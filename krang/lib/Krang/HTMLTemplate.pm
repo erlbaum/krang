@@ -36,14 +36,13 @@ use Krang::AddOn;
 our @PATH;
 
 sub reload_paths {
-    @PATH = ();
-    foreach my $addon (map { $_->name } Krang::AddOn->find()) {
-        push @PATH, catdir(KrangRoot, 'addons', $addon, 
-                           'skins', Skin, 'templates'),
-                     catdir(KrangRoot, 'addons', $addon, 'templates');
-    }
-    push @PATH, catdir(KrangRoot, 'skins', Skin, 'templates'),
-                catdir(KrangRoot, 'templates');
+    @PATH = 
+      (grep { -e $_ } 
+       (map { catdir(KrangRoot, 'addons', $_, 'skins', Skin, 'templates'),
+              catdir(KrangRoot, 'addons', $_, 'templates') }
+        (map { $_->name } Krang::AddOn->find())),
+       catdir(KrangRoot, 'skins', Skin, 'templates'),
+       catdir(KrangRoot, 'templates'));
 }
 
 BEGIN { reload_paths() }
