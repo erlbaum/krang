@@ -12,7 +12,15 @@
 function reSize() {
     var iframe = document.getElementById("ifrm");
     if (window.innerHeight) {
+      // Netscape compatible
       iframe.height = window.innerHeight - 150;
+    } else if( document.documentElement &&
+               document.documentElement.clientHeight ) {
+       //IE 6+ in 'standards compliant mode'
+       iframe.height = document.documentElement.clientHeight - 150;
+    } else if( document.body && ocument.body.clientHeight ) {
+       //IE 4 compatible
+       iframe.height = document.body.clientHeight;
     }
 }
 </script>
