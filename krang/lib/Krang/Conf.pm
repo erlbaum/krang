@@ -64,12 +64,6 @@ F<krang.conf>.  The routines provided will return the correct settings
 based on the currently active instance, accesible and setable using
 C<< Krang::Conf->instance() >>.
 
-If you call get() or an accessor method before setting instance(), 
-Krang::Conf will attempt to automagically set the correct instance.
-It will do so by looking for an environment variable, KRANG_INSTANCE,
-which contains the name of the instance.  If this variable is not set
-(or if it is set to a non-valid instance), get() will croak.
-
 Full details on all configuration parameters is available in the
 configuration document, which you can find at:
 
@@ -133,43 +127,8 @@ case-insensitive.
 =cut
 
 sub get {
-    my $self = shift;
-    my ($conf_prop_name) = @_;
-
-    # Var for return data
-    my $cont_prop_value;
-
-    if ($INSTANCE_CONF) {
-        $cont_prop_value = $INSTANCE_CONF->get($conf_prop_name);
-
-    } else {
-
-        # At this point there are two possibilities:
-        #
-        #  1. The caller is requesting a $CONF-level property,
-        #     in which case they should be able to get it without
-        #     specifying an $INSTANCE
-        # 
-        #  2. The caller is requesting an $INSTANCE_CONF-level
-        #     property, but has not yet specified $INSTANCE,
-        #     in which case we should try to automagically set
-        #     it, or croak() trying.
-
-        # Check the root level $CONF
-        $cont_prop_value = $CONF->get($conf_prop_name);
-
-        # Is there a $CONF-level property by that name?
-        unless (defined($cont_prop_value)) {
-            my $instance_name = $self->instance();
-            croak ("No Krang instance has been specified") unless (defined($instance_name));
-
-            # If we got this far, retrieve the $cont_prop_value from $INSTANCE_CONF
-            $cont_prop_value = $INSTANCE_CONF->get($conf_prop_name);
-        }
-
-    }
-
-    return $cont_prop_value;
+    return $INSTANCE_CONF->get($_[1]) if $INSTANCE_CONF;
+    return $CONF->get($_[1]);
 }
 
 =item C<< $value = Krang::Conf->directivenamehere() >>
@@ -225,27 +184,15 @@ state.
 
 sub instance {
     my $pkg = shift;
-
-    unless (@_) {
-        # Is instance already set?
-        return $INSTANCE if defined($INSTANCE);
-
-        # If not, try to find the instance name via KRANG_INSTANCE
-        my $env_instance_name = $ENV{KRANG_INSTANCE};
-
-        # No KRANG_INSTANCE?  We've failed.  Return undef
-        return undef unless defined($env_instance_name);
-
-        # If KRANG_INSTANCE is defined, attempt to set instance()
-        return $pkg->instance($env_instance_name);
-    }
+    return $INSTANCE unless @_;
     
     my $instance = shift;
     if (defined $instance) {
         # get a handle on the block
         my $block = $CONF->block(instance => $instance);
         croak("Unable to find instance named '$instance' in configuration " .
-              "file.") unless defined $block;
+              "file.")
+          unless defined $block;
 
         # setup package state
         $INSTANCE      = $instance;

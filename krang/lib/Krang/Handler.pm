@@ -45,83 +45,204 @@ None.
 
 use Krang;
 use Apache::URI;
-use Apache::Constants qw(OK REDIRECT FORBIDDEN);
+use Apache::Constants qw(:response);
 use Apache::Cookie;
 use File::Spec::Functions qw(splitdir rel2abs catdir);
 use Carp qw(croak);
 use Krang::Conf qw(KrangRoot);
 use HTML::Template;
 use Digest::MD5 qw(md5_hex md5);
-use Krang::Session qw(%session);
 use Krang::Log qw(critical info debug);
 
-# figure out the instance for the incoming request
-sub init_handler ($$) {
-    my ($pkg, $r) = @_;
-    Krang::Conf->instance($r->dir_config('instance'));
-    return OK;
+# Login app name
+use constant LOGIN_APP => 'login.pl';
+
+
+
+##########################
+####  PUBLIC METHODS  ####
+##########################
+
+
+# Re-write the incoming request, based on Krang Instance rules:
+#
+# flavor == "instance" :  Instance name should be set, or die()
+# flavor == "root"     :  If no instance name, must be in root directory.  Show list of instances.
+#                      :  If we have an instance name, it should match first directory in path
+#                      :  If in instance path, rewrite uri to point to real assets in htdocs root.
+#
+sub trans_handler ($$) {
+    my $self = shift;
+    my ($r) = @_;
+
+    # Dump request details to log
+    my $is_main = $r->is_main();
+    my $is_initial_req = $r->is_initial_req();
+    my $uri = $r->uri();
+    print STDERR "REQUEST:  is_main: '$is_main'   is_initial_req: '$is_initial_req'   uri: '$uri'\n";
+
+    print STDERR "GATEWAY_INTERFACE: '". $ENV{GATEWAY_INTERFACE} ."'\n";
+
+    # Only handle main requests
+    unless ( $r->is_initial_req() ) {
+        return DECLINED;
+    }
+
+    # Read directory configuration for this request
+    my $instance_name = $r->dir_config('instance');
+    $instance_name = '' unless (defined($instance_name));
+    my $flavor = $r->dir_config('flavor');
+    print STDERR "DIR CONFIG INSTANCE: '$instance_name'  FLAVOR: '$flavor'\n";
+
+
+    # Are we in the context of an Instance server?
+    if ($flavor eq 'instance') {
+        die ("No instance name set for this Krang instance") unless (length($instance_name));
+
+        # Set current instance, or die trying
+        Krang::Conf->instance($instance_name);
+
+        # Propagate the instance name to the CGI-land
+        $r->cgi_env('KRANG_INSTANCE' => $instance_name);
+
+        # Handle DirectoryIndex case...
+        $uri .= 'index.html' if ($uri =~ /\/$/);
+        $r->uri($uri);
+
+        # Our work is done -- we outta 'ere
+        return DECLINED;
+    }
+
+
+    ## We're now in the context of a "root"-flavored instance... directory city, baby.
+    if (length($instance_name)) {
+
+        # We have an instance name.  We should be in a matching path
+        die ("Expected uri like '/$instance_name\*', got '$uri' instead") 
+          unless ($uri =~ /^\/$instance_name/);
+
+        # Set current instance, or die trying
+        $r->warn("SETTING ROOT INSTANCE: '$instance_name'");
+        Krang::Conf->instance($instance_name);
+
+        # Propagate the instance name to the CGI-land
+        $r->cgi_env('KRANG_INSTANCE' => $instance_name);
+
+        # Rewrite the current uri to send request back to the real assets in the root
+        my $new_uri = $uri;
+        $new_uri =~ s/^\/$instance_name//;
+
+        # Handle root case: index.html
+        $new_uri = "/index.html" if (($new_uri eq '/') || $new_uri eq '');
+
+        #$r->warn("ROOT INSTANCE REWRITE: '$uri' => '$new_uri'");
+        #$r->uri($new_uri);
+        #return DECLINED;
+
+        my $fq_filename = $r->document_root() . $new_uri;
+        $r->warn("ROOT INSTANCE FILE REWRITE: '$uri' => '$fq_filename'");
+        $r->filename($fq_filename);
+        return OK;
+
+    } else {
+
+        # Allow requests for other assets to pass through normally
+        return DECLINED unless ($uri eq '/');
+
+        # We're looking at the root.  Set handler to show list of instances
+        $r->warn("Setting instance_menu handler");
+        $r->handler("perl-script");
+        $r->push_handlers(PerlHandler => \&instance_menu); 
+
+        return DECLINED;
+
+    }
 }
 
-# handles user authentication, tossing to the login app for
-# authentication.  Sets up REMOTE_USER and SESSION_ID if successful.
-sub auth_handler ($$) {
-    my ($pkg, $r) = @_;
-    my $path      = $r->parsed_uri()->path();
-    my $instance  = Krang::Conf->instance();
-    my $flavor    = $r->dir_config('flavor');
 
-    # always allow access to the login app    
-    if (($flavor eq 'root'     and $path =~ m!^/$instance/login!) or 
-        ($flavor eq 'instance' and $path =~ m!^/login!)) {
+# Attempt to retrieve user adentity from session cookie.
+# Set REMOTE_USER and KRANG_SESSION_ID if successful
+sub authen_handler ($$) {
+    my $self = shift;
+    my ($r) = @_;
+
+    # Only handle main requests
+    unless ( $r->is_initial_req() ) {
+        return DECLINED;
+    }
+
+    # Get Krang instance name
+    my $instance  = Krang::Conf->instance();
+
+    my %cookies = Apache::Cookie->new($r)->parse();
+    unless ($cookies{$instance}) {
+        # no cookie, redirect to login
+        debug("No cookie found, passing Authen without user login");
         return OK;
     }
 
-    my %cookies = Apache::Cookie->new($r)->parse();
-    unless ($cookies{$r->auth_name}) {        
-        # no cookie, redirect to login
-        debug("No cookie found, redirecting to login");
-        return _redirect_to_login($r, $flavor, $instance);
-    }
-
     # validate cookie
-    my %cookie = $cookies{$r->auth_name}->value;
+    my %cookie = $cookies{$instance}->value;
     my $hash = md5_hex($cookie{user_id} . $cookie{instance} . 
                        $cookie{session_id} . $Krang::CGI::Login::SALT);
     if ($cookie{hash} ne $hash or $cookie{instance} ne $instance) {
         # invalid cookie, send to login
         critical("Invalid cookie found, possible breakin attempt from IP " . 
-                 $r->connection->remote_ip . ".  Redirecting to login.");
-        return _redirect_to_login($r, $flavor, $instance);
+                 $r->connection->remote_ip . ".  Passing Authen without user login.");
+        return OK;
     }
 
-    # setup REMOTE_USER
-    $ENV{REMOTE_USER} = $cookie{user_id};
+    # Validate session
+    
 
-    # try to load the session, if it fails send to login.  Usually
-    # this means the session is no longer there.
-    eval { Krang::Session->load($cookie{session_id}); };
-    if ($@) {
-        # no cookie, redirect to login
-        debug("Error loading session: $@");
-        return _redirect_to_login($r, $flavor, $instance);
-    }
+    # We have a valid cookie/user!  Setup REMOTE_USER
+    $r->connection->user($cookie{user_id});
+
+    # Propagate it to CGI-land via the environment
+    $r->cgi_env('KRANG_SESSION_ID' => $cookie{session_id});
 
     return OK;
 }
 
-sub _redirect_to_login {
-    my ($r, $flavor, $instance) = @_;
-    $r->headers_out->set(Location => ($flavor eq 'instance' ? 
-                                      '/login' : "/$instance/login") .
-                         '?target=' . $r->uri);
-    return REDIRECT;
+
+# Authorization
+sub authz_handler ($$) {
+    my $self = shift;
+    my ($r) = @_;
+
+    # Only handle main requests
+    unless ( $r->is_initial_req() ) {
+        return DECLINED;
+    }
+
+    my $path      = $r->parsed_uri()->path();
+    my $instance  = Krang::Conf->instance();
+    my $flavor    = $r->dir_config('flavor');
+
+    # always allow access to the login app
+    my $login_app = LOGIN_APP;
+    if (($flavor eq 'root'     and $path =~ m!^/$instance/$login_app!) or 
+        ($flavor eq 'instance' and $path =~ m!^/$login_app!) or
+        ($path =~ m!^/$instance/env\.!) or
+        ($path =~ m!^/env\.!)
+       ) {
+        return OK;
+    }
+
+    # If user is logged in, we're done
+    return OK if (defined($r->connection->user()));
+
+    # No user?  Not a request to login?  Redirect the user to login!
+    return $self->_redirect_to_login($r, $flavor, $instance);
 }
+
 
 
 # content handler, finds a CGI module to call and calls it
 sub handler ($$) {
-    my $pkg    = shift;
-    my $r      = shift;
+    my $self = shift;
+    my ($r) = @_;
+
     my $path   = $r->parsed_uri()->path();
     my $flavor = $r->dir_config('flavor');
 
@@ -137,7 +258,7 @@ sub handler ($$) {
 
     # show an instance menu if no instance is set
     my $instance = Krang::Conf->instance();
-    return $pkg->instance_menu() unless defined $instance;
+    return $self->instance_menu() unless defined $instance;
 
     # default to the entry module (FIX)
     $module = 'element_editor' unless defined $module;
@@ -154,7 +275,7 @@ sub handler ($$) {
 
     # unload the session ASAP, the client might be making another
     # request already!
-    Krang::Session->unload();
+    #Krang::Session->unload();
 
     # if the page generated an error, cough it up
     critical($err), die($err) if $err;
@@ -162,9 +283,17 @@ sub handler ($$) {
     return OK;
 }
 
+
+
+
+#############################
+####  INTERNAL HANDLERS  ####
+#############################
+
 # display a menu of available instances
 sub instance_menu {
-    my $pkg = shift;
+    my ($r) = @_;
+
     my $template = HTML::Template->new(filename => 'instance_menu.tmpl',
                                        cache    => 1,
                                        path     => 
@@ -182,5 +311,50 @@ sub instance_menu {
 
     return OK;
 }
+
+
+
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+sub _redirect_to_login {
+    my $self = shift;
+    my ($r, $flavor, $instance) = @_;
+
+    my $login_app = LOGIN_APP;
+    my $new_uri = ($flavor eq 'instance' ? "/$login_app" : "/$instance/$login_app");
+    $new_uri .= '?target=' . $self->escape_url( $r->uri() );
+
+    return $self->_do_redirect($r, $new_uri);
+}
+
+
+sub _do_redirect {
+    my $self = shift;
+    my ($r, $new_uri) = @_;
+
+    $r->err_header_out(Location => $new_uri);
+    my $output = "Redirect: <a href=\"$new_uri\">$new_uri</a>";
+    # $r->custom_response(REDIRECT, $output);
+
+    return REDIRECT;
+}
+
+
+sub escape_url {
+    my $self = shift;
+    my ($text) = @_;
+
+    # URL-escape string
+    $text =~ s/\=/\%3d/g;
+    $text =~ s/\&/\%26/g;
+    $text =~ s/\?/\%3f/g;
+    $text =~ s/\//\%2f/g;
+
+    return $text;
+}
+
 
 1;

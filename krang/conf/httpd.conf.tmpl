@@ -69,9 +69,38 @@ AddModule mod_setenvif.c
 AddModule mod_perl.c
 
 
-PerlPassEnv KRANG_ROOT
-PerlPassEnv KRANG_CONF
-PerlModule Krang
+### Non mod_perl config
+
+# To handle CGI
+AddHandler cgi-script .pl
+Options +ExecCGI
+
+PassEnv KRANG_ROOT
+PassEnv KRANG_CONF
+PassEnv PERL5LIB
+
+
+#
+# MOD_PERL Configuration for Krang
+#
+<IfModule mod_perl.c>
+        PerlPassEnv KRANG_ROOT
+        PerlPassEnv KRANG_CONF
+        PerlPassEnv PERL5LIB
+
+        PerlSendHeader Off
+        PerlWarn On
+        PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
+
+<TMPL_UNLESS CGI_MODE>
+        <FilesMatch "^.*\.pl$">
+        SetHandler perl-script
+        PerlHandler Apache::Registry
+        </FilesMatch>
+
+</TMPL_UNLESS>
+</IfModule>
+
 
 Listen <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
@@ -79,10 +108,10 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 <VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
    ServerName <tmpl_var RootVirtualHost>
 
+   PerlTransHandler Krang::Handler->trans_handler
+
    <Location />
       PerlSetVar        flavor root
-      PerlInitHandler   Krang::Handler->init_handler
-      PerlHandler       Krang::Handler->handler
    </Location>
 
    <tmpl_loop InstanceLoop>
@@ -90,12 +119,11 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
          SetHandler        perl-script
          PerlSetVar        flavor root
          PerlSetVar        instance <tmpl_var InstanceName>
-         PerlInitHandler   Krang::Handler->init_handler
-         PerlHandler       Krang::Handler->handler
 
          AuthType          Krang::Handler
          AuthName          <tmpl_var InstanceName>
-         PerlAuthenHandler Krang::Handler->auth_handler
+         PerlAuthenHandler Krang::Handler->authen_handler
+         PerlAuthzHandler  Krang::Handler->authz_handler
          require           valid-user
       </Location>
    </tmpl_loop>
@@ -104,16 +132,18 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 <tmpl_loop InstanceLoop>
 <VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
    ServerName      <tmpl_var VirtualHost>
+
+   PerlTransHandler Krang::Handler->trans_handler
+
    <Location />
        SetHandler      perl-script
        PerlSetVar      flavor instance   
        PerlSetVar      instance <tmpl_var InstanceName>
-       PerlInitHandler Krang::Handler->init_handler
-       PerlHandler     Krang::Handler->handler    
 
        AuthType Krang::Handler
        AuthName <tmpl_var InstanceName>
-       PerlAuthenHandler Krang::Handler->auth_handler
+       PerlAuthenHandler Krang::Handler->authen_handler
+       PerlAuthzHandler  Krang::Handler->authz_handler
        require valid-user
    </Location>
 </VirtualHost>

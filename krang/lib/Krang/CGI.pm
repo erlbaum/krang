@@ -35,6 +35,10 @@ See L<CGI::Application>.
 =cut
 
 use base 'CGI::Application';
+
+# Load Krang to set instance
+use Krang;
+
 use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catdir rel2abs);
 

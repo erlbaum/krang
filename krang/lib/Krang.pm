@@ -56,7 +56,7 @@ BEGIN {
         Krang::ElementLibrary->load_set(set => ElementSet());
     }
     Krang::Conf->instance(undef);
-}        
+}
 
 
 BEGIN {
