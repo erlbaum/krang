@@ -206,7 +206,7 @@ sub send_file {
     croak("Unable to spawn scp.") unless $command;
 
     # answer the password prompt and all should be well
-    if ($command->expect(undef, 'password:')) {
+    if ($command->expect(undef, 'password:', 'Password:')) {
         $command->send($self->{password} . "\n");
     }
     # wait for EOF
@@ -219,7 +219,7 @@ sub send_file {
     my ($f) = $file =~ m!([^/]+)$!;
     my ($size) = `ls -s $file` =~ /(\d+)/;
     $command = $self->spawn(%args, command => "ls -s $f");
-    if (not($command->expect(5, '-re', "\\d+\\s+$f")) or
+    if (not($command->expect(15, '-re', "\\d+\\s+$f")) or
         $command->match !~ /${size}\s+$f/) {
         croak("Failed to send file, size of '$f' does not match '$size'.");
     }
@@ -241,7 +241,7 @@ sub fetch_file {
     croak("Unable to spawn scp.") unless $command;
 
     # answer the password prompt and all should be well
-    if ($command->expect(5, 'password:')) {
+    if ($command->expect(5, 'password:', 'Password:')) {
         $command->send($self->{password} . "\n");
     }
     # wait for EOF
@@ -273,7 +273,7 @@ sub spawn {
     $spawn->log_stdout(0);
     $spawn->log_file(sub { $self->_log_expect(@_) } );
     croak("Unable to spawn '$command'.") unless $spawn;
-    if ($spawn->expect(5, 'password:')) {
+    if ($spawn->expect(15, 'password:', 'Password:')) {
         $spawn->send($self->{password} . "\n");
     }
     return $spawn;
