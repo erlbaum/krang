@@ -241,7 +241,7 @@ sub fetch_file {
     croak("Unable to spawn scp.") unless $command;
 
     # answer the password prompt and all should be well
-    if ($command->expect(5, 'password:', 'Password:')) {
+    if ($command->expect(15, 'password:', 'Password:')) {
         $command->send($self->{password} . "\n");
     }
     # wait for EOF
@@ -254,7 +254,7 @@ sub fetch_file {
     my ($f) = $file =~ m!([^/]+)$!;
     my ($size) = `ls -s $f` =~ /(\d+)/;
     $command = $self->spawn(%args, command => "ls -s $file");
-    if (not($command->expect(5, '-re', "\\d+\\s+$file")) or
+    if (not($command->expect(15, '-re', "\\d+\\s+$file")) or
         $command->match !~ /${size}\s+$file/) {
         croak("Failed to fetch file, size of '$file' does not match '$size'.");
     }
