@@ -52,6 +52,7 @@ use File::Spec::Functions qw(catdir catfile);
 use Krang::HTMLTemplate;
 use Image::BioChrome;
 use File::Copy qw(copy);
+use Krang::File;
 
 # parameters from skin.conf that go to the CSS template
 our @CSS_PARAMS = 
@@ -90,13 +91,15 @@ sub new {
     croak("Missing required 'name' parameter.")
       unless exists $self->{name};
 
+    my $skin_dir = Krang::File->find("skins/$self->{name}");
+    croak("Unable to find skin named $self->{name}!") unless $skin_dir;
+
     # read in conf file
     my $conf = Config::ApacheFormat->new(
                    valid_directives => [@REQ, 'include'],
                    valid_blocks     => []);
-    eval { $conf->read(catfile(KrangRoot, 'skins', $self->{name}, 
-                               'skin.conf')) };
-    die "Unable to read skin.conf file for skin '$self->{name}': $@\n" if $@;
+    eval { $conf->read(catfile($skin_dir, 'skin.conf')) };
+    die "Unable to read $skin_dir/skin.conf: $@\n" if $@;
 
     # check reqs
     foreach my $req (@REQ) {
@@ -140,11 +143,12 @@ sub _install_css {
 sub _install_images {
     my $self = shift;
     my $conf = $self->{conf};
+    my $skin_dir = Krang::File->find("skins/$self->{name}");
 
     # process each image in turn
     foreach my $image (@IMAGES) {
-        my $src = catfile(KrangRoot, 'skins', $self->{name}, 'images',$image);
-        my $targ = catfile(KrangRoot, 'htdocs', 'images',$image);
+        my $src = catfile($skin_dir, 'images', $image);
+        my $targ = catfile(KrangRoot, 'htdocs', 'images', $image);
 
         # if the skin supplies this image, copy it into place
         if (-e $src) {
