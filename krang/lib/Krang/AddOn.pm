@@ -115,28 +115,31 @@ sub uninstall {
     rmtree(catdir($dir, $self->name));
 }
 
+
+our @ADDONS;
 sub find {
     my ($pkg, %arg) = @_;
     my $dir = catdir(KrangRoot, 'addons');
 
-    opendir(my $dh, $dir) or die "Unable to open dir $dir: $!";
-    my @files = grep { not /^\./ } readdir($dh);
-    closedir($dh);
+    unless (@ADDONS) {
+        opendir(my $dh, $dir) or die "Unable to open dir $dir: $!";
+        my @files = grep { not /^\./ } readdir($dh);
+        closedir($dh);
 
-    if (exists $arg{name}) {
-        @files = grep { $_ eq $arg{name} } @files;
-    }
-    
-    my @obj;
-    foreach my $addon (@files) {
-        my $conf = $pkg->_addon_conf(catfile($dir, $addon, 'krang_addon.conf'));
-        push @obj, $pkg->new(name    => $addon,
-                             version => $conf->get('version'),
-                             conf    => $conf);
-    }
-    
-    return @obj;
+        foreach my $addon (@files) {
+            my $conf = $pkg->_addon_conf(catfile($dir, $addon, 
+                                                 'krang_addon.conf'));
+            push @ADDONS, $pkg->new(name    => $addon,
+                                    version => $conf->get('version'),
+                                    conf    => $conf);
+        }
+    }    
+
+    return @ADDONS unless $arg{name};
+    return grep { $_->{name} eq $arg{name} } @ADDONS;
 }
+
+sub _flush_cache { @ADDONS = () }
 
 sub install {
     my ($pkg, %args) = @_;
@@ -199,8 +202,10 @@ sub install {
            $conf->get('postinstallscript'))
       if $conf->get('postinstallscript');
 
-    # installing a new addon means that @INC needs updating, reimport
-    # Krang::lib
+    # installing a new addon means that @INC needs updating, reload
+    # Krang::lib and flush the file cache and the addon cache
+    Krang::File->flush_cache();
+    $pkg->_flush_cache();
     Krang::lib->reload();
 
     # all done, return home if possible

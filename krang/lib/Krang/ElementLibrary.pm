@@ -91,6 +91,7 @@ use File::Spec::Functions qw(catdir catfile file_name_is_absolute);
 use Config::ApacheFormat;
 use Carp qw(croak);
 use Krang::Log qw(debug info);
+use Krang::File;
 
 # load all Krang::ElementClass base classes, which will be used by
 # element sets
@@ -125,20 +126,17 @@ sub load_set {
     my ($set) = @arg{qw(set)};
     local $_;
 
-    # get location of the element library, mixing in KrangRoot if non-absolute
-    my $lib = catdir(KrangRoot, 'element_lib');
-
     # don't load sets more than once
     our (%LOADED_SET, %PARENT_SETS);
     unless (exists $LOADED_SET{$set}) {
-        my $conf = $pkg->_load_conf($lib, $set);
+        my $conf = $pkg->_load_conf($set);
 
         # load parent sets first
         $PARENT_SETS{$set} = [ $conf->get('ParentSets') ];
         Krang::ElementLibrary->load_set(set => $_) 
             for (@{$PARENT_SETS{$set}});
 
-        $pkg->_load_classes($lib, $set, $conf);
+        $pkg->_load_classes($set, $conf);
         $pkg->_instantiate_top_levels($set, $conf);
         debug("Loaded element set '$set'");
     }
@@ -149,15 +147,16 @@ sub load_set {
 
 # load a set.conf file
 sub _load_conf {
-    my ($pkg, $lib, $set) = @_;
+    my ($pkg, $set) = @_;
 
-    unless (-d catdir($lib, $set)) {
+    my $dir = Krang::File->find("element_lib/$set");
+    unless (-d $dir) {
         warn("\nWARNING: Missing element library '$set'.\n\n");
         exit;
     }
 
     # load the element set configuration file
-    my $conf_file = catfile($lib, $set, "set.conf");    
+    my $conf_file = catfile($dir, "set.conf");
     my $conf = Config::ApacheFormat->new(
            valid_directives => [ qw(version krangversion toplevels
                                     parentsets )],
@@ -172,11 +171,16 @@ sub _load_conf {
 
 # load classes for an element set
 sub _load_classes {
-    my ($pkg, $lib, $set, $conf) = @_;
-    my $dir = catdir($lib, $set);
+    my ($pkg, $set, $conf) = @_;
+
+    my $dir = Krang::File->find("element_lib/$set");
+    unless (-d $dir) {
+        warn("\nWARNING: Missing element library '$set'.\n\n");
+        exit;
+    }
 
     # setup @INC so element sets can load successfully
-    unshift(@INC, $lib);
+    unshift(@INC, "$dir/..");
 
     # make sure to reset @INC before returning
     eval {         

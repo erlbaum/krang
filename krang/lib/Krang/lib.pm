@@ -11,9 +11,9 @@ Krang::lib - setup Krang library search path
   use Krang::lib;
 
   # reload lib dirs when needed (ex. addon install)
-  Krang::Lib->reload();
+  Krang::lib->reload();
 
-=head2 DESCRIPTION
+=head1 DESCRIPTION
 
 This module is responsible for setting up the search path for Krang's
 Perl libraries.  It handles setting @INC and $ENV{PERL5LIB} to correct
@@ -22,9 +22,9 @@ values.
 B<NOTE>: Krang::lib is used by Krang::Script, so in most cases you
 should just use Krang::Script and leave it at that.
 
-=head2 INTERFACE
+=head1 INTERFACE
 
-=head3 C<< Krang::Lib->reload() >>
+=head2 C<< Krang::lib->reload() >>
 
 Call to reload library paths.  This is only needed when something new
 is added, removal is handled automatically by Perl.
