@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
 
-use CGI::Application;
-my $app = CGI::Application->new();
+use Krang::CGI::Env;
+my $app = Krang::CGI::Env->new();
 $app->run();

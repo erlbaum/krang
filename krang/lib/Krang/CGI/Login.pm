@@ -68,7 +68,7 @@ sub login {
     my $query    = $self->query();
     my $username = $query->param('username');
     my $password = $query->param('password');
-    my $target   = $query->param('target') || '/';
+    my $target   = $query->param('target') || './';
     my $dbh      = dbh();
 
     return $self->show_form(alert => 
@@ -89,7 +89,8 @@ sub login {
     # an MD5 hash with $SALT to allow the PerlAuthenHandler to check
     # for tampering
     my $q = $self->query();
-    my $session_id = Krang::Session->create();
+    my $session_id = (defined($ENV{KRANG_SESSION_ID})) ? 
+      $ENV{KRANG_SESSION_ID} : Krang::Session->create();
     my $instance   = Krang::Conf->instance();
     my %filling    = ( user_id    => $user_id, 
                        session_id => $session_id,
@@ -100,6 +101,9 @@ sub login {
     # save user info in new session hash
     $session{user_id}  = $user_id;
     $session{username} = $username;
+
+    # Unload the session if we've created it
+    Krang::Session->unload() unless (defined($ENV{KRANG_SESSION_ID}));
 
     # build the cookie
     my $cookie = $q->cookie(

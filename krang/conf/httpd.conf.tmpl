@@ -69,36 +69,44 @@ AddModule mod_setenvif.c
 AddModule mod_perl.c
 
 
-### Non mod_perl config
+#
+# Non mod_perl config
+#
 
 # To handle CGI
-AddHandler cgi-script .pl
 Options +ExecCGI
 
 PassEnv KRANG_ROOT
 PassEnv KRANG_CONF
+PassEnv CGI_MODE
 PassEnv PERL5LIB
 
 
 #
 # MOD_PERL Configuration for Krang
 #
-<IfModule mod_perl.c>
-        PerlPassEnv KRANG_ROOT
-        PerlPassEnv KRANG_CONF
-        PerlPassEnv PERL5LIB
+PerlPassEnv KRANG_ROOT
+PerlPassEnv KRANG_CONF
+PerlPassEnv CGI_MODE
+PerlPassEnv PERL5LIB
 
-        PerlSendHeader Off
-        PerlWarn On
-        PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
+PerlSendHeader Off
+PerlWarn On
+PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
 
-<TMPL_UNLESS CGI_MODE>
-        <FilesMatch "^.*\.pl$">
+<Perl>
+        use Krang::Handler;
+</Perl>
+
+<FilesMatch "^.*\.pl$">
+<TMPL_IF CGI_MODE>
+        SetHandler cgi-script
+<TMPL_ELSE>
         SetHandler perl-script
         PerlHandler Apache::Registry
-        </FilesMatch>
+</TMPL_IF>
+</FilesMatch>
 
-</TMPL_UNLESS>
 </IfModule>
 
 
@@ -116,7 +124,6 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 
    <tmpl_loop InstanceLoop>
       <Location /<tmpl_var InstanceName>>
-         SetHandler        perl-script
          PerlSetVar        flavor root
          PerlSetVar        instance <tmpl_var InstanceName>
 
@@ -136,7 +143,6 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
    PerlTransHandler Krang::Handler->trans_handler
 
    <Location />
-       SetHandler      perl-script
        PerlSetVar      flavor instance   
        PerlSetVar      instance <tmpl_var InstanceName>
 

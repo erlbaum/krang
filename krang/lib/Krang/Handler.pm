@@ -19,21 +19,38 @@ The basic order of events is:
 
 =over 4
 
-=item Krang::Handler->init_handler
+=item Krang::Handler->trans_handler
 
-Determines which instance of Krang is being requested and calls
-Krang::Conf->instance() to set it.
+Responsible for setting Krang instance name and propagating it
+to the environment (KRANG_INSTANCE).  Responsible for re-writing
+requests internally to properly locate files in the case of
+"root"-flavor requests.  E.g.:
 
-=item Krang::Handler->auth_handler
+Both requests:
 
-Checks for an auth cookie.  If one isn't found or it's not valid, a
-redirect tosses you to the login app.  Otherwise, C<$ENV{REMOTE_USER}>
-is set, the C<%session> is loaded and the request continues.
+  http://my-krang/instance1/someasset.gif
+  http://my-krang/someasset.gif
 
-=item Krang::Handler->handler
+ ...translate to...
 
-Finds the appropriate CGI module to run based on the requested path.
-Runs that module, unloads the C<%session> and returns.
+  /path/to/document/root/someasset.gif
+
+
+=item Krang::Handler->authen_handler
+
+Authentication.  Checks for an auth cookie.  If found and valid, the request is 
+associated with the user_id via the $request->connection->user() 
+method.  The effect of this is that $query->remote_user() and 
+$ENV{REMOTE_USER} will properly report the user who is logged in.
+
+
+=item Krang::Handler->authz_handler
+
+Authorization.  Currently enforced "require valid-user" only.  IOW, 
+if a user is specified, they are authorized.  If no user
+has been specified (via the authen_handler), the request is
+redirected to the login application.
+
 
 =back
 
@@ -44,6 +61,7 @@ None.
 =cut
 
 use Krang;
+use Krang::CGI::Login;
 use Apache::URI;
 use Apache::Constants qw(:response);
 use Apache::Cookie;
@@ -53,6 +71,7 @@ use Krang::Conf qw(KrangRoot);
 use HTML::Template;
 use Digest::MD5 qw(md5_hex md5);
 use Krang::Log qw(critical info debug);
+
 
 # Login app name
 use constant LOGIN_APP => 'login.pl';
@@ -75,14 +94,6 @@ sub trans_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    # Dump request details to log
-    my $is_main = $r->is_main();
-    my $is_initial_req = $r->is_initial_req();
-    my $uri = $r->uri();
-    print STDERR "REQUEST:  is_main: '$is_main'   is_initial_req: '$is_initial_req'   uri: '$uri'\n";
-
-    print STDERR "GATEWAY_INTERFACE: '". $ENV{GATEWAY_INTERFACE} ."'\n";
-
     # Only handle main requests
     unless ( $r->is_initial_req() ) {
         return DECLINED;
@@ -92,14 +103,14 @@ sub trans_handler ($$) {
     my $instance_name = $r->dir_config('instance');
     $instance_name = '' unless (defined($instance_name));
     my $flavor = $r->dir_config('flavor');
-    print STDERR "DIR CONFIG INSTANCE: '$instance_name'  FLAVOR: '$flavor'\n";
-
+    my $uri = $r->uri();
 
     # Are we in the context of an Instance server?
     if ($flavor eq 'instance') {
         die ("No instance name set for this Krang instance") unless (length($instance_name));
 
         # Set current instance, or die trying
+        debug("Krang::Handler:  Setting instance to '$instance_name'");
         Krang::Conf->instance($instance_name);
 
         # Propagate the instance name to the CGI-land
@@ -122,7 +133,7 @@ sub trans_handler ($$) {
           unless ($uri =~ /^\/$instance_name/);
 
         # Set current instance, or die trying
-        $r->warn("SETTING ROOT INSTANCE: '$instance_name'");
+        debug("Krang::Handler:  Setting instance to '$instance_name'");
         Krang::Conf->instance($instance_name);
 
         # Propagate the instance name to the CGI-land
@@ -135,13 +146,9 @@ sub trans_handler ($$) {
         # Handle root case: index.html
         $new_uri = "/index.html" if (($new_uri eq '/') || $new_uri eq '');
 
-        #$r->warn("ROOT INSTANCE REWRITE: '$uri' => '$new_uri'");
-        #$r->uri($new_uri);
-        #return DECLINED;
-
         my $fq_filename = $r->document_root() . $new_uri;
-        $r->warn("ROOT INSTANCE FILE REWRITE: '$uri' => '$fq_filename'");
         $r->filename($fq_filename);
+
         return OK;
 
     } else {
@@ -150,7 +157,6 @@ sub trans_handler ($$) {
         return DECLINED unless ($uri eq '/');
 
         # We're looking at the root.  Set handler to show list of instances
-        $r->warn("Setting instance_menu handler");
         $r->handler("perl-script");
         $r->push_handlers(PerlHandler => \&instance_menu); 
 
@@ -183,8 +189,9 @@ sub authen_handler ($$) {
 
     # validate cookie
     my %cookie = $cookies{$instance}->value;
+    my $session_id = $cookie{session_id};
     my $hash = md5_hex($cookie{user_id} . $cookie{instance} . 
-                       $cookie{session_id} . $Krang::CGI::Login::SALT);
+                       $session_id . $Krang::CGI::Login::SALT);
     if ($cookie{hash} ne $hash or $cookie{instance} ne $instance) {
         # invalid cookie, send to login
         critical("Invalid cookie found, possible breakin attempt from IP " . 
@@ -192,8 +199,18 @@ sub authen_handler ($$) {
         return OK;
     }
 
-    # Validate session
-    
+    # Validate session by trying to load session
+    debug("Krang::Handler:  Loading session '$session_id'");
+    eval { Krang::Session->load($session_id); };
+    if ($@) {
+        # no cookie, redirect to login
+        debug("Error loading session: $@");
+        return OK;
+    }
+
+    # Unload the session so that we don't block later
+    debug("Krang::Handler:  UN-Loading session");
+    Krang::Session->unload();
 
     # We have a valid cookie/user!  Setup REMOTE_USER
     $r->connection->user($cookie{user_id});
@@ -234,53 +251,6 @@ sub authz_handler ($$) {
 
     # No user?  Not a request to login?  Redirect the user to login!
     return $self->_redirect_to_login($r, $flavor, $instance);
-}
-
-
-
-# content handler, finds a CGI module to call and calls it
-sub handler ($$) {
-    my $self = shift;
-    my ($r) = @_;
-
-    my $path   = $r->parsed_uri()->path();
-    my $flavor = $r->dir_config('flavor');
-
-    # find module
-    my $module;
-    if ($flavor eq 'instance') {
-        # module is the first token on the path for instance vhosts
-        ($module) = $path =~ m!^/(\w+)!;
-    } else {
-        # module is the second token on the path for root vhost
-        ($module) = $path =~ m!^/\w+/(\w+)!;
-    }
-
-    # show an instance menu if no instance is set
-    my $instance = Krang::Conf->instance();
-    return $self->instance_menu() unless defined $instance;
-
-    # default to the entry module (FIX)
-    $module = 'element_editor' unless defined $module;
-
-    # find the module pkg
-    my $module_pkg = "Krang::CGI::" . 
-      join('', map { ucfirst($_) } split('_', $module));
-    croak("Unrecoginized module '$module' $module_pkg.")
-      unless $module_pkg->can('new');
-
-    # run the CGI app, catching any errors and writing them to log
-    eval { $module_pkg->new()->run(); };
-    my $err = $@;
-
-    # unload the session ASAP, the client might be making another
-    # request already!
-    #Krang::Session->unload();
-
-    # if the page generated an error, cough it up
-    critical($err), die($err) if $err;
-
-    return OK;
 }
 
 
