@@ -45,21 +45,23 @@ has a version number of 1.00.  Its directory structure will look like:
 
 This add-on would ship in a file called 'Turbo-1.00.tar.gz'.
 
-Notice that this structure is ready to be copied directly into Krang,
-because the 'docs', 'lib' and 't' directories match existing
-directories in Krang.
-
-The configuration file, C<krang_addon.conf> contains the name name and
+The configuration file, C<krang_addon.conf> contains the name and
 version of the addon:
 
   Name Turbo
   Version 1.00
 
+The file structure in an addon matches existing directories in Krang.
+It is installed into the C<addons/> directory in Krang.  In this case
+the structure above would be placed in C<addons/Turbo>.  To run the
+C<krang_turbo> script you would run:
+
+  $ addons/Turbo/bin/krang_turbo
+
 That's all there is to producing a simple Krang add-on.  Just layout
 your files, write a simple C<krang_addon.conf> and tar it up.  The
 rest of the document will explain enhancements which may be used to
 produce more complex add-ons.
-
 
 B<NOTE:> As of Krang 1.102 there is a new script to automate some of
 the work here:
@@ -70,10 +72,9 @@ the work here:
 
 =head2 C<krang_addon.conf>
 
-If you need more control over how an addon is installed into Krang
-then you must create a C<krang_addon.conf> file in your add-on's
-directory.  The file follows the same Apache-inspired format as
-Krang's krang.conf file.  I'll explain each available directive.
+You must create a C<krang_addon.conf> file in your add-on's directory.
+The file follows the same Apache-inspired format as Krang's krang.conf
+file.  I'll explain each available directive.
 
 =over 4
 
@@ -109,6 +110,9 @@ install everything else into Krang:
 
   ExcludeFiles README
 
+Files in C<upgrade/> and C<krang_addon.conf> are excluded
+automatically.
+
 =item * C<RequireKrang> I<x.y>
 
 Require a version of Krang.  For example, if Turbo will only work with
@@ -129,7 +133,7 @@ and any version of RacingStripes:
 =item * C<PostInstallScript> I<script>
 
 A script to run after file installation is complete.  C<KRANG_ROOT>
-will be set in the environment for this script.  
+will be set in the environment for this script.
 
 =back
 
