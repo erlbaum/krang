@@ -231,7 +231,7 @@ sub _upgrade {
 
 # figure out which files to copy
 sub _list_files {
-    my %exclude = ( 'krang_addon.conf' => 1 );
+    my %exclude;
     my @files;
     
     if ($conf->get('Files')) {
@@ -256,13 +256,15 @@ sub _list_files {
     
 sub _copy_files {
     my @files = @_;
+    my $root = KrangRoot;
+    my $name = $conf->get('name');
+    my $addon_dir = catdir($root, 'addons', $name);
 
     # copy the files, creating directories as necessary
-    my $root = KrangRoot;
     foreach my $file (@files) {
         my @parts = splitdir($file);
         my $dir   = @parts > 1 ? catdir(@parts[0 .. $#parts - 1]) : '';
-        my $target_dir = catdir($root, $dir);
+        my $target_dir = catdir($addon_dir, $dir);
         my $target = catfile($target_dir, $parts[-1]);
         unless (-d $target_dir) {
             print STDERR "Making directory $target_dir...\n"
@@ -313,35 +315,26 @@ sub _read_conf {
 
 # find the addon dir, one way or another
 sub _find_dir {
-    # if it's a file, treat it as a tar.gz and open it up in a temp directory
-    if (-f $source) {
-        # open up the tar file
-        my $tar = Archive::Tar->new();
-        my $ok = eval { $tar->read($source); 1 };
-        die("Unable to read addon archive '$source' : $@\n")
-          if $@;
-        die("Unable to read addon archive '$source' : ". Archive::Tar->error)
-          if not $ok;
-        
-        # extract in temp dir
-        my $dir = tempdir( DIR     => catdir(KrangRoot, 'tmp'),
-                           CLEANUP => 1 );
-        chdir($dir) or die "Unable to chdir to $dir: $!";
-        $tar->extract($tar->list_files) or
-          die("Unable to unpack archive '$source' : ". Archive::Tar->error);    
-        
-        # if there's just a single directory here then enter it
-        opendir(DIR, $dir) or die $!;
-        my @entries = grep { not /^\./ } readdir(DIR);
-        closedir(DIR);
-        if (@entries == 1 and -d $entries[0]) {
-            chdir($entries[0]) or die $!;
-        }
-        
-    } elsif (-d $source) {
-        chdir($source) or die "Unable to chdir to $source: $!";
-        
-    } else {
-        die("Bad source arguement '$source': must be a file or a directory.\n");
+    # open up the tar file
+    my $tar = Archive::Tar->new();
+    my $ok = eval { $tar->read($source); 1 };
+    die("Unable to read addon archive '$source' : $@\n")
+      if $@;
+    die("Unable to read addon archive '$source' : ". Archive::Tar->error)
+      if not $ok;
+    
+    # extract in temp dir
+    my $dir = tempdir( DIR     => catdir(KrangRoot, 'tmp'),
+                       CLEANUP => 1 );
+    chdir($dir) or die "Unable to chdir to $dir: $!";
+    $tar->extract($tar->list_files) or
+      die("Unable to unpack archive '$source' : ". Archive::Tar->error);    
+    
+    # if there's just a single directory here then enter it
+    opendir(DIR, $dir) or die $!;
+    my @entries = grep { not /^\./ } readdir(DIR);
+    closedir(DIR);
+    if (@entries == 1 and -d $entries[0]) {
+        chdir($entries[0]) or die $!;
     }
 }

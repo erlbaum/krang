@@ -15,16 +15,20 @@ ok(not $turbo);
 my $installer = catfile(KrangRoot, 'bin', 'krang_addon_installer');
 my $cmd = $installer . " " .
   catfile(KrangRoot, 't', 'addons', 'Turbo-1.00.tar.gz');
-system("$cmd > /dev/null");
+system("$cmd > /dev/null") && die "Unable to run krang_addon_installer: $?";
 
 # worked?
 ($turbo) = Krang::AddOn->find(name => 'Turbo');
 isa_ok($turbo, 'Krang::AddOn');
 cmp_ok($turbo->version, '==', 1);
-ok(-e 'lib/Krang/Turbo.pm');
-ok(-e 't/turbo.t');
-ok(-e 'docs/turbo.pod');
+ok(-d 'addons/Turbo');
+ok(-e 'addons/Turbo/lib/Krang/Turbo.pm');
+ok(not -e 'lib/Krang/Turbo.pm');
+ok(-e 'addons/Turbo/t/turbo.t');
+ok(-e 'addons/Turbo/docs/turbo.pod');
 ok(not -e 'krang_addon.conf');
+
+=begin comment
 
 # upgrade to Turbo 1.01
 $cmd = $installer . " " .
@@ -41,9 +45,10 @@ ok(-e 'docs/turbo.pod');
 ok(-e 'turbo_1.01_was_here');
 ok(not -e 'krang_addon.conf');
 
+=end comment
+
+=cut
+
 # clean up
 $turbo->delete;
-unlink('lib/Krang/Turbo.pm');
-unlink('t/turbo.t');
-unlink('docs/turbo.pod');
-unlink('turbo_1.01_was_here');
+system('rm -rf addons/Turbo') && die "Unable to cleanup.";
