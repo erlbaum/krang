@@ -84,8 +84,7 @@ $@
 END
 }
 
-use KrangFarm::Conf;
-use KrangFarm::Control;
+use KrangFarm::Machine;
 use Cwd qw(cwd);
 use File::Temp qw(tempdir);
 
@@ -153,9 +152,9 @@ pod2usage("Unrecognized options to krang_farm_build: '"
 
 # resolve machines list
 if (@machine_names) {
-    my @all = KrangFarm::Conf->machines;
+    my @all = KrangFarm::Machine->list;
     foreach my $name (@machine_names) {
-        my ($machine) = grep { $_->{name} eq $name } @all;
+        my ($machine) = grep { $_ eq $name } @all;
         die "Machine named '$name' not found in farm.conf!\n" 
           unless $machine;
         push(@machines, $machine);
@@ -165,50 +164,39 @@ if (@machine_names) {
 }
 
 # run over list of machines starting them up and running a build
-foreach my $machine (@machines) {
-    print "\n" . "*"x50 . "\nBuilding on $machine->{name} ".
-      "($machine->{description})\n";
-    my $logfile = catfile($ENV{KRANGFARM_ROOT}, 'log', 
-                          "build.$machine->{name}.log");
-    print "   Logging to $logfile\n";
-    open(my $log, '>>', $logfile) or die "Unable to open '$logfile': $!";
-    my $old = select($log);
-    $|++;
-    select($old);
+foreach my $name (@machines) {
+    my $machine = 
+      KrangFarm::Machine->new(name => $name,
+                              log  => catfile($ENV{KRANGFARM_ROOT}, 'log', 
+                                              "build.$name.log"));
+    print "\n" . "*"x50 . 
+      "\nBuilding on ". $machine->name .
+        " (" . $machine->description . ")\n";
 
     # start up
-    KrangFarm::Control->start(machine => $machine,
-                              log     => $log);
+    $machine->start();
 
     eval {
         # send source tarball
-        KrangFarm::Control->send_file(machine => $machine,
-                                      log     => $log,
-                                      file    => $src);
+        $machine->send_file(file => $src);
         
         # untar it
         my ($file) = $src =~ m!([^/]+)$!;
-        KrangFarm::Control->run(machine => $machine,
-                                log     => $log,
-                                command => "tar xzf $file");
+        $machine->run(command => "tar xzf $file");
         
-
-        foreach my $perl (keys %{$machine->{perls}}) {
+        my $perls = $machine->perls;
+        foreach my $perl (keys %$perls) {
             next if $which_perl and $perl ne $which_perl; 
-            my $arch = $machine->{perls}{$perl};
+            my $arch = $perls->{$perl};
             my ($dir) = $file =~ m!(.*)\.tar\.gz$!;
 
             # run a make clean
-            KrangFarm::Control->run(machine => $machine,
-                                    log     => $log,
-                                    command => "make -C $dir clean");
+            $machine->run(command => "make -C $dir clean");
 
             # run a make build
             print "   Starting '$perl krang_build' at " . localtime() . "\n";
-            my $build = KrangFarm::Control->spawn(
-                                machine => $machine,
-                                log     => $log,
-                                command => "$perl $dir/bin/krang_build");
+            my $build = 
+              $machine->spawn(command => "$perl $dir/bin/krang_build");
         
             # wait for "Build complete!" message
             my $complete = 0;
@@ -216,10 +204,10 @@ foreach my $machine (@machines) {
                                "Build complete!")) {
                 $complete = 1;
             }
-            die "Build on '$machine->{name}' failed.  " .
-              "Check log/build.$machine->{name}.log for details.\n"
+            die "Build on '" . $machine->name ."' failed.  " .
+              "Check log/build." . $machine->name . ".log for details.\n"
                 unless $complete;
-            print $log localtime() . " : Build complete!\n";
+            $machine->log(" : Build complete!");
             print "   Finished '$perl krang_build' at " . localtime() . "\n";
             
             # shut it down
@@ -227,41 +215,35 @@ foreach my $machine (@machines) {
             $build->soft_close();
             
             # now do a make dist
-            $build = KrangFarm::Control->spawn(machine => $machine,
-                                               log     => $log,
-                                               command => "$perl $dir/bin/krang_makedist");
+            $build = $machine->spawn(command => 
+                                     "$perl $dir/bin/krang_makedist");
             my $dist;
             if ($build->expect(undef, 
-                               '-re', "Distribution complete in .*?\\.tar\\.gz")) {
+                               '-re', 
+                               "Distribution complete in .*?\\.tar\\.gz")) {
                 $dist = 1;
             }
-            die "Make dist on '$machine->{name}' failed.  " .
-              "Check log/build.$machine->{name}.log for details.\n"
+            die "Make dist on '" . $machine->name . "' failed.  " .
+              "Check log/build." . $machine->name . ".log for details.\n"
                 unless $dist;
-            print $log localtime() . " : Dist complete!\n";
+            $machine->log(" : Dist complete!");
         
             # retrieve the built distribution, should be
             # krang-X.XXX-$arch.tar.gz
             my $dist_file = $file;
             $dist_file =~ s!src!$arch!;
-            KrangFarm::Control->fetch_file(machine => $machine,
-                                           log     => $log,
-                                           file    => "$dist_file");
+            $machine->fetch_file(file => "$dist_file");
             print "   Retrieved $dist_file.\n";
-            print $log localtime() . " : Retrieved $dist_file.\n";
+            $machine->log(" : Retrieved $dist_file.");
         }
         
     };
     my $err = $@;
 
     # shut down machine, no matter what happened
-    KrangFarm::Control->stop(machine => $machine,
-                             log     => $log)
+    $machine->stop()
         unless $no_shutdown;
-
-    # cough up and error if something broke
+    
+    # print an error if something broke
     die $err if $err;
-
-    close $log;
 }
-

@@ -24,7 +24,8 @@ KrangFarm::Conf - configuration for the Krang Farm
 =head1 DESCRIPTION
 
 This module provides access to the values configured in
-F<conf/farm.conf>.
+F<conf/farm.conf>.  L<KrangFarm::Machine> uses this module to
+configure machine objects.
 
 =head1 INTERFACE
 
