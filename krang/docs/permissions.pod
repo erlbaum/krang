@@ -6,7 +6,7 @@ system.  This system works by affiliating named "groups" with sets of
 privileges.  Users are then affiliated with these groups, through
 which they are granted authority.
 
-The purpose of this document is three-fold:
+The purpose of this document is two-fold:
 
 =over 4
 
@@ -18,12 +18,6 @@ To describe the functionality of the Krang permissions system.
 =item 2. Implementation
 
 To describe how the Krang permissions system is implemented, and why.
-
-
-=item 3. Usage
-
-To describe how to use the Krang permissions system when developing
-Krang applications.
 
 
 =back
@@ -300,8 +294,31 @@ Because may_see and may_edit columns will contain "1" if true and "0"
 if not, sum() will effectively be greater than zero if the user is
 allowed to see or edit, respectively.
 
-Maintenance of this table is managed by the Krang::Group module which
-is called when categories or groups are changed.
+As you can see, this SQL will hide records to which the user has no
+authority to see.  This handles the "Hide" case, but does not handle
+the "Edit" verses "Read-Only" case.  To support this case, the
+"may_edit" property should be used.  When records are instantiated
+from the database the "may_edit" property should be stored with the
+object.
+
+This object property should be considered whenever the user attempts
+to trigger a write operation on the object, in which case the
+operation should croak().  Examples of methods which should implement
+this behavior are:
+
+  save()
+  delete()
+  checkout()
+  checkin()
+
+This will ensure that even if the calling code erroneously issues
+write operations, those operations will not be permitted thus
+corrupting the database.
+
+
+Maintenance of the category_group_permission_cache table is managed by
+the Krang::Group module which is called when categories or groups are
+changed.
 
 
 =item * Application Classes
@@ -343,6 +360,46 @@ the database.
 
 =item * Sites/Categories
 
+Site/categories affect a most of the objects in the Krang system.  The
+web UI needs to decide whether or not to display buttons for write
+operations for a given object.  In order to inform the UI code of the
+ability to edit a particular object, every object should implement a
+method, may_edit(), which returns "1" or "0" indicating whether an
+object is editable or not, respectively.
+
+In practice, this would effect list views which display "edit" buttons
+or checkboxes to delete or checkout objects.  This would be
+implemented via the Krang::HTMLPager row handler function.  For
+example:
+
+  sub row_handler {
+    my ($row_hashref, $row_obj) = @_;
+
+    my @commands = qw(view log);
+
+    # Add "edit" function if user may edit
+    if ($row_obj->may_edit) {
+      unshift(@commands, 'edit');
+    }
+
+    # Build HTML for commands
+    my $row_id = $row_obj->story_id();
+    my @commands_html = ();
+    foreach my $command (@commands) {
+      my $href = "javascript:$command('$row_id')";
+      my $link = "<a href=\"$href\">$command</a>";
+      push(@commands_html, $link);
+    }
+
+    # Set up command column
+    my $command_column_html = join("&nbsp;|&nbsp;", @commands_html);
+    $row_data->{command_column} = $command_column_html;
+
+    # ...Rest of row handler here...
+  }
+
+This same technique can be used to remove delete and checkout
+checkboxes from rows which are not editable.
 
 
 =item * Application Classes
