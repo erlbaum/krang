@@ -9,3 +9,8 @@ offers the following operations:
   - upgrade tests via krang_farm_upgrade_test
 
 Configuration of the krang-farm scripts is in conf/farm.conf
+
+The following Perl modules must be installed:
+
+  Config::ApacheFormat
+  Expect

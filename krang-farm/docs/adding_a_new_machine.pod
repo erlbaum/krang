@@ -47,7 +47,8 @@ Krang's platform tree for more information.
 
 Turn off unnecessary services for better boot speed and lower memory
 usage inside the virtual machine.  The only system services required
-by krang-farm are sshd and mysqld.
+by krang-farm are sshd and mysqld (others may be required by the OS,
+of course).
 
 =item 9
 
