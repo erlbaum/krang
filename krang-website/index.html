@@ -11,7 +11,9 @@
 
 function reSize() {
     var iframe = document.getElementById("ifrm");
-    iframe.height = window.innerHeight - 150;
+    if (window.innerHeight) {
+      iframe.height = window.innerHeight - 150;
+    }
 }
 </script>
 
