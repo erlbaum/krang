@@ -53,7 +53,7 @@ sub fill_template {
                   admin => { Krang::Group->user_admin_permissions() },
                 );
 
-    $template->param(nav => $pkg->render($TREE{$instance}, \%perms));
+    $template->param(nav_content => $pkg->render($TREE{$instance}, \%perms));
 
     # set global admin if all admin perms are on
     $template->param(nav_global_admin => 1) 
@@ -65,6 +65,8 @@ sub fill_template {
 # render the navigation menu held in the navigation tree
 sub render {
     my ($pkg, $node, $perms, $depth, $index) = @_;
+    $depth ||= 0;
+    $index ||= 0;
 
     # stop here if condition set and returns false
     my $condition = $node->condition;
