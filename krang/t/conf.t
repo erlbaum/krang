@@ -1,4 +1,4 @@
-use Test::More tests => 17;
+use Test::More tests => 21;
 use strict;
 use warnings;
 
@@ -41,7 +41,6 @@ is(Krang::Conf->ElementLibrary, "/usr/local/krang_elements");
 Krang::Conf->import(qw(KrangRoot ElementLibrary DBName));
 ok(KrangRoot());
 is(ElementLibrary(), "/usr/local/krang_elements");
-ok(not defined DBName());
 
 Krang::Conf->instance("instance_one");
 is(Krang::Conf->instance, "instance_one");
@@ -54,3 +53,36 @@ is(Krang::Conf->instance, "instance_two");
 ok(KrangRoot());
 is(Krang::Conf->get("DBName"), "test2");
 is(DBName(), "test2");
+
+
+## Test behavior for automagic setting of instance()
+#
+# Test no KRANG_INSTANCE
+Krang::Conf->instance(undef);  # Reset Conf state
+delete($ENV{KRANG_INSTANCE});  # Just in case...
+ok(not defined Krang::Conf->instance());  # Should be undef
+
+# Should read "instance_one" from environment
+Krang::Conf->instance(undef);  # Reset Conf state
+$ENV{KRANG_INSTANCE} = "instance_one";
+is(Krang::Conf->instance(), "instance_one");  
+
+# Test croak() when KRANG_INSTANCE == invalid instance
+Krang::Conf->instance(undef);  # Reset Conf state
+$ENV{KRANG_INSTANCE} = "no_such_instance_123";
+eval { Krang::Conf->instance(); };
+ok($@ =~ /No such block|Unable to find instance/);  
+
+# Test empty KRANG_INSTANCE
+Krang::Conf->instance(undef);  # Reset Conf state
+$ENV{KRANG_INSTANCE} = "";
+eval { Krang::Conf->instance(); };
+ok($@ =~ /No such block|Unable to find instance/);  
+
+
+## Test automagic loading of instance() via get()
+#
+Krang::Conf->instance(undef);  # Reset Conf state
+delete($ENV{KRANG_INSTANCE});  # Just in case...
+eval { DBName() };
+ok($@ =~ /No Krang instance has been specified/);
