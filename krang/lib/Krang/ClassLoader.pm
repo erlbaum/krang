@@ -1,0 +1,50 @@
+package Krang::ClassLoader;
+use strict;
+use warnings;
+
+=head1 NAME
+
+Krang::ClassLoader - load Krang classes, using Krang::ClassFactory
+
+=head1 SYNOPSIS
+
+  # instead of this:
+  use Krang::Element qw(foreach_element);
+
+  # write this:
+  use Krang::ClassLoader Element => qw(foreach_element);
+
+=head1 DESCRIPTION
+
+This module loads classes just like normal C<use>, but it looks up the
+full class names using L<Krang::ClassFactory> before loading.
+
+Ideally, this would work:
+
+  use pkg('Element') qw(foreach_element);
+
+Unfortunately Perl requires that class names passed to C<use> be
+bare-words.
+
+=head1 INTERFACE
+
+None.
+
+=cut
+
+use Krang::ClassFactory qw(pkg);
+
+sub import {
+    my ($self, $class, @args) = @_;
+
+    my $pkg = pkg($class);
+    (my $file = "$pkg.pm") =~ s!::!/!g;
+    require $file;
+
+    if (my $m = $pkg->can('import')) {
+        @_ = ($pkg, @args);
+        goto &$m;
+    }
+}
+
+1;
