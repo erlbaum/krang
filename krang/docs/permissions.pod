@@ -3,7 +3,7 @@
 Krang implements an authentication and authorization system which
 controls the users' ability to access different aspects of the
 system.  This system works by affiliating named "groups" with sets of
-privledges.  Users are then affiliated with these groups, through
+privileges.  Users are then affiliated with these groups, through
 which they are granted authority.
 
 The purpose of this document is three-fold:
@@ -140,7 +140,7 @@ make any changes.
 A user is granted "Hide" access to the "Admin" application class.  As
 a result, they cannot see or access any of the applications in that
 class, including Users, Groups, Contributors, Sites, Categories, Jobs,
-or Prefererences.
+
 
 
 =item *
@@ -181,9 +181,82 @@ It is through these two mechanisms that Krang permissions are implemented.
 =head2 API security
 
 The purpose of API security is to limit access to Krang objects.  This
-mechism is implemented by modifying the Krang object modules (e.g.,
+mechanism is implemented by modifying the Krang object modules (e.g.,
 Krang::Media, Krang::Story, etc.).
 
+Typically, this means modifying the find() method to hide objects
+which the current user is not allowed to see and throwing exceptions
+when the user tries to perform an operation they are not allowed to
+perform, such as calling save() on an object to which they have
+"Read-Only" access.
+
+The implementation varies according to the security realm:
+
+=over 4
+
+
+=item * Sites/Categories
+
+Site/categories are the most complex aspect of the Krang
+permissions system.  Because categories touch so many different parts
+of the Krang system, and because they are so voluminous (possibly
+numbering around 10,000 per Krang instance) a special mechanism has
+been devised to handle category-based permissions.
+
+Primarily, a table called "category_group_permission" has been
+created.  This table stores the category permission configuration
+designated by the users.  For example, imagine the following was
+configured for the "Car Editors" group:
+
+  site1.com/, "Read-Only"
+  site1.com/departments/cars/, "Edit"
+
+The intention of the user who configured these permissions would be to
+grant "Car Editors" the ability to manage content within their
+section, but not anywhere else.  For example, if they wanted to add a
+story to the system they would be granted access as follows to the
+following categories:
+
+  Not allowed:  site1.com/
+  Allowed:      site1.com/departments/cars/
+  Allowed:      site1.com/departments/cars/toyota/prius/
+  Not allowed:  site1.com/departments/unicycles/
+
+In order to make a permissions decision about the category
+"site1.com/departments/cars/" there is an exact match in the
+"category_group_permission" table.  Unfortunately, in order to find
+permissions for "site1.com/departments/cars/toyota/prius/" it is
+necessary to ascend the hierarchy until we get to
+"site1.com/departments/cars/".
+
+The "category_group_permission" table is expected to be a very sparse
+matrix of categories and groups.  If we were to rely on this table for
+making all category permission decisions we would spend a considerable
+amount of time negotiating the category hierarchy, and performance
+would greatly suffer as a result.
+
+In order to avoid this problem, another table called
+"category_group_permission_cache" has been created.  Unlike
+"category_group_permission", this table stores every possible
+combination of group and category.  As a result, any look up for
+category/group permissions is certain to be resolved in a single
+query.  Maintenance of this table is managed by the Krang::Group
+module which is called when categories or groups are changed.
+
+
+=item * Application Classes
+
+
+
+=item * Desks
+
+
+
+=item * Global Permissions
+
+
+
+=back
 
 
 =head2 UI security
