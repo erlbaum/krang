@@ -84,8 +84,8 @@ is working.
 
 =item 7. Start Krang
 
-   a. # cd $KRANG_ROOT
-   b. # sudo $KRANG_ROOT/bin/krang_apachectl start
+   a. % cd $KRANG_ROOT
+   b. % sudo $KRANG_ROOT/bin/krang_apachectl start
 
 
 
