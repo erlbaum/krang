@@ -19,24 +19,18 @@ The first thing the module does is attempt to become the configured
 KrangUser and KrangRoot.  If you're not already KrangUser then you'll
 need to be root in order to change into KrangUser.
 
-This module will activate the first instance defined in F<krang.conf>
-by calling:
+Next the module sets REMOTE_USER to the user ID of the special hidden
+'system' user.  This user has global admin access to all Krang
+instances.
 
-  Krang::Conf->instance((Krang::Conf->instances())[0]);
-
-You can override this behavior by setting the KRANG_INSTANCE
-environment variable.
+This module will exit with an error if you F<krang.conf> has multiple
+instances but you didn't set the KRANG_INSTANCE environment variable.
 
 If you set KRANG_PROFILE to 1 then L<Krang::Profiler> will be used.
 
 =head1 INTERFACE
 
 None.
-
-=head1 TODO
-
-The way the session setup gets user_id 1 with no authentication is
-mighty hinky.  Fix it to use KRANG_USERNAME and KRANG_PASSWORD.
 
 =cut
 
@@ -45,6 +39,7 @@ BEGIN {
     require Krang::Profiler if $ENV{KRANG_PROFILE};
 }
 
+use Krang::lib;
 use Krang::ErrorHandler;
 use Krang::Conf qw(KrangUser KrangGroup KrangRoot);
 use Krang::Log qw(debug critical);

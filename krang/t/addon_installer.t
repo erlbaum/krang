@@ -12,13 +12,12 @@ my ($turbo) = Krang::AddOn->find(name => 'Turbo');
 ok(not $turbo);
 
 # install Turbo 1.00
-my $installer = catfile(KrangRoot, 'bin', 'krang_addon_installer');
-my $cmd = $installer . " " .
-  catfile(KrangRoot, 't', 'addons', 'Turbo-1.00.tar.gz');
-system("$cmd > /dev/null") && die "Unable to run krang_addon_installer: $?";
+Krang::AddOn->install(src => 
+                      catfile(KrangRoot, 't', 'addons', 'Turbo-1.00.tar.gz'));
 
 # worked?
 ($turbo) = Krang::AddOn->find(name => 'Turbo');
+END { $turbo->uninstall }
 isa_ok($turbo, 'Krang::AddOn');
 cmp_ok($turbo->version, '==', 1);
 ok(-d 'addons/Turbo');
@@ -27,6 +26,10 @@ ok(not -e 'lib/Krang/Turbo.pm');
 ok(-e 'addons/Turbo/t/turbo.t');
 ok(-e 'addons/Turbo/docs/turbo.pod');
 ok(not -e 'krang_addon.conf');
+
+
+# try to load Krang::Turbo
+use_ok('Krang::Turbo');
 
 =begin comment
 
@@ -49,6 +52,4 @@ ok(not -e 'krang_addon.conf');
 
 =cut
 
-# clean up
-$turbo->delete;
-system('rm -rf addons/Turbo') && die "Unable to cleanup.";
+
