@@ -40,6 +40,18 @@ parameter.
 Specify a particular machine to test against.  Otherwise the tests
 will run against all machines.  May be repeated.
 
+=item --perl
+
+Specify a particular Perl to test with.  This must be one of the Perl
+binaries configured in the C<Perls> line in F<farm.conf>.  Otherwise
+all Perls will be used.  May not be repeated.
+
+=item --no-shutdown
+
+Leave the machine(s) running after the test run is finished.  Useful
+when debugging a failed run.  You'll have to manually shutdown the
+running machines before the next run.
+
 =back
 
 =cut
@@ -73,8 +85,7 @@ $@
 END
 }
 
-use KrangFarm::Conf;
-use KrangFarm::Control;
+use KrangFarm::Machine;
 use File::Temp qw(tempdir);
 use Expect;
 
@@ -82,12 +93,14 @@ use Expect;
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, @machines, @machine_names, $version);
+my ($help, $man, @machines, @machine_names, $version, $no_shutdown, $which_perl);
 pod2usage(2) unless
   GetOptions(help       => \$help,
              man        => \$man,
              'version=f' => \$version,
              'machine=s' => \@machine_names,
+             'no-shutdown' => \$no_shutdown,
+             'perl=s'    => \$which_perl,
             );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
@@ -97,24 +110,31 @@ pod2usage("Missing required parameter --version")
   unless $version;
 
 # resolve machines list
+# resolve machines list
 if (@machine_names) {
-    my @all = KrangFarm::Conf->machines;
+    my @all = KrangFarm::Machine->list;
     foreach my $name (@machine_names) {
-        my ($machine) = grep { $_->{name} eq $name } @all;
+        my ($machine) = grep { $_ eq $name } @all;
         die "Machine named '$name' not found in farm.conf!\n" 
           unless $machine;
         push(@machines, $machine);
     }                
 } else {
-    @machines = KrangFarm::Conf->machines;
+    @machines = KrangFarm::Machine->list;
 }
 
 # run over list of machines starting them up and running a build
-foreach my $machine (@machines) {
-    print "\n" . "*"x50 . "\nTesting on $machine->{name} ".
-      "($machine->{description})\n";
+my %results;
+foreach my $name (@machines) {
+    my $machine = 
+      KrangFarm::Machine->new(name => $name,
+                              log  => catfile($ENV{KRANGFARM_ROOT}, 'log', 
+                                              "test.$name.log"));
+
+    print "\n" . "*"x50 . "\nTesting on $name ".
+      "(" . $machine->description . ")\n";
     my $logfile = catfile($ENV{KRANGFARM_ROOT}, 'log', 
-                          "test.$machine->{name}.log");
+                          "test.$name.log");
     print "   Logging to $logfile\n";
     open(my $log, '>>', $logfile) or die "Unable to open '$logfile': $!";
     my $old = select($log);
@@ -122,12 +142,13 @@ foreach my $machine (@machines) {
     select($old);
 
     # start up
-    KrangFarm::Control->start(machine => $machine,
-                              log     => $log);
+    $machine->start();
 
     eval {
-        foreach my $perl (keys %{$machine->{perls}}) {
-            my $arch = $machine->{perls}{$perl};
+        my $perls = $machine->perls;
+        foreach my $perl (keys %$perls) {
+            next if $which_perl and $perl ne $which_perl; 
+            my $arch = $perls->{$perl};
             my $dir = "krang-$version-$arch";
             my $file = $dir . ".tar.gz";
 
@@ -136,31 +157,25 @@ foreach my $machine (@machines) {
 
             # send built tarball
             print "   Sending $file...\n";
-            KrangFarm::Control->send_file(machine => $machine,
-                                          log     => $log,
-                                          file    => $file);
+            $machine->send_file(file => $file);
             
             # untar it
-            KrangFarm::Control->run(machine => $machine,
-                                    log     => $log,
-                                    command => "tar xzf $file");
+            $machine->run(command => "tar xzf $file");
 
             # do an install
             my $install_cmd = "sudo $perl $dir/bin/krang_install ".
                               "--HostName localhost ".
                               "--IPAddress 127.0.0.1 ".
                               "--AdminPassword whale ".
-                              "--DBUser $machine->{user} ".
-                              "--DBPass $machine->{password} ".
+                              "--DBUser " . $machine->user . " " .
+                              "--DBPass " . $machine->password . " " .
                               "--InstanceHostName test ".
                               "--InstanceDBName krang ".
                               "--InstanceElementSet TestSet1 ".
-                              "--KrangUser $machine->{user} ".
-                              "--KrangGroup $machine->{password}";
+                              "--KrangUser " . $machine->user . " " .
+                              "--KrangGroup " . $machine->password;
             print "   Starting '$perl krang_install' at " . localtime() . "\n";
-            my $build = KrangFarm::Control->spawn(machine => $machine,
-                                                  log     => $log,
-                                                  command => $install_cmd);
+            my $build = $machine->spawn(command => $install_cmd);
         
             # wait for install complete message
             my $complete = 0;
@@ -168,8 +183,8 @@ foreach my $machine (@machines) {
                                "KRANG INSTALLATION COMPLETE")) {
                 $complete = 1;
             }
-            die "Install on '$machine->{name}' failed.  " .
-              "Check log/test.$machine->{name}.log for details.\n"
+            die "Install on '$name' failed.  " .
+              "Check log/test.$name.log for details.\n"
                 unless $complete;
             print $log localtime() . " : install complete!\n";
             print "   Finished '$perl krang_install' at " . localtime() . "\n";
@@ -178,19 +193,45 @@ foreach my $machine (@machines) {
             # run a make test
             my $test_cmd = "sh -c 'cd /usr/local/krang && $perl bin/krang_test --verbose'";
             print "   Starting '$perl krang_test' at " . localtime() . "\n";
-            my $test = KrangFarm::Control->spawn(machine => $machine,
-                                                 log     => $log,
-                                                 command => $test_cmd);
+            my $test = $machine->spawn(command => $test_cmd);
         
             # wait for success message
             my $success = 0;
-            if ($test->expect(undef, 
-                               "All tests successful.")) {
-                $success = 1;
+            my $script;
+            my $result = 0;
+            while(my $which = $test->expect(undef, 
+                                            "All tests successful.",
+                                            '-re' => '^ok\r?$',
+                                            '-re' => '^t/\\w+\\.{3}',
+                                            '-re' => 'Failed \\d+/\\d+ test scripts, \\d+.\\d+% okay. \\d+/\\d+ subtests failed, \\d+.\\d+% okay.',
+                                           )) {
+                if ($which == 1) {
+                    # all done
+                    $success = 1;
+                    print "   Test Results: Success.\n";
+                    last;
+                } elsif ($which == 2) {
+                    # all tests ok
+                    print "ok.\n" unless $result;
+                    $result++;
+                } elsif ($which == 3) {
+                    # starting a test script
+                    print "not ok.\n" if $script and not $result;
+                    ($script) = $test->match =~ m!t/(\w+)\.{3}!;
+                    print "     t/$script.t: " if $script;
+                    $result = 0;
+                } elsif ($which == 4) {
+                    # failed at the end
+                    print "not ok.\n" if $script and not $result;
+                    print "   Test Results: " . $test->match . "\n";
+                } else {
+                    die "Whatcha talkin bout $which?";
+                }
             }
-            die "Tests on '$machine->{name}' failed.  " .
-              "Check log/test.$machine->{name}.log for details.\n"
-                unless $success;
+
+            # record results
+            $results{$name}{$perl} = $success;
+
             print $log localtime() . " : tests complete!\n";
             print "   Finished '$perl krang_tests' at " . localtime() . "\n";
             $test->soft_close();
@@ -199,11 +240,22 @@ foreach my $machine (@machines) {
     my $err = $@;
 
     # shut down machine, no matter what happened
-    KrangFarm::Control->stop(machine => $machine,
-                             log     => $log);
+    $machine->stop() unless $no_shutdown;
 
     # cough up and error if something broke
     die $err if $err;
 
     close $log;
 }
+
+# output summary and exit accordingly
+my $failure = 0;
+foreach my $machine (sort keys %results) {
+    print "\n\n===> $machine <===\n";
+    foreach my $perl (sort keys %{$results{$machine}}) {
+        print "  " . ($results{$machine}{$perl} ? "PASSED" : "FAILED") . 
+          ": $perl\n";
+        $failure++ unless $results{$machine}{$perl};
+    }
+}
+exit $failure;
