@@ -1,5 +1,5 @@
 ## $Id$
-## Makefile to build Apache with mod_perl and mod_ssl
+## Makefile to build Apache with mod_perl
 ##
 ## By Jesse Erlbaum <jesse@erlbaum.net>
 ## Originally Created: December 2000
