@@ -126,7 +126,7 @@ if ($from_cvs) {
     # checkout krang
     my $orig = cwd;
     chdir($temp) or die $!;
-    system('cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs -z3 co krang > /dev/null 2>&1') and
+    system('cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs -z3 co -P krang > /dev/null 2>&1') and
       die "Unable to checkout krang from CVS: $?";
     print "Checkout complete.\n";
     
