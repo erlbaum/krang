@@ -478,7 +478,7 @@ Convenience method to Krang::Publisher, deploys template.
 
 sub deploy {
     my $self = shift;
-    my $publisher = new Krang::Publisher();
+    my $publisher = Krang::Publisher->new();
 
     $publisher->deploy_template(
                               template => $self
