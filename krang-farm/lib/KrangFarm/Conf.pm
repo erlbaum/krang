@@ -56,7 +56,7 @@ machine is a hash containing the following keys:
 # load configuration when this module loads
 # internal routine to load the conf file.  Called by a BEGIN during
 # startup, and used during testing.
-our @MACHINE_VARS = qw(description user password);
+our @MACHINE_VARS = qw(description user password perls);
 our $CONF;
 sub _load {
     # find a default conf file
@@ -89,7 +89,9 @@ sub machines {
     my %machines;
     foreach my $name (map { $_->[1] } $CONF->get("machine")) {
         my $block = $CONF->block([machine => $name]);
-        $machines{$name} = { map { ($_, $block->get($_)) } @MACHINE_VARS };
+        $machines{$name} = { map { ($_, $block->get($_)) } 
+                             grep { $_ ne 'perls' } @MACHINE_VARS };
+        $machines{$name}{perls} = [ $block->get('perls') ];
         $machines{$name}{name} = $name;
     }
     return values %machines;

@@ -133,50 +133,58 @@ foreach my $machine (@machines) {
                                 log     => $log,
                                 command => "tar xzf $file");
         
-        # run a make build
-        print "   Starting 'make build' at " . localtime() . "\n";
-        my ($dir) = $file =~ m!(.*)\.tar\.gz$!;
-        my $build = KrangFarm::Control->spawn(machine => $machine,
-                                              log     => $log,
-                                              command => "make -C $dir build");
+
+        foreach my $perl (@{$machine->{perls}}) {
+            my ($dir) = $file =~ m!(.*)\.tar\.gz$!;
+
+            # run a make clean
+            KrangFarm::Control->run(machine => $machine,
+                                    log     => $log,
+                                    command => "make -C $dir clean");
+
+            # run a make build
+            print "   Starting '$perl krang_build' at " . localtime() . "\n";
+            my $build = KrangFarm::Control->spawn(
+                                machine => $machine,
+                                log     => $log,
+                                command => "$perl $dir/bin/krang_build");
         
-        # wait for "Build complete!" message
-        my $complete = 0;
-        if ($build->expect(undef, 
-                           "Build complete!")) {
-            $complete = 1;
-        }
-        die "Build on '$machine->{name}' failed.  " .
-          "Check log/build.$machine->{name}.log for details.\n"
-            unless $complete;
-        print $log localtime() . " : Build complete!\n";
-        print "   Finished 'make build' at " . localtime() . "\n";
+            # wait for "Build complete!" message
+            my $complete = 0;
+            if ($build->expect(undef, 
+                               "Build complete!")) {
+                $complete = 1;
+            }
+            die "Build on '$machine->{name}' failed.  " .
+              "Check log/build.$machine->{name}.log for details.\n"
+                unless $complete;
+            print $log localtime() . " : Build complete!\n";
+            print "   Finished 'make build' at " . localtime() . "\n";
+            
+            # shut it down
+            $build->expect(undef);
+            $build->soft_close();
+            
+            # now do a make dist
+            $build = KrangFarm::Control->spawn(machine => $machine,
+                                               log     => $log,
+                                               command => "$perl $dir/bin/krang_makedist");
+            my $dist;
+            if ($build->expect(undef, 
+                               '-re', "Distribution complete in .*?\\.tar\\.gz")) {
+                ($dist) = $build->match =~ /(\S+\.tar\.gz)/;
+            }
+            die "Make dist on '$machine->{name}' failed.  " .
+              "Check log/build.$machine->{name}.log for details.\n"
+                unless $dist;
+            print $log localtime() . " : Dist complete in $dist!\n";
         
-        # shut it down
-        $build->expect(undef);
-        $build->soft_close();
-        
-        # now do a make dist
-        print "   Starting 'make dist' at " . localtime() . "\n";
-        $build = KrangFarm::Control->spawn(machine => $machine,
+            # retrieve the built distribution
+            KrangFarm::Control->fetch_file(machine => $machine,
                                            log     => $log,
-                                           command => "make -C $dir dist");
-        my $dist;
-        if ($build->expect(undef, 
-                           '-re', "Distribution complete in .*?\\.tar\\.gz")) {
-            ($dist) = $build->match =~ /(\S+\.tar\.gz)/;
+                                           file    => "$dist");
+            print "   Retrieved $dist\n";
         }
-        die "Make dist on '$machine->{name}' failed.  " .
-          "Check log/build.$machine->{name}.log for details.\n"
-            unless $dist;
-        print $log localtime() . " : Dist complete in $dist!\n";
-        print "   Finished 'make dist' at " . localtime() . "\n";
-        
-        # retrieve the built distribution
-        KrangFarm::Control->fetch_file(machine => $machine,
-                                       log     => $log,
-                                       file    => "$dir/$dist");
-        print "   Retrieved $dist at " . localtime() . "\n";
         
     };
     my $err = $@;
