@@ -92,7 +92,7 @@ sub machines {
         $machines{$name} = { map { ($_, $block->get($_)) } @MACHINE_VARS };
         $machines{$name}{name} = $name;
     }
-    return \%machines;
+    return values %machines;
 }
 
 1;
