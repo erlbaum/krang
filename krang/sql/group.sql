@@ -40,8 +40,8 @@ DROP TABLE IF EXISTS category_group_permission_cache;
 CREATE TABLE category_group_permission_cache (
         category_id     INT UNSIGNED NOT NULL,
         group_id        INT UNSIGNED NOT NULL,
-        may_see         BOOL,
-        may_edit        BOOL,
+        may_see         BOOL NOT NULL DEFAULT "0",
+        may_edit        BOOL NOT NULL DEFAULT "0",
         PRIMARY KEY (category_id, group_id)        
 );
 
