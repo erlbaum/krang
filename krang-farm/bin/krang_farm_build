@@ -34,6 +34,12 @@ This script will write to a log for each machine called
 Specify a particular machine to build against.  Otherwise the build
 will run against all machines.  May be repeated.
 
+=item --perl
+
+Specify a particular Perl to build with.  This must be one of the Perl
+binaries configured in the C<Perls> line in F<farm.conf>.  Otherwise
+all Perls will be used.  May not be repeated.
+
 =item --from-cvs
 
 Instead of passing in a source tar-ball, the latest source from CVS
@@ -87,13 +93,14 @@ use File::Temp qw(tempdir);
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, @machines, $src, @machine_names, $from_cvs, $no_shutdown);
+my ($help, $man, @machines, $src, @machine_names, $from_cvs, $no_shutdown, $which_perl);
 pod2usage(2) unless
   GetOptions(help       => \$help,
              man        => \$man,
              'machine=s' => \@machine_names,
              'from-cvs'  => \$from_cvs,
              'no-shutdown' => \$no_shutdown,
+             'perl=s'    => \$which_perl,
             );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
@@ -187,6 +194,7 @@ foreach my $machine (@machines) {
         
 
         foreach my $perl (keys %{$machine->{perls}}) {
+            next if $which_perl and $perl ne $which_perl; 
             my $arch = $machine->{perls}{$perl};
             my ($dir) = $file =~ m!(.*)\.tar\.gz$!;
 
