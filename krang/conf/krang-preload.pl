@@ -4,6 +4,9 @@
 ####  MODULES TO PRE-LOAD INTO KRANG  ####
 ##########################################
 
+# setup load paths
+use Krang::lib;
+
 use Krang::Conf qw(KrangRoot);
 use File::Find qw(find);
 use Krang::HTMLTemplate;
