@@ -212,7 +212,7 @@ sub spawn {
 
     print $log localtime() . " : Spawning command '$command'.\n";
 
-    my $spawn = Expect->spawn("ssh $machine->{user}\@$machine->{name} $command");
+    my $spawn = Expect->spawn(qq{ssh $machine->{user}\@$machine->{name} "$command"});
     $spawn->log_stdout(0);
     $spawn->log_file(sub { _log_expect($log, @_) } );
     croak("Unable to spawn '$command'.") unless $spawn;

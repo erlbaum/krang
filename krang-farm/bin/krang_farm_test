@@ -199,8 +199,8 @@ foreach my $machine (@machines) {
     my $err = $@;
 
     # shut down machine, no matter what happened
-    #KrangFarm::Control->stop(machine => $machine,
-    #                         log     => $log);
+    KrangFarm::Control->stop(machine => $machine,
+                             log     => $log);
 
     # cough up and error if something broke
     die $err if $err;
