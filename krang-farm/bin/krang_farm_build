@@ -16,6 +16,10 @@ Create a build of Krang v1.018 on just the Redhat7_3 machine:
 
   $ krang_farm_build --machine Redhat7_3 krang-1.018-src.tar.gz
 
+Create builds from the source in CVS:
+
+  $ krang_farm_build --from-cvs
+
 =head1 LOGGING
 
 This script will write to a log for each machine called
@@ -29,6 +33,11 @@ This script will write to a log for each machine called
 
 Specify a particular machine to build against.  Otherwise the build
 will run against all machines.  May be repeated.
+
+=item --from-cvs
+
+Instead of passing in a source tar-ball, the latest source from CVS
+will be used.
 
 =back
 
@@ -65,16 +74,19 @@ END
 
 use KrangFarm::Conf;
 use KrangFarm::Control;
+use Cwd qw(cwd);
+use File::Temp qw(tempdir);
 
 # process options
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, @machines, $src, @machine_names);
+my ($help, $man, @machines, $src, @machine_names, $from_cvs);
 pod2usage(2) unless
   GetOptions(help       => \$help,
              man        => \$man,
              'machine=s' => \@machine_names,
+             'from-cvs'  => \$from_cvs,
             );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
@@ -82,7 +94,40 @@ pod2usage(-verbose => 2) if $man;
 # get input source file
 $src = shift(@ARGV);
 pod2usage("Missing source filename command-line parameter!\n")
-  unless $src;
+  unless $src or $from_cvs;
+pod2usage("Source filename cannot be combined with --from-cvs!\n")
+  if $src and $from_cvs;
+
+# pull latest source from cvs
+if ($from_cvs) {
+    # make a fresh checkout of Krang
+    my $temp = tempdir(CLEANUP => 1);
+    print "Checking out Krang in temp directory...\n";
+    
+    # login to CVS server
+    my $command = Expect->spawn("cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs login") or die "Unable to login is CVS server: $!";
+    $command->log_stdout(0);
+    $command->send("\n") if $command->expect(5, 'password:');
+    $command->soft_close();
+
+    # checkout krang
+    my $orig = cwd;
+    chdir($temp) or die $!;
+    system('cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs -z3 co krang > /dev/null 2>&1') and
+      die "Unable to checkout krang from CVS: $?";
+    print "Checkout complete.\n";
+    
+    # make a source dist and copy it back where we came from
+    chdir("krang") 
+      or die $!;
+    system("make dist") 
+      && die "Failed to make dist: $?";
+    ($src) = <krang-*-src.tar.gz>;
+    system("mv $src $orig")
+      && die "Failed to mv krang-*-src.tar.gz $orig: $?";
+
+    chdir($orig) or die $!;
+}
 
 # validate filename
 die "Specified file '$src' does not exist.\n" unless -e $src;
@@ -134,7 +179,8 @@ foreach my $machine (@machines) {
                                 command => "tar xzf $file");
         
 
-        foreach my $perl (@{$machine->{perls}}) {
+        foreach my $perl (keys %{$machine->{perls}}) {
+            my $arch = $machine->{perls}{$perl};
             my ($dir) = $file =~ m!(.*)\.tar\.gz$!;
 
             # run a make clean
@@ -159,7 +205,7 @@ foreach my $machine (@machines) {
               "Check log/build.$machine->{name}.log for details.\n"
                 unless $complete;
             print $log localtime() . " : Build complete!\n";
-            print "   Finished 'make build' at " . localtime() . "\n";
+            print "   Finished '$perl krang_build' at " . localtime() . "\n";
             
             # shut it down
             $build->expect(undef);
@@ -172,18 +218,22 @@ foreach my $machine (@machines) {
             my $dist;
             if ($build->expect(undef, 
                                '-re', "Distribution complete in .*?\\.tar\\.gz")) {
-                ($dist) = $build->match =~ /(\S+\.tar\.gz)/;
+                $dist = 1;
             }
             die "Make dist on '$machine->{name}' failed.  " .
               "Check log/build.$machine->{name}.log for details.\n"
                 unless $dist;
-            print $log localtime() . " : Dist complete in $dist!\n";
+            print $log localtime() . " : Dist complete!\n";
         
-            # retrieve the built distribution
+            # retrieve the built distribution, should be
+            # krang-X.XXX-$arch.tar.gz
+            my $dist_file = $file;
+            $dist_file =~ s!src!$arch!;
             KrangFarm::Control->fetch_file(machine => $machine,
                                            log     => $log,
-                                           file    => "$dist");
-            print "   Retrieved $dist\n";
+                                           file    => "$dist_file");
+            print "   Retrieved $dist_file.\n";
+            print $log localtime() . " : Retrieved $dist_file.\n";
         }
         
     };
