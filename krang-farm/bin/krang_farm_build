@@ -160,7 +160,7 @@ if (@machine_names) {
         push(@machines, $machine);
     }                
 } else {
-    @machines = KrangFarm::Conf->machines;
+    @machines = KrangFarm::Machine->list;
 }
 
 # run over list of machines starting them up and running a build
