@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+use Krang::lib;
 use Krang::ErrorHandler;
 use Krang::CGI::MyPref;
 my $app = Krang::CGI::MyPref->new();

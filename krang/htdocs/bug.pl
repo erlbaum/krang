@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+use Krang::lib;
 use Krang::ErrorHandler;
 use Krang::CGI::Bugzilla;
 my $app = Krang::CGI::Bugzilla->new();
