@@ -1575,7 +1575,7 @@ Convenience method to Krang::Publisher, previews media object.
 
 sub preview {
     my $self = shift;
-    my $publisher = new Krang::Publisher();
+    my $publisher = Krang::Publisher->new();
 
     $publisher->preview_media(
                                    media    => $self
@@ -1591,7 +1591,7 @@ Convenience method to Krang::Publisher, publishes media object.
 
 sub publish {
     my $self = shift;
-    my $publisher = new Krang::Publisher();
+    my $publisher = Krang::Publisher->new();
 
     $publisher->publish_media(
                                    media    => $self
