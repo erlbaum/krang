@@ -38,14 +38,19 @@ directory of the user configured in F<farm.conf>.
 
 =item KrangFarm::Control->fetch_file(machine => $machine, log => $log, file => $file)
 
-Transfer a file from the machine to the current directory.  If the
-file path is relative it is relative to the home directory of the user
-configured in F<farm.conf>.
+Transfer a file from the machine to the current directory.  The file
+path is relative to the home directory of the user configured in
+F<farm.conf>.
 
 =item $command = KrangFarm::Control->spawn(machine => $machine, log => $log, command => $command)
 
 Spawns a command in the machine and returns an Expect object for the
 connection.
+
+=item KrangFarm::Control->run(machine => $machine, log => $log, command => $command)
+
+Runs a command in the machine and waits for it to finish before
+returning.
 
 =back
 
@@ -61,6 +66,7 @@ use VMware::VmPerl::VM;
 use Carp qw(croak);
 use Net::Ping;
 use Time::HiRes qw(time sleep);
+use Expect;
 
 # how long to wait for VMWare to do stuff, in seconds
 our $MAX_WAIT = 60 * 5;
@@ -117,7 +123,117 @@ sub start {
     die "Timed out waiting for machine to start.\n"
       unless $alive;
 
+    # wait 30 seconds more to let sshd come up
+    sleep 30;
+
     print $log localtime() . " : Machine started.\n";
+}
+
+sub send_file {
+    my ($pkg, %args) = @_;
+    my $machine = $args{machine} or croak("Missing machine param.");
+    my $log = $args{log} || \*STDERR;
+    my $file = $args{file};
+    croak "File '$file' does not exist." unless -e $file;
+    
+    print $log localtime() . " : sending $file to machine.\n";
+
+    # open up an scp command, logging to $log
+    my $command = Expect->spawn("scp $file $machine->{user}\@$machine->{name}: 2>&1");
+    $command->log_stdout(0);
+    $command->log_file(sub { _log_expect($log, @_) });
+    croak("Unable to spawn scp.") unless $command;
+
+    # answer the password prompt and all should be well
+    if ($command->expect(undef, 'password:')) {
+        $command->send($machine->{password} . "\n");
+    }
+    # wait for EOF
+    $command->expect(undef);
+    $command->soft_close();
+    croak "Failed to send file." if $command->exitstatus() != 0;
+
+    # make sure the file has the right size by comparing results of
+    # 'ls -s' on both host and target
+    my ($f) = $file =~ m!([^/]+)$!;
+    my ($size) = `ls -s $file` =~ /(\d+)/;
+    $command = $pkg->spawn(%args, command => "ls -s $f");
+    if (not($command->expect(undef, '-re', "\\d+\\s+$f")) or
+        $command->match !~ /${size}\s+$f/) {
+        croak("Failed to send file, size of '$f' does not match '$size'.");
+    }
+    $command->soft_close();
+
+    print $log localtime() . " : File sent successfully.\n";
+}
+
+sub fetch_file {
+    my ($pkg, %args) = @_;
+    my $machine = $args{machine} or croak("Missing machine param.");
+    my $log = $args{log} || \*STDERR;
+    my $file = $args{file};
+    
+    print $log localtime() . " : sending $file to machine.\n";
+
+    # open up an scp command, logging to $log
+    my $command = Expect->spawn("scp $machine->{user}\@$machine->{name}:$file . 2>&1");
+    $command->log_stdout(0);
+    $command->log_file(sub { _log_expect($log, @_) });
+    croak("Unable to spawn scp.") unless $command;
+
+    # answer the password prompt and all should be well
+    if ($command->expect(undef, 'password:')) {
+        $command->send($machine->{password} . "\n");
+    }
+    # wait for EOF
+    $command->expect(undef);
+    $command->soft_close();
+    croak "Failed to send file." if $command->exitstatus() != 0;
+
+    # make sure the file has the right size by comparing results of
+    # 'ls -s' on both host and target
+    my ($f) = $file =~ m!([^/]+)$!;
+    my ($size) = `ls -s $f` =~ /(\d+)/;
+    $command = $pkg->spawn(%args, command => "ls -s $file");
+    if (not($command->expect(undef, '-re', "\\d+\\s+$file")) or
+        $command->match !~ /${size}\s+$file/) {
+        croak("Failed to fetch file, size of '$file' does not match '$size'.");
+    }
+    $command->soft_close();
+
+    print $log localtime() . " : File fetched successfully.\n";
+}
+
+sub spawn {
+    my ($pkg, %args) = @_;
+    my $machine = $args{machine} or croak("Missing machine param.");
+    my $log = $args{log} || \*STDERR;
+    my $command = $args{command};
+
+    print $log localtime() . " : Spawning command '$command'.\n";
+
+    my $spawn = Expect->spawn("ssh $machine->{user}\@$machine->{name} $command");
+    $spawn->log_stdout(0);
+    $spawn->log_file(sub { _log_expect($log, @_) } );
+    croak("Unable to spawn '$command'.") unless $spawn;
+    if ($spawn->expect(undef, 'password:')) {
+        $spawn->send($machine->{password} . "\n");
+    }
+    return $spawn;
+}
+
+sub run {
+    my ($pkg, %args) = @_;
+    my $machine = $args{machine} or croak("Missing machine param.");
+    my $log = $args{log} || \*STDERR;
+
+    # spawn the command
+    my $command = $pkg->spawn(%args);
+
+    # wait for EOF
+    $command->expect(undef);
+    $command->soft_close();
+    croak "Failed to run '$args{command}'." if $command->exitstatus() != 0;
 }
 
 sub stop {
@@ -155,9 +271,13 @@ sub stop {
     die "Timed out waiting for machine to stop.\n"
       if $alive;   
 
+    # wait 10 more seconds to finish up
+    sleep 10;
+
     print $log localtime() . " : Machine stopped.\n";
 }
 
+# gets the vmware config name for a machine
 sub _machine2cfg {
     my $machine = shift;
     my $name = $machine->{name};
@@ -170,5 +290,9 @@ sub _machine2cfg {
           join(', ', @VM_LIST));
 }
 
-
+# logs expect output to log files
+sub _log_expect {
+    my ($log, @text) = @_;
+    print $log @text;
+}
 1;
