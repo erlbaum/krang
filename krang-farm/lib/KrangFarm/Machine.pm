@@ -53,7 +53,7 @@ Returns a list of all machines defined in F<farm.conf>.
 
 Creates a new machine.  C<name> must be defined in F<farm.conf>.  The
 C<log> parameter provides a filename to write a trace of all
-operations.
+operations.  If not provided C<log> defaults to F<log/farm.log>.
 
 =item C<< $machine->start() >>
 
@@ -135,9 +135,9 @@ sub list {
 sub new {
     my ($pkg, %args) = @_;
     croak("Missing required 'name' parameter.") unless exists $args{name};
-    croak("Missing required 'log' parameter.")  unless exists $args{log};
     croak("Can't find a machine named '$args{name}' in farm.conf.")
       unless exists $MACHINES{$args{name}};
+    $args{log} ||= $ENV{KRANGFARM_ROOT} . '/log/farm.log';
     
     my $self = bless { %{$MACHINES{$args{name}}} }, $pkg;
 
@@ -169,7 +169,7 @@ sub start {
       unless ($state == VM_EXECUTION_STATE_OFF);
 
     # start it up
-    $self->log("Starting machine...");
+    $self->log("Starting $self->{name}...");
     $vm->start(VM_POWEROP_MODE_HARD);
 
     # wait till machine is on the net
