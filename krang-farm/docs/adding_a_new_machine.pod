@@ -1,0 +1,87 @@
+=head1 Adding a New Machine to the Farm
+
+This document describes how to add a new machine to the Krang Farm.
+
+=over 4
+
+=item 1
+
+Create a new VMWare virtual machine.  Choose a name for it.  This is
+$NAME.  Give the machine at least 128MB of RAM.  B<Important>: be sure
+to configure the machine for NAT networking only.  You don't want
+anyone on the external network to be able to access this machine.
+
+=item 2
+
+Install an operating system on the OS.  Setup at least 128MB of swap
+space.
+
+=item 3
+
+Configure the new machine with a static IP from the private network
+configured in VMWare (172.16.104.x, gateway is 172.16.104.1, DNS is
+172.16.104.2).  This is $IP.
+
+=item 4
+
+Add an entry in /etc/hosts on the VMWare host, assigning $NAME to $IP.
+
+=item 5
+
+Add a user account inside the virtual machine for use by krang-farm.
+This is $USER and the password you set is $PASSWORD.
+
+=item 6
+
+Give this account sudo access with no password required.  For example,
+add a line like this to /etc/sudoers inside the virtual machine:
+
+  $USER   ALL=(ALL) NOPASSWD: ALL
+
+=item 7
+
+Install additional software needed by Krang.  See README files in
+Krang's platform tree for more information.
+
+=item 8
+
+Turn off unnecessary services for better boot speed and lower memory
+usage inside the virtual machine.  The only system services required
+by krang-farm are sshd and mysqld.
+
+=item 9
+
+Add a configuration block to conf/farm.conf describing the new
+machine.  Replace values as appropriate.
+
+  <Machine $NAME>
+     User $USER
+     Password $PASSWORD
+     ...
+  </Machine>
+
+You'll find more details in comments in the configuration file.
+
+=item 10
+
+Shut down your new virtual machine and put its virtual disk in
+'nonpersistent' mode.  With this setting any changes made during a
+test will be erased when the machine is power cycled.
+
+=item 11
+
+Do a manual test build and install of Krang to make sure the machine
+is read for use in the krang-farm.  If Krang won't install because of
+a missing dependency then return your virtual disk to 'persistent'
+mode, fix the problem and then go to step 10.
+
+=item 12
+
+Shut down the virtual machine.
+
+=item 13
+
+Process complete.
+
+=back
+
