@@ -340,6 +340,7 @@ sub _addon_conf {
                    valid_directives => [qw( name version files 
                                             excludefiles requirekrang
                                             requireaddons postinstallscript 
+                                            navigationhandler
                                           )],
                    valid_blocks     => []);
     eval { $conf->read($file) };

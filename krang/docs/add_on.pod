@@ -34,6 +34,8 @@ test file (turbo.t) and comes with some documentation (turbo.pod).  It
 has a version number of 1.00.  Its directory structure will look like:
 
     Turbo-1.00
+    |-- bin/
+    |   `-- krang_turbo
     |-- docs/
     |   `-- turbo.pod
     |-- krang_addon.conf
@@ -67,8 +69,6 @@ B<NOTE:> As of Krang 1.102 there is a new script to automate some of
 the work here:
 
   bin/krang_addon_framework
-
-
 
 =head2 C<krang_addon.conf>
 
@@ -134,6 +134,34 @@ and any version of RacingStripes:
 
 A script to run after file installation is complete.  C<KRANG_ROOT>
 will be set in the environment for this script.
+
+=item * C<NavigationHandler> I<Module>
+
+This parameter allows your addon to contribute navigation links to the
+left-nav in Krang.  The module you name here will be loaded and a
+method called navigation_handler() will be called with the navigation
+tree as an argument.  For example, this code adds a new navigation
+section called "Log Viewer" with a link called "View Log" pointing to
+C<log_viewer.pl>:
+
+  sub navigation_handler {
+      my ($pkg, $tree) = @_;
+      
+      my $node = $tree->new_daughter();
+      $node->name('Log Tools');
+  
+      $node = $node->new_daughter();
+      $node->name('View Log');
+      $node->link('log_viewer.pl');
+  }
+
+If this method was placed in a class called LogViewer::NavHandler then
+krang_addon.conf would contain:
+
+  NavigationHandler LogViewer::NavHandler
+
+For more about how navigation works in Krang see L<Krang::Navigation>
+and L<Krang::NavigationNode>.
 
 =back
 

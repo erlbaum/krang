@@ -7,6 +7,7 @@ use Krang::Conf qw(FTPHostName FTPPort EnableBugzilla);
 use Krang::Session qw(%session);
 use Krang::NavigationNode;
 use Krang::Log qw(debug info critical);
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -121,8 +122,22 @@ sub render {
 
 # initialize navigation tree
 sub initialize_tree {
-    my $instance = shift;
+    my $pkg = shift;
+    my $tree = $pkg->default_tree();
 
+    # mix in navigation from add-ons with NavigationHandlers
+    foreach my $addon (Krang::AddOn->find()) {
+        my $nav_handler = $addon->conf->get('NavigationHandler')
+          or next;
+        eval "require $nav_handler";
+        croak("Failed to load NavigationHandler class $nav_handler for the " . $addon->name . " addon: $@") if $@;
+        $nav_handler->navigation_handler($tree);
+    }
+
+    return $tree;
+}
+
+sub default_tree {
     my ($root, $node, $sub, $sub2);
     $root = Krang::NavigationNode->new();
     $root->name('Root');

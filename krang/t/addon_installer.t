@@ -87,6 +87,12 @@ SKIP: {
     my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
     login_ok($username, $password);
 
+    # hit workspace.pl and look for the new nav entries
+    request_ok('workspace.pl', {});
+    response_like(qr/Log Tools/);
+    response_like(qr/<a.*?log_viewer.pl.*>.*?View Log/);
+
+    # try the script
     request_ok('log_viewer.pl', {});
     response_like(qr/hi mom/i);
 }

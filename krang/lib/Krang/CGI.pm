@@ -2,6 +2,8 @@ package Krang::CGI;
 use strict;
 use warnings;
 
+# pull in Krang::lib when not running in mod_perl
+BEGIN { $ENV{MOD_PERL} or eval "use Krang::lib" }
 
 =head1 NAME
 
@@ -116,7 +118,7 @@ sub run {
         debug("Krang::CGI:  UN-Loading Session after error");
         Krang::Session->unload();
         die $@;
-    }        
+    }
 
 
     # In debug mode append dump_html()
