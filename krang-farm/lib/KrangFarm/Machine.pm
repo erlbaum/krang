@@ -337,7 +337,7 @@ sub log {
 # hash accessors
 BEGIN {
     no strict 'refs';
-    for my $x qw(name description perls user pass) {
+    for my $x qw(name description perls user password) {
         *{"KrangFarm::Machine::$x"} = sub { $_[0]->{$x} };
     }
 }
