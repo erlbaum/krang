@@ -90,7 +90,6 @@ build_apache:
 	BUILD_PWD=`pwd` && cd $(APACHE_PACKAGE) && PERL5LIB=$$BUILD_PWD/$(PERL_BUILD)/lib/site_perl:$$PERL5LIB ./configure \
 	  --prefix=../$(APACHE_BUILD) \
 	  --activate-module=src/modules/perl/libperl.a \
-	  --enable-shared=max \
 	  --disable-shared=perl \
 	  --enable-module=rewrite --enable-shared=rewrite \
 	  --enable-module=proxy   --enable-shared=proxy \
