@@ -48,14 +48,14 @@ is working.
 
    a. Uninstall RedHat's MySQL...
       i. # rpm -e \
-           && libdbi-dbd-mysql \
-           && MyODBC \
-           && MySQL-python \
-           && perl-DBD-MySQL \
-           && php-mysql \
-           && qt-MySQL \
-           && tora \
-           && mysql-server
+           libdbi-dbd-mysql \
+           MyODBC \
+           MySQL-python \
+           perl-DBD-MySQL \
+           php-mysql \
+           qt-MySQL \
+           tora \
+           mysql-server
 
    b. Install MySQL from rpm...
       i. # cd $KRANG_ROOT/install/MySQL/ \
