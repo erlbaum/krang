@@ -30,9 +30,24 @@ use Krang::Message qw(get_messages clear_messages);
 use Krang::Navigation;
 use File::Spec::Functions qw(catdir);
 use Krang::Log qw(debug);
+use Krang::AddOn;
 
-our @PATH = (catdir(KrangRoot, 'skins', Skin, 'templates'),
-             catdir(KrangRoot, 'templates'));
+# setup paths to templates
+our @PATH;
+
+sub reload_paths {
+    @PATH = ();
+    foreach my $addon (map { $_->name } Krang::AddOn->find()) {
+        push @PATH, catdir(KrangRoot, 'addons', $addon, 
+                           'skins', Skin, 'templates'),
+                     catdir(KrangRoot, 'addons', $addon, 'templates');
+    }
+    push @PATH, catdir(KrangRoot, 'skins', Skin, 'templates'),
+                catdir(KrangRoot, 'templates');
+}
+
+BEGIN { reload_paths() }
+
 
 # overload new() to setup template paths
 sub new {
@@ -44,7 +59,8 @@ sub new {
 # given the path setting coming from the caller, compute the final path array
 sub _compute_path {
     my $in = shift;
-    
+    $in = [ $in ] unless ref $in;
+
     # append @PATH to each input path
     my @out;
     foreach my $in (@$in) {

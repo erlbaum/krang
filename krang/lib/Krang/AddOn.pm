@@ -207,6 +207,7 @@ sub install {
     Krang::File->flush_cache();
     $pkg->_flush_cache();
     Krang::lib->reload();
+    Krang::HTMLTemplate->reload_paths() if @Krang::HTMLTemplate::PATH;
 
     # all done, return home if possible
     chdir $old_dir;

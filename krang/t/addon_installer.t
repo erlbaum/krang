@@ -8,6 +8,7 @@ use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 use Krang::ElementLibrary;
 use Krang::Test::Apache;
+use Krang::HTMLTemplate;
 
 # make sure Turbo isn't installed
 my ($turbo) = Krang::AddOn->find(name => 'Turbo');
@@ -71,6 +72,11 @@ isa_ok($log, 'Krang::AddOn');
 cmp_ok($log->version, '==', 1.00);
 is($log->name, 'LogViewer');
 
+# try loading the about.tmpl template
+my $template = Krang::HTMLTemplate->new(filename => 'about.tmpl',
+                                        path     => 'About/');
+like($template->output, qr/enhanced with LogViewer/);
+
 # try hitting the CGI through the webserver
 SKIP: {
     skip "Apache server isn't up, skipping live tests", 3
@@ -84,3 +90,4 @@ SKIP: {
     request_ok('log_viewer.pl', {});
     response_like(qr/hi mom/i);
 }
+
