@@ -1,0 +1,209 @@
+#!/usr/bin/perl -w
+use strict;
+use warnings;
+
+=head1 NAME
+
+krang_farm_test - runs tests on the krang farm
+
+=head1 SYNOPSIS
+
+Perform a test run across all machines in the farm:
+
+  $ krang_farm_test --version 1.019
+
+=head1 DECRIPTION
+
+This script runs tests against the krang farm.  It expects to find
+built Krang distributions the current directory, most likely created
+by C<krang_farm_build>.  A common scenario to run tests against the
+lastest CVS code (replace --version arg as necessary):
+
+  $ krang_farm_build --from-cvs && krang_farm_test --version 1.019
+
+=head1 LOGGING
+
+This script will write to a log for each machine called
+'test.$NAME.log' in the log/ directory.
+
+=head1 OPTIONS
+
+=over
+
+=item --version 1.019
+
+Specify the version of Krang to be tested.  This is a required
+parameter.
+
+=item --machine machine_name
+
+Specify a particular machine to test against.  Otherwise the tests
+will run against all machines.  May be repeated.
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+
+BEGIN {
+    # Find a KRANGFARM_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANGFARM_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANGFARM_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANGFARM_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib;
+
+    # load KrangFarm::Conf
+    eval { require KrangFarm::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load KrangFarm::Conf.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use KrangFarm::Conf;
+use KrangFarm::Control;
+use File::Temp qw(tempdir);
+use Expect;
+
+# process options
+use Getopt::Long;
+use Pod::Usage;
+
+my ($help, $man, @machines, @machine_names, $version);
+pod2usage(2) unless
+  GetOptions(help       => \$help,
+             man        => \$man,
+             'version=f' => \$version,
+             'machine=s' => \@machine_names,
+            );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+# version is required
+pod2usage("Missing required parameter --version")
+  unless $version;
+
+# resolve machines list
+if (@machine_names) {
+    my @all = KrangFarm::Conf->machines;
+    foreach my $name (@machine_names) {
+        my ($machine) = grep { $_->{name} eq $name } @all;
+        die "Machine named '$name' not found in farm.conf!\n" 
+          unless $machine;
+        push(@machines, $machine);
+    }                
+} else {
+    @machines = KrangFarm::Conf->machines;
+}
+
+# run over list of machines starting them up and running a build
+foreach my $machine (@machines) {
+    print "\n" . "*"x50 . "\nTesting on $machine->{name} ".
+      "($machine->{description})\n";
+    my $logfile = catfile($ENV{KRANGFARM_ROOT}, 'log', 
+                          "test.$machine->{name}.log");
+    print "   Logging to $logfile\n";
+    open(my $log, '>>', $logfile) or die "Unable to open '$logfile': $!";
+    my $old = select($log);
+    $|++;
+    select($old);
+
+    # start up
+    KrangFarm::Control->start(machine => $machine,
+                              log     => $log);
+
+    eval {
+        foreach my $perl (keys %{$machine->{perls}}) {
+            my $arch = $machine->{perls}{$perl};
+            my $dir = "krang-$version-$arch";
+            my $file = $dir . ".tar.gz";
+
+            die "Missing $file tarball needed for test run.  Did you forget to run krang_farm_build?\n"
+              unless -e $file;
+
+            # send built tarball
+            print "   Sending $file...\n";
+            KrangFarm::Control->send_file(machine => $machine,
+                                          log     => $log,
+                                          file    => $file);
+            
+            # untar it
+            KrangFarm::Control->run(machine => $machine,
+                                    log     => $log,
+                                    command => "tar xzf $file");
+
+            # do an install
+            my $install_cmd = "sudo $perl $dir/bin/krang_install ".
+                              "--HostName localhost ".
+                              "--IPAddress 127.0.0.1 ".
+                              "--AdminPassword whale ".
+                              "--DBUser $machine->{user} ".
+                              "--DBPass $machine->{password} ".
+                              "--InstanceHostName test ".
+                              "--InstanceDBName krang ".
+                              "--InstanceElementSet TestSet1 ".
+                              "--KrangUser $machine->{user} ".
+                              "--KrangGroup $machine->{password}";
+            print "   Starting '$perl krang_install' at " . localtime() . "\n";
+            my $build = KrangFarm::Control->spawn(machine => $machine,
+                                                  log     => $log,
+                                                  command => $install_cmd);
+        
+            # wait for install complete message
+            my $complete = 0;
+            if ($build->expect(undef, 
+                               "KRANG INSTALLATION COMPLETE")) {
+                $complete = 1;
+            }
+            die "Install on '$machine->{name}' failed.  " .
+              "Check log/test.$machine->{name}.log for details.\n"
+                unless $complete;
+            print $log localtime() . " : install complete!\n";
+            print "   Finished '$perl krang_install' at " . localtime() . "\n";
+            $build->soft_close();
+
+            # run a make test
+            my $test_cmd = "sh -c 'cd /usr/local/krang && $perl bin/krang_test --verbose'";
+            print "   Starting '$perl krang_test' at " . localtime() . "\n";
+            my $test = KrangFarm::Control->spawn(machine => $machine,
+                                                 log     => $log,
+                                                 command => $test_cmd);
+        
+            # wait for success message
+            my $success = 0;
+            if ($test->expect(undef, 
+                               "All tests successful.")) {
+                $success = 1;
+            }
+            die "Tests on '$machine->{name}' failed.  " .
+              "Check log/test.$machine->{name}.log for details.\n"
+                unless $success;
+            print $log localtime() . " : tests complete!\n";
+            print "   Finished '$perl krang_tests' at " . localtime() . "\n";
+            $test->soft_close();
+        }
+    };
+    my $err = $@;
+
+    # shut down machine, no matter what happened
+    #KrangFarm::Control->stop(machine => $machine,
+    #                         log     => $log);
+
+    # cough up and error if something broke
+    die $err if $err;
+
+    close $log;
+}
