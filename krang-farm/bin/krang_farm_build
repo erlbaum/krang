@@ -39,6 +39,12 @@ will run against all machines.  May be repeated.
 Instead of passing in a source tar-ball, the latest source from CVS
 will be used.
 
+=item --no-shutdown
+
+Leave the machine(s) running after the test run is finished.  Useful
+when debugging a failed run.  You'll have to manually shutdown the
+running machines before the next run.
+
 =back
 
 =cut
@@ -81,12 +87,13 @@ use File::Temp qw(tempdir);
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, @machines, $src, @machine_names, $from_cvs);
+my ($help, $man, @machines, $src, @machine_names, $from_cvs, $no_shutdown);
 pod2usage(2) unless
   GetOptions(help       => \$help,
              man        => \$man,
              'machine=s' => \@machine_names,
              'from-cvs'  => \$from_cvs,
+             'no-shutdown' => \$no_shutdown,
             );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
@@ -241,7 +248,8 @@ foreach my $machine (@machines) {
 
     # shut down machine, no matter what happened
     KrangFarm::Control->stop(machine => $machine,
-                             log     => $log);
+                             log     => $log)
+        unless $no_shutdown;
 
     # cough up and error if something broke
     die $err if $err;
