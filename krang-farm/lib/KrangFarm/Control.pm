@@ -109,7 +109,7 @@ sub start {
     print $log localtime() . " : Starting machine...\n";
     $vm->start(VM_POWEROP_MODE_HARD);
 
-    # wait till it's pingable or until max-wait has expired
+    # wait till machine is on the net
     my $start = time;
     my $ping = Net::Ping->new();
     my $alive = 0;
@@ -123,8 +123,8 @@ sub start {
     die "Timed out waiting for machine to start.\n"
       unless $alive;
 
-    # wait 30 seconds more to let sshd come up
-    sleep 30;
+    # wait a little longer for sshd to come up
+    sleep 15;
 
     print $log localtime() . " : Machine started.\n";
 }
@@ -158,7 +158,7 @@ sub send_file {
     my ($f) = $file =~ m!([^/]+)$!;
     my ($size) = `ls -s $file` =~ /(\d+)/;
     $command = $pkg->spawn(%args, command => "ls -s $f");
-    if (not($command->expect(undef, '-re', "\\d+\\s+$f")) or
+    if (not($command->expect(5, '-re', "\\d+\\s+$f")) or
         $command->match !~ /${size}\s+$f/) {
         croak("Failed to send file, size of '$f' does not match '$size'.");
     }
@@ -182,7 +182,7 @@ sub fetch_file {
     croak("Unable to spawn scp.") unless $command;
 
     # answer the password prompt and all should be well
-    if ($command->expect(undef, 'password:')) {
+    if ($command->expect(5, 'password:')) {
         $command->send($machine->{password} . "\n");
     }
     # wait for EOF
@@ -195,7 +195,7 @@ sub fetch_file {
     my ($f) = $file =~ m!([^/]+)$!;
     my ($size) = `ls -s $f` =~ /(\d+)/;
     $command = $pkg->spawn(%args, command => "ls -s $file");
-    if (not($command->expect(undef, '-re', "\\d+\\s+$file")) or
+    if (not($command->expect(5, '-re', "\\d+\\s+$file")) or
         $command->match !~ /${size}\s+$file/) {
         croak("Failed to fetch file, size of '$file' does not match '$size'.");
     }
@@ -216,7 +216,7 @@ sub spawn {
     $spawn->log_stdout(0);
     $spawn->log_file(sub { _log_expect($log, @_) } );
     croak("Unable to spawn '$command'.") unless $spawn;
-    if ($spawn->expect(undef, 'password:')) {
+    if ($spawn->expect(5, 'password:')) {
         $spawn->send($machine->{password} . "\n");
     }
     return $spawn;
@@ -270,9 +270,6 @@ sub stop {
     }
     die "Timed out waiting for machine to stop.\n"
       if $alive;   
-
-    # wait 10 more seconds to finish up
-    sleep 10;
 
     print $log localtime() . " : Machine stopped.\n";
 }

@@ -91,7 +91,7 @@ sub machines {
         my $block = $CONF->block([machine => $name]);
         $machines{$name} = { map { ($_, $block->get($_)) } 
                              grep { $_ ne 'perls' } @MACHINE_VARS };
-        $machines{$name}{perls} = [ $block->get('perls') ];
+        $machines{$name}{perls} = { $block->get('perls') };
         $machines{$name}{name} = $name;
     }
     return values %machines;
