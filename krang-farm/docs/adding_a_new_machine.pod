@@ -22,6 +22,10 @@ Configure the new machine with a static IP from the private network
 configured in VMWare (172.16.104.x, gateway is 172.16.104.1, DNS is
 172.16.104.2).  This is $IP.
 
+(Note: if you need to make an external network connection to get
+software then set the interface to DHCP which is needed for VMWare's
+NAT system.  Just set it back to $IP when you're done.)
+
 =item 4
 
 Add an entry in /etc/hosts on the VMWare host, assigning $NAME to $IP.
