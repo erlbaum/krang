@@ -232,6 +232,9 @@ foreach my $name (@machines) {
             # record results
             $results{$name}{$perl} = $success;
 
+            # uninstall
+            $machine->run(command => "sudo /usr/local/krang/bin/krang_uninstall --no_prompt");
+
             print $log localtime() . " : tests complete!\n";
             print "   Finished '$perl krang_tests' at " . localtime() . "\n";
             $test->soft_close();
