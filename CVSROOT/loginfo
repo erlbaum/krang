@@ -1,1 +1,1 @@
-DEFAULT $CVSROOT/CVSROOT/activitymail -dcf %{sVv} -M 2048 -t krang-cvs@lists.sourceforge.net -n -u krang-cvs@lists.sourceforge.net
+DEFAULT $CVSROOT/CVSROOT/activitymail -dcf %{sVv} -M 2048 -t krang-cvs@lists.sourceforge.net -n
