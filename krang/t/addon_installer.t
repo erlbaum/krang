@@ -79,13 +79,20 @@ like($template->output, qr/enhanced with LogViewer/);
 
 # try hitting the CGI through the webserver
 SKIP: {
-    skip "Apache server isn't up, skipping live tests", 3
+    skip "Apache server isn't up, skipping live tests", 7
       unless -e catfile(KrangRoot, 'tmp', 'httpd.pid');
 
     # get creds
     my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
     my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
     login_ok($username, $password);
+
+    # hit about.pl and see if the server is in CGI mode, skip if not
+    # since the addon won't be registered
+    request_ok('about.pl', {});
+    my $res = get_response();
+    skip "Apache server isn't running in CGI mode, skipping live tests", 5
+      unless $res->content =~ /running\s+in\s+CGI\s+mode/i;
 
     # hit workspace.pl and look for the new nav entries
     request_ok('workspace.pl', {});

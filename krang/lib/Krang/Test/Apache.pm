@@ -12,7 +12,7 @@ use Test::Builder;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(login_ok login_not_ok request_ok 
+our @EXPORT = qw(login_ok login_not_ok request_ok get_response
                  response_like response_unlike);
 
 # hook up Test::Builder ala the Test::Builder POD 
@@ -158,6 +158,16 @@ Opposite of response_like().
 sub response_unlike {
     my ($re, $name) = @_;
     $Test->unlike($res->content, $re, $name);
+}
+
+=item get_response()
+
+Returns the HTTP::Reponse object for the last reponse from the server.
+
+=cut
+
+sub get_response {
+    return $res;
 }
 
 =back
