@@ -1,0 +1,198 @@
+=head1 Krang Permissions System
+
+Krang implements an authentication and authorization system which
+controls the users' ability to access different aspects of the
+system.  This system works by affiliating named "groups" with sets of
+privledges.  Users are then affiliated with these groups, through
+which they are granted authority.
+
+The purpose of this document is three-fold:
+
+=over 4
+
+=item 1. Functionality
+
+To describe the functionality of the Krang permissions system.
+
+
+=item 2. Implementation
+
+To describe how the Krang permissions system is implemented, and why.
+
+
+=item 3. Usage
+
+To describe how to use the Krang permissions system when developing
+Krang applications.
+
+
+=back
+
+
+
+=head1 Functionality
+
+Krang's security is based on "groups".  Groups are logical containers
+which are affiliated with permission settings and users.  Permissions
+for a group are assigned in three major "security realms":
+
+
+=head2 Security Realms
+
+=over 4
+
+=item 1. Sites/Categories
+
+Sites, and the categories (e.g., directories) within each site.
+
+
+=item 2. Application Classes
+
+Includes four classes of applications: Story, Media, Templates, and Admin.
+
+
+=item 3. Desks
+
+Logical desks, such as "Edit" or "Publish"
+
+
+=back
+
+
+
+=head2 Security Levels
+
+Within these three security realms, authority is granted to one of
+three levels:
+
+
+=over 4
+
+=item A. Edit
+
+User may add, modify or delete.
+
+
+=item B. Read-Only
+
+User can view items but not make changes.
+
+
+=item C. Hide
+
+User may neither see nor change items.
+
+
+=back
+
+
+
+=head2 Global Permissions
+
+In addition to the realms and levels described above, there are two
+security items affiliated with a group which are global to the whole
+system.
+
+=over 4
+
+=item * Can Create Users
+
+Controls the ability of the user to access the edit functions of the
+Admin/User application.
+
+
+=item * Can Publish
+
+Controls the ability of the user to send content to the live site.
+
+
+=back
+
+
+
+=head2 Use Cases
+
+These permissions are applied intuitively based on their context.  For
+example:
+
+=over 4
+
+
+=item *
+
+A user is granted "Read-Only" access to a particular category.  As a
+result, they can see the contents of the category and its
+sub-categories, but may not add, modify or delete categories in the
+affected hierarchy.  Furthermore, the user may see but not edit media
+and story objects which are within the affected hierarchy.
+
+
+=item *
+
+A user is granted "Edit" access to desk "A", but "Read-Only" access to
+desk "B".  as a result, they can manipulate content on desk "A", and
+they may move it to desk "B" -- but once on desk "B" they cannot
+make any changes.
+
+
+=item *
+
+A user is granted "Hide" access to the "Admin" application class.  As
+a result, they cannot see or access any of the applications in that
+class, including Users, Groups, Contributors, Sites, Categories, Jobs,
+or Prefererences.
+
+
+=item *
+
+A user is granted "Edit" access to "Story" and "Media" application
+classes, but not to "Templates".  As a result, they can manage
+content, but may not make changes to the templates which control the
+appearance of content.
+
+=back
+
+
+
+=head1 Implementation
+
+There are two primary tasks for which the Krang permissions system is
+responsible:
+
+
+=over 4
+
+=item 1. API security
+
+Limit access to Krang objects.
+
+
+=item 2. UI security
+
+Influence UI based on access to functionality.
+
+
+=back
+
+
+It is through these two mechanisms that Krang permissions are implemented.
+
+
+=head2 API security
+
+The purpose of API security is to limit access to Krang objects.  This
+mechism is implemented by modifying the Krang object modules (e.g.,
+Krang::Media, Krang::Story, etc.).
+
+
+
+=head2 UI security
+
+The purpose of UI security is to inform the various user interface
+applications so that features to which the user does not have access
+are hidden from view.  The goal of hiding these inaccessible features
+is to improve ease of use for the typical user.
+
+
+
+
