@@ -6,7 +6,17 @@
 <title>Krang</title>
 <link rel="stylesheet" href="krang.css" type="text/css">
 </head>
-<body>
+
+<script language="javascript">
+
+function reSize() {
+    var iframe = document.getElementById("ifrm");
+    iframe.height = window.innerHeight - 150;
+}
+</script>
+
+
+<body onload="reSize()" onresize="reSize()">
 <div id="frame">
 <div id="header"><div class="logo"><img src="images/logo.gif" height="27" width="155" alt="logo" border="0"></div>
 <div class="title">an Open Source web publisher</div>
@@ -35,7 +45,7 @@
 
 <div id="space">&nbsp;</div>
 <div id="content" style='margin-bottom: 10px;'>
-<iframe name="main" hspace=0 marginwidth=3 marginheight=1 vspace=0 width=100% height=370 frameborder=0 src="news.html">Sorry, your browser doesn't support iframes.  Come back with one that does.</iframe>
+<iframe id="ifrm" name="main" hspace=0 marginwidth=3 marginheight=1 vspace=0 width=100% height=370 frameborder=0 src="news.html">Sorry, your browser doesn't support iframes.  Come back with one that does.</iframe>
 
 </div>
 
