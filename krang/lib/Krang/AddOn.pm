@@ -86,11 +86,11 @@ use File::Temp qw(tempdir tempfile);
 use Archive::Tar;
 use Config::ApacheFormat;
 use File::Find ();
-use Krang::AddOn;
 use Krang;
 use File::Copy qw(copy);
 use Cwd qw(fastcwd);
 
+use Krang::File;
 
 use Krang::MethodMaker
   new_with_init => 'new',

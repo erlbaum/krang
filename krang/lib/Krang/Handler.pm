@@ -85,6 +85,7 @@ use CGI ();
 use HTTP::BrowserDetect;
 use Apache::SizeLimit;
 use Krang::Cache;
+use Krang::File;
 
 # Login app name
 use constant LOGIN_APP => 'login.pl';
@@ -138,10 +139,11 @@ sub trans_handler ($$) {
 
         # Handle DirectoryIndex case...
         $uri .= 'workspace.pl' if ($uri =~ /\/$/);
-        $r->uri($uri);
 
-        # Our work is done -- we outta 'ere
-        return DECLINED;
+        # now map to a file on disk with Krang::File
+        my $file = Krang::File->find("htdocs/$uri");
+        $r->filename($file);
+        return OK;
     }
 
 
@@ -169,7 +171,8 @@ sub trans_handler ($$) {
         # Handle root case: workspace.pl
         $new_uri = "/workspace.pl" if (($new_uri eq '/') || $new_uri eq '');
 
-        my $fq_filename = $r->document_root() . $new_uri;
+        # map to filename on disk
+        my $fq_filename = Krang::File->find("htdocs/$new_uri");
         $r->filename($fq_filename);
 
         return OK;

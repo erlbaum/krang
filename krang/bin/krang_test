@@ -85,10 +85,12 @@ END
 # process options
 use Getopt::Long;
 use Pod::Usage;
+use Krang::lib;
+use Krang::File;
 
 our ($help, $man);
 my $v = 0;
-my $files = "t/*.t";
+my $files;
 pod2usage(2) unless
   GetOptions(help       => \$help,
              man        => \$man,
@@ -98,6 +100,12 @@ pod2usage(2) unless
             );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
+
+my $root = Krang::Conf->get('KrangRoot');
+$files ||= join(" ", map { s!^$root/!!; $_ } 
+                     map { "$_/*.t" } 
+                     grep { -d $_ } Krang::File->find_all('t'));
+print "FILES: $files\n";
 
 # choose the first instance if KRANG_INSTANCE not set
 unless ($ENV{KRANG_INSTANCE}) {

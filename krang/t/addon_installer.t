@@ -7,6 +7,7 @@ use Krang::AddOn;
 use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 use Krang::ElementLibrary;
+use Krang::Test::Apache;
 
 # make sure Turbo isn't installed
 my ($turbo) = Krang::AddOn->find(name => 'Turbo');
@@ -60,3 +61,26 @@ eval { Krang::ElementLibrary->load_set(set => "Default2") };
 ok(not $@);
 die $@ if $@;
 
+# install an addon with an htdocs/ script
+Krang::AddOn->install(src => 
+            catfile(KrangRoot, 't', 'addons', 'LogViewer-1.00.tar.gz'));
+# worked?
+my ($log) = Krang::AddOn->find(name => 'LogViewer');
+END { $log->uninstall }
+isa_ok($log, 'Krang::AddOn');
+cmp_ok($log->version, '==', 1.00);
+is($log->name, 'LogViewer');
+
+# try hitting the CGI through the webserver
+SKIP: {
+    skip "Apache server isn't up, skipping live tests", 3
+      unless -e catfile(KrangRoot, 'tmp', 'httpd.pid');
+
+    # get creds
+    my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
+    my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
+    login_ok($username, $password);
+
+    request_ok('log_viewer.pl', {});
+    response_like(qr/hi mom/i);
+}
