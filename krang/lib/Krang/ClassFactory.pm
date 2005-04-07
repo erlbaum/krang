@@ -2,6 +2,11 @@ package Krang::ClassFactory;
 use strict;
 use warnings;
 
+use Krang::lib;
+use File::Spec::Functions qw(catdir catfile);
+use Config::ApacheFormat;
+use Carp qw(croak);
+
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(pkg);
@@ -27,14 +32,16 @@ selectively override core Krang classes.  Addons declare their
 overrides via a F<conf/class.conf> file.  For example, if the
 Turbo-1.00.tar.gz addon contains a F<conf/class.conf> file with:
 
-  Story Turbo::Story
+  SetClass Story      Turbo::Story
+  SetClass CGI::Story Turbo::CGI::Story
 
-Then Krang will return 'Turbo::Story' for calls to class('Story').
-This will have the effect of dynamically substituting Turbo::Story for
-Krang::Story.  The benefit of this over just including
-C<lib/Krang/Story.pm> in the addon is that Turbo::Story can (and
-probably I<should>) inherit from Krang::Story to implement its
-functionality.
+Then Krang will return 'Turbo::Story' for calls to pkg('Story') and
+'Turbo::CGI::Story' for pkg('CGI::Story').  This will have the effect
+of dynamically substituting Turbo::Story for Krang::Story and
+Turbo::CGI::Story for Krang::Story.  The benefit of this over just
+including C<lib/Krang/Story.pm> in the addon is that Turbo's classes
+can (and probably I<should>) inherit from Krang::Story and
+Krang::CGI::Story to implement its functionality.
 
 =head1 INTERFACE
 
@@ -57,5 +64,48 @@ sub pkg {
     return "Krang::" . $_[0] unless exists $CLASSES{$_[0]};
     return $CLASSES{$_[0]};
 }
+
+sub reload_configuration {
+    my $pkg = shift;
+    %CLASSES = ();
+    $pkg->load_configuration();
+}
+
+# load the class.conf files from addons
+sub load_configuration {
+    my $pkg = shift;
+
+    my $root = $ENV{KRANG_ROOT} 
+     or croak("KRANG_ROOT must be defined before loading Krang::ClassFactory");
+
+    # using Krang::Addon would be easier but this module shouldn't
+    # load any Krang:: modules since that will prevent them from being
+    # overridden in addons via class.conf
+    opendir(my $dir, catdir($root, 'addons'));
+    while(my $addon = readdir($dir)) {
+        next if $addon eq '.' or $addon eq '..';
+        my $conf  = catfile($root, 'addons', $addon, 'conf', 'class.conf');
+        if (-e $conf) {
+            $pkg->load_file($conf);
+        }
+    }
+}
+
+sub load_file {
+    my ($pkg, $file) = @_;
+    my $conf = Config::ApacheFormat->new(
+                 hash_directives => ['setclass']);
+    eval { $conf->read($file) };
+    croak("Unable to load class configuration file $file: $@") if $@;
+
+    my @keys = $conf->get('setclass');
+    foreach my $key (@keys) {
+        $CLASSES{$key} = $conf->get('setclass', $key);
+    }
+}
+
+
+BEGIN { __PACKAGE__->load_configuration() }
+
 
 1;

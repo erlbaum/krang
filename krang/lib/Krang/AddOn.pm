@@ -209,6 +209,7 @@ sub install {
     $pkg->_flush_cache();
     pkg('lib')->reload();
     pkg('HTMLTemplate')->reload_paths() if @Krang::HTMLTemplate::PATH;
+    pkg('ClassFactory')->reload_configuration();
 
     # all done, return home if possible
     chdir $old_dir;
