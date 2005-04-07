@@ -36,9 +36,16 @@ use Carp qw(croak);
 use File::Spec::Functions qw(catdir);
 use Config;
 
-sub reload { shift->import() }
+our $DONE = 0;
+
+sub reload { 
+    $DONE = 0;
+    shift->import() 
+}
 
 sub import {
+    return if $DONE; # this should only happen once unless reload() is called
+
     my $root = $ENV{KRANG_ROOT} 
       or croak("KRANG_ROOT must be defined before loading pkg('lib')");
     
@@ -53,7 +60,7 @@ sub import {
         unshift @INC, $lib, "$lib/".$Config{archname};
     }
 
-    # warn("INC after Krang::lib setup:\n\t" . join("\n\t", @INC));
+    $DONE = 1;
 }
 
 1;
