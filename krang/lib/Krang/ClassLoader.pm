@@ -2,6 +2,9 @@ package Krang::ClassLoader;
 use strict;
 use warnings;
 
+use Krang::lib;
+use Krang::ClassFactory qw(pkg);
+
 =head1 NAME
 
 Krang::ClassLoader - load Krang classes, using Krang::ClassFactory
@@ -31,8 +34,6 @@ bare-words.
 None.
 
 =cut
-
-use Krang::ClassFactory qw(pkg);
 
 sub import {
     my ($self, $class, @args) = @_;
