@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
+use Krang::ClassFactory qw(pkg);
 use Krang::lib;
-use Krang::ErrorHandler;
-use Krang::CGI::Media;
-Krang::CGI::Media->new()->run();
+use Krang::ClassLoader 'ErrorHandler';
+use Krang::ClassLoader 'CGI::Media';
+pkg('CGI::Media')->new()->run();

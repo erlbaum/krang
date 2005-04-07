@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+use Krang::ClassFactory qw(pkg);
 use Krang::lib;
-use Krang::CGI::Debug;
-Krang::CGI::Debug->new()->run();
+use Krang::ClassLoader 'CGI::Debug';
+pkg('CGI::Debug')->new()->run();

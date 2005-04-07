@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
+use Krang::ClassFactory qw(pkg);
 use Krang::lib;
-use Krang::ErrorHandler;
-use Krang::CGI::Schedule;
-my $app = Krang::CGI::Schedule->new();
+use Krang::ClassLoader 'ErrorHandler';
+use Krang::ClassLoader 'CGI::Schedule';
+my $app = pkg('CGI::Schedule')->new();
 $app->run();
