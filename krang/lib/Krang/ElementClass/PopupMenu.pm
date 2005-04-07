@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use Krang::ClassLoader base => 'ElementClass';
 use Carp qw(croak);
 
 use Krang::ClassLoader MethodMaker => 

@@ -21,7 +21,7 @@ None.
 
 =cut
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 use CGI qw/:standard/;
 use Krang::ClassLoader 'Conf';
 

@@ -17,6 +17,12 @@ Krang::ClassLoader - load Krang classes, using Krang::ClassFactory
   # write this:
   use Krang::ClassLoader Element => qw(foreach_element);
 
+  # for inheritence, instead of this:
+  use base 'Krang::CGI';
+
+  # write this
+  use Krang::ClassLoader base => 'CGI';
+
 =head1 DESCRIPTION
 
 This module loads classes just like normal C<use>, but it looks up the
@@ -38,7 +44,14 @@ None.
 sub import {
     my ($self, $class, @args) = @_;
 
-    my $pkg = pkg($class);
+    my $pkg;
+    if ($class eq 'base') {
+        # decode super-class instead
+        $pkg     = 'base';
+        $args[0] = pkg($args[0]);
+    } else {
+        $pkg = pkg($class);
+    }
     (my $file = "$pkg.pm") =~ s!::!/!g;
     require $file;
 

@@ -22,7 +22,7 @@ may search for, view, edit, and create templates.
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use base qw/Krang::CGI/;
+use Krang::ClassLoader base => qw/CGI/;
 
 use Carp qw(verbose croak);
 

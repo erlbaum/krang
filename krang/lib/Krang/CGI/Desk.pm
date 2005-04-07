@@ -32,7 +32,7 @@ use Krang::ClassLoader Widget => qw(format_url);
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader 'Desk';
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 
 sub setup {
     my $self = shift;

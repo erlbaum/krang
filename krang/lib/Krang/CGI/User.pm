@@ -26,7 +26,7 @@ use strict;
 use warnings;
 
 
-use base qw/Krang::CGI/;
+use Krang::ClassLoader base => qw/CGI/;
 
 use Carp qw(verbose croak);
 use Krang::ClassLoader 'History';

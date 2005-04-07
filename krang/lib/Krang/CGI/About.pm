@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 use Krang;

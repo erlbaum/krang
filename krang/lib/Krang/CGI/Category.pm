@@ -15,7 +15,7 @@ use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Site';
 
-use base 'Krang::CGI::ElementEditor';
+use Krang::ClassLoader base => 'CGI::ElementEditor';
 
 sub _get_element { $session{category}->element; }
 

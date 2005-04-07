@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use Krang::ClassLoader base => 'ElementClass';
 
 use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( rows cols ) ];

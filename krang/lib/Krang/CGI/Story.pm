@@ -15,7 +15,7 @@ use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Group';
 
-use base 'Krang::CGI::ElementEditor';
+use Krang::ClassLoader base => 'CGI::ElementEditor';
 
 sub _get_element { $session{story}->element; }
 

@@ -160,7 +160,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader Message => qw(add_message get_messages);
 use Krang::ClassLoader Widget => qw(category_chooser date_chooser decode_date);
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 
 sub setup {
     my $self = shift;

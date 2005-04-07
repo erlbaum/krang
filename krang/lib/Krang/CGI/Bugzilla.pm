@@ -1,6 +1,6 @@
 package Krang::CGI::Bugzilla;
 use Krang::ClassFactory qw(pkg);
-use base qw(Krang::CGI);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 

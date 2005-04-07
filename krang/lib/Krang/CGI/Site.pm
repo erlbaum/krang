@@ -24,7 +24,7 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 
 use Carp qw(verbose croak);
 use Krang::ClassLoader 'History';

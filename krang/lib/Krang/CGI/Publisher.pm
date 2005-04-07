@@ -34,7 +34,7 @@ use Time::Piece;
 
 use Carp qw(croak);
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 
 sub setup {
     my $self = shift;

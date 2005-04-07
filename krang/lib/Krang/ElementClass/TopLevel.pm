@@ -6,7 +6,7 @@ use warnings;
 use Carp qw(croak);
 
 use Krang::ClassLoader Log => qw(debug info critical);
-use base 'Krang::ElementClass';
+use Krang::ClassLoader base => 'ElementClass';
 
 =head1 NAME
 

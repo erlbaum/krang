@@ -21,7 +21,7 @@ None.
 
 =cut
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile catdir);
 use Krang::ClassLoader 'HTMLTemplate';

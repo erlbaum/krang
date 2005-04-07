@@ -23,7 +23,7 @@ None.
 =cut
 
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 use Digest::MD5 qw(md5_hex md5);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);

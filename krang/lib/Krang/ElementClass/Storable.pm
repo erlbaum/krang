@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use Krang::ClassLoader base => 'ElementClass';
 use Storable qw(nfreeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
 use Carp qw( croak );
