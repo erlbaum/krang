@@ -1,10 +1,11 @@
 package Krang::ElementClass::TopLevel;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use Carp qw(croak);
 
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader Log => qw(debug info critical);
 use base 'Krang::ElementClass';
 
 =head1 NAME

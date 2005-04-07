@@ -1,4 +1,5 @@
 package Krang::AddOn;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -8,16 +9,16 @@ Krang::AddOn - module to manage Krang add-ons
 
 =head1 SYNOPSIS
 
-  use Krang::AddOn;
+  use Krang::ClassLoader 'AddOn';
 
   # install an addon
-  Krang::AddOn->install(src => '/path/to/Turbo-1.00.tar.gz');
+  pkg('AddOn')->install(src => '/path/to/Turbo-1.00.tar.gz');
 
   # get a list of installed addons
-  my @addons = Krang::AddOn->find();
+  my @addons = pkg('AddOn')->find();
 
   # find a particular addon by name
-  my ($addon) = Krang::AddOn->find(name => $name);
+  my ($addon) = pkg('AddOn')->find(name => $name);
 
   # get the name and version of an addon
   $name    = $addon->name;
@@ -75,7 +76,7 @@ Find an addon based on name.
 =cut
 
 use Carp qw(croak);
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catdir catfile canonpath splitdir);
 use File::Path qw(mkpath);
 
@@ -90,9 +91,9 @@ use Krang;
 use File::Copy qw(copy);
 use Cwd qw(fastcwd);
 
-use Krang::File;
+use Krang::ClassLoader 'File';
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   new_with_init => 'new',
   new_hash_init => 'hash_init',
   get_set => [ qw(name version conf) ];
@@ -158,7 +159,7 @@ sub install {
 
     # make sure that this is a positive upgrade, if the addon is already
     # installed
-    my ($old) = Krang::AddOn->find(name => $conf->get('name'));
+    my ($old) = pkg('AddOn')->find(name => $conf->get('name'));
     $args{old} = $old;
     if ($old and $old->version >= $conf->get('version') and not $force) {
         die "Unable to install version " . $conf->get('version') . " of " . 
@@ -177,7 +178,7 @@ sub install {
         my @addons = $conf->get('requireaddons');
         while(@addons) {
             my ($req_name, $req_ver) = (shift(@addons), shift(@addons));
-            my ($req) = Krang::AddOn->find(name => $req_name);
+            my ($req) = pkg('AddOn')->find(name => $req_name);
             die "This addon requires the '$req_name' addon, ".
               "which is not installed!\n"
                 unless $req;
@@ -204,10 +205,10 @@ sub install {
 
     # installing a new addon means that @INC needs updating, reload
     # Krang::lib and flush the file cache and the addon cache
-    Krang::File->flush_cache();
+    pkg('File')->flush_cache();
     $pkg->_flush_cache();
-    Krang::lib->reload();
-    Krang::HTMLTemplate->reload_paths() if @Krang::HTMLTemplate::PATH;
+    pkg('lib')->reload();
+    pkg('HTMLTemplate')->reload_paths() if @Krang::HTMLTemplate::PATH;
 
     # all done, return home if possible
     chdir $old_dir;

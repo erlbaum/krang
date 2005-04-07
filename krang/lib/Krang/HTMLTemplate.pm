@@ -1,4 +1,5 @@
 package Krang::HTMLTemplate;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -24,13 +25,13 @@ See L<HTML::Template>.
 =cut
 
 use base 'HTML::Template';
-use Krang::Session qw(%session);
-use Krang::Conf qw(InstanceDisplayName KrangRoot Skin);
-use Krang::Message qw(get_messages clear_messages);
-use Krang::Navigation;
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin);
+use Krang::ClassLoader Message => qw(get_messages clear_messages);
+use Krang::ClassLoader 'Navigation';
 use File::Spec::Functions qw(catdir);
-use Krang::Log qw(debug);
-use Krang::AddOn;
+use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader 'AddOn';
 
 # setup paths to templates
 our @PATH;
@@ -40,7 +41,7 @@ sub reload_paths {
       (grep { -e $_ } 
        (map { catdir(KrangRoot, 'addons', $_, 'skins', Skin, 'templates'),
               catdir(KrangRoot, 'addons', $_, 'templates') }
-        (map { $_->name } Krang::AddOn->find())),
+        (map { $_->name } pkg('AddOn')->find())),
        catdir(KrangRoot, 'skins', Skin, 'templates'),
        catdir(KrangRoot, 'templates'));
 }
@@ -78,7 +79,7 @@ sub output {
 
     # fill in header variables as necessary
     if ($template->query(name => 'header_user_name')) {
-        my ($user) = Krang::User->find(user_id => $ENV{REMOTE_USER});
+        my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
         $template->param(header_user_name => $user->first_name . " " . 
                                              $user->last_name) if $user;
     }
@@ -93,7 +94,7 @@ sub output {
         clear_messages();
     }
 
-    Krang::Navigation->fill_template(template => $template);
+    pkg('Navigation')->fill_template(template => $template);
                                                  
     return $template->SUPER::output();
 }

@@ -1,4 +1,5 @@
 package Krang::lib;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -8,10 +9,10 @@ Krang::lib - setup Krang library search path
 
 =head1 SYNOPSIS
 
-  use Krang::lib;
+  use Krang::ClassLoader 'lib';
 
   # reload lib dirs when needed (ex. addon install)
-  Krang::lib->reload();
+  pkg('lib')->reload();
 
 =head1 DESCRIPTION
 
@@ -39,7 +40,7 @@ sub reload { shift->import() }
 
 sub import {
     my $root = $ENV{KRANG_ROOT} 
-      or croak("KRANG_ROOT must be defined before loading Krang::lib");
+      or croak("KRANG_ROOT must be defined before loading pkg('lib')");
     
     # using Krang::Addon would be easier but this module shouldn't
     # load any Krang:: modules since that will prevent them from being

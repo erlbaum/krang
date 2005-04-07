@@ -1,4 +1,5 @@
 package Krang::ElementClass::Storable;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 

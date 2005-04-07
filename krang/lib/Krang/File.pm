@@ -1,9 +1,10 @@
 package Krang::File;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::AddOn;
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 
 =head1 NAME
 
@@ -12,13 +13,13 @@ Krang::File - find a file needed by Krang, searching addons and core
 =head1 SYNOPSIS
 
   # find one file, searching through addons and the core
-  $file = Krang::File->find("/htdocs/images/arrow.png");
+  $file = pkg('File')->find("/htdocs/images/arrow.png");
 
   # find all instances of a file
-  @files = Krang::File->find_all("/htdocs/images/arrow.png");
+  @files = pkg('File')->find_all("/htdocs/images/arrow.png");
 
   # forget past requests
-  Krang::File->flush_cache();
+  pkg('File')->flush_cache();
 
 =head1 DESCRIPTION
 
@@ -53,11 +54,11 @@ sub find {
 
     my ($pkg, $file) = @_;
     my $root   = KrangRoot;
-    my @addons = Krang::AddOn->find();
+    my @addons = pkg('AddOn')->find();
 
     -e $_ and return $CACHE{$file} = $_ 
       for ((map { "$root/addons/" . $_->name . "/$file" } 
-              Krang::AddOn->find()), 
+              pkg('AddOn')->find()), 
            "$root/$file");
 
     return $CACHE{$file} = undef;
@@ -68,11 +69,11 @@ sub flush_cache { %CACHE = (); }
 sub find_all {
     my ($pkg, $file) = @_;
     my $root   = KrangRoot;
-    my @addons = Krang::AddOn->find();
+    my @addons = pkg('AddOn')->find();
 
     return grep { -e $_ }
       ((map { "$root/addons/" . $_->name . "/$file" } 
-        Krang::AddOn->find()), 
+        pkg('AddOn')->find()), 
        "$root/$file");
 }
 

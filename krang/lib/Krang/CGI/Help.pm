@@ -1,4 +1,5 @@
 package Krang::CGI::Help;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -21,9 +22,9 @@ None.
 =cut
 
 use base 'Krang::CGI';
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile catdir);
-use Krang::HTMLTemplate;
+use Krang::ClassLoader 'HTMLTemplate';
 
 sub setup {
     my $self = shift;
@@ -44,7 +45,7 @@ sub show {
     }
 
     # load as template to process includes
-    my $template = Krang::HTMLTemplate->new(filename => $file,
+    my $template = pkg('HTMLTemplate')->new(filename => $file,
                                             path     => ['Help'],
                                             search_path_on_includes => 1,
                                             cache    => 1);

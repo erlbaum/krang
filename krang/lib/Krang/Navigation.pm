@@ -1,12 +1,13 @@
 package Krang::Navigation;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Desk;
-use Krang::Conf qw(FTPHostName FTPPort EnableBugzilla);
-use Krang::Session qw(%session);
-use Krang::NavigationNode;
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader 'Desk';
+use Krang::ClassLoader Conf => qw(FTPHostName FTPPort EnableBugzilla);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'NavigationNode';
+use Krang::ClassLoader Log => qw(debug info critical);
 use Carp qw(croak);
 
 =head1 NAME
@@ -15,9 +16,9 @@ Krang::Navigation - Krang module to manage UI navbar
 
 =head1 SYNOPSIS
 
-  use Krang::Navigation;
+  use Krang::ClassLoader 'Navigation';
 
-  Krang::Navigation->fill_template(template => $template);
+  pkg('Navigation')->fill_template(template => $template);
 
 =head1 DESCRIPTION
 
@@ -44,14 +45,14 @@ sub fill_template {
     my $template = $arg{template};
     return unless $template->query(name => 'nav_content');
 
-    my $instance = Krang::Conf->instance;
+    my $instance = pkg('Conf')->instance;
 
     $TREE{$instance} = $pkg->initialize_tree($instance) 
       unless $TREE{$instance};
     
-    my %perms = ( desk  => { Krang::Group->user_desk_permissions()  },
-                  asset => { Krang::Group->user_asset_permissions() },
-                  admin => { Krang::Group->user_admin_permissions() },
+    my %perms = ( desk  => { pkg('Group')->user_desk_permissions()  },
+                  asset => { pkg('Group')->user_asset_permissions() },
+                  admin => { pkg('Group')->user_admin_permissions() },
                 );
 
     $template->param(nav_content => $pkg->render($TREE{$instance}, \%perms));
@@ -126,7 +127,7 @@ sub initialize_tree {
     my $tree = $pkg->default_tree();
 
     # mix in navigation from add-ons with NavigationHandlers
-    foreach my $addon (Krang::AddOn->find()) {
+    foreach my $addon (pkg('AddOn')->find()) {
         my $nav_handler = $addon->conf->get('NavigationHandler')
           or next;
         eval "require $nav_handler";
@@ -139,7 +140,7 @@ sub initialize_tree {
 
 sub default_tree {
     my ($root, $node, $sub, $sub2);
-    $root = Krang::NavigationNode->new();
+    $root = pkg('NavigationNode')->new();
     $root->name('Root');
 
     # My Workspace block
@@ -176,7 +177,7 @@ sub default_tree {
     $sub = $node->new_daughter();
     $sub->name('Desks');
     
-    foreach my $desk (Krang::Desk->find()) {
+    foreach my $desk (pkg('Desk')->find()) {
         my $desk_id = $desk->desk_id;
         $sub2 = $sub->new_daughter();
         $sub2->name($desk->name);
@@ -230,7 +231,7 @@ sub default_tree {
     $sub->name('FTP');
     $sub->link(
        sub {
-           my ($user) = Krang::User->find(user_id => $ENV{REMOTE_USER});
+           my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
            return "ftp://" . $user->login . '@' . 
                    FTPHostName . ':' . FTPPort .  '/' . $ENV{KRANG_INSTANCE} .
                    '/template';

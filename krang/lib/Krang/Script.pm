@@ -1,4 +1,5 @@
 package Krang::Script;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -8,7 +9,7 @@ Krang - loader for the Krang scripts
 
 =head1 SYNOPSIS
  
-  use Krang::Script;
+  use Krang::ClassLoader 'Script';
 
 =head1 DESCRIPTION
 
@@ -36,16 +37,16 @@ None.
 
 # activate profiling if requested
 BEGIN {
-    require Krang::Profiler if $ENV{KRANG_PROFILE};
+    eval "require " . pkg('Profiler') if $ENV{KRANG_PROFILE};
 }
 
-use Krang::lib;
-use Krang::ErrorHandler;
-use Krang::Conf qw(KrangUser KrangGroup KrangRoot);
-use Krang::Log qw(debug critical);
+use Krang::ClassLoader 'lib';
+use Krang::ClassLoader 'ErrorHandler';
+use Krang::ClassLoader Conf => qw(KrangUser KrangGroup KrangRoot);
+use Krang::ClassLoader Log => qw(debug critical);
 # use Krang::Session qw(%session);
 use Carp qw(croak);
-use Krang::User;
+use Krang::ClassLoader 'User';
 
 BEGIN {
     # make sure we are KrangUser/KrangGroup
@@ -90,7 +91,7 @@ BEGIN {
     # Set Krang instance if not running under mod_perl
     my $instance = $ENV{KRANG_INSTANCE};
     if (not defined $instance) {
-        my @instances = Krang::Conf->instances();
+        my @instances = pkg('Conf')->instances();
         if (@instances > 1) {
             warn "\nYour Krang configuration contains multiple instances, please set the\nKRANG_INSTANCE environment variable.\n\nAvailable instances are: " . 
               join(', ', @instances[0 .. $#instances - 1]) . 
@@ -101,11 +102,11 @@ BEGIN {
         }
     }
     debug("Krang.pm:  Setting instance to '$instance'");    
-    Krang::Conf->instance($instance);
+    pkg('Conf')->instance($instance);
   
     # set REMOTE_USER to the user_id for the 'system' user
     unless ($ENV{REMOTE_USER}) {
-        my @user = (Krang::User->find(ids_only => 1,
+        my @user = (pkg('User')->find(ids_only => 1,
                                       login    => 'system'));
         if (@user) {
             $ENV{REMOTE_USER} = $user[0];

@@ -1,4 +1,5 @@
 package Krang::ElementLibrary;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -8,22 +9,22 @@ Krang::ElementLibrary - the element class loader and indexer
 
 =head1 SYNOPSIS
 
-  use Krang::ElementLibrary;
+  use Krang::ClassLoader 'ElementLibrary';
 
   # load an element set by name
-  Krang::ElementLibary->load_set(set => "Flex");
+  pkg('ElementLibary')->load_set(set => "Flex");
 
   # get a list of available top level elements
-  @top_levels = Krang::ElementLibary->top_levels());
+  @top_levels = pkg('ElementLibary')->top_levels());
 
   # get the object for the top level called "article" from the current set
-  $class = Krang::ElementLibary->top_level(name => "article");
+  $class = pkg('ElementLibary')->top_level(name => "article");
 
   # find a class within the current set
-  $class = Krang::ElementLibrary->find_class(name => "deck")
+  $class = pkg('ElementLibrary')->find_class(name => "deck")
 
   # get a list of all element names, anywhere in the element library
-  @names = Krang::ElementLibrary->element_names();
+  @names = pkg('ElementLibrary')->element_names();
 
 =head1 DESCRIPTION
 
@@ -86,29 +87,29 @@ Then either F<Flex/article.pm> or F<Default/article.pm> must exist
 
 =cut
 
-use Krang::Conf qw(InstanceElementSet KrangRoot);
+use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot);
 use File::Spec::Functions qw(catdir catfile file_name_is_absolute);
 use Config::ApacheFormat;
 use Carp qw(croak);
-use Krang::Log qw(debug info);
-use Krang::File;
+use Krang::ClassLoader Log => qw(debug info);
+use Krang::ClassLoader 'File';
 
 # load all Krang::ElementClass base classes, which will be used by
 # element sets
-use Krang::ElementClass;
-use Krang::ElementClass::TopLevel;
-use Krang::ElementClass::Cover;
-use Krang::ElementClass::CheckBox;
-use Krang::ElementClass::ListBox;
-use Krang::ElementClass::ListGroup;
-use Krang::ElementClass::MediaLink;
-use Krang::ElementClass::PopupMenu;
-use Krang::ElementClass::RadioGroup;
-use Krang::ElementClass::StoryLink;
-use Krang::ElementClass::CategoryLink;
-use Krang::ElementClass::Textarea;
-use Krang::ElementClass::Text;
-use Krang::ElementClass::Date;
+use Krang::ClassLoader 'ElementClass';
+use Krang::ClassLoader 'ElementClass::TopLevel';
+use Krang::ClassLoader 'ElementClass::Cover';
+use Krang::ClassLoader 'ElementClass::CheckBox';
+use Krang::ClassLoader 'ElementClass::ListBox';
+use Krang::ClassLoader 'ElementClass::ListGroup';
+use Krang::ClassLoader 'ElementClass::MediaLink';
+use Krang::ClassLoader 'ElementClass::PopupMenu';
+use Krang::ClassLoader 'ElementClass::RadioGroup';
+use Krang::ClassLoader 'ElementClass::StoryLink';
+use Krang::ClassLoader 'ElementClass::CategoryLink';
+use Krang::ClassLoader 'ElementClass::Textarea';
+use Krang::ClassLoader 'ElementClass::Text';
+use Krang::ClassLoader 'ElementClass::Date';
 
 =head1 INTERFACE
 
@@ -133,7 +134,7 @@ sub load_set {
 
         # load parent sets first
         $PARENT_SETS{$set} = [ $conf->get('ParentSets') ];
-        Krang::ElementLibrary->load_set(set => $_) 
+        pkg('ElementLibrary')->load_set(set => $_) 
             for (@{$PARENT_SETS{$set}});
 
         $pkg->_load_classes($set, $conf);
@@ -149,7 +150,7 @@ sub load_set {
 sub _load_conf {
     my ($pkg, $set) = @_;
 
-    my $dir = Krang::File->find("element_lib/$set");
+    my $dir = pkg('File')->find("element_lib/$set");
     unless (-d $dir) {
         warn("\nWARNING: Missing element library '$set'.\n\n");
         exit;
@@ -173,7 +174,7 @@ sub _load_conf {
 sub _load_classes {
     my ($pkg, $set, $conf) = @_;
 
-    my $dir = Krang::File->find("element_lib/$set");
+    my $dir = pkg('File')->find("element_lib/$set");
     unless (-d $dir) {
         warn("\nWARNING: Missing element library '$set'.\n\n");
         exit;
@@ -336,12 +337,12 @@ Implement KrangVersion checking.
 
 # load all configured element sets
 BEGIN {
-    my $cur_instance = Krang::Conf->instance();
-    foreach my $instance (Krang::Conf->instances()) {
-        Krang::Conf->instance($instance);
-        Krang::ElementLibrary->load_set(set => InstanceElementSet());
+    my $cur_instance = pkg('Conf')->instance();
+    foreach my $instance (pkg('Conf')->instances()) {
+        pkg('Conf')->instance($instance);
+        pkg('ElementLibrary')->load_set(set => InstanceElementSet());
     }
-    Krang::Conf->instance($cur_instance);
+    pkg('Conf')->instance($cur_instance);
 }
 
 1;

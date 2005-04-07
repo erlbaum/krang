@@ -1,12 +1,13 @@
 package Krang::Message;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Conf qw(KrangRoot);
-use Krang::Session qw(%session);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Session => qw(%session);
 use File::Spec::Functions qw(catfile);
 use Carp qw(croak);
-use Krang::Log qw(debug);
+use Krang::ClassLoader Log => qw(debug);
 
 use base 'Exporter';
 our @EXPORT_OK = qw(add_message get_messages clear_messages);
@@ -17,7 +18,7 @@ Krang::Message - module to handle UI messages in Krang
 
 =head1 SYNOPSIS
 
-  use Krang::Message qw(add_messsage get_messages clear_messages);
+  use Krang::ClassLoader Message => qw(add_messsage get_messages clear_messages);
 
   # show the 'invalid_type' message, which requires no parameters
   add_message('invalid_type');

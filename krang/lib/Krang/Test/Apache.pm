@@ -1,4 +1,5 @@
 package Krang::Test::Apache;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -6,8 +7,8 @@ use LWP::UserAgent;
 use HTTP::Request::Common;
 use File::Spec::Functions qw(catfile);
 use HTTP::Cookies;
-use Krang::Conf qw(KrangRoot HostName ApachePort);
-use Krang::Log qw(debug);
+use Krang::ClassLoader Conf => qw(KrangRoot HostName ApachePort);
+use Krang::ClassLoader Log => qw(debug);
 use Test::Builder;
 
 require Exporter;
@@ -41,7 +42,7 @@ Krang::Test::Apache - support module for testing against Apache
 =head1 SYNOPSIS
 
   use Test::More qw(no_plan); 
-  use Krang::Test::Apache;
+  use Krang::ClassLoader 'Test::Apache';
 
   # make sure bad logins fail
   login_not_ok('foo', 'bar');
@@ -88,7 +89,7 @@ sub login_ok {
 # underlying login function used by login_ok and login_not_ok
 sub _do_login {
     my($username, $password) = @_;
-    my $instance = Krang::Conf->instance;
+    my $instance = pkg('Conf')->instance;
     
     my $url = _url('login.pl');
     my $res = $ua->request(POST $url,
@@ -186,7 +187,7 @@ sub _url {
     $base_url .= ":" . ApachePort if ApachePort ne '80';
 
     # build the URL
-    return join('/', $base_url, Krang::Conf->instance, $script);
+    return join('/', $base_url, pkg('Conf')->instance, $script);
 }
 
 1;

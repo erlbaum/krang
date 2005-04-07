@@ -1,9 +1,10 @@
 package Krang::NavigationNode;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use base 'Tree::DAG_Node';
-use Krang::MethodMaker get_set => [ qw(link condition) ];
+use Krang::ClassLoader MethodMaker => get_set => [ qw(link condition) ];
 
 =head1 NAME
 
@@ -57,9 +58,9 @@ hidden as well.
 The subroutine will receive the following structure as a single
 argument:
 
-    { desk  => { Krang::Group->user_desk_permissions()  },
-      asset => { Krang::Group->user_asset_permissions() },
-      admin => { Krang::Group->user_admin_permissions() },
+    { desk  => { pkg('Group')->user_desk_permissions()  },
+      asset => { pkg('Group')->user_asset_permissions() },
+      admin => { pkg('Group')->user_admin_permissions() },
     }
 
 For too many examples see the default node tree in
