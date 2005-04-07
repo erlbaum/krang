@@ -12,7 +12,7 @@ use File::Find qw(find);
 use Krang::HTMLTemplate;
 
 # load all Krang libs, with a few exceptions
-my $skip = qr/Profiler|Test|BricLoader|Cache|FTP|DataSet|Upgrade|MethodMaker|Daemon|Script|XML/;
+my $skip = qr/Profiler|Test|BricLoader|Cache|FTP|DataSet|Upgrade|MethodMaker|Daemon|Script|XML|ClassLoader/;
 find({ 
       wanted => sub {
           return unless m!(Krang/.*).pm$!;
