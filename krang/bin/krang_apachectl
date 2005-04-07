@@ -79,6 +79,7 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Conf qw(KrangRoot InstanceHostName Skin);
 
 # the httpd command
@@ -209,17 +210,17 @@ sub write_conf {
     print STDERR ($cgi_mode ? "CGI Mode activated" : "Apache::Registry Mode activated") . "\n";
     $template->param(CGI_MODE => $cgi_mode);
 
-    $template->param((map { ($_, Krang::Conf->get($_)) }
+    $template->param((map { ($_, pkg('Conf')->get($_)) }
                       (qw(KrangUser KrangGroup 
                           ApacheAddr ApachePort
                           HostName
                          ))),
-                     KrangRoot => rel2abs(Krang::Conf->get("KrangRoot")));
+                     KrangRoot => rel2abs(pkg('Conf')->get("KrangRoot")));
     
     # setup the instance loop
     my @loop;
-    foreach my $instance (Krang::Conf->instances()) {
-        Krang::Conf->instance($instance);
+    foreach my $instance (pkg('Conf')->instances()) {
+        pkg('Conf')->instance($instance);
         push(@loop,
              {
               InstanceName => $instance,

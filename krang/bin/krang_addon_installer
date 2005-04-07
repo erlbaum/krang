@@ -79,6 +79,7 @@ END
 }
 
 # process command options
+use Krang::ClassFactory qw(pkg);
 use Pod::Usage;
 use Getopt::Long;
 our ($help, $man, $force, $source);
@@ -117,12 +118,12 @@ BEGIN {
 
 # use first instance if one isn't set.  Addons are installation wide
 # anyway.
-BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
-use Krang::Script;
-use Krang::Conf qw(KrangRoot);
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Copy qw(copy);
 use File::Temp qw(tempdir tempfile);
-use Krang::AddOn;
+use Krang::ClassLoader 'AddOn';
 
 # copy source file into someplace it can be read
 my (undef, $tempfile) = tempfile(DIR => catdir(KrangRoot, 'tmp'),
@@ -135,6 +136,6 @@ print STDERR "Copied '$source' to '$tempfile'.\n" if $verbose > 1;
 $source = $tempfile;
 
 # install the addon
-Krang::AddOn->install(src => $source, verbose => $verbose, force => $force);
+pkg('AddOn')->install(src => $source, verbose => $verbose, force => $force);
 
 print "Installation complete.\n";

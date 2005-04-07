@@ -121,6 +121,7 @@ END
 }
 
 # process command-line args.
+use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 

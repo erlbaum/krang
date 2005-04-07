@@ -73,6 +73,7 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Conf qw(KrangRoot InstanceHostName);
 
 # the httpd command
@@ -193,12 +194,12 @@ sub write_conf {
     my $apache_root = rel2abs(catdir(KrangRoot, APACHE_ROOT));
     $template->param(ApacheRoot => $apache_root);
 
-    $template->param((map { ($_, Krang::Conf->get($_)) }
+    $template->param((map { ($_, pkg('Conf')->get($_)) }
                       (qw(KrangUser KrangGroup 
                           SiteServerAddr SiteServerPort
                           HostName
                          ))),
-                     KrangRoot => rel2abs(Krang::Conf->get("KrangRoot")));
+                     KrangRoot => rel2abs(pkg('Conf')->get("KrangRoot")));
     
     # write out the config
     open(CONF, '>' . catfile(KrangRoot, "tmp", "siteserver.conf")) 
