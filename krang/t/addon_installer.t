@@ -1,25 +1,26 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 use Test::More qw(no_plan);
-use Krang::AddOn;
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
-use Krang::ElementLibrary;
-use Krang::Test::Apache;
-use Krang::HTMLTemplate;
+use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader 'Test::Apache';
+use Krang::ClassLoader 'HTMLTemplate';
 
 # make sure Turbo isn't installed
-my ($turbo) = Krang::AddOn->find(name => 'Turbo');
+my ($turbo) = pkg('AddOn')->find(name => 'Turbo');
 ok(not $turbo);
 
 # install Turbo 1.00
-Krang::AddOn->install(src => 
+pkg('AddOn')->install(src => 
                       catfile(KrangRoot, 't', 'addons', 'Turbo-1.00.tar.gz'));
 
 # worked?
-($turbo) = Krang::AddOn->find(name => 'Turbo');
+($turbo) = pkg('AddOn')->find(name => 'Turbo');
 END { $turbo->uninstall }
 isa_ok($turbo, 'Krang::AddOn');
 cmp_ok($turbo->version, '==', 1);
@@ -31,14 +32,14 @@ ok(-e 'addons/Turbo/docs/turbo.pod');
 ok(not -e 'krang_addon.conf');
 
 # try to load Krang::Turbo
-use_ok('Krang::Turbo');
+use_ok(pkg('Turbo'));
 
 # upgrade to Turbo 1.01
-Krang::AddOn->install(src => 
+pkg('AddOn')->install(src => 
                       catfile(KrangRoot, 't', 'addons', 'Turbo-1.01.tar.gz'));
 
 # worked?
-($turbo) = Krang::AddOn->find(name => 'Turbo');
+($turbo) = pkg('AddOn')->find(name => 'Turbo');
 isa_ok($turbo, 'Krang::AddOn');
 cmp_ok($turbo->version, '==', 1.01);
 ok(-e 'addons/Turbo/lib/Krang/Turbo.pm');
@@ -48,32 +49,32 @@ ok(-e 'turbo_1.01_was_here');
 unlink('turbo_1.01_was_here');
 
 # install an addon with an element set
-Krang::AddOn->install(src => 
+pkg('AddOn')->install(src => 
             catfile(KrangRoot, 't', 'addons', 'NewDefault-1.00.tar.gz'));
 # worked?
-my ($def) = Krang::AddOn->find(name => 'NewDefault');
+my ($def) = pkg('AddOn')->find(name => 'NewDefault');
 END { $def->uninstall }
 isa_ok($def, 'Krang::AddOn');
 cmp_ok($def->version, '==', 1.00);
 is($def->name, 'NewDefault');
 
 # try loading the element lib
-eval { Krang::ElementLibrary->load_set(set => "Default2") };
+eval { pkg('ElementLibrary')->load_set(set => "Default2") };
 ok(not $@);
 die $@ if $@;
 
 # install an addon with an htdocs/ script
-Krang::AddOn->install(src => 
+pkg('AddOn')->install(src => 
             catfile(KrangRoot, 't', 'addons', 'LogViewer-1.00.tar.gz'));
 # worked?
-my ($log) = Krang::AddOn->find(name => 'LogViewer');
+my ($log) = pkg('AddOn')->find(name => 'LogViewer');
 END { $log->uninstall }
 isa_ok($log, 'Krang::AddOn');
 cmp_ok($log->version, '==', 1.00);
 is($log->name, 'LogViewer');
 
 # try loading the about.tmpl template
-my $template = Krang::HTMLTemplate->new(filename => 'about.tmpl',
+my $template = pkg('HTMLTemplate')->new(filename => 'about.tmpl',
                                         path     => 'About/');
 like($template->output, qr/enhanced with LogViewer/);
 
