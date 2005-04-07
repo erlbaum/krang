@@ -78,11 +78,15 @@ my $template = pkg('HTMLTemplate')->new(filename => 'about.tmpl',
                                         path     => 'About/');
 like($template->output, qr/enhanced with LogViewer/);
 
-# try hitting the CGI through the webserver
 SKIP: {
     skip "Apache server isn't up, skipping live tests", 7
       unless -e catfile(KrangRoot, 'tmp', 'httpd.pid');
 
+    # try restarting the server, skipping if that doesn't work
+    local $ENV{CGI_MODE} = 1;
+    system(KrangRoot . "/bin/krang_ctl restart > /dev/null 2>&1")
+      and skip "Krang servers couldn't be restarted, skipping tests.", 7;
+    
     # get creds
     my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
     my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
@@ -104,4 +108,3 @@ SKIP: {
     request_ok('log_viewer.pl', {});
     response_like(qr/hi mom/i);
 }
-
