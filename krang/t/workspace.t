@@ -62,14 +62,14 @@ SKIP: {
     my @work = pkg('Workspace')->find();
     ok(not grep { not defined $_ } @work);
     foreach my $story (@stories) {
-        ok(grep { ref $_ eq 'Krang::Story' and
-                    $_->story_id == $story->story_id } @work);
+        ok(grep { $_->isa('Krang::Story') and
+                  $_->story_id == $story->story_id } @work);
     }
           
     # checkin a story and make sure it's gone from workspace
     $stories[0]->checkin;
     @work = pkg('Workspace')->find();
-    ok(not grep { ref $_ eq 'Krang::Story' and
-                    $_->story_id == $stories[0]->story_id } @work);
+    ok(not grep { $_->isa('Krang::Story') and
+                  $_->story_id == $stories[0]->story_id } @work);
 };
 
