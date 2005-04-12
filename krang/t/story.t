@@ -1,5 +1,13 @@
 use Krang::ClassFactory qw(pkg);
-use Test::More qw(no_plan);
+
+# these tests are run from addon_lazy as sub-tests
+BEGIN {
+    unless ($ENV{SUB_TEST}) {
+        eval "use Test::More qw(no_plan);";
+        die $@ if $@;
+    }
+}
+
 use strict;
 use warnings;
 use Krang::ClassLoader 'Script';
