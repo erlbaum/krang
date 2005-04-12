@@ -25,7 +25,7 @@ Krang::AddOn - module to manage Krang add-ons
   $version = $addon->version;
 
   # remove an addon
-  $addon->uninstall();
+  $addon->uninstall(verbose => 0);
 
 =head1 DESCRIPTION
 
@@ -46,6 +46,13 @@ The C<verbose> option will cause install steps to be logged to STDERR.
 The C<force> option will allow an addon to be installed even if the
 addon is already installed and version is greater than or equal to
 this version.
+
+=item C<< $addon->uninstall(verbose => 1, force => 1) >>
+
+Uninstall an addon.  The C<verbose> option will cause install steps to
+be logged to STDERR.  The C<force> option will allow an addon to be
+uninstalled even if an existing addon depends on it, otherwise the
+method will die().
 
 =item C<< $name = $addon->name >>
 
@@ -111,9 +118,38 @@ sub init {
 
 # remove an addon
 sub uninstall {
-    my $self = shift;
-    my $dir = catdir(KrangRoot, 'addons');
-    rmtree(catdir($dir, $self->name));
+    my ($self, %args) = @_;
+    my $verbose = $args{verbose};
+    my $force   = $args{force};
+
+    # make sure no other addons are depending on this one
+    eval {
+        foreach my $addon (ref($self)->find()) {
+            next if $addon->name eq $self->{name};
+            my $conf = $addon->conf;        
+            if (my %req = $conf->get('requireaddons')) {
+                die "Cannot uninstall the $self->{name} addon while ".
+                  "$addon->{name} is installed.  $addon->{name} depends " .
+                    "on $self->{name}.\n"
+                      if $req{$self->{name}};
+            }
+        }
+    };
+    if ($@) {
+        die $@ unless $force;
+        warn $@ . "(continueing anyway due to --force)\n";
+    }
+
+    my $dir = catdir(KrangRoot, 'addons', $self->name);
+    
+    # run the uninstall script if one is set
+    system("KRANG_ROOT=" . KrangRoot . " perl " .
+           catfile($dir, $self->conf->get('uninstallscript')))
+      if $self->conf->get('uninstallscript');
+
+    # do the deed
+    print STDERR "Removing $dir...\n" if $verbose;
+    rmtree($dir);
 }
 
 
@@ -342,6 +378,7 @@ sub _addon_conf {
                    valid_directives => [qw( name version files 
                                             excludefiles requirekrang
                                             requireaddons postinstallscript 
+                                            uninstallscript
                                             navigationhandler
                                           )],
                    valid_blocks     => []);
