@@ -24,6 +24,13 @@ use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'XML::Validator';
+use List::Util qw(first);
+
+# list of supported classes
+our @CLASSES = (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site 
+                   Krang::Category Krang::Alert Krang::Group Krang::Media 
+                   Krang::Template Krang::Story Krang::Schedule 
+                   Krang::ListGroup Krang::List Krang::ListItem ));
 
 # setup exceptions
 use Exception::Class 
@@ -297,7 +304,7 @@ sub add {
 
 sub _obj2id {
     my $object = shift;
-    my $class = ref $object;
+    my $class = first { $object->isa($_) } @CLASSES;
     my ($id_name) = $class =~ /^Krang::(.*)$/;
     $id_name = lc($id_name) . "_id";
     $id_name = 'list_item_id' if ($id_name eq 'listitem_id');
@@ -551,7 +558,7 @@ sub import_all {
     my @failed;
 
     # process classes in an order least likely to cause backrefs
-    foreach my $class (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site Krang::Category Krang::Alert Krang::Group Krang::Media Krang::Template Krang::Story Krang::Schedule Krang::ListGroup Krang::List Krang::ListItem )) {
+    foreach my $class (@CLASSES) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};
