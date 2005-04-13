@@ -117,6 +117,7 @@ use Krang::ClassFactory qw(pkg);
 use Term::Prompt qw(prompt);
 use Krang;
 use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot InstanceDBName DBUser DBPass);
+use Krang::File;
 
 use Getopt::Long;
 use Pod::Usage;
@@ -253,8 +254,10 @@ foreach my $instance (@instances) {
     system($cmd) && die "Couldn't grant all: $?";
 
     # load all sql files as the DBUser
-    print STDERR "Loading SQL for '$name'...\n" if $verbose;
-    $cmd = "cat " . catfile(KrangRoot, 'sql', '*.sql') . 
+    my @sql_dirs = Krang::File->find_all('sql');
+    print STDERR "Loading SQL for '$name' from " . join(', ', @sql_dirs) . 
+      "...\n" if $verbose;
+    $cmd = "cat " . join(' ', map { catfile($_, '*.sql') } @sql_dirs) . 
       " | mysql -u$user $name ";
     $cmd .= " -p$pass" if $pass;
     $cmd .= " -h$hostname" if defined $hostname;

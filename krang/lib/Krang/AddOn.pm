@@ -143,9 +143,11 @@ sub uninstall {
     my $dir = catdir(KrangRoot, 'addons', $self->name);
     
     # run the uninstall script if one is set
-    system("KRANG_ROOT=" . KrangRoot . " perl " .
-           catfile($dir, $self->conf->get('uninstallscript')))
-      if $self->conf->get('uninstallscript');
+    if ($self->conf->get('uninstallscript')) {
+        system("KRANG_ROOT=" . KrangRoot . " perl " .
+               catfile($dir, $self->conf->get('uninstallscript')))
+          and die "\n\nUninstall script failed, won't uninstall!\n";
+    }
 
     # do the deed
     print STDERR "Removing $dir...\n" if $verbose;
@@ -153,6 +155,7 @@ sub uninstall {
 }
 
 
+# find caches addons in @ADDONS until _flush_cache is called
 our @ADDONS;
 sub find {
     my ($pkg, %arg) = @_;
