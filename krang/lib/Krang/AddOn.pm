@@ -231,6 +231,11 @@ sub install {
     # copy files
     $pkg->_copy_files(%args, files => \@files);
 
+    # run krang_addon_build to build src/ files
+    system(catfile(KrangRoot, 'bin', 'krang_addon_build') . " " .
+           $conf->get('name')) 
+      and die "Unable to build with krang_addon_build: $!";
+
     # perform upgrades if necessary
     $pkg->_upgrade(%args) if $old;
 

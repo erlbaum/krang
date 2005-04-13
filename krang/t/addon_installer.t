@@ -63,6 +63,18 @@ eval { pkg('ElementLibrary')->load_set(set => "Default2") };
 ok(not $@);
 die $@ if $@;
 
+# install an addon which has a src/ module
+pkg('AddOn')->install(src => 
+            catfile(KrangRoot, 't', 'addons', 'Clean-1.00.tar.gz'));
+# worked?
+my ($clean) = pkg('AddOn')->find(name => 'Clean');
+END { $clean->uninstall }
+
+# try loading HTML::Clean
+eval "no warnings 'deprecated'; use HTML::Clean";
+ok(not $@);
+die $@ if $@;
+
 # install an addon with an htdocs/ script
 pkg('AddOn')->install(src => 
             catfile(KrangRoot, 't', 'addons', 'LogViewer-1.00.tar.gz'));
@@ -103,6 +115,9 @@ SKIP: {
     request_ok('workspace.pl', {});
     response_like(qr/Log Tools/);
     response_like(qr/<a.*?log_viewer.pl.*>.*?View Log/);
+
+    # Clean should be removing spaces
+    response_like(qr/<html><head><title>/);
 
     # try the script
     request_ok('log_viewer.pl', {});
