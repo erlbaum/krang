@@ -10,6 +10,7 @@ use File::Spec::Functions qw(catfile);
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader 'Test::Apache';
 use Krang::ClassLoader 'HTMLTemplate';
+use Krang::ClassLoader DB => 'dbh';
 
 # make sure Turbo isn't installed
 my ($turbo) = pkg('AddOn')->find(name => 'Turbo');
@@ -74,6 +75,10 @@ END { $clean->uninstall }
 eval "no warnings 'deprecated'; use HTML::Clean";
 ok(not $@);
 die $@ if $@;
+
+# look for the cleaned table
+my $dbh = dbh();
+ok($dbh->selectrow_array("SHOW TABLES LIKE 'cleaned'"));
 
 # install an addon with an htdocs/ script
 pkg('AddOn')->install(src => 
