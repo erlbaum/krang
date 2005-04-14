@@ -36,8 +36,6 @@ Cancel, will not save changes and you will remain on the same page
 
 =back
 
-=back
-
 =item New Template - Element Chooser (1.200?)
 
 When creating a new template - the element chooser pulldown is nearly
