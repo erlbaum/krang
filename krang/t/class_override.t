@@ -48,4 +48,9 @@ SKIP: {
       unless $res->content =~ /running\s+in\s+CGI\s+mode/i;
 
     response_like(qr/PLUS BIG IMPROVEMENTS/);
+
+    # hit the barf runmode which tests messages.conf extensions
+    request_ok('about.pl', {rm => 'barf'});
+    response_like(qr/Barf!/);
+    response_like(qr/Barf\s+Barf/);
 }
