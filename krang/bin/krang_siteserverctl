@@ -75,6 +75,7 @@ END
 
 use Krang::ClassFactory qw(pkg);
 use Krang::Conf qw(KrangRoot InstanceHostName);
+use Krang::File;
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
@@ -182,11 +183,12 @@ END
 sub write_conf {
     require HTML::Template;
 
+    # find template file, looking addons first then in the root
+    my $file = Krang::File->find("conf/siteserver.conf.tmpl");
+
     # create the httpd.conf by processing it as a template, using conf
     # directives as params
-    my $template = HTML::Template->new(filename => catfile(KrangRoot, 
-                                                           "conf",
-                                                           "siteserver.conf.tmpl"),
+    my $template = HTML::Template->new(filename => $file,
                                        global_vars => 1,
                                        die_on_bad_params => 0,
                                       );
