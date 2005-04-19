@@ -174,6 +174,18 @@ Krang::History stores class names in the database which interacts in
 unfortunate ways with the new class overriding system.  The fix here
 isn't particularly clear but one is obviously needed.
 
+=item Add-on scripts should get #! handling
+
+Krang fixes the #! line on scripts in bin/ to point to the Perl used
+to install Krang.  Addons should get similar processing during
+install.
+
+=item Add-ons should be able to include their own platform/ files
+
+Add-ons may ship with requirements which need additional porting.  For
+this purpose add-ons should be able to have their own platform/
+modules which inherit from the ones in KRANG_ROOT/platform.
+
 =back
 
 =head2 Other
