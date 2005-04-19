@@ -68,7 +68,8 @@ Get the addon's configuration, a Config::ApacheFormat object.
 
 =item C<< @addons = Krang::AddOn->find() >>
 
-Get a list of addons.  Only one option is supported:
+Get a list of addons sorted by their Priority.  Only one option is
+supported:
 
 =over
 
@@ -173,7 +174,12 @@ sub find {
                                     version => $conf->get('version'),
                                     conf    => $conf);
         }
-    }    
+
+        # sort by priority in reverse order
+        @ADDONS = sort { ($b->conf->get('priority') || 0)  
+                           <=>
+                         ($a->conf->get('priority') || 0) } @ADDONS
+    }
 
     return @ADDONS unless $arg{name};
     return grep { $_->{name} eq $arg{name} } @ADDONS;
@@ -388,6 +394,7 @@ sub _addon_conf {
                                             requireaddons postinstallscript 
                                             uninstallscript
                                             navigationhandler
+                                            priority
                                           )],
                    valid_blocks     => []);
     eval { $conf->read($file) };

@@ -128,3 +128,28 @@ SKIP: {
     request_ok('log_viewer.pl', {});
     response_like(qr/hi mom/i);
 }
+
+
+# install addons which use Priority, make sure it works
+pkg('AddOn')->install(src => 
+            catfile(KrangRoot, 't', 'addons', 'Last-1.00.tar.gz'));
+my ($last) = pkg('AddOn')->find(name => 'Last');
+END { $last->uninstall }
+
+pkg('AddOn')->install(src => 
+            catfile(KrangRoot, 't', 'addons', 'AAMiddle-1.00.tar.gz'));
+my ($middle) = pkg('AddOn')->find(name => 'AAMiddle');
+END { $middle->uninstall }
+
+pkg('AddOn')->install(src => 
+            catfile(KrangRoot, 't', 'addons', 'First-1.00.tar.gz'));
+my ($first) = pkg('AddOn')->find(name => 'First');
+END { $first->uninstall }
+
+# pull addons, looking for just these
+my @addons = grep { $_->name eq 'First' or 
+                    $_->name eq 'Last' or 
+                    $_->name eq 'AAMiddle' } Krang::AddOn->find();
+is($addons[0]->name, 'First', 'first is first');
+is($addons[1]->name, 'AAMiddle', 'middle is middle');
+is($addons[2]->name, 'Last', 'last is last');
