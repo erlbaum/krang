@@ -164,7 +164,7 @@ sub find {
 
     unless (@ADDONS) {
         opendir(my $dh, $dir) or die "Unable to open dir $dir: $!";
-        my @files = grep { not /^\./ } readdir($dh);
+        my @files = grep { not /^\./ and not /^CVS$/ } readdir($dh);
         closedir($dh);
 
         foreach my $addon (@files) {
