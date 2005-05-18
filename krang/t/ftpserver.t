@@ -6,6 +6,7 @@ use Krang::Script;
 use Krang::Category;
 use Krang::Site;
 use Krang::User;
+use Krang::Group;
 use Krang::Media;
 use Krang::Template;
 use Krang::Session qw(%session);
@@ -82,6 +83,14 @@ isa_ok($ftp, 'Net::FTP', 'is Net::FTP');
 
 my $password = 'krangftptest';
 my $user = $creator->create_user(password => $password);
+
+my @group_ids = $user->group_ids();
+my @groups = Krang::Group->find( group_ids => [@group_ids] );
+
+foreach my $g (@groups) {
+   $g->admin_categories_ftp(1);
+   $g->save();
+}
 
 is( $ftp->login( $user->login, $password ), '1', 'Login Test' );
 
