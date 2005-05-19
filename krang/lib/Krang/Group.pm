@@ -30,6 +30,7 @@ Krang::Group - Interface to manage Krang permissions
                                  admin_contribs      => 1,
                                  admin_sites         => 1,
                                  admin_categories    => 1,
+                                 admin_categories_ftp    => 1,
                                  admin_jobs          => 1,
                                  admin_desks         => 1,
                                  admin_lists         => 1,
@@ -76,6 +77,7 @@ Krang::Group - Interface to manage Krang permissions
   my $admin_contribs   = $group->admin_contribs();
   my $admin_sites      = $group->admin_sites();
   my $admin_categories = $group->admin_categories();
+  my $admin_categories_ftp = $group->admin_categories_ftp();
   my $admin_jobs       = $group->admin_jobs();
   my $admin_desks      = $group->admin_desks();
   my $admin_desks      = $group->admin_lists();
@@ -141,6 +143,7 @@ use constant FIELDS => qw( name
                            admin_contribs
                            admin_sites
                            admin_categories
+                           admin_categories_ftp
                            admin_jobs
                            admin_desks
                            admin_lists
@@ -185,6 +188,7 @@ specified using Boolean (1 or 0) values:
   * admin_contribs
   * admin_sites
   * admin_categories
+  * admin_categories_ftp
   * admin_jobs
   * admin_desks
   * admin_lists
@@ -206,6 +210,7 @@ sub init {
                     admin_contribs      => 0,
                     admin_sites         => 0,
                     admin_categories    => 0,
+                    admin_categories_ftp    => 0,
                     admin_jobs          => 0,
                     admin_desks         => 0,
                     admin_lists         => 0,
@@ -645,6 +650,7 @@ sub serialize_xml {
     $writer->dataElement( admin_contribs => $self->{admin_contribs} );
     $writer->dataElement( admin_sites => $self->{admin_sites} );
     $writer->dataElement( admin_categories => $self->{admin_categories} );
+    $writer->dataElement( admin_categories_ftp => $self->{admin_categories_ftp} );
     $writer->dataElement( admin_jobs => $self->{admin_jobs} );
     $writer->dataElement( admin_desks=> $self->{admin_desks} );
     $writer->dataElement( admin_lists => $self->{admin_lists} );
@@ -1261,6 +1267,7 @@ functions:
   admin_contribs
   admin_sites
   admin_categories
+  admin_categories_ftp
   admin_jobs
   admin_desks
   admin_lists
@@ -1278,6 +1285,7 @@ assigned to the following groups:
               admin_contribs      => 1
               admin_sites         => 0
               admin_categories    => 1
+              admin_categories_ftp    => 1
               admin_jobs          => 1
               admin_desks         => 0
               admin_lists         => 0
@@ -1290,6 +1298,7 @@ assigned to the following groups:
               admin_contribs      => 0
               admin_sites         => 0
               admin_categories    => 0
+              admin_categories_ftp    => 0
               admin_jobs          => 1
               admin_desks         => 1
               admin_lists         => 0
@@ -1304,6 +1313,7 @@ In this case, the resultant permissions for this user will be:
    admin_contribs      => 1
    admin_sites         => 0
    admin_categories    => 1
+   admin_categories_ftp    => 1
    admin_jobs          => 1
    admin_desks         => 1
    admin_lists         => 0
@@ -1345,6 +1355,7 @@ sub user_admin_permissions {
                           admin_contribs
                           admin_sites
                           admin_categories
+                          admin_categories_ftp
                           admin_jobs
                           admin_desks
                           admin_lists );
