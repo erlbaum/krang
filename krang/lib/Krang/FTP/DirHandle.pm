@@ -677,20 +677,6 @@ sub can_list   { 1; }
 sub can_rename { 1; }
 sub can_mkdir  { 1; }
 
-=back
-
-=head1 SEE ALSO
-
-Net:FTPServer::DirHandle
-
-L<Krang::FTP::Server>
-
-L<Krang::FTP::FileHandle>
-
-=cut 
-sub dir {return shift};
-
-
 =item _can_manage_categories_via_ftp()
 
 Returns true if user has admin permissions to manage categories via 
@@ -705,6 +691,20 @@ sub _can_manage_categories_via_ftp {
     my $can_admin_categories_ftp = $admin_perms{'admin_categories_ftp'} || 0;
     return ($can_admin_categories && $can_admin_categories_ftp);
 }
+
+=back
+
+=head1 SEE ALSO
+
+Net:FTPServer::DirHandle
+
+L<Krang::FTP::Server>
+
+L<Krang::FTP::FileHandle>
+
+=cut 
+
+sub dir {return shift};
 
 
 1;
