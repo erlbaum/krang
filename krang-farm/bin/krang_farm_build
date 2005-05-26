@@ -18,7 +18,7 @@ Create a build of Krang v1.018 on just the Redhat7_3 machine:
 
 Create builds from the source in CVS:
 
-  $ krang_farm_build --from-cvs
+  $ krang_farm_build --from-cvs tag=V1_1025
 
 =head1 LOGGING
 
@@ -43,8 +43,8 @@ all Perls will be used.  May not be repeated.
 =item --from-cvs
 
 Instead of passing in a source tar-ball, it will check out krang from cvs and use that.
-By default it will check out the head.  Optionally you can supply a symbolic tag to --from-cvs 
-"--from-cvs=V1_1025" this will check out the specfied version instead of the latest and greatest.
+By default it will check out the head.  Optionally you can supply a symbolic tag with the option --tag=VERSION_X 
+"--tag=V1_1025" this will check out the specfied version instead of the latest and greatest.
 
 =item --no-shutdown
 
@@ -93,12 +93,13 @@ use File::Temp qw(tempdir);
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, @machines, $src, @machine_names, $from_cvs, $no_shutdown, $which_perl);
+my ($help, $man, @machines, $src, @machine_names, $from_cvs, $tag, $no_shutdown, $which_perl);
 pod2usage(2) unless
   GetOptions(help       => \$help,
              man        => \$man,
              'machine=s' => \@machine_names,
-             'from-cvs:s'  => \$from_cvs,
+             'from-cvs'  => \$from_cvs,
+             'tag=s'     => \$tag,
              'no-shutdown' => \$no_shutdown,
              'perl=s'    => \$which_perl,
             );
@@ -127,14 +128,16 @@ if ($from_cvs) {
     # checkout krang
     my $orig = cwd;
     chdir($temp) or die $!;
-    if ($from_cvs eq '1') {
+
+    unless ($tag) {
         system('cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs -z3 co -P krang > /dev/null 2>&1') and
           die "Unable to checkout krang from CVS: $?";
     } else {
-        system('cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs -z3 co -P -r ' . $from_cvs . ' krang > /dev/null 2>&1') and
+        system('cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs -z3 co -P -r ' . $tag . ' krang > /dev/null 2>&1') and
           die "Unable to checkout krang from CVS: $?";
 
     }
+
     print "Checkout complete.\n";
     
     # make a source dist and copy it back where we came from
