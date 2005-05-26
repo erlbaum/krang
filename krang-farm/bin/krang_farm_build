@@ -42,8 +42,9 @@ all Perls will be used.  May not be repeated.
 
 =item --from-cvs
 
-Instead of passing in a source tar-ball, the latest source from CVS
-will be used.
+Instead of passing in a source tar-ball, it will check out krang from cvs and use that.
+By default it will check out the head.  Optionally you can supply a symbolic tag to --from-cvs 
+"--from-cvs=V1_1025" this will check out the specfied version instead of the latest and greatest.
 
 =item --no-shutdown
 
@@ -97,7 +98,7 @@ pod2usage(2) unless
   GetOptions(help       => \$help,
              man        => \$man,
              'machine=s' => \@machine_names,
-             'from-cvs'  => \$from_cvs,
+             'from-cvs:s'  => \$from_cvs,
              'no-shutdown' => \$no_shutdown,
              'perl=s'    => \$which_perl,
             );
@@ -126,8 +127,14 @@ if ($from_cvs) {
     # checkout krang
     my $orig = cwd;
     chdir($temp) or die $!;
-    system('cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs -z3 co -P krang > /dev/null 2>&1') and
-      die "Unable to checkout krang from CVS: $?";
+    if ($from_cvs eq '1') {
+        system('cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs -z3 co -P krang > /dev/null 2>&1') and
+          die "Unable to checkout krang from CVS: $?";
+    } else {
+        system('cvs -d:pserver:anonymous\@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs -z3 co -P -r ' . $from_cvs . ' krang > /dev/null 2>&1') and
+          die "Unable to checkout krang from CVS: $?";
+
+    }
     print "Checkout complete.\n";
     
     # make a source dist and copy it back where we came from
