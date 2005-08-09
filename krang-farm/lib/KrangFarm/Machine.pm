@@ -214,14 +214,14 @@ sub send_file {
     $command->soft_close();
     croak "Failed to send file." if $command->exitstatus() != 0;
 
-    # make sure the file has the right size by comparing results of
-    # 'ls -s' on both host and target
+    # make sure the file the file was sent successfully by comparing results of
+    # md5sum 
     my ($f) = $file =~ m!([^/]+)$!;
-    my ($size) = `ls -s $file` =~ /(\d+)/;
-    $command = $self->spawn(%args, command => "ls -s $f");
-    if (not($command->expect(15, '-re', "\\d+\\s+$f")) or
-        $command->match !~ /${size}\s+$f/) {
-        croak("Failed to send file, size of '$f' does not match '$size'.");
+    my ($key) = `md5sum $file` =~ /^\s*(\w+)\s+/;
+    $command = $self->spawn(%args, command => "md5sum $f");
+    if (not($command->expect(15, '-re', "\\w+\\s+$f")) or
+        $command->match !~ /${key}\s+$f/) {
+        croak("Failed to send file, md5sum of '$f' does not match '$key'.");
     }
     $command->soft_close();
 
@@ -249,14 +249,14 @@ sub fetch_file {
     $command->soft_close();
     croak "Failed to send file." if $command->exitstatus() != 0;
 
-    # make sure the file has the right size by comparing results of
-    # 'ls -s' on both host and target
+    # make sure the file was sent successfully by comparing results of
+    # 'md5sum' on both host and target
     my ($f) = $file =~ m!([^/]+)$!;
-    my ($size) = `ls -s $f` =~ /(\d+)/;
-    $command = $self->spawn(%args, command => "ls -s $file");
-    if (not($command->expect(15, '-re', "\\d+\\s+$file")) or
-        $command->match !~ /${size}\s+$file/) {
-        croak("Failed to fetch file, size of '$file' does not match '$size'.");
+    my ($key) = `md5sum $f` =~ /^\s*(\w+)\s+/;
+    $command = $self->spawn(%args, command => "md5sum $file");
+    if (not($command->expect(15, '-re', "\\w+\\s+$file")) or
+        $command->match !~ /${key}\s+$file/) {
+        croak("Failed to fetch file, md5sum of '$file' does not match '$key'.");
     }
     $command->soft_close();
 
