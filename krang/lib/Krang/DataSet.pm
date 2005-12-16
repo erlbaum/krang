@@ -663,7 +663,7 @@ sub _deserialize {
         my $krang_lib = $1;
         eval("use Krang::ClassLoader '$krang_lib'");
         die ("Error importing '$krang_lib': $@") if ($@);
-        $class =~ pkg($krang_lib);
+        $class = pkg($krang_lib);
     } else {
         # Non-Krang library.  Import.
         eval("use $class");

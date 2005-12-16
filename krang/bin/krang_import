@@ -229,7 +229,7 @@ sub import_callback {
     my $object = $arg{object};
     
     if ($verbose) {
-        my ($class, $id) = pkg('DataSet')->_obj2id->($object);
+        my ($class, $id) = pkg('DataSet')->_obj2id($object);
         if ($id > $max_id{$class}) {
             print STDERR "Imported $class => $id\n";
         } elsif (grep { $_ eq $class } @skip_classes) {
