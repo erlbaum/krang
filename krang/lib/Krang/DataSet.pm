@@ -1,36 +1,28 @@
 package Krang::DataSet;
-use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
+
+use Archive::Tar;
+use Carp qw(croak);
+use Cwd qw(fastcwd);
 use Exporter;
-use File::Temp qw(tempdir);
-use File::Path qw(mkpath rmtree);
-use File::Spec::Functions qw(catdir catfile splitpath 
-                             file_name_is_absolute rel2abs);
 use File::Copy qw(copy);
 use File::Find qw(find);
-use Krang::ClassLoader Conf => qw(KrangRoot);
-use Archive::Tar;
-use Cwd qw(fastcwd);
-use Krang::ClassLoader Log => qw(debug assert ASSERT);
-use Carp qw(croak);
-use Krang::ClassLoader 'XML';
-use Krang;
-use Krang::ClassLoader 'Contrib';
-use Krang::ClassLoader 'Story';
-use Krang::ClassLoader 'Template';
-use Krang::ClassLoader 'Media';
-use Krang::ClassLoader 'Category';
-use Krang::ClassLoader 'Site';
-use Krang::ClassLoader 'XML::Validator';
+use File::Path qw(mkpath rmtree);
+use File::Spec::Functions qw(catdir catfile splitpath file_name_is_absolute rel2abs);
+use File::Temp qw(tempdir);
 use List::Util qw(first);
 
-# list of supported classes
-our @CLASSES = (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site 
-                   Krang::Category Krang::Alert Krang::Group Krang::Media 
-                   Krang::Template Krang::Story Krang::Schedule 
-                   Krang::ListGroup Krang::List Krang::ListItem ));
+
+use Krang;
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Log => qw(debug assert ASSERT);
+use Krang::ClassLoader 'XML';
+use Krang::ClassLoader 'XML::Validator';
+
+
 
 # setup exceptions
 use Exception::Class 
@@ -228,6 +220,26 @@ sub _validate_file {
 
 }
 
+
+=item C<< $set->supported_classes() >>
+
+Returns a list of classes which may be exported via Krang::DataSet.
+Override this method to extent the list.
+
+=cut
+
+sub supported_classes {
+    my $self = shift;
+
+    my @classes = qw( Krang::Desk Krang::User Krang::Contrib Krang::Site 
+                      Krang::Category Krang::Alert Krang::Group Krang::Media 
+                      Krang::Template Krang::Story Krang::Schedule 
+                      Krang::ListGroup Krang::List Krang::ListItem );
+
+    return @classes;
+}
+
+
 =item C<< $set->add(object => $story, from => $self) >>
 
 Adds an object to the data-set.  This operation will also add any
@@ -258,7 +270,7 @@ sub add {
     my $path   = $args{path};
 
     if ($object) {
-        my ($class, $id) = _obj2id($object);
+        my ($class, $id) = $self->_obj2id($object);
 
         # been there, done that?
         return if $self->{objects}{$class}{$id}{xml};
@@ -294,7 +306,7 @@ sub add {
           or croak("Unable to copy file '$file' to '$full_path' : $!");
         
         # register file with caller
-        my ($from_class, $from_id) = _obj2id($from);
+        my ($from_class, $from_id) = $self->_obj2id($from);
         $self->{objects}{$from_class}{$from_id}{files} ||= [];
         push(@{$self->{objects}{$from_class}{$from_id}{files}}, $path);
      } else {
@@ -303,8 +315,9 @@ sub add {
 }
 
 sub _obj2id {
+    my $self = shift;
     my $object = shift;
-    my $class = first { $object->isa($_) } @CLASSES;
+    my $class = first { $object->isa($_) } ( $self->supported_classes );
     my ($id_name) = $class =~ /^Krang::(.*)$/;
     $id_name = lc($id_name) . "_id";
     $id_name = 'list_item_id' if ($id_name eq 'listitem_id');
@@ -550,15 +563,15 @@ sub import_all {
 
     # check skip classes
     foreach my $class (keys %{$self->{skip_classes}}) {
-        next if $class eq 'Krang::Category';
-        next if $class eq 'Krang::Site';
-        croak("Found unexpected value in skip_classes list: $class.  Only Krang::Category and Krang::Site are supported.");
+        next if $class->isa('Krang::Category');
+        next if $class->isa('Krang::Site');
+        croak("Found unexpected value in skip_classes list: $class.  Only Krang::Category and Krang::Site (or sub-classes thereof) are supported.");
     }
 
     my @failed;
 
     # process classes in an order least likely to cause backrefs
-    foreach my $class (@CLASSES) {
+    foreach my $class ( $self->supported_classes ) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};
@@ -618,7 +631,7 @@ sub map_id {
     
     # deserialize
     my $object = $self->_deserialize($class, $id);
-    my ($new_class, $new_id) = _obj2id($object);
+    my ($new_class, $new_id) = $self->_obj2id($object);
 
     # trigger the callback
     $self->{import_callback}->(object => $object);
@@ -644,10 +657,24 @@ sub _deserialize {
     # are we skipping this clas?
     my $skip = $self->{skip_classes}{$class};
 
+    # Import the class, the hard way
+    if ($class =~ /^Krang::(.+)$/) {
+        # We got a Krang class.  Use ClassLoader/ClassFactory
+        my $krang_lib = $1;
+        eval("use Krang::ClassLoader '$krang_lib'");
+        die ("Error importing '$krang_lib': $@") if ($@);
+        $class =~ pkg($krang_lib);
+    } else {
+        # Non-Krang library.  Import.
+        eval("use $class");
+        die ("Error importing $class: $@") if ($@);
+    }
+
     my $obj = $class->deserialize_xml(xml       => $xml, 
                                       set       => $self, 
                                       no_update => $self->{no_update},
                                       skip_update => $skip);
+
     croak("Call to $class->deserialize failed!")
       unless $obj;
     croak("Call to $class->deserialize didn't return a $class object!")
