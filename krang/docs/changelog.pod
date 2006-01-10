@@ -3,6 +3,17 @@
 This document contains a list of changes for each release of Krang.
 
 
+=head2 v2.002
+
+=over
+
+=item *
+
+PUT CHANGES HERE [You Sir]
+
+=back
+
+
 =head2 v2.001
 
 =over
@@ -85,6 +96,44 @@ even if you're using a custom element library.  [Jesse Erlbaum]
 
 Fixed a bug in Krang::lib which caused "legacy" /krang/element_lib path to
 not be included in Perl's @INC path.  [Jesse Erlbaum]
+
+
+=item *
+
+Extended bin/krang_upgrade to check an upgrade directory in each addon directory for  
+upgrade scripts to run.  This is in addition to $KRANG_ROOT/upgrade. [Mike Friedman]
+
+
+=item *
+
+Fixed bug in Krang::ListItem that did not allow sub-classes of
+Krang::List and Krang::ListItem to be used. [Bodo Schulze]
+
+
+=item *
+
+Made URL in message 'story_publish' a link opening the published 
+story in a new window. [Bodo Schulze]
+
+
+=item *
+
+Fixed bug in Krang::Story which would not allow subclasses of
+Krang::Contrib, Krang::ElementClass::StoryLink and
+Krang::ElementClass::MediaLink to be used. [Bodo Schulze]
+
+=item *
+
+Addon-v2 compliance for bin scripts 
+krang_scheduled krang_schedulectl krang_load_skin krang_info krang_ftpd
+krang_ftpctl krang_floodfill krang_delete krang_create_lists krang_category_rename
+krang_bench krang_backup krang_apachectl krang_siteserverctl krang_makedist krang_publish
+[Aaron Dancygier]
+
+=item *
+
+Added SSL support. [Bodo Schulze]
+
 
 
 =back
