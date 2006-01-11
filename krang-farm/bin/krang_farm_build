@@ -18,7 +18,7 @@ Create a build of Krang v1.018 on just the Redhat7_3 machine:
 
 Create builds from the source in CVS:
 
-  $ krang_farm_build --from-cvs tag=V1_1025
+  $ krang_farm_build --from-cvs --tag=V1_1025
 
 =head1 LOGGING
 
