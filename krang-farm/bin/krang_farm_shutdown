@@ -1,0 +1,112 @@
+#!/usr/bin/perl -w
+use strict;
+use warnings;
+
+=head1 NAME
+
+krang_farm_shutdown - utility script to shutdown 1 or more hungup krang_farm machines. 
+
+=head1 SYNOPSIS
+
+Shutdown fedora1 krang_farm machine.
+
+  $ krang_farm_shutdown --machine fedora1 
+
+=head1 DECRIPTION
+
+This is a utility script for shutting down vmware machines which are.
+  $ krang_farm_shutdown --machine fedora1 
+
+=head1 OPTIONS
+
+=over
+
+=item --machine machine_name
+
+Specify a particular machine to shutdown.  Otherwise it shuts down  
+ all vmware machines in farm.conf
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+
+BEGIN {
+    # Find a KRANGFARM_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANGFARM_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANGFARM_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANGFARM_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib;
+
+    # load KrangFarm::Conf
+    eval { require KrangFarm::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load KrangFarm::Conf.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use KrangFarm::Machine;
+use File::Temp qw(tempdir);
+use Expect;
+
+# process options
+use Getopt::Long;
+use Pod::Usage;
+
+my ($help, $man, @machines, @machine_names, $version, $no_shutdown, $which_perl);
+pod2usage(2) unless
+  GetOptions(help       => \$help,
+             man        => \$man,
+             'machine=s' => \@machine_names
+            );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+# resolve machines list
+if (@machine_names) {
+    my @all = KrangFarm::Machine->list;
+    foreach my $name (@machine_names) {
+        my ($machine) = grep { $_ eq $name } @all;
+        die "Machine named '$name' not found in farm.conf!\n" 
+          unless $machine;
+        push(@machines, $machine);
+    }                
+} else {
+    @machines = KrangFarm::Machine->list;
+}
+
+# run over list of machines starting them up and running a build
+my %results;
+foreach my $name (@machines) {
+    my $machine = 
+      KrangFarm::Machine->new(name => $name,
+                              log  => catfile($ENV{KRANGFARM_ROOT}, 'log', 
+                                              "test.$name.log"));
+
+    print "\n" . "*"x50 . "\niShutting down $name ".
+      "(" . $machine->description . ")\n";
+
+    eval {
+            $machine->stop();
+    };
+    my $err = $@;
+
+    # cough up and error if something broke
+    warn $err if $err;
+}
+
+exit 0;
