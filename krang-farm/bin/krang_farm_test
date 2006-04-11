@@ -200,7 +200,7 @@ foreach my $name (@machines) {
             my $script;
             my $result = 0;
             while(my $which = $test->expect(undef, 
-                                            "All tests successful.",
+                                            '-re' => '^All tests successful[\.,].*$',
                                             '-re' => '^ok\r?$',
                                             '-re' => '^t/\\w+\\.{3}',
                                             '-re' => 'Failed \\d+/\\d+ test scripts, \\d+.\\d+% okay. \\d+/\\d+ subtests failed, \\d+.\\d+% okay.',
