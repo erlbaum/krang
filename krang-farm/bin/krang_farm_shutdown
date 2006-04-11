@@ -95,9 +95,9 @@ foreach my $name (@machines) {
     my $machine = 
       KrangFarm::Machine->new(name => $name,
                               log  => catfile($ENV{KRANGFARM_ROOT}, 'log', 
-                                              "test.$name.log"));
+                                              "shutdown_farm.log"));
 
-    print "\n" . "*"x50 . "\niShutting down $name ".
+    print "\n" . "*"x50 . "\nShutting down $name ".
       "(" . $machine->description . ")\n";
 
     eval {
