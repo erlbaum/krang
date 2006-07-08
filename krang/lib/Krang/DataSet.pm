@@ -1,5 +1,4 @@
 package Krang::DataSet;
-use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -10,29 +9,21 @@ use File::Spec::Functions qw(catdir catfile splitpath
                              file_name_is_absolute rel2abs);
 use File::Copy qw(copy);
 use File::Find qw(find);
-use Krang::ClassLoader Conf => qw(KrangRoot);
-use Archive::Tar;
+use Krang::Conf qw(KrangRoot);
 use Cwd qw(fastcwd);
-use Krang::ClassLoader Log => qw(debug assert ASSERT);
+use Krang::Log qw(debug assert ASSERT);
 use Carp qw(croak);
-use Krang::ClassLoader 'XML';
+use Krang::XML;
 use Krang;
-use Krang::ClassLoader 'Contrib';
-use Krang::ClassLoader 'Story';
-use Krang::ClassLoader 'Template';
-use Krang::ClassLoader 'Media';
-use Krang::ClassLoader 'Category';
-use Krang::ClassLoader 'Site';
-use Krang::ClassLoader 'XML::Validator';
-use List::Util qw(first);
+use Krang::Contrib;
+use Krang::Story;
+use Krang::Template;
+use Krang::Media;
+use Krang::Category;
+use Krang::Site;
+use Krang::XML::Validator;
 use IO::Zlib;
 use IPC::Run qw(run);
-
-# list of supported classes
-our @CLASSES = (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site 
-                   Krang::Category Krang::Alert Krang::Group Krang::Media 
-                   Krang::Template Krang::Story Krang::Schedule 
-                   Krang::ListGroup Krang::List Krang::ListItem ));
 
 # setup exceptions
 use Exception::Class 
@@ -62,7 +53,7 @@ Krang::DataSet - Krang interface to XML data sets
 Creating data sets:
 
   # create a new data set
-  my $set = pkg('DataSet')->new();
+  my $set = Krang::DataSet->new();
 
   # add an objects to it
   $set->add(object => $story);
@@ -79,7 +70,7 @@ Creating data sets:
 Loading data sets:
 
   # load a data set from a file on disk
-  my $set = pkg('DataSet')->new(path => "foo.kds");
+  my $set = Krang::DataSet->new(path => "foo.kds");
 
   # get a list of objects in the set
   my @objects = $set->list();
@@ -189,7 +180,7 @@ sub _validate {
     my $self = shift;
     local $_;
 
-    my $validator = pkg('XML::Validator')->new();
+    my $validator = Krang::XML::Validator->new();
 
     # switch into directory with XML
     my $old_dir = fastcwd;
@@ -219,7 +210,7 @@ sub _validate_file {
     my $self = shift;
     my $path = shift;
 
-    my $validator = pkg('XML::Validator')->new();
+    my $validator = Krang::XML::Validator->new();
 
     my ($ok, $err) = $validator->validate(path => $path);
 
@@ -278,7 +269,7 @@ sub add {
         # register mapping before calling serialize_xml to break cycles
         $self->{objects}{$class}{$id}{xml} = $file;
         
-        my $writer = pkg('XML')->writer(fh => $fh);
+        my $writer = Krang::XML->writer(fh => $fh);
         $writer->xmlDecl();
         $object->serialize_xml(writer => $writer, set => $self);
         $writer->end();
@@ -306,7 +297,7 @@ sub add {
 
 sub _obj2id {
     my $object = shift;
-    my $class = first { $object->isa($_) } @CLASSES;
+    my $class = ref $object;
     my ($id_name) = $class =~ /^Krang::(.*)$/;
     $id_name = lc($id_name) . "_id";
     $id_name = 'list_item_id' if ($id_name eq 'listitem_id');
@@ -352,11 +343,12 @@ May throw a Krang::DataSet::ValidationFailed exception if the archive
 is found to contain errors.  See EXCEPTIONS below for details.
 
 =cut
+
 sub write {
     my ($self, %args) = @_;
     my $path     = $args{path};
     my $compress = $args{compress} || 0;
-
+    
     croak("Missing required path arg.") unless $path;
     if ($compress) {
         croak("Path does not end in .kds.gz") unless $path =~ /\.kds\.gz$/;
@@ -381,26 +373,26 @@ sub write {
     }
 
     # build list of files to tar in segments of X number of files each, as
-    # defined in $to_tar_at_a_time
+    # defined in $to_tar_at_a_time 
     my (%files_to_tar,$segment);
     my $count = 0;
     # tar can only accept a certain number of files to be passed in at a time
-    # a limit imposed by the OS; here set the limit to a conservative figure
+    # a limit imposed by the OS; here set the limit to a conservative figure 
     my $to_tar_at_a_time = 100;
     find({ wanted => sub { return unless -f;
                            s!^$self->{dir}/!!;
-                          if ($count % $to_tar_at_a_time == 0) {
+                           if ($count % $to_tar_at_a_time == 0) {
                                $segment = 'segment' . $count;
-                           }
+  			   }
                            push(@{$files_to_tar{$segment}},$_);
-                           $count++;
+     			   $count++;
                        },
            no_chdir => 1 },
          $self->{dir});
 
     # give current user read,write,execute permissions for tar cmd further below
     chmod(0700, $path);
-
+ 
     foreach my $file_list (keys %files_to_tar) {
         # use tar with -r option to be able to append files, to get around
         # "Argument list too long" problem when used with the -c option and
@@ -420,7 +412,7 @@ sub write {
 
     # we're done adding files to tar, let's compress it if compression is on
     if ($compress) {
-        open(FILE, $path) or
+        open(FILE, $path) or 
           die "Error compressing: Cannot open tar archive '$path'";
         my (undef, $tmpfilename) = tempfile(DIR => catdir(KrangRoot, 'tmp'));
 
@@ -455,7 +447,7 @@ sub _write_index {
 
     open(my $fh, '>','index.xml') or
       croak("Unable to open index.xml: $!");
-    my $writer = pkg('XML')->writer(fh => $fh);
+    my $writer = Krang::XML->writer(fh => $fh);
 
     # open up index document
     $writer->xmlDecl();
@@ -491,22 +483,22 @@ sub _write_index {
 # load index.xml into objects
 sub _load_index {
     my $self = shift;
-    
+
     # read in index
-    open(my $index, '<', catfile($self->{dir}, 'index.xml')) or 
+    open(my $index, '<', catfile($self->{dir}, 'index.xml')) or
       croak("Unable to open $self->{dir}/index.xml: $!");
     my $xml = join('', <$index>);
     close $index or die $!;
-  
+
     # parse'm up
-    my $data = pkg('XML')->simple(xml => $xml, forcearray => 1);
+    my $data = Krang::XML->simple(xml => $xml, forcearray => 1);
     my %index;
     foreach my $class_rec (@{$data->{class}}) {
         my $class = $class_rec->{name};
         foreach my $object (@{$class_rec->{object}}) {
             $index{$class}{$object->{id}[0]} = { xml => $object->{xml}[0],
-                                                 ($object->{file} ? 
-                                                  (files => $object->{file}) : 
+                                                 ($object->{file} ?
+                                                  (files => $object->{file}) :
                                                   ()),
                                                };
             croak("index.xml refers to file '$object->{xml}[0]' which is ".
@@ -593,7 +585,8 @@ sub import_all {
     my @failed;
 
     # process classes in an order least likely to cause backrefs
-    foreach my $class (@CLASSES) {
+    foreach my $class (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site Krang::Category Krang::Alert
+                          Krang::Group Krang::Media Krang::Template Krang::Story Krang::Schedule Krang::ListGroup Krang::List Krang::ListItem )) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};
@@ -733,6 +726,7 @@ sub map_file {
     return $full_path;
 }
 
+
 =back
 
 =head1 EXCEPTIONS
@@ -812,5 +806,4 @@ by the media object:
 =back
 
 =cut
-
 1;
