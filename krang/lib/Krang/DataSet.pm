@@ -1,28 +1,38 @@
 package Krang::DataSet;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use Exporter;
-use File::Temp qw(tempdir);
+use File::Temp qw(tempdir tempfile);
 use File::Path qw(mkpath rmtree);
 use File::Spec::Functions qw(catdir catfile splitpath 
                              file_name_is_absolute rel2abs);
 use File::Copy qw(copy);
 use File::Find qw(find);
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use Archive::Tar;
 use Cwd qw(fastcwd);
-use Krang::Log qw(debug assert ASSERT);
+use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Carp qw(croak);
-use Krang::XML;
+use Krang::ClassLoader 'XML';
 use Krang;
-use Krang::Contrib;
-use Krang::Story;
-use Krang::Template;
-use Krang::Media;
-use Krang::Category;
-use Krang::Site;
-use Krang::XML::Validator;
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'XML::Validator';
+use List::Util qw(first);
+use IO::Zlib;
+use IPC::Run qw(run);
+
+# list of supported classes
+our @CLASSES = (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site 
+                   Krang::Category Krang::Alert Krang::Group Krang::Media 
+                   Krang::Template Krang::Story Krang::Schedule 
+                   Krang::ListGroup Krang::List Krang::ListItem ));
 
 # setup exceptions
 use Exception::Class 
@@ -52,7 +62,7 @@ Krang::DataSet - Krang interface to XML data sets
 Creating data sets:
 
   # create a new data set
-  my $set = Krang::DataSet->new();
+  my $set = pkg('DataSet')->new();
 
   # add an objects to it
   $set->add(object => $story);
@@ -69,7 +79,7 @@ Creating data sets:
 Loading data sets:
 
   # load a data set from a file on disk
-  my $set = Krang::DataSet->new(path => "foo.kds");
+  my $set = pkg('DataSet')->new(path => "foo.kds");
 
   # get a list of objects in the set
   my @objects = $set->list();
@@ -179,7 +189,7 @@ sub _validate {
     my $self = shift;
     local $_;
 
-    my $validator = Krang::XML::Validator->new();
+    my $validator = pkg('XML::Validator')->new();
 
     # switch into directory with XML
     my $old_dir = fastcwd;
@@ -209,7 +219,7 @@ sub _validate_file {
     my $self = shift;
     my $path = shift;
 
-    my $validator = Krang::XML::Validator->new();
+    my $validator = pkg('XML::Validator')->new();
 
     my ($ok, $err) = $validator->validate(path => $path);
 
@@ -268,7 +278,7 @@ sub add {
         # register mapping before calling serialize_xml to break cycles
         $self->{objects}{$class}{$id}{xml} = $file;
         
-        my $writer = Krang::XML->writer(fh => $fh);
+        my $writer = pkg('XML')->writer(fh => $fh);
         $writer->xmlDecl();
         $object->serialize_xml(writer => $writer, set => $self);
         $writer->end();
@@ -296,7 +306,7 @@ sub add {
 
 sub _obj2id {
     my $object = shift;
-    my $class = ref $object;
+    my $class = first { $object->isa($_) } @CLASSES;
     my ($id_name) = $class =~ /^Krang::(.*)$/;
     $id_name = lc($id_name) . "_id";
     $id_name = 'list_item_id' if ($id_name eq 'listitem_id');
@@ -342,12 +352,11 @@ May throw a Krang::DataSet::ValidationFailed exception if the archive
 is found to contain errors.  See EXCEPTIONS below for details.
 
 =cut
-
 sub write {
     my ($self, %args) = @_;
     my $path     = $args{path};
     my $compress = $args{compress} || 0;
-    
+
     croak("Missing required path arg.") unless $path;
     if ($compress) {
         croak("Path does not end in .kds.gz") unless $path =~ /\.kds\.gz$/;
@@ -355,12 +364,11 @@ sub write {
         croak("Path does not end in .kds") unless $path =~ /\.kds$/;
     }
 
+    $path = file_name_is_absolute($path) ? $path : rel2abs($path);
+
     # go to the kds dir
     my $old_dir = fastcwd;
     chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
-
-    # open up a new archive
-    my $kds = Archive::Tar->new();
 
     # write the index
     eval { $self->_write_index; };
@@ -372,28 +380,62 @@ sub write {
         die $err;
     }
 
-    # add all files to the tar
+    # build list of files to tar in segments of X number of files each, as
+    # defined in $to_tar_at_a_time
+    my (%files_to_tar,$segment);
+    my $count = 0;
+    # tar can only accept a certain number of files to be passed in at a time
+    # a limit imposed by the OS; here set the limit to a conservative figure
+    my $to_tar_at_a_time = 100;
     find({ wanted => sub { return unless -f;
                            s!^$self->{dir}/!!;
-                           $kds->add_files($_)
-                             or croak("Failed to add $_ to KDS : " .
-                                      Archive::Tar->error());
+                          if ($count % $to_tar_at_a_time == 0) {
+                               $segment = 'segment' . $count;
+                           }
+                           push(@{$files_to_tar{$segment}},$_);
+                           $count++;
                        },
            no_chdir => 1 },
          $self->{dir});
 
-    eval {
-        $kds->write((file_name_is_absolute($path) ? 
-                     $path : catfile($old_dir, $path)), 
-                    $compress ? 9 : 0);
-    };
-    if ($@) {
-        # gotta get back, regardless of errors
-        my $err = $@;
-        chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
-        die $err;
+    # give current user read,write,execute permissions for tar cmd further below
+    chmod(0700, $path);
+
+    foreach my $file_list (keys %files_to_tar) {
+        # use tar with -r option to be able to append files, to get around
+        # "Argument list too long" problem when used with the -c option and
+        # passed a large number of files
+        my $cmd = ["tar", "rf", $path, @{$files_to_tar{$file_list}}];
+
+        debug("Running @$cmd");
+        my $rc = run($cmd, \my($in, $out, $err));
+
+        if (!$rc) {
+            # gotta get back, regardless of errors
+            chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
+            die "Unable to add files to archive '$path': $err";
+        }
+
     }
-    
+
+    # we're done adding files to tar, let's compress it if compression is on
+    if ($compress) {
+        open(FILE, $path) or
+          die "Error compressing: Cannot open tar archive '$path'";
+        my (undef, $tmpfilename) = tempfile(DIR => catdir(KrangRoot, 'tmp'));
+
+        my $fh = IO::Zlib->new($tmpfilename, "wb9") or
+          die "IO::Zlib can't open $tmpfilename ($!)";
+
+        while(<FILE>) {
+            print $fh "$_";
+        }
+        $fh->close;
+        close(FILE);
+
+        copy $tmpfilename, $path or die "Error compressing: Can't copy $tmpfilename to '$path' ($!)";
+    }
+
     chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
 
     # Do a validation pass in dev mode to make sure we didn't write
@@ -401,6 +443,7 @@ sub write {
     # something on disk to look at if validation fails.
     $self->_validate if ASSERT;
 }
+
 
 # write out the index XML
 sub _write_index {
@@ -412,7 +455,7 @@ sub _write_index {
 
     open(my $fh, '>','index.xml') or
       croak("Unable to open index.xml: $!");
-    my $writer = Krang::XML->writer(fh => $fh);
+    my $writer = pkg('XML')->writer(fh => $fh);
 
     # open up index document
     $writer->xmlDecl();
@@ -456,7 +499,7 @@ sub _load_index {
     close $index or die $!;
   
     # parse'm up
-    my $data = Krang::XML->simple(xml => $xml, forcearray => 1);
+    my $data = pkg('XML')->simple(xml => $xml, forcearray => 1);
     my %index;
     foreach my $class_rec (@{$data->{class}}) {
         my $class = $class_rec->{name};
@@ -550,8 +593,7 @@ sub import_all {
     my @failed;
 
     # process classes in an order least likely to cause backrefs
-    foreach my $class (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site Krang::Category Krang::Alert
-                          Krang::Group Krang::Media Krang::Template Krang::Story Krang::Schedule Krang::ListGroup Krang::List Krang::ListItem )) {
+    foreach my $class (@CLASSES) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};
