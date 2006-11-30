@@ -1,1 +1,1 @@
-DEFAULT $CVSROOT/CVSROOT/activitymail -l -M 2048 -u $USER\@krangcms.com
+DEFAULT /usr/bin/activitymail -u $USER\@krangcms.com -l -M 2048
