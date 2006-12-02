@@ -1,1 +1,0 @@
-DEFAULT /usr/bin/activitymail -dcf %{sVv} -M 2048 -u $USER\@krangcms.com -t krang-cvs@lists.sourceforge.net -n

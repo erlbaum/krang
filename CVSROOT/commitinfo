@@ -1,1 +1,0 @@
-DEFAULT /usr/bin/activitymail -u $USER\@krangcms.com -l -M 2048
