@@ -1,0 +1,99 @@
+<tmpl_include /header.tmpl>
+
+<script language="javascript" type="text/javascript">
+<!-- //
+
+    add_site = function () {
+        var myform = document.forms["add_site_form"];
+        myform.submit();
+    }
+
+    edit_site = function (site_id) {
+        var myform = document.forms["edit_site_form"];
+        myform.site_id.value = site_id;
+        myform.submit();
+    }
+
+    delete_selected = function () {
+        if (confirm("Are you SURE you want to delete these sites?")) {
+            var myform = document.forms["krang_pager_form"];
+            myform.rm.value = 'delete_selected';
+            myform.submit();
+        }
+    }
+
+  view_site = function (id) {
+    document.find_site.rm.value = 'view';
+    document.find_site.site_id.value = id;
+    document.find_site.submit();
+  }
+
+// -->
+</script>
+
+<form name="add_site_form" method="POST" action="site.pl">
+<input type="hidden" name="rm" value="add">
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+</form>
+
+<form name="edit_site_form" method="POST" action="site.pl">
+<input type="hidden" name="rm" value="edit">
+<input type="hidden" name="site_id" value="">
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+</form>
+
+<form method="POST" name="find_site" action="site.pl">
+<input type="hidden" name="rm" value="view">
+<input type="hidden" name="site_id">
+
+<!-- Persist return data for search and paging -->
+<tmpl_var history_return_params>
+<!-- END Persist return data for search and paging -->
+</form>
+
+<div class="dark-bar"><p class="left">&nbsp;Site List</p><p class="right"><a href="javascript:openWin('help.pl?topic=site')">Help</a>&nbsp;</p></div>
+
+<form name="search_form" method="POST" action="site.pl">
+<div class="boxb"> 
+ <div class="light">
+
+  <p>SEARCH</p>
+    <input type="hidden" name="rm" value="search">
+<input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">&nbsp;&nbsp;&nbsp;<input type="submit" value="Search" class="button"></div>
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+</form>
+<div class="no-border">
+
+<b><a href="javascript:add_site()">Add A Site</a></b></div><br>
+
+<!-- START Krang::HTMLPager output -->
+<tmpl_var pager_html>
+<!-- END Krang::HTMLPager output -->
+</div>
+
+<tmpl_if row_count>
+  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div>
+</tmpl_if>
+
+</div>
+<tmpl_include /footer.tmpl>

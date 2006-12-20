@@ -1,0 +1,41 @@
+<tmpl_include header.tmpl>
+
+<div class="dark-bar"><p class="left">&nbsp;Bulk Media Upload</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:openWin('help.pl?topic=media_bulk_upload')">Help</a>&nbsp;</p></div>
+
+  <div class="box">
+<br>
+<table class="form-head">
+
+<tr>
+<td>FTP Upload</td>
+</tr></table>
+
+<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
+<tr>
+<td class="form-cell">&nbsp;<br>(Windows IE or for use with an external FTP client)<br>&nbsp;<br><a target="media_bulkupload" href="ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media">ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media</a><br>&nbsp;</td></tr>
+</table>
+
+<br>
+
+<table class="form-head">
+
+<tr>
+<td>Archive Upload</td>
+</tr></table>
+
+<form name="upload_form" method="POST" enctype="multipart/form-data" action="media_bulk_upload.pl">
+
+<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
+<tr>
+<td class="form-cell"><tmpl_var upload_chooser></td></tr>
+    <tr><td class="form-cell"><tmpl_var category_chooser></td></tr>
+    <tr><td class="form-cell"><input type='checkbox' name='create_cats'> Create non-existant categories found in archive</td></tr>
+    </table><br>
+	 </div>
+<div class="button-bar">
+<input type="hidden" name="rm" value="upload" override="1">
+  <input type="button" value="Upload" onclick="document.upload_form.submit()" class="button">&nbsp;
+</div>
+</form>
+</div>
+<tmpl_include footer.tmpl>

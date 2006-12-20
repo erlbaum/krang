@@ -1,0 +1,46 @@
+<tmpl_include header.tmpl>
+
+<script language="JavaScript" type="text/javascript">
+
+  preview_story = function (id) {
+        Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
+        Preview.focus();
+  }
+
+  view_story  = function (id) {
+    document.find_story.rm.value = 'view';
+    document.find_story.story_id.value = id;
+    document.find_story.submit();
+  }
+
+  checkin_selected  = function () {
+    var myform = document.krang_pager_form;
+    myform.rm.value = 'checkin_selected';
+    myform.submit();
+  }
+
+</script>
+
+<form method="post" name="find_story" action="story.pl">
+<input type="hidden" name="rm" value="list_active">
+<input type="hidden" name="story_id">
+
+<!-- Set up view mode return -->
+<input type="hidden" name="return_script" value="story.pl">
+<input type="hidden" name="return_params" value="rm">
+<input type="hidden" name="return_params" value="list_active">
+
+</form>
+
+<div class="dark-bar"><p class="left">&nbsp;Active Stories</p><p class="right"><a href="javascript:openWin('help.pl?topic=story_active')">Help</a>&nbsp;</p></div>
+<div class="box">
+<!-- Krang::HTMLPager -->
+<tmpl_var pager_html>
+<!-- Krang::HTMLPager -->
+</div>
+
+<tmpl_if row_count><tmpl_if may_checkin_all>
+  <div class="button-bar"><input type="button" value="Check In" onClick="checkin_selected()" class="button">&nbsp;</div>
+</tmpl_if></tmpl_if></div>
+</div>
+<tmpl_include footer.tmpl>

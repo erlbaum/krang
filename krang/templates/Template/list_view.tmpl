@@ -1,0 +1,143 @@
+<tmpl_include header.tmpl>
+
+<script language="JavaScript" type="text/javascript">
+
+  edit_template  = function (id) {
+    document.find_template.rm.value = 'checkout_and_edit';
+    document.find_template.template_id.value = id;
+    document.find_template.submit();
+  }
+
+  view_template  = function (id) {
+    document.find_template.rm.value = 'view';
+    document.find_template.template_id.value = id;
+    document.find_template.submit();
+  }
+
+  delete_selected  = function () {
+    if (confirm("Are you SURE you want to delete the checked templates?")) {
+      var myform = document.krang_pager_form;
+      myform.rm.value = 'delete_selected';
+      myform.submit();
+    }
+  }
+
+  advanced_search  = function () {
+    var myform = document.template_search_form;
+    myform.rm.value = 'advanced_search';
+    myform.submit();
+  }
+
+  simple_search  = function () {
+    var myform = document.template_search_form;
+    myform.rm.value = 'search';
+    myform.submit();
+  }
+
+  clear_advanced_search  = function () {
+    var myform = document.clear_advanced_search_form;
+    myform.submit();
+  }
+
+  do_deploy  = function () {
+    if (confirm("Are you SURE you want to deploy the checked templates?")) {
+      var myform = document.krang_pager_form;
+      myform.rm.value = 'deploy_selected';
+      myform.submit();
+    }
+  }
+
+</script>
+
+
+<form method="POST" name="find_template" action="template.pl">
+<input type="hidden" name="rm" value="view">
+<input type="hidden" name="template_id">
+
+  <!-- Persist return data for search and paging -->
+<tmpl_var history_return_params>
+<!-- END Persist return data for search and paging -->
+
+</form>
+
+
+<form name="clear_advanced_search_form" method="POST" action="template.pl">
+<input type="hidden" name="rm" value="advanced_search">
+<input type="hidden" name="search_filter" value="">
+<input type="hidden" name="clear_search_form" value="1">
+</form>
+
+<div class="dark-bar"><p class="left">&nbsp;Find Template<p class="right"><a href="javascript:openWin('help.pl?topic=template_find')">Help</a>&nbsp;</p></div>
+<form name="template_search_form" method="POST" action="template.pl">
+<tmpl_if do_advanced_search>
+<div class="box">
+<table border="0" cellpadding="6" cellspacing="0" width="571">
+
+<tr><td>SEARCH 
+  (<a href="javascript:simple_search()">Simple Search</a>)
+  <input type="hidden" name="rm" value="advanced_search"><br></td></tr>
+
+  <!-- Advanced Search Form -->
+  <tr><td>
+   <table border="0" cellspacing="5" cellpadding="2">
+
+      <tr>
+        <td>URL:</td>
+        <td><input size="40" type="text" name="search_url" value="<tmpl_var escape=HTML search_url>"></td>
+      </tr>
+
+      <tr>
+        <td>Site/Category:</td>
+        <td><tmpl_var category_chooser></td>
+      </tr>
+
+      <tr>
+        <td>Element:</td>
+        <td><tmpl_var element_chooser></td>
+      </tr>
+
+      <tr>
+        <td>ID:</td>
+        <td><input size="40" type="text" name="search_template_id" value="<tmpl_var escape=HTML search_template_id>"></td>
+      </tr>
+
+      <tr>
+        <td></td>
+        <td><input type="button" value="Clear" onClick="clear_advanced_search()" class="button">&nbsp;<input type="submit" value="Search" class="button"></td>
+      </tr>
+
+      <input type="hidden" name="search_filter" value="">
+
+    </table>&nbsp;
+  </td></tr>
+
+<tmpl_else>
+<div class="boxb"> 
+ <div class="light">
+<p>SEARCH 
+  (<a href="javascript:advanced_search()">Advanced Search</a>)</p>
+    <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+  <input type="hidden" name="rm" value="search">&nbsp;&nbsp;&nbsp;<input type="submit" value="Search" class="button"></div>
+
+</tmpl_if>
+
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+</form>
+
+<tmpl_var pager_html>
+
+<!-- Krang::HTMLPager -->
+
+  </div>
+
+<tmpl_if row_count>
+  <div class="button-bar"><div style="float:left;"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div>&nbsp;<input type="button" value="Deploy" onClick="do_deploy()" class="button"></div>
+</tmpl_if>
+  </div>
+<tmpl_include footer.tmpl>
