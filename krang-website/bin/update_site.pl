@@ -9,10 +9,10 @@ die("Missing setting for KRANG_WEBSITE_ROOT!") unless $ENV{KRANG_WEBSITE_ROOT};
 die("Missing setting for SF_USERNAME!") unless $ENV{SF_USERNAME};
 die("Missing setting for SF_PASSWORD!") unless $ENV{SF_PASSWORD};
 
-# update Krang from CVS
+# update Krang from SVN
 chdir($ENV{KRANG_ROOT}) or die $!;
-print "Updating CVS checkout...\n";
-system("cvs -q update -d") == 0 or die "Failed to update CVS: $?";
+print "Updating SVN checkout...\n";
+system("svn update") == 0 or die "Failed to update SVN: $?";
 
 # rebuild docs
 print "Building docs...\n";
@@ -20,8 +20,8 @@ system("make docs") == 0 or die "Failed to make docs: $?";
 
 # update Krang website from CVS
 chdir($ENV{KRANG_WEBSITE_ROOT}) or die $!;
-print "Updating CVS checkout...\n";
-system("cvs -q update -d") == 0 or die "Failed to update CVS: $?";
+print "Updating SVN checkout...\n";
+system("svn update") == 0 or die "Failed to update CVS: $?";
 
 # copy in docs
 print "Copying docs into place.\n";
