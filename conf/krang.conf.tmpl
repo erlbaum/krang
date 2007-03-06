@@ -29,9 +29,11 @@ DBSock "<tmpl_var DBSock>"
 
 # 
 # ApacheAddr and ApachePort: the IP and port for the Apache server
+# ApacheMaxSize: the maximum process size (in KB) for apache children. Default is 64000
 #
 ApacheAddr <tmpl_var IPAddress>
 ApachePort <tmpl_var ApachePort>
+ApacheMaxSize 64000
 
 #
 # HostName: the virtual host for the root server, which
