@@ -994,7 +994,7 @@ sub deserialize_xml {
     my @group_ids = @{$data->{group_id}};
     my @new_group_ids;
     foreach my $g (@group_ids) {
-        push (@new_group_ids, $set->map_id(class => "Krang::Group", id => $g));
+        push (@new_group_ids, $set->map_id(class => pkg('Group'), id => $g));
     }
     $user->group_ids(@new_group_ids);
 
