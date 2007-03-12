@@ -159,10 +159,10 @@ sub _install_images {
 
             # colorize
             $bio->alphas(
-                $self->_normalize_color($file_block->get('BackgroundColor')),
-                $self->_normalize_color($file_block->get('Color1')),
-                $self->_normalize_color($file_block->get('Color2')),
-                $self->_normalize_color($file_block->get('Color3')),
+                $self->_normalize_color($file_block->get('BioChromeBlack')),
+                $self->_normalize_color($file_block->get('BioChromeRed')),
+                $self->_normalize_color($file_block->get('BioChromeBlue')),
+                $self->_normalize_color($file_block->get('BioChromeGreen')),
             );
             
             $bio->write_file(catfile(KrangRoot, 'htdocs', 'images', $file)); 
