@@ -47,7 +47,7 @@ use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Category';
-use Krang::ClassLoader Widget => qw(category_chooser format_url);
+use Krang::ClassLoader Widget => qw(category_chooser format_url autocomplete_values);
 use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Carp;
@@ -103,6 +103,7 @@ sub setup {
                          add_category
                          delete_category
                          edit_categories_return
+                         autocomplete
                         )]);
 
     $self->tmpl_path('Group/');
@@ -917,7 +918,13 @@ sub get_group_tmpl {
     return \%group_tmpl;
 }
 
-
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'group_permission',
+        fields => [qw(name)],
+    );
+}
 
 
 1;

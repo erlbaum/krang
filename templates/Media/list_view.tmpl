@@ -157,8 +157,10 @@
 <tmpl_else>
 <div class="boxb"> 
  <div class="light">
-  <p>SEARCH (<a href="javascript:advanced_search()">Advanced Search</a>)&nbsp;&nbsp;&nbsp;<input type="hidden" name="rm" value="find"><input type="checkbox" name="show_thumbnails" value="1"<tmpl_if show_thumbnails> checked</tmpl_if>>Show Thumbnails</p>
-  <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">&nbsp;&nbsp;&nbsp;<input type="submit" value="Search" class="button">
+  <p>SEARCH (<a href="javascript:advanced_search()">Advanced Search</a>)
+  &nbsp;&nbsp;&nbsp;<input type="hidden" name="rm" value="find"><input type="checkbox" name="show_thumbnails" value="1"<tmpl_if show_thumbnails> checked</tmpl_if>>Show Thumbnails</p>
+  <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>" class="autocomplete">
+  &nbsp;&nbsp;&nbsp;<input type="submit" value="Search" class="button">
   </div>
 
 </tmpl_if>

@@ -4,17 +4,19 @@
 <html>
 <head>
 <title><tmpl_var header_instance_name> CMS</title>
-<script language="JavaScript" type="text/javascript">
-openWin = function (url){  
-   aWindow=window.open(url,"thewindow","width=500,height=500,left=200,top=0,status=no,toolbar=no,menubar=no,scrollbars=yes,location=no,directories=no,resizable=no");
-   aWindow.focus();
-}
-</script>
+<script src="js/prototype.js" type="text/javascript"></script>
+<script src="js/behaviour.js" type="text/javascript"></script>
+<script src="js/scriptaculous/builder.js" type="text/javascript"></script>
+<script src="js/scriptaculous/effects.js" type="text/javascript"></script>
+<script src="js/scriptaculous/dragdrop.js" type="text/javascript"></script>
+<script src="js/scriptaculous/controls.js" type="text/javascript"></script>
+<script src="js/krang.js" type="text/javascript"></script>
+<script src="js/krang/behaviours.js" type="text/javascript"></script>
 <link rel="stylesheet" href="krang.css" type="text/css">
 </head>
 <body>
 <div id="frame">
-<div id="header"><div class="logo"><a href="javascript:openWin('about.pl')"><img src="images/logo.gif" height="27" width="155" alt="logo" border="0"></a></div>
+<div id="header"><div class="logo"><a href="about.pl" class="new_window"><img src="images/logo.gif" height="27" width="155" alt="logo" border="0"></a></div>
 <div class="title"><tmpl_var header_instance_name></div>
 <div class="log">Logged In as: <tmpl_var header_user_name> | <a href="login.pl?rm=logout">Log Out</a></div>
 <div class="dkblu"></div>

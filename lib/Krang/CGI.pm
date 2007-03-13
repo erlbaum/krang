@@ -5,6 +5,7 @@ use warnings;
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Message => qw(add_message);
+use CGI::Util qw(escape);
 
 # pull in Krang::lib when not running in mod_perl
 BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }

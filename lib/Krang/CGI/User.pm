@@ -32,6 +32,7 @@ use Carp qw(verbose croak);
 use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Log => qw/critical debug info/;
+use Krang::ClassLoader Widget => qw/autocomplete_values/;
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
@@ -66,6 +67,7 @@ sub setup {
 		save_edit
 		save_stay_edit
 		search
+        autocomplete
 	/]);
 
     $self->tmpl_path('User/');
@@ -690,6 +692,15 @@ sub search_row_handler {
     $row->{login} = $q->escapeHTML($user->login);
     $row->{last}  = $q->escapeHTML($user->last_name);
     $row->{first} = $q->escapeHTML($user->first_name);
+}
+
+
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'user',
+        fields => [qw(user_id first_name last_name)],
+    );
 }
 
 

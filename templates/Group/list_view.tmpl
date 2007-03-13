@@ -56,9 +56,12 @@
 <div class="boxb"> 
  <div class="light">
 
-  <p>SEARCH</p>
+    <p>SEARCH</p>
     <input type="hidden" name="rm" value="search">
-<input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">&nbsp;&nbsp;&nbsp;<input type="submit" value="Search" class="button"></div>
+    <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>" class="autocomplete">
+    &nbsp;&nbsp;&nbsp;
+    <input type="submit" value="Search" class="button">
+ </div>
 
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="">

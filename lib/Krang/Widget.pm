@@ -4,11 +4,13 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use CGI;
 use Krang::ClassLoader 'HTMLTemplate';
 use Time::Piece qw(localtime);
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader DB => qw(dbh);
 use HTML::PopupTreeSelect;
 use Text::Wrap qw(wrap);
 use Krang::ClassLoader Message => qw(add_message);
@@ -19,7 +21,7 @@ use File::Spec::Functions qw(catfile);
 use base 'Exporter';
 our @EXPORT_OK = qw(category_chooser time_chooser date_chooser 
                     datetime_chooser decode_date decode_datetime 
-                    format_url template_chooser);
+                    format_url template_chooser autocomplete_values);
 
 =head1 NAME
 
@@ -834,9 +836,89 @@ sub template_chooser {
     return $template->output;
 }
 
+=item $values = autocomplete_values(%args)
 
+Returns an arrayref of alphabetized "words" that begin with the
+given C<phrase>, pulled from the specifed C<fields> of the 
+given C<table>.
 
+It takes the following named arguments:
 
+=over
+
+=item table
+
+The database table to use for the lookup.
+This is required.
+
+=item fields
+
+An array ref of field names in the database from which to fetch "words".
+This is required.
+
+=item phrase
+
+The phrase typed by the user. If none is given it will be pulled from
+the C<phrase> param of the query string.
+This is optional.
+
+=item dbh
+
+The database handle to use. If none is provided it will default
+to the normal Krang one for the current instance.
+This is optional.
+
+=back
+
+=cut
+
+sub autocomplete_values {
+    my %args = @_;
+    my ($phrase, $table, $fields, $dbh) = @args{qw(phrase table fields dbh)};
+    $dbh ||= dbh();
+    if(! $phrase ) {
+        my $cgi = CGI->new();
+        $phrase = $cgi->param('phrase');
+    }
+
+    # query the db for these values
+    my $sql   = "SELECT " . join(', ', map { "`$_`" } @$fields) . " FROM `$table` WHERE "
+        . join(' OR ', map { "`$_` REGEXP ?" } @$fields );
+
+    my $regex = '(^|[[:blank:]_//])' . $phrase;
+    my $sth   = $dbh->prepare_cached($sql);
+    my @binds = map { $regex } @$fields;
+    $sth->execute(@binds);
+
+    # split into individual words and then sort
+    my %words;
+    while( my $row = $sth->fetchrow_arrayref ) {
+        foreach my $pos (0..(scalar @$row -1) ) {
+            my $answer = lc($row->[$pos]);
+            # remove any potential file suffixes
+            $answer =~ s/\.\w{3,5}$//;
+
+            # split on '_' or \s to make words and only keep the ones that
+            # start with our phrase
+            foreach (split(/(?:_|\s|\/)+/, $answer)) {
+                my $w = lc($_);
+                $words{$w} = 1 if( index($w, $phrase) == 0 );
+            }
+            # if it has an '_' and no spaces, keep the whole word
+            if( $answer =~ /_/ && $answer !~ /\s/ && ( index($answer, $phrase) == 0 ) ) {
+                $words{$answer} = 1;
+            }
+        }
+    }
+    
+    my $html = '<ul>';
+    foreach (sort keys %words) {
+        s/</&lt;/g;
+        s/&/&amp;/g;
+        $html .= "<li>$_</li>";
+    }
+    return $html . '</ul>';
+}
 
 1;
 

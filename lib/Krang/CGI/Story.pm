@@ -8,7 +8,7 @@ use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Message => qw(add_message);
-use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url);
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader 'CGI::Workspace';
 use Carp qw(croak);
 use Krang::ClassLoader 'Pref';
@@ -85,6 +85,7 @@ sub setup {
                      save_and_change_bulk_edit_sep => 'save_and_change_bulk_edit_sep',
                      save_and_find_story_link    => 'save_and_find_story_link',
                      save_and_find_media_link    => 'save_and_find_media_link',
+                     autocomplete => 'autocomplete',
                     );
 
     $self->tmpl_path('Story/');
@@ -1700,6 +1701,14 @@ sub list_active_row_handler {
     # user
     my ($user) = pkg('User')->find(user_id => $story->checked_out_by);
     $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
+}
+
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'story',
+        fields => [qw(story_id title slug)],
+    );
 }
 
 

@@ -43,6 +43,7 @@ use Krang::ClassLoader 'ListGroup';
 use Krang::ClassLoader 'List';
 use Krang::ClassLoader 'ListItem';
 use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Widget => qw(autocomplete_values);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Carp;
@@ -60,6 +61,7 @@ sub setup {
                          search
                          edit
                          save
+                         autocomplete
                         )]);
 
     $self->tmpl_path('ListGroup/');
@@ -353,6 +355,14 @@ sub save {
     } else {
         return $self->search();
     }
+}
+
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'list_group',
+        fields => [qw(list_group_id name)],
+    );
 }
 
 

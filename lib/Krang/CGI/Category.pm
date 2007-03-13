@@ -8,7 +8,7 @@ use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Message => qw(add_message);
-use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url);
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader 'CGI::Workspace';
 use Carp qw(croak);
 use Krang::ClassLoader 'Pref';
@@ -69,6 +69,7 @@ sub setup {
                      save_and_change_bulk_edit_sep => 'save_and_change_bulk_edit_sep',
                      save_and_find_story_link    => 'save_and_find_story_link',
                      save_and_find_media_link    => 'save_and_find_media_link',
+                     autocomplete => 'autocomplete',
                     );
 
     $self->tmpl_path('Category/');
@@ -649,6 +650,12 @@ sub category_save {
     $category->save();
 }
 
-
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'category',
+        fields => [qw(category_id url)],
+    );
+}
 
 1;

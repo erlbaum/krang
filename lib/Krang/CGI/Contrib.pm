@@ -54,6 +54,7 @@ use Krang::ClassLoader 'Conf';
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Widget => qw(autocomplete_values);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
@@ -103,6 +104,7 @@ sub setup {
                          cancel_edit
                          save_stay_edit
                          delete
+                         autocomplete
                         )]);
 
     $self->tmpl_path('Contrib/');
@@ -1208,6 +1210,13 @@ sub upload_image {
 
 }
 
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'contrib',
+        fields => [qw(contrib_id first middle last)],
+    );
+}
 
 
 1;

@@ -42,7 +42,7 @@ is 'add'.
 
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Media';
-use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url);
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Pref';
@@ -88,6 +88,7 @@ sub setup {
                          view_version
                          revert_version
                          save_and_edit_schedule
+                         autocomplete
                         )]);
 
     $self->tmpl_path('Media/');
@@ -1745,8 +1746,13 @@ sub do_save_media {
     return ();
 }
 
-
-
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'media',
+        fields => [qw(media_id title caption alt_tag filename)],
+    );
+}
 
 1;
 

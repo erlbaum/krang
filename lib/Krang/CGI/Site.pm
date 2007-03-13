@@ -34,6 +34,7 @@ use Krang::ClassLoader Message => qw/add_message/;
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'Site';
+use Krang::ClassLoader Widget => qw/autocomplete_values/;
 
 our @history_param_list = ('rm',
                            'krang_pager_curr_page_num',
@@ -66,6 +67,7 @@ sub setup {
 			view
 			view_edit
 			view_return
+            autocomplete
 			/]);
 
     $self->tmpl_path('Site/');
@@ -649,13 +651,16 @@ sub _save {
     return ();
 }
 
-
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'site',
+        fields => [qw(site_id url)],
+    );
+}
 
 =back
 
 =cut
 
-
-my $quip = <<QUIP;
-1
-QUIP
+1;

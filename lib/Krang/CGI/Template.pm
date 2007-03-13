@@ -33,7 +33,7 @@ use Krang::ClassLoader Message => qw/add_message/;
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'Template';
-use Krang::ClassLoader Widget => qw/format_url category_chooser template_chooser/;
+use Krang::ClassLoader Widget => qw/format_url category_chooser template_chooser autocomplete_values/;
 use Krang::ClassLoader 'Publisher';
 
 use constant WORKSPACE_URI => 'workspace.pl';
@@ -87,6 +87,7 @@ sub setup {
 		view
 		view_edit
 		view_version
+        autocomplete
 	/]);
 
 	$self->tmpl_path('Template/');
@@ -1252,12 +1253,16 @@ sub list_active_row_handler {
     $row->{user} = $self->query->escapeHTML($user->first_name . " " . $user->last_name);
 }
 
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'template',
+        fields => [qw(template_id element_class_name filename)],
+    );
+}
 
 =back
 
 =cut
 
-
-my $quip = <<QUIP;
-1
-QUIP
+1;
