@@ -151,7 +151,7 @@ sub _install_images {
             my $file_block = $img_block->block(File => $file);
 
             # open up the image and color it with Image::BioChrome
-            my $template = pkg('Find')->find(catfile(KrangRoot, 'templates', 'images', $file));
+            my $template = pkg('File')->find(catfile('templates', 'images', $file));
             $Image::BioChrome::VERBOSE = 0;
             $Image::BioChrome::DEBUG = 0;
             my $bio = Image::BioChrome->new($template);
@@ -161,8 +161,8 @@ sub _install_images {
             $bio->alphas(
                 $self->_normalize_color($file_block->get('BioChromeBlack')),
                 $self->_normalize_color($file_block->get('BioChromeRed')),
-                $self->_normalize_color($file_block->get('BioChromeBlue')),
                 $self->_normalize_color($file_block->get('BioChromeGreen')),
+                $self->_normalize_color($file_block->get('BioChromeBlue')),
             );
             
             $bio->write_file(catfile(KrangRoot, 'htdocs', 'images', $file)); 
