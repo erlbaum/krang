@@ -5,3 +5,4 @@ CREATE TABLE pref (
         value   VARCHAR(255) NOT NULL
 );
 INSERT INTO pref (id, value) VALUES ("search_page_size", "20");
+INSERT INTO pref (id, value) VALUES ("use_autocomplete", "1");

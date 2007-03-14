@@ -28,6 +28,7 @@ use Digest::MD5 qw(md5_hex md5);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader 'Log' => qw(debug);
 use Krang::ClassLoader Conf => qw(
     BadLoginCount
@@ -42,6 +43,7 @@ use Krang::ClassLoader Conf => qw(
     ApachePort
 );
 use CGI::Application::Plugin::RateLimit;
+use JSON qw(objToJson);
 
 # secret salt for creating login cookies
 our $SALT = <<END;
@@ -205,14 +207,25 @@ sub login {
     pkg('Session')->unload() unless (defined($ENV{KRANG_SESSION_ID}));
 
     # build the cookie
-    my $cookie = $q->cookie(
-                            -name   => $instance,
-                            -value  => \%filling,
-                           );
+    my $session_cookie = $q->cookie(
+        -name  => $instance,
+        -value => \%filling,
+    );
+
+    # put our preferences into our cookie via JSON so that the JS
+    # on the client side can access it
+    my %prefs;
+    for my $name qw(search_page_size use_autocomplete) {
+        $prefs{$name} = pkg('MyPref')->get($name);
+    }
+    my $pref_cookie = $q->cookie(
+        -name  => 'KRANG_PREFS',
+        -value => objToJson(\%prefs),
+    );
     
     # redirect to original destination and set the cookie
-    $self->header_props(-uri          => $target,
-                        -cookie       => $cookie->as_string);
+    $self->header_add(-uri    => $target,
+                      -cookie => [$session_cookie->as_string, $pref_cookie->as_string]);
 
     $self->header_type('redirect');
     my $output = "Redirect: <a href=\"$target\">$target</a>";

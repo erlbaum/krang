@@ -26,6 +26,43 @@ Krang.popup = function(url) {
 }
 
 /*
+    Krang.get_cookie(name)
+    Returns the value of a specific cookie.
+*/
+Krang.get_cookie = function(name) {
+    var value  = null;
+    var cookie = document.cookie;
+    var start, end;
+
+    if ( cookie.length > 0 ) {
+        start = cookie.indexOf( name + '=' );
+
+        // if the cookie exists
+        if ( start != -1 )  {
+          start += name.length + 1; // need to account for the '='
+
+          // set index of beginning of value
+          end = cookie.indexOf( ';', start );
+
+          if ( end == -1 ) end = cookie.length;
+
+          value = unescape( cookie.substring( start, end ) );
+        }
+    }
+    return value;
+}
+
+/*
+    Krang.my_prefs
+    Returns a hash of preferences values from the server
+    (passed to use via a JSON cookie)
+*/
+Krang.my_prefs = function() {
+    var json = Krang.get_cookie('KRANG_PREFS');
+    return eval('(' + json + ')');
+}
+
+/*
     Krang.classNameSuffix(element, prefix)
     Returns the portion of the class name that follows the give
     prefix and correctly handles multiple class names.
