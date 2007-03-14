@@ -53,6 +53,14 @@ Krang.get_cookie = function(name) {
 }
 
 /*
+    Krang.set_cookie(name, value)
+    Sets a cookie to a particular value.
+*/
+Krang.set_cookie = function(name, value) {
+    document.cookie = name + '=' + value;
+}
+
+/*
     Krang.my_prefs
     Returns a hash of preferences values from the server
     (passed to use via a JSON cookie)
