@@ -18,13 +18,18 @@ var rules = {
         var div = Builder.node('div', { className: 'autocomplete', style : 'display:none' }); 
         el.parentNode.insertBefore(div, el.nextSibling);
         
-        // turn off browser's auto-complete
+        // turn off browser's built-in auto-complete
         el.autocomplete = "off";
+
+        // the request_url is first retrieved from the action of the form
+        // and second from the url of the current document.
+        var request_url = el.form.readAttribute('action')
+            || document.URL;
 
         new Ajax.Autocompleter(
             el,
             div,
-            el.form.readAttribute('action'),
+            request_url,
             { 
                 paramName: 'phrase',
                 tokens   : [' '],
