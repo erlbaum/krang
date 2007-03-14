@@ -868,13 +868,18 @@ The database handle to use. If none is provided it will default
 to the normal Krang one for the current instance.
 This is optional.
 
+=item where
+
+Any additional logic that will added the generated SQL's C<WHERE> clause
+using C<AND>.
+
 =back
 
 =cut
 
 sub autocomplete_values {
     my %args = @_;
-    my ($phrase, $table, $fields, $dbh) = @args{qw(phrase table fields dbh)};
+    my ($phrase, $table, $fields, $dbh, $where) = @args{qw(phrase table fields dbh where)};
     $dbh ||= dbh();
     if(! $phrase ) {
         my $cgi = CGI->new();
@@ -882,8 +887,9 @@ sub autocomplete_values {
     }
 
     # query the db for these values
-    my $sql   = "SELECT " . join(', ', map { "`$_`" } @$fields) . " FROM `$table` WHERE "
-        . join(' OR ', map { "`$_` REGEXP ?" } @$fields );
+    my $sql   = "SELECT " . join(', ', map { "`$_`" } @$fields) . " FROM `$table` WHERE ("
+        . join(' OR ', map { "`$_` REGEXP ?" } @$fields ) . ')';
+    $sql .= " AND $where" if $where;
 
     my $regex = '(^|[[:blank:]_//])' . $phrase;
     my $sth   = $dbh->prepare_cached($sql);
