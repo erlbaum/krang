@@ -17,10 +17,10 @@ Krang.load = function() {
 }
 
 /*
-    Krang.new_window(url)
-    Open the url into a new window consistently
+    Krang.popup(url)
+    Open the url into a new popup window consistently
 */
-Krang.new_window = function(url) {
+Krang.popup = function(url) {
     var win =window.open(url,"thewindow","width=500,height=500,left=200,top=0,status=no,toolbar=no,menubar=no,scrollbars=yes,location=no,directories=no,resizable=no");
     win.focus();
 }
