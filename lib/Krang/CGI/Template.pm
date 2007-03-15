@@ -33,7 +33,13 @@ use Krang::ClassLoader Message => qw/add_message/;
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'Template';
-use Krang::ClassLoader Widget => qw/format_url category_chooser template_chooser autocomplete_values/;
+use Krang::ClassLoader Widget => qw/
+    format_url
+    category_chooser
+    template_chooser
+    template_chooser_object
+    autocomplete_values
+/;
 use Krang::ClassLoader 'Publisher';
 
 use constant WORKSPACE_URI => 'workspace.pl';
@@ -88,13 +94,12 @@ sub setup {
 		view_edit
 		view_version
         autocomplete
+        template_chooser_node
 	/]);
 
 	$self->tmpl_path('Template/');
 
 }
-
-
 
 =head1 INTERFACE
 
@@ -967,7 +972,7 @@ sub get_tmpl_params {
     my (%tmpl_params, $version);
 
     # loop through template fields
-    $tmpl_params{$_} = $template->$_ for @fields;
+    $tmpl_params{$_} = ($template->$_ || '') for @fields;
     debug("FILENAME: $tmpl_params{filename}");
     $version = $template->version;
 
@@ -1260,6 +1265,16 @@ sub autocomplete {
         fields => [qw(template_id element_class_name filename)],
     );
 }
+
+sub template_chooser_node {
+    my $self = shift;
+    my $query = $self->query();
+    my $chooser = template_chooser_object(
+        query  => $query,
+    );
+    return $chooser->handle_get_node( query => $query );
+};
+
 
 =back
 

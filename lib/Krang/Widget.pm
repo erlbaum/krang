@@ -5,23 +5,32 @@ use warnings;
 
 use Carp qw(croak);
 use CGI;
-use Krang::ClassLoader 'HTMLTemplate';
-use Time::Piece qw(localtime);
+use File::Spec::Functions qw(catfile);
+use HTML::PopupTreeSelect::Dynamic;
 use Krang::ClassLoader 'Category';
-use Krang::ClassLoader Conf => qw(KrangRoot);
-use Krang::ClassLoader Log => qw(debug);
-use Krang::ClassLoader DB => qw(dbh);
-use HTML::PopupTreeSelect;
-use Text::Wrap qw(wrap);
+use Krang::ClassLoader 'HTMLTemplate';
+use Krang::ClassLoader Conf    => qw(KrangRoot);
+use Krang::ClassLoader DB      => qw(dbh);
+use Krang::ClassLoader Log     => qw(debug);
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Session => qw(%session);
-
-use File::Spec::Functions qw(catfile);
+use Text::Wrap qw(wrap);
+use Time::Piece qw(localtime);
 
 use base 'Exporter';
-our @EXPORT_OK = qw(category_chooser time_chooser date_chooser 
-                    datetime_chooser decode_date decode_datetime 
-                    format_url template_chooser autocomplete_values);
+our @EXPORT_OK = qw(
+    category_chooser
+    category_chooser_object
+    time_chooser
+    date_chooser
+    datetime_chooser
+    decode_date
+    decode_datetime
+    format_url
+    template_chooser
+    template_chooser_object
+    autocomplete_values
+);
 
 =head1 NAME
 
@@ -58,42 +67,70 @@ chooser.
 
 Available parameters are as follows:
 
-  name     - (required) Unique name of the chooser.  If you have multiple
-             choosers on the same page then they must have different
-             names.  Must be alphanumeric.
+=over
 
-  query    - (required) The CGI.pm query object for this request.
+=item name (required)
 
-  field    - The form field which will be set to the category_id of the
-             choosen category.  Defaults to the value set for C<name>
-             if not set.
+Unique name of the chooser.  If you have multiple
+choosers on the same page then they must have different
+names.  Must be alphanumeric.
 
-  site_id  - If specified, chooser will limit selection to only
-             this site and its descendant categories.
+=item query (required)
 
-  onchange - can be set to the name of a javascript function
-             that will be called when the user picks a category.  
+The CGI.pm query object for this request.
 
-  label    - change the label on the button which defaults to 'Choose'. 
+=item field   
 
-  display  - setting to false will supress displaying the chosen 
-             category URL next to the button.
+The form field which will be set to the category_id of the
+choosen category.  Defaults to the value set for C<name>
+if not set.
 
-  formname - the name of the form in which the chooser appears.  If 
-             not specified, will default to the first form in your 
-             HTML document.
+=item site_id 
 
-  title    - the title on the chooser window.  Defaults to 'Choose a 
-             Category'.
+If specified, chooser will limit selection to only
+this site and its descendant categories.
 
-  may_see  - Hide categories which are hidden to the current user.
-             Defaults to 1.
+=item onchange
 
-  may_edit - Hide categoriew which are read-only to the current user.
-             Defaults to 0.
+can be set to the name of a javascript function
+that will be called when the user picks a category.  
 
-  persistkey - Hash key that indicates where in the session hash to
-               look for a pre-existing value.
+=item label   
+
+change the label on the button which defaults to 'Choose'. 
+
+=item display 
+
+setting to false will supress displaying the chosen 
+category URL next to the button.
+
+=item formname
+
+the name of the form in which the chooser appears.  If 
+not specified, will default to the first form in your 
+HTML document.
+
+=item title   
+
+the title on the chooser window.  Defaults to 'Choose a 
+Category'.
+
+=item may_see 
+
+Hide categories which are hidden to the current user.
+Defaults to 1.
+
+=item may_edit
+
+Hide categories which are read-only to the current user.
+Defaults to 0.
+
+=item persistkey
+
+Hash key that indicates where in the session hash to
+look for a pre-existing value.
+
+=back
 
 The template for the category chooser is located in
 F<Widget/category_chooser.tmpl>.
@@ -102,12 +139,131 @@ F<Widget/category_chooser.tmpl>.
 
 sub category_chooser {
     my %args = @_;
-    my ($name, $query, $label, $display, $onchange, $formname, $site_id, 
-        $field, $title, $may_see, $may_edit, $persistkey) =
-      @args{qw(name query label display onchange formname site_id 
-               field title may_see may_edit persistkey)};
+    my ( $name, $query, $display, $onchange, $formname, $field, $persistkey ) =
+      @args{qw(name query display onchange formname field persistkey)};
     croak("Missing required args: name and query")
       unless $name and $query;
+
+    # field defaults to name
+    $field ||= $name;
+
+    my $chooser = category_chooser_object(%args);
+    # if we didn't get a choose it's cause there are no categories to choose from
+    if( ! $chooser ) {
+        add_message('no_categories_for_chooser');
+        return "No categories are defined.";
+    }
+
+    my $template = pkg('HTMLTemplate')->new(
+        filename          => "Widget/category_chooser.tmpl",
+        cache             => 1,
+        die_on_bad_params => 1,
+    );
+    $formname   ||= '';
+    $name       ||= '';
+    $persistkey ||= '';
+
+    my $category_id =
+      defined $query->param($field) ? $query->param($field)
+      : $persistkey
+      ? $session{KRANG_PERSIST}{$persistkey}{ 'cat_chooser_id_' . $formname . "_" . $name }
+      : 0;
+
+    my ($cat) = pkg('Category')->find( category_id => $category_id );
+
+    if ($cat) {
+        $template->param( category_id  => $category_id );
+        $template->param( category_url => $cat->url );
+    }
+
+    # send data to the template
+    $template->param(
+        chooser  => $chooser->output,
+        name     => $name,
+        field    => $field,
+        display  => defined $display ? $display : 1,
+        formname => $formname,
+        onchange => $onchange
+    );
+
+    return $template->output();
+}
+
+=item $chooser = category_chooser_object(name => 'category_id', query => $query)
+
+Creates and returns an L<HTML::PopupTreeSelect::Dynamic> object for
+use with categories. This is used to create the HTML for the original
+widget and to dynamically supply the limbs of the tree on demand in
+AJAX requests.
+
+Available parameters are as follows:
+
+=over
+
+=item name (required)
+
+Unique name of the chooser.  If you have multiple
+choosers on the same page then they must have different
+names.  Must be alphanumeric.
+
+=item query (required)
+
+The CGI.pm query object for this request.
+
+=item label   
+
+change the label on the button which defaults to 'Choose'. 
+
+=item field   
+
+The form field which will be set to the category_id of the
+choosen category.  Defaults to the value set for C<name>
+if not set.
+
+=item site_id 
+
+If specified, chooser will limit selection to only
+this site and its descendant categories.
+
+=item title   
+
+the title on the chooser window.  Defaults to 'Choose a 
+Category'.
+
+=item may_see 
+
+Hide categories which are hidden to the current user.
+Defaults to 1.
+
+=item may_edit
+
+Hide categories which are read-only to the current user.
+Defaults to 0.
+
+=item persistkey
+
+Hash key that indicates where in the session hash to
+look for a pre-existing value.
+
+=back
+
+=cut 
+
+sub category_chooser_object {
+    my %args = @_;
+    my (
+        $name,  $query, $label,   $formname, $site_id,
+        $field, $title, $may_see, $may_edit, $persistkey
+      )
+      = @args{
+        qw(name query label formname site_id
+          field title may_see may_edit persistkey)
+      };
+
+    croak("Missing required args: query") unless $query;
+
+    $name ||= $query->param('name');
+    croak("Missing required args: name") unless $name;
 
     # field defaults to name
     $field ||= $name;
@@ -115,100 +271,77 @@ sub category_chooser {
     # may_see is on by default
     $may_see = 1 unless defined $may_see;
 
-    my $template = pkg('HTMLTemplate')->new(filename => 
-                                            "Widget/category_chooser.tmpl",
-                                            cache   => 1,
-                                            die_on_bad_params => 1,
-                                           );
+    $formname   ||= '';
+    $name       ||= '';
+    $persistkey ||= '';
 
-    $formname   = '' unless($formname);
-    $name       = ''  unless($name);
-    $persistkey = '' unless($persistkey);
-
-    my $category_id =
-      (defined($query->param($field))) ? $query->param($field) :
-        $session{KRANG_PERSIST}{$persistkey}{'cat_chooser_id_'.$formname."_".$name};
-
-    $category_id = 0 unless $category_id;
-
-    $session{KRANG_PERSIST}{$persistkey}{'cat_chooser_id_'.$formname."_".$name} =
-      $query->param($field) if defined($query->param($field));
+    $session{KRANG_PERSIST}{$persistkey}{ 'cat_chooser_id_' . $formname . "_" . $name } =
+      $query->param($field)
+      if defined( $query->param($field) );
 
     # setup category loop
-    my %find_params = (order_by => 'url');
-    $find_params{site_id} = $site_id if ($site_id);
-    $find_params{may_see} = 1 if $may_see;
-    $find_params{may_edit} = 1 if $may_edit;
+    my %find_params = ( order_by => 'url' );
+    $find_params{site_id}  = $site_id if ($site_id);
+    $find_params{may_see}  = 1        if $may_see;
+    $find_params{may_edit} = 1        if $may_edit;
 
     # get list of all cats
     my @cats = pkg('Category')->find(%find_params);
 
     # if there are no cats then there can't be any chooser
-    unless (@cats) {
-        add_message('no_categories_for_chooser');
-        return "No categories are defined.";
-    }
+    return unless @cats;
 
-    # build up data structure used by HTML::PopupTreeSelect
-    my $data = { children => [], label => "", open => 1};
+    # build up data structure used by HTML::PopupTreeSelect::Dynamic
+    my $data = { children => [], label => "", open => 1 };
     my %nodes;
     while (@cats) {
         my $cat = shift @cats;
 
-        my $parent_id = $cat->parent_id;
+        my $parent_id   = $cat->parent_id;
         my $parent_node = $parent_id ? $nodes{$parent_id} : $data;
 
         # maybe they don't have permissions to the parent, so it
         # wasn't returned from the initial find().  Fill it in
         # deactivated.
         unless ($parent_node) {
-            unshift(@cats, $cat);
-            unshift(@cats, pkg('Category')->find(category_id => $parent_id));
+            unshift( @cats, $cat );
+            unshift( @cats, pkg('Category')->find( category_id => $parent_id ) );
             $cats[0]->{_inactive} = 1;
             next;
         }
-            
-        push(@{$parent_node->{children}}, 
-             {
-              label    => ($cat->dir eq '/' ? $cat->url : $cat->dir),
-              value    => $cat->category_id . "," . $cat->url,
-              children => [],
-              ($cat->{_inactive} ? 
-               (inactive => 1) : ()),
-             });
-        $nodes{$cat->category_id} = $parent_node->{children}[-1];
 
-        if ($cat->category_id == $category_id) {
-            $template->param(category_id => $category_id);
-            $template->param(category_url => $cat->url);
-        }
+        push(
+            @{ $parent_node->{children} },
+            {
+                label => ( $cat->dir eq '/' ? $cat->url : $cat->dir ),
+                value    => $cat->category_id . "," . $cat->url,
+                children => [],
+                ( $cat->{_inactive} ? ( inactive => 1 ) : () ),
+            }
+        );
+        $nodes{ $cat->category_id } = $parent_node->{children}[-1];
     }
-    
+
     # build the chooser
-    my $chooser = HTML::PopupTreeSelect->new(name       => $name,
-                                             title      => $title || 'Choose a Category',
-                                             data       => $data->{children},
-                                             image_path => 'images',
-                                             onselect   => $name . '_choose_category',
-                                             hide_root  => 1,
-                                             button_label => $label||'Choose',
-                                             include_css => 0,
-                                             width      => 225,
-                                             height     => 200,
-                                             resizable  => 1,
-                                             hide_textareas => 1,
-                                            );
-
-    # send data to the template
-    $template->param(chooser       => $chooser->output,
-                     name          => $name,
-                     field         => $field,
-                     display       => defined $display ? $display : 1,
-                     formname      => $formname,
-                     onchange      => $onchange);
-
-    return $template->output;
+    return HTML::PopupTreeSelect::Dynamic->new(
+        name              => $name,
+        title             => $title || 'Choose a Category',
+        data              => $data->{children},
+        image_path        => 'images',
+        onselect          => $name . '_choose_category',
+        hide_root         => 1,
+        button_label      => $label || 'Choose',
+        include_css       => 0,
+        width             => 225,
+        height            => 200,
+        resizable         => 1,
+        hide_textareas    => 1,
+        dynamic_url       => $query->url,
+        dynamic_params    => "rm=category_chooser_node&name=${name}",
+        include_prototype => 0,
+    );
 }
+
 
 =item $chooser_html = time_chooser(name => 'time', query => $query)
 
@@ -707,33 +840,51 @@ chooser.
 
 Available parameters are as follows:
 
-  name     - (required) Unique name of the chooser.  If you have multiple
-             choosers on the same page then they must have different
-             names.  Must be alphanumeric.
+=over
 
-  query    - (required) The CGI.pm query object for this request.
+=item name (required)
 
-  field    - The form field which will be set to the template_id of the
-             choosen category.  Defaults to the value set for C<name>
-             if not set.
+Unique name of the chooser.  If you have multiple choosers on the same
+page then they must have different names.  Must be alphanumeric.
 
-  onchange - can be set to the name of a javascript function
-             that will be called when the user picks a category.  
+=item query (required)
 
-  label    - change the label on the button which defaults to 'Choose'. 
+The CGI.pm query object for this request.
 
-  display  - setting to false will supress displaying the chosen 
-             template name next to the button.
+=item field
 
-  formname - the name of the form in which the chooser appears.  If 
-             not specified, will default to the first form in your 
-             HTML document.
+The form field which will be set to the template_id of the choosen
+category.  Defaults to the value set for C<name> if not set.
 
-  title    - the title on the chooser window.  Defaults to 'Choose a 
-             Template'.
+=item onchange
 
-  persistkey - Hash key that indicates where in the session hash to
-               look for a pre-existing value.
+Can be set to the name of a javascript function that will be called when
+the user picks a category.
+
+=item label
+
+Change the label on the button which defaults to 'Choose'.
+
+=item display
+
+Setting to false will supress displaying the chosen template name next
+to the button.
+
+=item formname
+
+The name of the form in which the chooser appears.  If not specified,
+will default to the first form in your HTML document.
+
+=item title
+
+The title on the chooser window.  Defaults to 'Choose a Template'.
+
+=item persistkey
+
+Hash key that indicates where in the session hash to look for a
+pre-existing value.
+
+=back
 
 The template for the category chooser is located in
 F<Widget/template_chooser.tmpl>.
@@ -742,99 +893,150 @@ F<Widget/template_chooser.tmpl>.
 
 sub template_chooser {
     my %args = @_;
-    my ($name, $query, $label, $display, $onchange, $formname,
-        $field, $title, $persistkey) =
-	  @args{qw(name query label display onchange formname
-               field title persistkey)};
+    my ( $name, $query, $display, $onchange, $formname, $field, $persistkey ) = @args{
+        qw(name query display onchange formname
+          field title persistkey)
+      };
 
     croak("Missing required args: name and query")
       unless $name and $query;
 
+    my $template = pkg('HTMLTemplate')->new(
+        filename          => "Widget/template_chooser.tmpl",
+        cache             => 1,
+        die_on_bad_params => 1,
+        loop_context_vars => 1,
+    );
+
     # field defaults to name
-    $field ||= $name;
-
-    my $template = pkg('HTMLTemplate')->new(filename => 
-                                            "Widget/template_chooser.tmpl",
-                                            cache   => 1,
-                                            die_on_bad_params => 1,
-					    loop_context_vars => 1,
-                                           );
-
-    $formname   = '' unless($formname);
-    $name       = '' unless($name);
-    $persistkey = '' unless($persistkey);
+    $field      ||= $name;
+    $formname   ||= '';
+    $name       ||= '';
+    $persistkey ||= '';
 
     # pass the element name around in advanced search
-    my $element_name =
-      (defined($query->param($field))) ? $query->param($field) :
-        $session{KRANG_PERSIST}{$persistkey}{'tmpl_chooser_id_'.$formname."_".$name};
+    my $element_name = $query->param($field)
+      || $session{KRANG_PERSIST}{$persistkey}{ 'tmpl_chooser_id_' . $formname . "_" . $name }
+      || '';
 
-    $element_name = '' unless $element_name;
+    $session{KRANG_PERSIST}{$persistkey}{ 'tmpl_chooser_id_' . $formname . "_" . $name } =
+      $query->param($field)
+      if defined( $query->param($field) );
 
-    $session{KRANG_PERSIST}{$persistkey}{'tmpl_chooser_id_'.$formname."_".$name} =
-      $query->param($field) if defined($query->param($field));
+    $template->param( element_class_name => $element_name );
+
+    # build the chooser
+    my $chooser = template_chooser_object(%args);
+
+    # send data to the template
+    $template->param(
+        chooser  => $chooser->output,
+        name     => $name,
+        field    => $field,
+        display  => defined $display ? $display : 1,
+        formname => $formname,
+        onchange => $onchange
+    );
+
+    return $template->output;
+}
+
+=item $chooser = template_chooser_object(name => 'category_id', query => $query)
+
+Creates and returns an L<HTML::PopupTreeSelect::Dynamic> object for
+use with templates. This is used to create the HTML for the original
+widget and to dynamically supply the limbs of the tree on demand in
+AJAX requests.
+
+Available parameters are as follows:
+
+=over
+
+=item name (required)
+
+Unique name of the chooser.  If you have multiple choosers on the same
+page then they must have different names.  Must be alphanumeric.
+
+=item query (required)
+
+The CGI.pm query object for this request.
+
+=item label
+
+Change the label on the button which defaults to 'Choose'.
+
+=item title
+
+The title on the chooser window.  Defaults to 'Choose a Template'.
+
+=back
+
+=cut
+
+sub template_chooser_object {
+    my %args = @_;
+    my ( $name, $query, $label, $title ) =
+      @args{qw(name query label title)};
+
+    croak("Missing required arg: query") unless $query;
+
+    $name ||= $query->param('name');
+    croak("Missing required arg: name") unless $name;
 
     # get element names
-    my @elements = map{ [pkg('ElementLibrary')->top_level(name => $_) => '']}
-	          reverse pkg('ElementLibrary')->top_levels;
+    my @elements = map { [ pkg('ElementLibrary')->top_level( name => $_ ) => '' ] }
+      reverse pkg('ElementLibrary')->top_levels;
 
     # get existing templates
-    my %exists = map{ s/\.tmpl//; $_ => 1 }
-                 map{ $_->filename } pkg('Template')->find;
+    my %exists = map { s/\.tmpl//; $_ => 1 }
+      map { $_->filename } pkg('Template')->find;
 
     # root node
     my $data = { children => [], label => '', open => 1 };
 
     # build element tree
     while (@elements) {
-	my ($class, $parent) = @{pop(@elements)};
-	my $parent_node = $parent ? $parent : $data;
-	my $element = $class->name;
+        my ( $class, $parent ) = @{ pop(@elements) };
+        my $parent_node = $parent ? $parent : $data;
+        my $element     = $class->name;
 
-	# elements for which a template already exists are colored in green
-	if ($exists{$element}) {
-	    $element = '<span class="tmpl_chooser_has_template">'. $class->name .'</span>';
-	}
+        # elements for which a template already exists are colored in green
+        if ( $exists{$element} ) {
+            $element = '<span class="tmpl_chooser_has_template">' . $class->name . '</span>';
+        }
 
-	my $child = { label => $element,
-		      value => $class->name,
-		      children => [],
-		    };
+        my $child = {
+            label    => $element,
+            value    => $class->name,
+            children => [],
+        };
 
-	push @{$parent_node->{children}}, $child;
+        push @{ $parent_node->{children} }, $child;
 
-	if (my @children = $class->children) {
-	    push(@elements, map{ [$_ => $child] } sort{$b->name cmp $a->name} @children);
-	}
+        if ( my @children = $class->children ) {
+            push( @elements, map { [ $_ => $child ] } sort { $b->name cmp $a->name } @children );
+        }
     }
 
-    $template->param(element_class_name => $element_name);
-
     # build the chooser, taking care of localizing the buttons and the title
-    my $chooser = HTML::PopupTreeSelect->new(
-					     name         => $name,
-					     title        => $title || 'Choose a Template',
-					     data         => $data->{children},
-					     image_path   => 'images',
-					     onselect     => $name . '_choose_template',
-					     button_label => $label || 'Choose',
-					     include_css  => 0,
-					     width        => 225,
-					     height       => 200,
-					     resizable    => 1,
-					     hide_textareas => 1,
-					     );
-
-    # send data to the template
-    $template->param(chooser       => $chooser->output,
-                     name          => $name,
-                     field         => $field,
-                     display       => defined $display ? $display : 1,
-                     formname      => $formname,
-                     onchange      => $onchange);
-
-    return $template->output;
+    return HTML::PopupTreeSelect::Dynamic->new(
+        name              => $name,
+        title             => $title || 'Choose a Template',
+        data              => $data->{children},
+        image_path        => 'images',
+        onselect          => $name . '_choose_template',
+        button_label      => $label || 'Choose',
+        include_css       => 0,
+        width             => 225,
+        height            => 200,
+        resizable         => 1,
+        hide_textareas    => 1,
+        dynamic_url       => $query->url,
+        dynamic_params    => "rm=template_chooser_node&name=${name}",
+        include_prototype => 0,
+    );
 }
+
 
 =item $values = autocomplete_values(%args)
 

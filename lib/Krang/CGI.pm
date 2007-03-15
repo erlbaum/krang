@@ -5,13 +5,13 @@ use warnings;
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Widget  => qw(category_chooser_object);
 
 # pull in Krang::lib when not running in mod_perl
 BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
 
 # trigger InitHandler when not in mod_perl
 BEGIN { $ENV{MOD_PERL} or pkg('AddOn')->call_handler('InitHandler') }
-
 
 =head1 NAME
 
@@ -396,6 +396,29 @@ END
             $$o .= $js;
         }
     }
+}
+
+# This run mode is added as a run mode to every controller class since it's used
+# in almost all of them. It is designed to be called as an AJAX request by
+# the C<category_chooser> widget to return a portion of the category tree.
+
+BEGIN {
+    __PACKAGE__->add_callback(
+        prerun => sub {
+            my $self  = shift;
+            $self->run_modes(
+                category_chooser_node => sub {
+                    my $self = shift;
+                    my $query = $self->query();
+                    my $chooser = category_chooser_object(
+                        query    => $query,
+                        may_edit => 1,
+                    );
+                    return $chooser->handle_get_node( query => $query );
+                },
+            );
+        }
+    );
 }
 
 1;
