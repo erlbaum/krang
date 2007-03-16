@@ -152,20 +152,24 @@ sub _install_images {
 
             # open up the image and color it with Image::BioChrome
             my $template = pkg('File')->find(catfile('templates', 'images', $file));
-            $Image::BioChrome::VERBOSE = 0;
-            $Image::BioChrome::DEBUG = 0;
-            my $bio = Image::BioChrome->new($template);
-            croak("Unable to load image $template.") unless $bio;
+            if( -e $template ) {
+                $Image::BioChrome::VERBOSE = 0;
+                $Image::BioChrome::DEBUG = 0;
+                my $bio = Image::BioChrome->new($template);
+                croak("Unable to load image $template.") unless $bio;
 
-            # colorize
-            $bio->alphas(
-                $self->_normalize_color($file_block->get('BioChromeBlack')),
-                $self->_normalize_color($file_block->get('BioChromeRed')),
-                $self->_normalize_color($file_block->get('BioChromeGreen')),
-                $self->_normalize_color($file_block->get('BioChromeBlue')),
-            );
-            
-            $bio->write_file(catfile(KrangRoot, 'htdocs', 'images', $file)); 
+                # colorize
+                $bio->alphas(
+                    $self->_normalize_color($file_block->get('BioChromeBlack')),
+                    $self->_normalize_color($file_block->get('BioChromeRed')),
+                    $self->_normalize_color($file_block->get('BioChromeGreen')),
+                    $self->_normalize_color($file_block->get('BioChromeBlue')),
+                );
+                
+                $bio->write_file(catfile(KrangRoot, 'htdocs', 'images', $file)); 
+            } else {
+                warn "Could not find file matching $file!\n";
+            }
         }
     }
 }
