@@ -215,6 +215,85 @@ BEGIN {
             }
         }
     );
+
+    __PACKAGE__->add_callback(postrun => sub {
+        # check for HTML errors if HTMLLint is on
+        my ($self, $o) = @_;   
+        return unless HTMLLint;
+
+        # parse the output with HTML::Lint
+        require HTML::Lint;
+        my $lint = HTML::Lint->new();
+        $lint->parse($$o);
+        $lint->eof();
+
+        # if there were errors put them into a javascript popup
+        if ($lint->errors) {
+            my $err_text = "<ul>" . join("", map { "<li>$_</li>" }
+                                         map { s/&/&amp;/g;
+                                               s/</&lt;/g;
+                                               s/>/&gt;/g;
+                                               s/\\/\\\\/g;
+                                               s/"/\\"/g;
+                                               $_; }
+                                         map { $_->as_string } $lint->errors) .
+                                           "</ul>";
+        my $js = qq|
+            <script language="javascript">
+              var html_lint_window = window.open("", "html_lint_window", "height=300,width=600");
+              html_lint_window.document.write("<html><head><title>HTML Errors Detected</title></head><body><h1>HTML Errors Detected</h1>$err_text</body></html>");
+              html_lint_window.document.close();
+              html_lint_window.focus(); 
+            </script>
+        |;
+            if ($$o =~ m!</body>!) {
+                $$o =~ s!</body>!$js\n</body>!;
+            } else {
+                $$o .= $js;
+            }
+        }
+    });
+
+    # make sure our redirect headers are AJAXy
+    # if the original request was for AJAX
+    __PACKAGE__->add_callback(postrun => sub {
+        my $self  = shift;
+        my %props = $self->header_props();
+        my $uri   = $props{'uri'} || $props{'-uri'};
+        my $ajax  = $self->param('ajax');
+        if( $uri && $ajax ) {
+            if( $uri =~ /\?/ ) {
+                $uri .= '&';
+            } else {
+                $uri .= '?';
+            }
+            $uri .= 'ajax=' . $ajax;
+            $props{'-uri'} = $uri;
+            $self->header_props(%props);
+        }
+    });
+
+    __PACKAGE__->add_callback(prerun => sub {
+        my $self  = shift;
+        # This run mode is added as a run mode to every controller class since it's used
+        # in almost all of them. It is designed to be called as an AJAX request by
+        # the C<category_chooser> widget to return a portion of the category tree.
+        $self->run_modes(
+            category_chooser_node => sub {
+                my $self = shift;
+                my $query = $self->query();
+                my $chooser = category_chooser_object(
+                    query    => $query,
+                    may_edit => 1,
+                );
+                return $chooser->handle_get_node( query => $query );
+            },
+        );
+
+        # store the ajax flag in $self->param early on
+        # since some modules will call $query->delete_all();
+        $self->param( ajax => (scalar $self->query->param('ajax') ) );
+    });
 }
 
 sub _check_permissions {
@@ -294,6 +373,9 @@ sub load_tmpl {
     } 
 
     my $t = pkg('HTMLTemplate')->new_file($tmpl_file, @extra_params);
+
+    # add the AJAX flag if we need to
+    $t->param(ajax => 1 ) if( $self->param('ajax') && $t->query( name => 'ajax' ) );
     return $t;
 }
 
@@ -360,65 +442,8 @@ sub dump_html {
     return "<div style='text-align: left; margin-left: 170px'>$output</div>";
 }
 
-# check for HTML errors if HTMLLint is on
-sub cgiapp_postrun {
-    my ($self, $o) = @_;   
-    return unless HTMLLint;
-
-    # parse the output with HTML::Lint
-    require HTML::Lint;
-    my $lint = HTML::Lint->new();
-    $lint->parse($$o);
-    $lint->eof();
-
-    # if there were errors put them into a javascript popup
-    if ($lint->errors) {
-        my $err_text = "<ul>" . join("", map { "<li>$_</li>" }
-                                     map { s/&/&amp;/g;
-                                           s/</&lt;/g;
-                                           s/>/&gt;/g;
-                                           s/\\/\\\\/g;
-                                           s/"/\\"/g;
-                                           $_; }
-                                     map { $_->as_string } $lint->errors) .
-                                       "</ul>";
-    my $js = <<END;
-<script language="javascript">
-  var html_lint_window = window.open("", "html_lint_window", "height=300,width=600");
-  html_lint_window.document.write("<html><head><title>HTML Errors Detected</title></head><body><h1>HTML Errors Detected</h1>$err_text</body></html>");
-  html_lint_window.document.close();
-  html_lint_window.focus(); 
-</script>
-END
-        if ($$o =~ m!</body>!) {
-            $$o =~ s!</body>!$js\n</body>!;
-        } else {
-            $$o .= $js;
-        }
-    }
-}
-
-# This run mode is added as a run mode to every controller class since it's used
-# in almost all of them. It is designed to be called as an AJAX request by
-# the C<category_chooser> widget to return a portion of the category tree.
-
 BEGIN {
-    __PACKAGE__->add_callback(
-        prerun => sub {
-            my $self  = shift;
-            $self->run_modes(
-                category_chooser_node => sub {
-                    my $self = shift;
-                    my $query = $self->query();
-                    my $chooser = category_chooser_object(
-                        query    => $query,
-                        may_edit => 1,
-                    );
-                    return $chooser->handle_get_node( query => $query );
-                },
-            );
-        }
-    );
+
 }
 
 1;

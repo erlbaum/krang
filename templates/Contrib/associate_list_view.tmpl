@@ -112,11 +112,11 @@ update_order_sort_south  = function (a, b) {
 <div class="box">
 <div class="no-border">
 Current Contributors</div>
-<form name="do_return_form" method="POST" action="<tmpl_if associate_story>story.pl<tmpl_else>media.pl</tmpl_if>">
+<form name="do_return_form" method="POST" action="<tmpl_if associate_story>story.pl<tmpl_else>media.pl</tmpl_if>" class="ajax">
 <input type="hidden" name="rm" value="edit">
 </form>
 
-<form name="add_contrib_form" method="POST" action="contributor.pl">
+<form name="add_contrib_form" method="POST" action="contributor.pl" class="ajax">
 <input type="hidden" name="rm" value="add">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
@@ -130,7 +130,7 @@ Current Contributors</div>
 </form>
 
 
-<form name="current_contributors_form" method="POST" action="contributor.pl">
+<form name="current_contributors_form" method="POST" action="contributor.pl" class="ajax">
 <input type="hidden" name="rm" value="reorder_contribs">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
@@ -179,7 +179,7 @@ Current Contributors</div>
 
 <div class="boxb">
  <div class="light">
-<form name="search_form" method="POST" action="contributor.pl">
+<form name="search_form" method="POST" action="contributor.pl" class="ajax">
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="">
 <input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
@@ -196,9 +196,9 @@ Current Contributors</div>
 
 
 
+<form name="krang_pager_form" method="POST" action="contributor.pl" class="ajax">
 <div class="no-border">
 Choose Contributors
-<form name="krang_pager_form" method="POST" action="contributor.pl">
 <p><b><a href="javascript:add_contrib()">Add A Contributor</a></b></p></div>
 <tmpl_include HTMLPager/pager-internals.tmpl>
 <tmpl_if krang_pager_rows>

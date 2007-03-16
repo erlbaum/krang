@@ -36,17 +36,17 @@
 
 </script>
 
-<form name="select_story" method="post" action="<tmpl_var action>">
+<div class="dark-bar"><p class="left">Select Story</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+
+<div class="box">
+<form name="select_story" method="post" action="<tmpl_var action>" class="ajax">
 <input type="hidden" name="selected_story_id">
 <input type="hidden" name="rm" value="find_story_link">
 <input type="hidden" name="path" value="<tmpl_var escape=1 path>">
 <input type="hidden" name="advanced" value="<tmpl_var escape=1 advanced>">
 <tmpl_var hard_find_hidden>
 
-<div class="dark-bar"><p class="left">Select Story</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
-
 <tmpl_if advanced>
-<div class="box">
 <table border="0" cellpadding="6" cellspacing="0" width="571">
 
 <tr><td>SEARCH
@@ -114,17 +114,10 @@
   (<a href="javascript:advanced_search()">Advanced Search</a>)</p>
   <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
   <input type="button" value="Search" onclick="document.forms[0].submit()">
-
-</tmpl_if>
+ </div>
 </div>
 
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
-</form>
+</tmpl_if>
 
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="">
@@ -134,7 +127,15 @@
 
 </form>
 
-<form name="clear_advanced_search_form" method="POST" action="<tmpl_var action>">
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+</form>
+
+<form name="clear_advanced_search_form" method="POST" action="<tmpl_var action>" class="ajax">
 <input type="hidden" name="rm" value="find_story_link">
 <input type="hidden" name="path" value="<tmpl_var path>">
 <input type="hidden" name="advanced" value=1>
@@ -146,7 +147,6 @@
 
 <div class="button-bar">
     <input type="button" value="Cancel" onclick="cancel_select()" class="button">
-</div>
 </div>
 
 <tmpl_include footer.tmpl>

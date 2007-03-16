@@ -98,12 +98,12 @@
 <div class="dark-bar"><p class="left"><tmpl_var desk_name escape=html> Desk</p><p class="right"><a href="help.pl?topic=desk" class="help">Help</a>&nbsp;</p></div>
 
 <!-- publish_story form -->
-<form name="publish_story_form" method="GET" action="publisher.pl">
+<form name="publish_story_form" method="GET" action="publisher.pl" class="ajax">
 <input type=hidden name="rm" value="publish_story">
 <input type=hidden name="story_id" value="">
 </form>
 
-<form name="krang_pager_form" method="POST" action="desk.pl">
+<form name="krang_pager_form" method="POST" action="desk.pl" class="ajax">
   <input type="hidden" name="rm">
   <input type="hidden" name="id">
   <input type="hidden" name="desk_id" value="<tmpl_var desk_id>">

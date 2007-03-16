@@ -21,6 +21,11 @@
         myform.submit();
   }
 
+  add_desk = function () {
+        var myform = document.forms["add_desk_form"];
+        myform.submit();
+  }
+
   // updates the order pull downs to stay consistent
 update_order = function (obj, prefix) {
     var form  = obj.form;
@@ -75,7 +80,7 @@ update_order_sort_south  = function (a, b) {
 
 <div class="dark-bar"><p class="left">&nbsp;Desk Editor</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="help.pl?topic=desk_admin" class="help">Help</a>&nbsp;</p></div>
 <TMPL_IF existing_desk_loop>
-<form name="current_desk_form" method="POST" action="desk_admin.pl">
+<form name="current_desk_form" method="POST" action="desk_admin.pl" class="ajax">
 <input type="hidden" name="total_desks" value="<tmpl_var total_desks>" override='1'>
 <input type="hidden" name="rm" value="delete" override='1'>
 <div class="box">
@@ -101,7 +106,7 @@ update_order_sort_south  = function (a, b) {
  <div class="no-border">No Desks Found</div>
 </TMPL_IF>
 <br>
-<form name="add_desk_form" method="POST" action="desk_admin.pl">
+<form name="add_desk_form" method="POST" action="desk_admin.pl" class="ajax">
 <input type="hidden" name="rm" value="add" override='1'>
 <table cellspacing="0" class="form-head" cellpadding="4">
       <tr>
@@ -117,7 +122,7 @@ update_order_sort_south  = function (a, b) {
             <td class="form-cell"><tmpl_var order_selector></td>
         </tr></table><br></div>
 		  
-		  <div class="button-bar"><input type=button value="Add Desk" onclick="submit()" class="button"></div></form></div>
+		  <div class="button-bar"><input type="button" value="Add Desk" onclick="add_desk()" class="button"></div></form></div>
 </div>
 
 <tmpl_include footer.tmpl>

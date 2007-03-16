@@ -34,99 +34,101 @@
     myform.submit();
   }
 
+  perform_search = function() {
+    var myform = document.select_media;
+    myform.submit();
+  }
+
 </script>
 
-<form name="select_media" method="post" action="<tmpl_var action>">
-<input type="hidden" name="selected_media_id">
-<input type="hidden" name="rm" value="find_media_link">
-<input type="hidden" name="advanced" value="<tmpl_var escape=1 advanced>">
-<input type="hidden" name="path" value="<tmpl_var escape=1 path>">
-<tmpl_var hard_find_hidden>
-
-<div class="dark-bar"><p class="left">&nbsp;Select Media</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
-<tmpl_if advanced>
-<div class="box">
-<table border="0" cellpadding="6" cellspacing="0" width="571">
-
-<tr><td>SEARCH
-  (<a href="javascript:simple_search()">Simple Search</a>)
-</td></tr>
-
-  <!-- Advanced Search Form -->
-  <tr><td>
-    <table border="0" cellspacing="5" cellpadding="2">
-    <tr>
-      <td>File:</td>
-        <td><input size="40" type="text" name="search_filename" value="<tmpl_var escape=HTML search_filename>"></td>
-      </tr>
-
-      <tr>
-        <td>Title:</td>
-        <td><input size="40" type="text" name="search_title" value="<tmpl_var escape=HTML search_title>"></td>
-      </tr>
-
-      <tr>
-        <td>ID:</td>
-        <td><input size="40" type="text" name="search_media_id" value="<tmpl_var escape=HTML search_media_id>"></td>
-      </tr>
-
-      <tr>
-        <td>Site/Category:</td>
-        <td><tmpl_var category_chooser></td>
-      </tr>
-
-      <tr>
-        <td>Creation Date:</td>
-        <td><tmpl_var date_chooser></td>
-      </tr>
-
-      <tr>
-        <td>Has No Attributes:</td>
-        <td><input type="checkbox" name="search_no_attributes" value="1"<tmpl_if search_no_attributes> checked</tmpl_if>></td>
-      </tr>
-
-      <tr>
-        <td></td>
-        <td><input type="button" value="Clear" onClick="clear_advanced_search()" class="button">&nbsp;<input type="button" value="Search" onclick="document.forms[0].submit()" class="button"></td>
-      </tr>
-
-      <input type="hidden" name="search_filter" value="">
-
-    </table></td></tr></table>
-
-<tmpl_else>
-<div class="boxb"> 
- <div class="light">
-  <p>SEARCH
-  (<a href="javascript:advanced_search()">Advanced Search</a>)</p>
-  <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-  <input type="button" value="Search" onclick="document.forms[0].submit()" class="button">
+<div class="dark-bar">
+  <p class="left">&nbsp;Select Media</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p>
 </div>
-</tmpl_if>
 
+<div class="box">
+<form name="select_media" method="post" action="<tmpl_var action>" class="ajax">
+  <input type="hidden" name="selected_media_id">
+  <input type="hidden" name="rm" value="find_media_link">
+  <input type="hidden" name="advanced" value="<tmpl_var escape=1 advanced>">
+  <input type="hidden" name="path" value="<tmpl_var escape=1 path>">
+  <tmpl_var hard_find_hidden>
+  <tmpl_if advanced>
+    <input type="hidden" name="search_filter" value="">
+    <table border="0" cellpadding="6" cellspacing="0" width="571">
+    <tr>
+      <td>SEARCH (<a href="javascript:simple_search()">Simple Search</a>)</td>
+    </tr>
+    <!-- Advanced Search Form -->
+    <tr>
+      <td>
+        <table border="0" cellspacing="5" cellpadding="2">
+        <tr>
+          <td>File:</td>
+          <td><input size="40" type="text" name="search_filename" value="<tmpl_var escape=HTML search_filename>"></td>
+        </tr>
+        <tr>
+          <td>Title:</td>
+          <td><input size="40" type="text" name="search_title" value="<tmpl_var escape=HTML search_title>"></td>
+        </tr>
+        <tr>
+          <td>ID:</td>
+          <td><input size="40" type="text" name="search_media_id" value="<tmpl_var escape=HTML search_media_id>"></td>
+        </tr>
+        <tr>
+          <td>Site/Category:</td>
+          <td><tmpl_var category_chooser></td>
+        </tr>
+        <tr>
+          <td>Creation Date:</td>
+          <td><tmpl_var date_chooser></td>
+        </tr>
+        <tr>
+          <td>Has No Attributes:</td>
+          <td><input type="checkbox" name="search_no_attributes" value="1"<tmpl_if search_no_attributes> checked</tmpl_if>></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>
+            <input type="button" value="Clear" onClick="clear_advanced_search()" class="button">
+            &nbsp;
+            <input type="button" value="Search" onclick="perform_search()" class="button">
+          </td>
+        </tr>
+        </table>
+      </td>
+    </tr>
+    </table>
+  </div>
+  <tmpl_else>
+  <div class="boxb"> 
+   <div class="light">
+    <p>SEARCH (<a href="javascript:advanced_search()">Advanced Search</a>)</p>
+    <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+    <input type="button" value="Search" onclick="perform_search()" class="button">
+   </div>
+  </div>
+  </tmpl_if>
 
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
+  <!-- Krang::HTMLPager params -->
+  <input type="hidden" name="krang_pager_curr_page_num" value="">
+  <input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+  <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+  <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 </form>
 
-<form name="clear_advanced_search_form" method="POST" action="<tmpl_var action>">
-<input type="hidden" name="rm" value="find_media_link">
-<input type="hidden" name="path" value="<tmpl_var path>">
-<input type="hidden" name="advanced" value=1>
-<input type="hidden" name="search_filter" value="">
+<form name="clear_advanced_search_form" method="POST" action="<tmpl_var action>" class="ajax">
+  <input type="hidden" name="rm" value="find_media_link">
+  <input type="hidden" name="path" value="<tmpl_var path>">
+  <input type="hidden" name="advanced" value=1>
+  <input type="hidden" name="search_filter" value="">
 </form>
 
 <tmpl_var pager_html>
-
 </div>
 
 <div class="button-bar">
     <input type="button" value="Cancel" onclick="cancel_select()" class="button">
 </div>
 
-</div>
+
 <tmpl_include footer.tmpl>
