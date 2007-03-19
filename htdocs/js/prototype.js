@@ -234,12 +234,12 @@ Object.extend(String.prototype, {
     return match[1].split(separator || '&').inject({}, function(hash, pair) {
       if ((pair = pair.split('='))[0]) {
         var name = decodeURIComponent(pair[0]);
-        var value = pair[1] ? decodeURIComponent(pair[1]) : undefined;
+        var value = pair[1] ? decodeURIComponent(pair[1]) : '';
 
         if (hash[name] !== undefined) {
           if (hash[name].constructor != Array)
             hash[name] = [hash[name]];
-          if (value) hash[name].push(value);
+          hash[name].push(value);
         }
         else hash[name] = value;
       }
