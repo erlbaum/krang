@@ -99,7 +99,7 @@ sub render {
     # format name with link
     my $name =
       ($link ? 
-       qq{<a href="javascript:nav_goto('} . $link . qq{')">} : "") .
+       qq{<a href="javascript:Krang.Nav.goto_url('} . $link . qq{')">} : "") .
       $node->name .
       ($link ? qq{</a>} : '');
 

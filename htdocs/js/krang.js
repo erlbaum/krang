@@ -6,17 +6,21 @@ in it
 var Krang = {};
 
 /*
-    Krang.load()
+    Krang.load([target])
     Applies all the loaded behaviours to the current document.
     Called at the end of each page. We avoid putting this into
     document.onload since that means it waits on pulling in
     all images, etc.
+
+    Optionally receives a target (either id, or element object)
+    for which to apply the behaviors.
 */
-Krang.load = function() {
-    Behaviour.apply();
-    for(var i=0; i<= Krang.onload_code.length; i++) {
-        var code = Krang.onload_code[i];
-        if( code ) Krang.onload_code[i]();
+Krang.load = function(target) {
+    Behaviour.apply(target);
+    for(var i=0; i< Krang.onload_code.length; i++) {
+console.log(i + ' => code => ' + code);
+        var code = Krang.onload_code.pop();
+        if( code ) code();
     }
 }
 
@@ -96,7 +100,7 @@ Krang.my_prefs = function() {
     target    : the id of the target element receiving the contents (optional defaults to 'C')
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
     onComplete: a call back function to be executed after the normal processing (optional)
-                Receives as arguments, the same args passed into ajax_submit
+                Receives as arguments, the same args passed into ajax_update
 
     Krang.ajax_update({
         url        : '/app/some_mod/something',
@@ -129,12 +133,6 @@ Krang.ajax_update = function(args) {
     if( target == null || target == '' )
         target = 'C';
 
-    // krang prompts when leaving an edit screen without saving
-    // so we need to set/unset this depending on the success of
-    // our actions
-    orig_nav_emode = nav_emode;
-    nav_emode = 0;
-
     new Ajax.Updater(
         { success : target },
         url_parts[0],
@@ -142,16 +140,18 @@ Krang.ajax_update = function(args) {
             parameters  : query_params,
             evalScripts : true,
             asynchronous: true,
-            onComplete : function(request) {
+            // if we're successful we're not in edit mode (can be reset by the request)
+            onSuccess   : function() { Krang.Nav.edit_mode(false) },
+            onComplete  : function(request) {
                 // reapply any dynamic bits to the target that was updated
-                Behaviour.apply(target);
+                Krang.load(target);
                 // hide the indicator
                 Krang.hide_indicator(indicator);
                 // do whatever else the user wants
                 complete(args);
             },
-            onFailure: function(req, e)   { Krang.show_error(e) },
-            onException: function(req, e) { Krang.show_error(e) }
+            onFailure   : function(req, e)   { Krang.show_error(e) },
+            onException : function(req, e) { Krang.show_error(e) }
         }
     );
 }
@@ -214,8 +214,6 @@ Krang.hide_indicator = function(indicator) {
 */
 Krang.show_error = function(msg) {
     msg = 'An error occurred! ' + msg;
-    // reset the nav_emode if we failed
-    nav_emode = orig_nav_emode;
     // XXX - just show an alert for right now
     // We'll replace this with something better later
     alert(msg);
@@ -237,3 +235,20 @@ Krang.class_suffix = function(el, prefix) {
 
     return suffix;
 }
+
+/* 
+    Krang.Nav
+*/
+Krang.Nav = {
+    edit_mode_flag : false,
+    edit_message   : 'Are you sure you want to discard your unsaved changes?',
+    edit_mode      : function() {
+        Krang.Nav.edit_mode_flag = true;
+    },
+    goto_url       : function(url) {
+        if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
+            window.location = url;
+            Krang.Nav.edit_mode_flag = false;
+        }
+    }
+};
