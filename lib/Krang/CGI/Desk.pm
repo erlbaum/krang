@@ -26,7 +26,6 @@ This application manages display of stories on desks for Krang.
 =cut
 
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget => qw(format_url);
 use Krang::ClassLoader Message => qw(add_message);
