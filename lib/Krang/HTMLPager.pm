@@ -259,7 +259,7 @@ sub make_internal_template {
     my $pager_tmpl = '';
 
     # Start pager form 'krang_pager_form'
-    $pager_tmpl .= '<form name="krang_pager_form" method="POST">';
+    $pager_tmpl .= '<form name="krang_pager_form" method="POST" class="ajax">';
 
     # Include javascript and hidden data template elements
     $pager_tmpl .= "\n\n<tmpl_include HTMLPager/pager-internals.tmpl>\n\n";
