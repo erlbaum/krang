@@ -14,6 +14,22 @@ var Krang = {};
 */
 Krang.load = function() {
     Behaviour.apply();
+    for(var i=0; i<= Krang.onload_code.length; i++) {
+        var code = Krang.onload_code[i];
+        if( code ) Krang.onload_code[i]();
+    }
+}
+
+/*
+    Krang.onload()
+    Add some code that will get executed after the DOM is loaded
+    (but without having to wait on images, etc to load).
+    Multiple calls will not overwrite previous calls and all code
+    given will be executed in the order give.
+*/
+Krang.onload_code = [];
+Krang.onload = function(code) {
+    Krang.onload_code.push(code);
 }
 
 /*
@@ -77,7 +93,7 @@ Krang.my_prefs = function() {
     Takes the following args in it's hash:
 
     url       : the full url of the request (required)
-    target    : the id of the target element receiving the contents (optional defaults to 'content')
+    target    : the id of the target element receiving the contents (optional defaults to 'C')
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
     onComplete: a call back function to be executed after the normal processing (optional)
                 Receives as arguments, the same args passed into ajax_submit
@@ -111,7 +127,7 @@ Krang.ajax_update = function(args) {
 
     // the default target
     if( target == null || target == '' )
-        target = 'content';
+        target = 'C';
 
     // krang prompts when leaving an edit screen without saving
     // so we need to set/unset this depending on the success of
