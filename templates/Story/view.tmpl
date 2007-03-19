@@ -21,7 +21,7 @@
 
 </script>
 
-<form method="post" name="view" action="story.pl">
+<form method="post" name="view" action="story.pl" class="ajax">
   <input type="hidden" name="rm" value="view">
   <input type="hidden" name="story_id" value="<tmpl_var story_id>">
   <input type="hidden" name="version" value="<tmpl_var version>">
@@ -119,7 +119,7 @@
 </p>
 
 </form>
-<form name="ret" action="<tmpl_var return_script>" method="post">
+<form name="ret" action="<tmpl_var return_script>" method="post" class="ajax">
    <tmpl_loop return_params_loop>
       <input type="hidden" name="<tmpl_var escape=HTML name="name">" value="<tmpl_var escape=HTML name="value">">
    </tmpl_loop>
@@ -136,7 +136,7 @@
 </form>
 
 
-<form method="post" name="view_log" action="history.pl">
+<form method="post" name="view_log" action="history.pl" class="ajax">
   <input type="hidden" name="history_return_script" value="story.pl">
   <input type="hidden" name="story_id" value="<tmpl_var story_id>">
 

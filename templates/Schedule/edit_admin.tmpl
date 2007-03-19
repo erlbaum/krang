@@ -22,41 +22,62 @@
 
 </script>
 
-<div class="dark-bar"><p class="left">&nbsp;Schedule Editor<p class="right"><a href="help.pl?topic=schedule" class="help">Help</a>&nbsp;</p></div>
+<div class="dark-bar"><p class="left">&nbsp;Schedule Editor</p><p class="right"><a href="help.pl?topic=schedule" class="help">Help</a>&nbsp;</p></div>
 
-<form name="add_schedule_form" method="POST" action="schedule.pl">
- <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
-
+<form name="add_schedule_form" method="POST" action="schedule.pl" class="ajax">
 <input type="hidden" name="advanced_schedule" value="1" override="1">
 <input type="hidden" name="rm" value="add_admin" override='1'>
-   <tr class="form-head">
-      <th align="left" colspan="2">Add to Schedule</th>
-   </tr>
-   <tr>
-      <td class="form-cell" width="80" style="border-left:none;">Date/Time</td>
-      <td class="form-cell" style="border-right:none;">
-      <table>
-      <tr><td <TMPL_IF no_date_type>class="invalid"</TMPL_IF>><input type="radio" name="repeat" value="never" <TMPL_IF repeat_never>CHECKED</TMPL_IF>>Once at:</td><td <TMPL_IF invalid_datetime>class="invalid"</TMPL_IF>><TMPL_VAR full_date_selector><br></td></tr>
-      <tr><td <TMPL_IF no_date_type>class="invalid"</TMPL_IF>><input type="radio" name="repeat" value="hourly" <TMPL_IF repeat_hourly>CHECKED</TMPL_IF>>Hourly at:</td><td><TMPL_VAR hourly_minute_selector> minutes after the hour</td></tr>
-      <tr><td <TMPL_IF no_date_type>class="invalid"</TMPL_IF>><input type="radio" name="repeat" value="daily" <TMPL_IF repeat_daily>CHECKED</TMPL_IF>>Daily at:</td><td <TMPL_IF no_hour>class="invalid"</TMPL_IF>><TMPL_VAR daily_time_selector></td></tr>
-      <tr><td <TMPL_IF no_date_type>class="invalid"</TMPL_IF>><input type="radio" name="repeat" value="weekly" <TMPL_IF repeat_weekly>CHECKED</TMPL_IF>>Weekly on:</td><td <TMPL_IF no_weekly_hour>class="invalid"</TMPL_IF>><TMPL_VAR weekly_day_selector>
-- <TMPL_VAR weekly_time_selector></td></tr>
-                </table>
-    </td>
+
+<br>
+<table cellspacing="0" width="571" cellpadding="0" class="form-cell">
+<tr class="form-head">
+  <th align="left" colspan="2">Add to Schedule</th>
+</tr>
+<tr>
+  <td class="form-cell" width="80" style="border-left:none;">Date/Time</td>
+  <td class="form-cell" style="border-right:none;">
+    <table>
+    <tr>
+      <td <tmpl_if no_date_type>class="invalid"</tmpl_if>>
+        <input type="radio" name="repeat" value="never" <tmpl_if repeat_never>CHECKED</tmpl_if>>Once at:
+      </td>
+      <td <tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var full_date_selector><br></td>
     </tr>
     <tr>
-            <td class="form-cell" style="border-top:none; border-right:none;">Action:</td>
-            <td class="form-cell" style="border-top:none; border-left:none;"><TMPL_VAR action_selector></td>
+      <td <tmpl_if no_date_type>class="invalid"</tmpl_if>>
+        <input type="radio" name="repeat" value="hourly" <tmpl_if repeat_hourly>CHECKED</tmpl_if>>Hourly at:
+      </td>
+      <td><tmpl_var hourly_minute_selector> minutes after the hour</td>
     </tr>
-<tr><td>&nbsp;</td><td style="padding: 5px;"><input type="button" value="Add to Schedule" onclick="submit()" class="button"></td></tr>
-                </table>
-
-</form>
- </td></tr>
-                </table>
-  </div>
+    <tr>
+      <td <tmpl_if no_date_type>class="invalid"</tmpl_if>>
+        <input type="radio" name="repeat" value="daily" <tmpl_if repeat_daily>CHECKED</tmpl_if>>Daily at:
+      </td>
+      <td <tmpl_if no_hour>class="invalid"</tmpl_if>><tmpl_var daily_time_selector>
+      </td>
+    </tr>
+    <tr>
+      <td <tmpl_if no_date_type>class="invalid"</tmpl_if>>
+        <input type="radio" name="repeat" value="weekly" <tmpl_if repeat_weekly>CHECKED</tmpl_if>>Weekly on:
+      </td>
+      <td <tmpl_if no_weekly_hour>class="invalid"</tmpl_if>>
+        <tmpl_var weekly_day_selector>
+        - <tmpl_var weekly_time_selector>
+      </td>
+    </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+  <td class="form-cell" style="border-top:none; border-right:none;">Action:</td>
+  <td class="form-cell" style="border-top:none; border-left:none;"><tmpl_var action_selector></td>
+</tr>
+</table>
 
 <div class="button-bar">
+  <input type="button" value="Add to Schedule" onclick="submit()" class="button">
 </div>
+
+</form>
 
 <tmpl_include footer.tmpl>

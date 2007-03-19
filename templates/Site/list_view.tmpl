@@ -31,7 +31,7 @@
 // -->
 </script>
 
-<form name="add_site_form" method="POST" action="site.pl">
+<form name="add_site_form" method="POST" action="site.pl" class="ajax">
 <input type="hidden" name="rm" value="add">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 
@@ -43,7 +43,7 @@
 
 </form>
 
-<form name="edit_site_form" method="POST" action="site.pl">
+<form name="edit_site_form" method="POST" action="site.pl" class="ajax">
 <input type="hidden" name="rm" value="edit">
 <input type="hidden" name="site_id" value="">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
@@ -56,7 +56,7 @@
 
 </form>
 
-<form method="POST" name="find_site" action="site.pl">
+<form method="POST" name="find_site" action="site.pl" class="ajax">
 <input type="hidden" name="rm" value="view">
 <input type="hidden" name="site_id">
 
@@ -67,7 +67,7 @@
 
 <div class="dark-bar"><p class="left">&nbsp;Site List</p><p class="right"><a href="help.pl?topic=site" class="help">Help</a>&nbsp;</p></div>
 
-<form name="search_form" method="POST" action="site.pl">
+<form name="search_form" method="POST" action="site.pl" class="ajax">
 <div class="boxb"> 
  <div class="light">
 

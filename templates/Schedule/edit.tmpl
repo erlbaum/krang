@@ -23,27 +23,29 @@
 
 </script>
 
-<div class="dark-bar"><p class="left">&nbsp;<tmpl_if is_story>Story</tmpl_if><tmpl_if is_media>Media</tmpl_if> Schedule Editor<tmpl_if simple> (Simple)</tmpl_if><p class="right"><a href="help.pl?topic=schedule" class="help">Help</a>&nbsp;</p></div>
+<div class="dark-bar">
+  <p class="left">&nbsp;<tmpl_if is_story>Story</tmpl_if><tmpl_if is_media>Media</tmpl_if> Schedule Editor<tmpl_if simple> (Simple)</tmpl_if></p>
+  <p class="right"><a href="help.pl?topic=schedule" class="help">Help</a>&nbsp;</p>
+</div>
 
 <div class="boxb">
-<table width="100%" cellpadding="5" cellspacing="0" border="0">
+  <table width="100%" cellpadding="5" cellspacing="0" border="0">
   <tr class="light"><td>ID:</td><td><tmpl_var id></td></tr>
-<tmpl_if is_story>
-  <tr class="light"><td>Story Type:</td><td><tmpl_var story_type></td></tr>
-</tmpl_if>
+  <tmpl_if is_story><tr class="light"><td>Story Type:</td><td><tmpl_var story_type></td></tr></tmpl_if>
   <tr class="light"><td>Current Version:</td><td><tmpl_var current_version></td></tr>
-  <tr class="light"><td>Published Version:</td><td><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td>
-  </tr>
+  <tr class="light"><td>Published Version:</td><td><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td></tr>
   <tr class="light"><td>URL:</td><td><tmpl_var url></td></tr>
   </table>
   
-<TMPL_IF existing_schedule_loop><div class="no-border"><form name="current_schedule_form" method="POST" action="schedule.pl">
-<input type="hidden" name="rm" value="delete" override='1'>
-<tmpl_if advanced><input type="hidden" name="advanced_schedule" value="1" override="1"></tmpl_if></div>
+<tmpl_if existing_schedule_loop>
+  <form name="current_schedule_form" method="POST" action="schedule.pl" class="ajax">
+  <input type="hidden" name="object_type" value="<tmpl_var object_type>">
+  <input type="hidden" name="rm" value="delete" override='1'>
+  <tmpl_if advanced><input type="hidden" name="advanced_schedule" value="1" override="1"></tmpl_if>
 
-<input type="hidden" name="object_type" value="<tmpl_var object_type>">
+  <br />
   <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
-<tr class="form-head">
+   <tr class="form-head">
      <th width="130">Schedule</th>
      <th width="130">Next Run</th>
      <th width="130">Action</th>
@@ -62,12 +64,13 @@
   </table>
 
   <div style="text-align:right; padding-top:5px; padding-bottom:5px; padding-right: 10px;">
-  <input type="button" value="Delete" onClick="delete_selected()" class="button"></div>
+    <input type="button" value="Delete" onClick="delete_selected()" class="button">
+  </div>
 </form>                                                                      
-<TMPL_ELSE><div class="no-border">No Schedule Found</div>
-</TMPL_IF>
+<tmpl_else><div class="no-border">No Scheduled Actions Found</div>
+</tmpl_if>
 
-<form name="add_schedule_form" method="POST" action="schedule.pl">
+<form name="add_schedule_form" method="POST" action="schedule.pl" class="ajax">
 <input type="hidden" name="object_type" value="<tmpl_var object_type>">
  <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
   <tmpl_if simple>
@@ -128,7 +131,7 @@
   <input type="button" value="Return" onclick="document.return_form.submit()" class="button">&nbsp;
 </div>
 
-<form name="return_form" method="POST" action="<tmpl_if is_story>story.pl<tmpl_else>media.pl</tmpl_if>">
+<form name="return_form" method="POST" action="<tmpl_if is_story>story.pl<tmpl_else>media.pl</tmpl_if>" class="ajax">
 <input type="hidden" name="rm" value="edit">
 </form>
 </div>

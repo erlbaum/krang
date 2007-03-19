@@ -25,7 +25,7 @@
 // -->
 </script>
 
-<form name="add_user_form" method="POST" action="user.pl">
+<form name="add_user_form" method="POST" action="user.pl" class="ajax">
 <input type="hidden" name="rm" value="add">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 
@@ -37,7 +37,7 @@
 
 </form>
 
-<form name="edit_user_form" method="POST" action="user.pl">
+<form name="edit_user_form" method="POST" action="user.pl" class="ajax">
 <input type="hidden" name="rm" value="edit">
 <input type="hidden" name="user_id" value="">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
@@ -52,7 +52,7 @@
 
 <div class="dark-bar"><p class="left">&nbsp;User List</p><p class="right"><a href="help.pl?topic=user" class="help">Help</a>&nbsp;</p></div>
 
-<form name="search_form" method="POST" action="user.pl">
+<form name="search_form" method="POST" action="user.pl" class="ajax">
 <div class="boxb"> 
  <div class="light">
     <p>SEARCH</p>

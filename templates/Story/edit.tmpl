@@ -114,7 +114,7 @@
 
 </script>
 
-<form method="post" name="edit" enctype="multipart/form-data" action="story.pl">
+<form method="post" name="edit" enctype="multipart/form-data" action="story.pl" class="ajax">
 <input type="hidden" name="rm" value="edit">
 
 <div class="dark-bar"><p class="left">&nbsp;Edit Story</p><p class="right"><tmpl_if is_root><tmpl_if story_id><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_if></tmpl_if><a href="help.pl?topic=story_edit" class="help">Help</a>&nbsp;</p></div>
