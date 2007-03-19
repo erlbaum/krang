@@ -142,7 +142,6 @@ sub reorder {
     my @param_names = $q->param;
     foreach my $index_name ( @param_names ) {
         if ($index_name =~ /order_\d*/) {
-        print STDERR $index_name."\n";
             my $desk_id = $index_name;
             $desk_id =~ s/order_//;
             push (@desks, $desk_id);
