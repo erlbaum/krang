@@ -77,7 +77,7 @@
 </script>
 
 
-<form method="POST" name="find_media" action="media.pl">
+<form method="POST" name="find_media" action="media.pl" class="ajax">
 <input type="hidden" name="rm" value="view">
 <input type="hidden" name="media_id">
 
@@ -88,7 +88,7 @@
 
 </form>
 
-<form name="clear_advanced_search_form" method="POST" action="media.pl">
+<form name="clear_advanced_search_form" method="POST" action="media.pl" class="ajax">
 <input type="hidden" name="rm" value="advanced_find">
 <input type="hidden" name="clear_search_form" value="1">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
@@ -96,7 +96,7 @@
 </form>
 
 <div class="dark-bar"><p class="left">&nbsp;Find Media</p><p class="right"><a href="help.pl?topic=media_find" class="help">Help</a>&nbsp;</p></div>
-<form name="search_form" method="POST" action="media.pl">
+<form name="search_form" method="POST" action="media.pl" class="ajax">
 <tmpl_if do_advanced_search>
 <div class="box">
 <table border="0" cellpadding="6" cellspacing="0" width="571">

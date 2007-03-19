@@ -50,7 +50,7 @@
 <div class="dark-bar"><p class="left">&nbsp;Group <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></p><p class="right"><a href="help.pl?topic=group" class="help">Help</a>&nbsp;</p></div>
 
 <div class="box">
-<form name="edit_group_form" method="POST" action="group.pl">
+<form name="edit_group_form" method="POST" action="group.pl" class="ajax">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="rm" value="save">
 <input type="hidden" name="category_id" value="">
