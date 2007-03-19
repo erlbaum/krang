@@ -147,7 +147,7 @@ Krang.ajax_update = function(args) {
 Krang.ajax_form_submit = function(form) {
     var url;
     if( form.action ) {
-        url = form.action;
+        url = form.readAttribute('action');
     } else {
         url = document.URL;
         // remove any possible query bits
