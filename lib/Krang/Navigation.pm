@@ -9,6 +9,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'NavigationNode';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Carp qw(croak);
+use CGI;
 
 =head1 NAME
 
@@ -42,6 +43,12 @@ our %TREE;
 
 sub fill_template {
     my ($pkg, %arg) = @_;
+
+    # don't do this work if we're doing an ajax request
+    my $q = CGI->new();
+    return if $q->param('ajax');
+
+    # don't do the work if there's no place to put the results
     my $template = $arg{template};
     return unless $template->query(name => 'nav_content');
 
