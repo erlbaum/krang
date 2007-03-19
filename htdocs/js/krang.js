@@ -149,7 +149,7 @@ Krang.ajax_form_submit = function(form) {
     if( form.action ) {
         url = form.action;
     } else {
-        url = window.URL;
+        url = document.URL;
         // remove any possible query bits
         url = url.replace(/\?.*/, '');
     }
