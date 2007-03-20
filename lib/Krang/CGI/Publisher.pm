@@ -441,7 +441,7 @@ sub _progress_callback {
     } else {
         $string = "Media " . $object->media_id . ": " . $object->url;
     }
-    print "<script language='javascript'>update_progress_bar($counter, $total, '$string');</script>\n";
+    print "<script language='javascript'>Krang.update_progress($counter, $total, '$string');</script>\n";
 }
 
 =item preview_media

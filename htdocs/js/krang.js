@@ -243,6 +243,29 @@ Krang.hide_indicator = function(indicator) {
 }
 
 /*
+    Krang.update_progress(count, total, label)
+
+    Updates the progress bar (with id "progress_bar") to the correct
+    width, sets the percentage counter (with id "progress_bar_percent")
+    and the optionally updates a label (with id "progress_bar_label")
+*/
+Krang.update_progress = function(count, total, label) {
+    var bar   = document.getElementById('progress_bar');
+    var perc  = document.getElementById('progress_bar_percent');
+    var prog  = ( count + 1 ) / total;
+
+    // can't go over 100%
+    if( prog > 1 ) prog = 1
+
+    var width = Math.floor( prog * 400 );
+
+    bar.style.width = width + 'px';
+    perc.innerHTML = Math.floor( prog * 100) + '%';
+    if( label ) document.getElementById('progress_bar_label').innerHTML = string;
+}
+
+
+/*
     Krang.show_error
     Shows an error to the user in the UI
 */
