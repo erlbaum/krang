@@ -23,7 +23,10 @@ var rules = {
             Event.stop(event);
         }.bindAsEventListener(el));
     },
-    'form.ajax' : function(el) {
+    'form' : function(el) {
+        // skip it if it has a class of 'non_ajax'
+        if( el.hasClassName('non_ajax') ) return;
+
         // only continue if we don't have any inputs of type 'file'
         // since you can't send those vi AJAX
         for(var i=0; i < el.elements.length; i++) {
@@ -34,25 +37,38 @@ var rules = {
         // save the old on submit if there is one so that we can
         // call it later
         var oldOnSubmit = el.onsubmit;
-        if( oldOnSubmit ) {
-            oldOnSubmit = oldOnSubmit.bind(el);
+        if( el.onsubmit ) {
+            el.old_onsubmit = el.onsubmit;
         }
 
-        // setup the onSubmit handler
-        el.observe('submit', function(event) {
-            // call our old onSubmit if there is one
+        // helper function to execute the old onSubmit handler
+        // and return true if it doesn't exist or returns true
+        el.on_submit_good = function() {
             var good = true;
-            if( oldOnSubmit ) good = oldOnSubmit();
-            
-            if( good ) Krang.ajax_form_submit(this);
+            if( this.old_onsubmit ) good = this.old_onsubmit();
+            return good;
+        }.bindAsEventListener(el);
+
+        // setup the onSubmit handler to handle form submissions caused
+        // by clicking on a 'submit' button.
+        el.observe('submit', function(event) {
+            if( this.on_submit_good ) Krang.ajax_form_submit(this);
             Event.stop(event);
         }.bindAsEventListener(el));
 
+        // save a non-ajax version of the submit in case we need it
+        // (like sending the request to a new window via Krang.submit_form_new_window )
+        el.old_submit = el.submit;
+        el.non_ajax_submit = function() {
+            if( this.on_submit_good ) this.old_submit();
+        }.bindAsEventListener(el);
+
         // Krang likes to call submit() directly on forms
-        // which unfortunately in JS does not call the onSubmit()
-        // handler. So we need to handle that too
+        // which unfortunately in JS is handled differently 
+        // than a user clicking on a 'submit' button.
+        // (meaning it doesn't invoke the onSubmit handler that we took care of in the section above) 
         el.submit = function() {
-            Krang.ajax_form_submit(this);
+            if( this.on_submit_good ) Krang.ajax_form_submit(this);
         }.bindAsEventListener(el);
     },
     // create an autocomplete widget. This involves creating a div
