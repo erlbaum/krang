@@ -18,7 +18,6 @@ var Krang = {};
 Krang.load = function(target) {
     Behaviour.apply(target);
     for(var i=0; i< Krang.onload_code.length; i++) {
-console.log(i + ' => code => ' + code);
         var code = Krang.onload_code.pop();
         if( code ) code();
     }
@@ -177,6 +176,41 @@ Krang.ajax_form_submit = function(form) {
         indicator : Krang.class_suffix(form, 'show_')
     });
 };
+
+/*
+    Krang.form_submit(formName, { input: 'value' }, new_window)
+    Select a form, optionally sets the values of those
+    elements and then submits the form.
+
+    You can also specify a third parameter which is a boolean
+    indicating whether or not the results will open up in a new
+    window.
+*/
+Krang.form_submit = function(formName, inputs, new_window) {
+    var form = document.forms[formName];
+    var err = 'Krang.form_submit(): ';
+
+    if( !form ) alert(err + 'form "' + formName + '" does not exist!');
+
+    if( inputs ) {
+        $H(inputs).each( function(pair) {
+            var el = form.elements[pair.key];
+            if(! el ) alert(err + 'input "' + pair.key + '" does not exist in form "' + formName + '"!');
+            el.value = pair.value;
+        });
+    }
+
+    if( new_window ) {
+        // save the old target of the form so we can restore it after
+        // submission
+        var old_target = form.target;
+        form.target = '_blank';
+        form.non_ajax_submit ? form.non_ajax_submit() : form.submit();
+        form.target = old_target;
+    } else {
+        form.submit();
+    }
+}
 
 /*
     Krang.show_indicator(id)
