@@ -80,7 +80,7 @@ update_order_sort_south  = function (a, b) {
 
 <div class="dark-bar"><p class="left">&nbsp;Desk Editor</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="help.pl?topic=desk_admin" class="help">Help</a>&nbsp;</p></div>
 <TMPL_IF existing_desk_loop>
-<form name="current_desk_form" method="POST" action="desk_admin.pl" class="ajax">
+<form name="current_desk_form" method="POST" action="desk_admin.pl">
 <input type="hidden" name="total_desks" value="<tmpl_var total_desks>" override='1'>
 <input type="hidden" name="rm" value="delete" override='1'>
 <div class="box">
@@ -106,7 +106,7 @@ update_order_sort_south  = function (a, b) {
  <div class="no-border">No Desks Found</div>
 </TMPL_IF>
 <br>
-<form name="add_desk_form" method="POST" action="desk_admin.pl" class="ajax">
+<form name="add_desk_form" method="POST" action="desk_admin.pl">
 <input type="hidden" name="rm" value="add" override='1'>
 <table cellspacing="0" class="form-head" cellpadding="4">
       <tr>

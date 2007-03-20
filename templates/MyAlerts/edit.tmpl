@@ -24,7 +24,7 @@ add_alert = function() {
 <tmpl_if alert_loop>
 
 <div class="no-border">Current Alerts</div>
-<form name="current_alert_form" method="post" action="my_alerts.pl" class="ajax">
+<form name="current_alert_form" method="post" action="my_alerts.pl">
 <input type="hidden" name="rm" value="delete_alerts" override='1'>
 
 <table cellspacing="0" cellpadding="4" class="form-head">
@@ -48,7 +48,7 @@ onClick="checkall(this, 'alert_delete_list')"></td></tr></table>
 
 <div class="no-border">No Current Alerts</div></tmpl_if>
 </form>
-<form name="add_alert_form" method="post" action="my_alerts.pl" class="ajax">
+<form name="add_alert_form" method="post" action="my_alerts.pl">
 
 <table cellspacing="0" class="form-head" cellpadding="4">
 <input type="hidden" name="rm" value="add_alert" override='1'>

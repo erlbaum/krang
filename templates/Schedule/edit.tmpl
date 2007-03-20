@@ -38,7 +38,7 @@
   </table>
   
 <tmpl_if existing_schedule_loop>
-  <form name="current_schedule_form" method="POST" action="schedule.pl" class="ajax">
+  <form name="current_schedule_form" method="POST" action="schedule.pl">
   <input type="hidden" name="object_type" value="<tmpl_var object_type>">
   <input type="hidden" name="rm" value="delete" override='1'>
   <tmpl_if advanced><input type="hidden" name="advanced_schedule" value="1" override="1"></tmpl_if>
@@ -70,7 +70,7 @@
 <tmpl_else><div class="no-border">No Scheduled Actions Found</div>
 </tmpl_if>
 
-<form name="add_schedule_form" method="POST" action="schedule.pl" class="ajax">
+<form name="add_schedule_form" method="POST" action="schedule.pl">
 <input type="hidden" name="object_type" value="<tmpl_var object_type>">
  <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
   <tmpl_if simple>
@@ -131,7 +131,7 @@
   <input type="button" value="Return" onclick="document.return_form.submit()" class="button">&nbsp;
 </div>
 
-<form name="return_form" method="POST" action="<tmpl_if is_story>story.pl<tmpl_else>media.pl</tmpl_if>" class="ajax">
+<form name="return_form" method="POST" action="<tmpl_if is_story>story.pl<tmpl_else>media.pl</tmpl_if>">
 <input type="hidden" name="rm" value="edit">
 </form>
 </div>

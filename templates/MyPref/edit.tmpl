@@ -25,7 +25,7 @@ change_prefs = function() {
 <div class="dark-bar"><p class="left">&nbsp;My Preferences</p><p class="right"><a href="help.pl?topic=my_pref" class="help">Help</a>&nbsp;</p></div>
 <div class="box">
 <br>
-<form name="edit_pref_form" method="post" onsubmit="return check_match(this)" action="my_pref.pl" class="ajax">
+<form name="edit_pref_form" method="post" onsubmit="return check_match(this)" action="my_pref.pl">
   <input type="hidden" name="rm" value="update_prefs">
   <tmpl_if password_only><input name="password_only" value="1" type="hidden" /></tmpl_if>
   <table cellpadding="4" cellspacing="0" class="form-head">
