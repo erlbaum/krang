@@ -358,8 +358,6 @@ Krang.Messages = {
         if( level === undefined ) level = 'messages';
 
         var my_stack = Krang.Messages.stack[level];
-console.log('level:' + level);
-console.log('length: ' + my_stack.length);
         if( my_stack.length ) {
             var content = '';
             for(var i=0; i< my_stack.length; i++) {
