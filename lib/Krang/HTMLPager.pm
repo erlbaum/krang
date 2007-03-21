@@ -263,7 +263,7 @@ sub make_internal_template {
     # when using ajax, it might not be the current URL that's supposed to 
     # receive the submission
     my $action = $q->url(-relative => 1);
-    $pager_tmpl .= qq|<form name="krang_pager_form" action="$action" method="POST" class="ajax">|;
+    $pager_tmpl .= qq|<form name="krang_pager_form" action="$action" method="post">|;
 
     # Include javascript and hidden data template elements
     $pager_tmpl .= "\n\n<tmpl_include HTMLPager/pager-internals.tmpl>\n\n";
