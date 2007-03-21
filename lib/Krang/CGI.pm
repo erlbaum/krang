@@ -454,7 +454,7 @@ sub dump_html {
 }
 
 sub script_name {
-    return $self->query->url(-relative => 1);
+    return shift->query->url(-relative => 1);
 }
 
 1;
