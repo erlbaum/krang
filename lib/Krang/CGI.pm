@@ -43,6 +43,17 @@ CGI::Application features are available.
 
 See L<CGI::Application>.
 
+Some additional methods are provided:
+
+=over
+
+=item script_name
+
+The name of the script making the request. This is useful if you need
+to set the target actions for requests that might come from various places.
+
+=back
+
 =head1 AUTHORIZATION
 
 User authentication is handled by L<Krang::Handler>. But for authoriztion,
@@ -442,8 +453,8 @@ sub dump_html {
     return "<div style='text-align: left; margin-left: 170px'>$output</div>";
 }
 
-BEGIN {
-
+sub script_name {
+    return $self->query->url(-relative => 1);
 }
 
 1;
