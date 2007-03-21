@@ -5,14 +5,6 @@ var rules = {
             Event.stop(event);
         }.bindAsEventListener(el));
     },
-    'a.help' : function(el) {
-        // for now, just treat them like popup links
-        // this may be expanded in the future
-        el.observe('click', function(event) {
-            Krang.popup(this.readAttribute('href'));
-            Event.stop(event);
-        }.bindAsEventListener(el));
-    },
     'a.ajax' : function(el) {
         el.observe('click', function(event) {
             Krang.ajax_update({

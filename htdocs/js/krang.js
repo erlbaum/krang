@@ -315,3 +315,24 @@ Krang.Nav = {
         }
     }
 };
+
+/*
+    Krang.Help
+*/
+Krang.Help = {
+    current_topic    : '',
+    current_subtopic : '',
+    set              : function(topic, subtopic) {
+console.log('help topic: ' + topic);
+        Krang.Help.current_topic    = topic;
+        Krang.Help.current_subtopic = subtopic;
+    },
+    go               : function() {
+        var url = 'help.pl';
+        if( Krang.Help.current_topic )
+            url = url + '?topic=' + Krang.Help.current_topic;
+        if( Krang.Help.current_subtopic )
+            url = url + '#' + Krang.Help.current_subtopic;
+        Krang.popup(url);
+    }
+};
