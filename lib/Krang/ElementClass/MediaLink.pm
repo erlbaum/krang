@@ -15,7 +15,7 @@ use Krang::ClassLoader MethodMaker =>
   get_set => [ qw( allow_upload show_thumbnail ) ],
   hash => [ qw( find ) ];
 
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_alert);
 
 sub new {
     my $pkg = shift;
@@ -154,7 +154,7 @@ sub load_query_data {
             my $err = $@;
 
             # tell all about it
-            add_message(duplicate_media_upload => 
+            add_alert(duplicate_media_upload => 
                         id => $err->media_id,
                         filename => $filename);
 

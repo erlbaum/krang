@@ -30,7 +30,7 @@ use Krang::ClassLoader 'User';
 use Krang::ClassLoader Conf => qw(PreviewSSL);
 use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget => qw(format_url datetime_chooser decode_datetime);
-use Krang::ClassLoader Message => qw(add_message get_messages clear_messages);
+use Krang::ClassLoader Message => qw(add_message add_alert get_alerts clear_alerts);
 use Time::Piece;
 
 use Carp qw(croak);
@@ -365,19 +365,19 @@ sub preview_story {
             # if there is an error, figure out what it is, create the
             # appropriate message and return an error page.
             if (ref $error && $error->isa('Krang::ElementClass::TemplateNotFound')) {
-                add_message('missing_template',
+                add_alert('missing_template',
                             filename       => $error->template_name,
                             category_url   => $error->category_url
                            );
             } elsif (ref $error && $error->isa('Krang::ElementClass::TemplateParseError')) {
-                add_message('template_parse_error',
+                add_alert('template_parse_error',
                             element_name  => $error->element_name,
                             template_name => $error->template_name,
                             category_url  => $error->category_url,
                             error_msg     => $error->message
                            );
             } elsif (ref $error and $error->isa('Krang::Publisher::FileWriteError')) {
-                add_message(
+                add_alert(
                             'file_write_error',
                             path => $error->destination
                            );
@@ -388,7 +388,7 @@ sub preview_story {
                 critical($err_msg);
 
             } elsif (ref $error and $error->isa('Krang::Publisher::ZeroSizeOutput')) {
-                add_message('zero_size_output',
+                add_alert('zero_size_output',
                             story_id     => $error->story_id,
                             category_url => $error->category_url,
                             story_class  => $error->story_class
@@ -402,11 +402,11 @@ sub preview_story {
             }
 
             # put the messages on the screen
-            foreach my $msg (get_messages()) {
+            foreach my $msg (get_alerts()) {
                 print "<div class='alertp'>" . $query->escapeHTML($msg) . 
                   "</div>\n";
             }
-            clear_messages();
+            clear_alerts();
 
             # make sure to turn off caching
             Krang::Cache::stop();
@@ -486,13 +486,13 @@ sub preview_media {
         my @error_loop;
 
         if (ref $e and $e->isa('Krang::Publisher::FileWriteError')) {
-            add_message('file_write_error',
+            add_alert('file_write_error',
                         path => $e->destination);
             # put the messages on the screen
-            foreach my $err (get_messages()) {
+            foreach my $err (get_alerts()) {
                 push(@error_loop, { err => $err });
             }
-            clear_messages();
+            clear_alerts();
 
             # pass a more informative message to the log file - ops should know.
             my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
@@ -649,7 +649,7 @@ sub _publish_assets_now {
                 # appropriate message and return.
                 if (ref $err &&
                     $err->isa('Krang::ElementClass::TemplateNotFound')) {
-                    add_message('missing_template',
+                    add_alert('missing_template',
                                 filename     => $err->template_name,
                                 category_url => $err->category_url
                                );
@@ -658,7 +658,7 @@ sub _publish_assets_now {
 
                 } elsif (ref $err &&
                          $err->isa('Krang::ElementClass::TemplateParseError')) {
-                    add_message('template_parse_error',
+                    add_alert('template_parse_error',
                                 element_name  => $err->element_name,
                                 template_name => $err->template_name,
                                 category_url  => $err->category_url,
@@ -670,7 +670,7 @@ sub _publish_assets_now {
                          $err->isa('Krang::Publisher::FileWriteError')
                         ) {
 
-                    add_message('file_write_error',
+                    add_alert('file_write_error',
                                 path => $err->destination);
                     # pass a more informative message to the log file - ops should know.
                     my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
@@ -681,7 +681,7 @@ sub _publish_assets_now {
                          ref $err &&
                          $err->isa('Krang::Publisher::ZeroSizeOutput')
                         ) {
-                    add_message('zero_size_output',
+                    add_alert('zero_size_output',
                                 story_id     => $err->story_id,
                                 category_url => $err->category_url,
                                 story_class  => $err->story_class

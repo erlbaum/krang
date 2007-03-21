@@ -12,7 +12,7 @@ use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader Conf    => qw(KrangRoot);
 use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Log     => qw(debug);
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Text::Wrap qw(wrap);
 use Time::Piece qw(localtime);
@@ -150,7 +150,7 @@ sub category_chooser {
     my $chooser = category_chooser_object(%args);
     # if we didn't get a choose it's cause there are no categories to choose from
     if( ! $chooser ) {
-        add_message('no_categories_for_chooser');
+        add_alert('no_categories_for_chooser');
         return "No categories are defined.";
     }
 

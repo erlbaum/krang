@@ -30,7 +30,7 @@ use Carp qw(verbose croak);
 use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Log => qw/critical debug info/;
-use Krang::ClassLoader Message => qw/add_message/;
+use Krang::ClassLoader Message => qw/add_message add_alert/;
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'Site';
@@ -226,7 +226,7 @@ sub delete {
         if (ref $@ and ($@->isa('Krang::Site::Dependency') or $@->isa('Krang::Category::Dependent'))) {
             my $url = $site->url;
             info("Unable to delete site id '$site_id': $url\n$@");
-            add_message('error_deletion_failure',
+            add_alert('error_deletion_failure',
                         urls => $url,);
             return $self->search();
         } else {
@@ -280,7 +280,7 @@ sub delete_selected {
 
     if (@bad_sites) {
         info("Failed attempt to delete site(s): " . join(", ", @bad_sites));
-        add_message('error_deletion_failure',
+        add_alert('error_deletion_failure',
                     urls => join(", ", @bad_sites));
     } else {
         add_message('message_selected_deleted',
@@ -575,7 +575,7 @@ sub validate {
     for my $name (@obj_fields) {    
         my $val = $site->{$name};
         if (not length $val) {
-            add_message("error_invalid_$name");
+            add_alert("error_invalid_$name");
             $errors{"error_invalid_$name"} = 1;
             next;
         }
@@ -583,19 +583,19 @@ sub validate {
         if ($name eq 'url' or $name eq 'preview_url') {            
             # check for http://
             if ($val =~ m!https?://!) {
-                add_message("error_${name}_has_http");
+                add_alert("error_${name}_has_http");
                 $errors{"error_invalid_$name"} = 1;
             } 
 
             # check for /s
             if ($val =~ m!/!) {
-                add_message("error_${name}_has_path");
+                add_alert("error_${name}_has_path");
                 $errors{"error_invalid_$name"} = 1;
             }
 
             # check for other bad chars
             if ($val !~ m!^[-\w.:]+$!) {
-                add_message("error_${name}_has_bad_chars");
+                add_alert("error_${name}_has_bad_chars");
                 $errors{"error_invalid_$name"} = 1;
             }
         }
@@ -603,7 +603,7 @@ sub validate {
         if ($name eq 'publish_path' or $name eq 'preview_path') {
             # must be an absolute UNIX path
             if ($val !~ m!^/!) {
-                add_message("error_${name}_not_absolute");
+                add_alert("error_${name}_not_absolute");
                 $errors{"error_invalid_$name"} = 1;
             }
         }
@@ -640,7 +640,7 @@ sub _save {
         if (ref $@ && $@->isa('Krang::Site::Duplicate')) {
             my $msg = "duplicate_url";
             $errors{$msg} = 1;
-            add_message($msg);
+            add_alert($msg);
             $q->param('errors', 1);
             return %errors;
         } else {

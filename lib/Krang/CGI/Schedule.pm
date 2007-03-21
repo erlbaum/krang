@@ -8,7 +8,7 @@ use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
 use Krang::ClassLoader 'Schedule';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Widget => qw(time_chooser datetime_chooser decode_datetime);
 use Krang::ClassLoader 'HTMLPager';
@@ -405,7 +405,7 @@ sub add {
 
     my $repeat = $q->param('repeat');
     unless ($repeat) {
-        add_message('no_date_type');
+        add_alert('no_date_type');
         return $self->edit('no_date_type');
     }
  
@@ -416,7 +416,7 @@ sub add {
     if ($repeat eq 'never') {
         my $date = decode_datetime(name=>'full_date', query=>$q);
         if (not $date) {
-            add_message('invalid_datetime');
+            add_alert('invalid_datetime');
             return $self->edit('invalid_datetime');
         }
 
@@ -456,7 +456,7 @@ sub add {
 
         my $hour = $q->param('daily_time_hour');
         unless ($hour) {
-            add_message('no_hour');
+            add_alert('no_hour');
             return $self->edit('no_hour');
         }
         my $ampm = $q->param('daily_time_ampm');
@@ -489,7 +489,7 @@ sub add {
                                                                                   
         my $hour = $q->param('weekly_time_hour');
         unless ($hour) {
-            add_message('no_hour');
+            add_alert('no_hour');
             return $self->edit('no_weekly_hour');
         }
         
@@ -558,7 +558,7 @@ sub add_admin {
 
     my $repeat = $q->param('repeat');
     unless ($repeat) {
-        add_message('no_date_type');
+        add_alert('no_date_type');
         return $self->edit_admin('no_date_type');
     }
  
@@ -569,7 +569,7 @@ sub add_admin {
     if ($repeat eq 'never') {
         my $date = decode_datetime(name=>'full_date', query=>$q);
         if (not $date) {
-            add_message('invalid_datetime');
+            add_alert('invalid_datetime');
             return $self->edit_admin('invalid_datetime');
         }
 
@@ -609,7 +609,7 @@ sub add_admin {
 
         my $hour = $q->param('daily_time_hour');
         unless ($hour) {
-            add_message('no_hour');
+            add_alert('no_hour');
             return $self->edit_admin('no_hour');
         }
         my $ampm = $q->param('daily_time_ampm');
@@ -642,7 +642,7 @@ sub add_admin {
                                                                                   
         my $hour = $q->param('weekly_time_hour');
         unless ($hour) {
-            add_message('no_hour');
+            add_alert('no_hour');
             return $self->edit_admin('no_weekly_hour');
         }
         
@@ -727,7 +727,7 @@ sub add_simple {
         add_message('scheduled_publish');
         return $self->edit();
     } else {
-        add_message('invalid_datetime');
+        add_alert('invalid_datetime');
         return $self->edit('invalid_datetime');
     }
 
@@ -749,7 +749,7 @@ sub delete {
     my @delete_list = $q->param('is_list_all') ? ($q->param('krang_pager_rows_checked')) : ( $q->param('schedule_delete_list') );
 
     unless (@delete_list) {
-        add_message('missing_schedule_delete_list');
+        add_alert('missing_schedule_delete_list');
         return $q->param('is_list_all') ? $self->list_all : $self->edit();
     }
 

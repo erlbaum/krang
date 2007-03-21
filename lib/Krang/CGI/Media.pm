@@ -43,7 +43,7 @@ is 'add'.
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
@@ -1245,7 +1245,7 @@ sub checkout_selected {
 #####  PRIVATE METHODS  #####
 #############################
 
-# Validate media object to check validity.  Return errors as hash and add_message()s.
+# Validate media object to check validity.  Return errors as hash and add_alert()s.
 # Must pass in $media object
 sub validate_media {
     my $self = shift;
@@ -1273,7 +1273,7 @@ sub validate_media {
     # Add messages, return hash for errors
     my %hash_errors = ();
     foreach my $error (@errors) {
-        add_message($error);
+        add_alert($error);
         $hash_errors{$error} = 1;
     }
 
@@ -1725,14 +1725,14 @@ sub do_save_media {
     # Is it a dup?
     if ($@) {
         if (ref($@) and $@->isa('Krang::Media::DuplicateURL')) {
-            add_message('duplicate_url');
+            add_alert('duplicate_url');
             return (duplicate_url=>1);
         } elsif (ref($@) and $@->isa('Krang::Media::NoCategoryEditAccess')) {
             # User tried to save to a category to which he doesn't have access
             my $category_id = $@->category_id || 
               croak("No category_id on pkg('Media::NoCategoryEditAccess') exception");
             my ($cat) = pkg('Category')->find(category_id => $category_id);
-            add_message( 'no_category_access', 
+            add_alert( 'no_category_access', 
                          url => $cat->url, 
                          id => $category_id );
             return (error_category_id=>1);

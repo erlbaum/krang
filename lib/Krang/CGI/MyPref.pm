@@ -8,7 +8,7 @@ use Carp qw(croak);
 use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'PasswordHandler';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf => qw(PasswordChangeTime);
 use JSON qw(objToJson);
@@ -163,7 +163,7 @@ them know they are required to change their password.
 
 sub force_pw_change {
     my $self = shift;
-    add_message('force_password_change', days => PasswordChangeTime);
+    add_alert('force_password_change', days => PasswordChangeTime);
     $self->param(password_only => 1);
     return $self->edit();
 }

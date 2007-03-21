@@ -164,7 +164,7 @@ use Krang::ClassLoader DB => qw(dbh);
 use Carp qw(croak);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
-use Krang::ClassLoader Message => qw(add_message get_messages);
+use Krang::ClassLoader Message => qw(add_message get_messages add_alert);
 use Krang::ClassLoader Widget => qw(category_chooser date_chooser decode_date);
 use Krang::ClassLoader base => 'CGI';
 
@@ -951,7 +951,7 @@ sub element_save {
                  $child->class->isa('Krang::ElementClass::MediaLink'))) {
             my ($valid, $msg) = $child->validate(query => $query);
             if (not $valid) {
-                add_message('invalid_element_data', msg => $msg);
+                add_alert('invalid_element_data', msg => $msg);
                 push @invalid, $index;
                 $clean = 0;
             }
@@ -963,7 +963,7 @@ sub element_save {
     if ($clean) {
         my ($valid, $msg) = $element->validate_children(query => $query);
         if (not $valid) {
-            add_message('invalid_element_data', msg => $msg);
+            add_alert('invalid_element_data', msg => $msg);
             $clean = 0;
         }
     }
@@ -1054,7 +1054,7 @@ sub revise {
     # deletions get a message listing deleted elements
     if ($op eq 'delete') {
         my %msg = get_messages(keys => 1);
-        add_message('no_elements_deleted') unless $msg{deleted_element};
+        add_alert('no_elements_deleted') unless $msg{deleted_element};
 
     } else {
         add_message('reordered_elements') unless $no_return;

@@ -51,7 +51,7 @@ for Krang::CGI::Contrib is 'search'.
 
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Conf';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Widget => qw(autocomplete_values);
@@ -395,7 +395,7 @@ sub associate_selected {
     my @contrib_associate_list = ( $q->param('krang_pager_rows_checked') );
 
     unless (@contrib_associate_list) {
-        add_message('missing_contrib_associate_list');
+        add_alert('missing_contrib_associate_list');
         return $self->associate_search();
     }
 
@@ -455,7 +455,7 @@ sub unassociate_selected {
     my @contrib_unassociate_list = ( $q->param('contrib_unassociate_list') );
 
     unless (@contrib_unassociate_list) {
-        add_message('missing_contrib_unassociate_list');
+        add_alert('missing_contrib_unassociate_list');
         return $self->associate_search();
     }
 
@@ -998,7 +998,7 @@ sub do_update_contrib {
         # delete the media object if it exists
 
         if (ref($@) and $@->isa('Krang::Contrib::DuplicateName')) {
-            add_message('duplicate_name');
+            add_alert('duplicate_name');
             return (duplicate_name=>1);
         } else {
             # Not our error!
@@ -1054,7 +1054,7 @@ sub validate_contrib {
 
     # Add messages
     foreach my $error (keys(%errors)) {
-        add_message($error);
+        add_alert($error);
     }
 
     return %errors;
@@ -1194,7 +1194,7 @@ sub upload_image {
         my $err = $@;
 
         # tell all about it
-        add_message('duplicate_media_upload',
+        add_alert('duplicate_media_upload',
                     filename => $filename);
 
         # use the dup instead of the new object

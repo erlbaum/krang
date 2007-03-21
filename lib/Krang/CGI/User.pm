@@ -33,7 +33,7 @@ use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Log => qw/critical debug info/;
 use Krang::ClassLoader Widget => qw/autocomplete_values/;
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
@@ -249,7 +249,7 @@ sub delete {
             critical("Unable to delete user '$user_id': objects are " .
                      "checked out by this user.");
             my ($user) = pkg('User')->find(user_id => $user_id);
-            add_message('error_deletion_failure',
+            add_alert('error_deletion_failure',
                         login => $user->login,
                         user_id => $user->user_id,);
             return $self->search();
@@ -303,7 +303,7 @@ sub delete_selected {
                 critical("Unable to delete user '$u': objects are checked " .
                          "out by this user.");
                 my ($user) = pkg('User')->find(user_id => $u);
-                add_message('error_deletion_failure',
+                add_alert('error_deletion_failure',
                             login => $user->login,
                             user_id => $user->user_id,);
                 return $self->search();
@@ -593,7 +593,7 @@ sub update_user {
                     my $error = "duplicate_" . $_;
                     $errors{$error} = 1;
                     $q->param('errors', 1);
-                    add_message($error);
+                    add_alert($error);
                 }
             }
             return %errors;
@@ -603,13 +603,13 @@ sub update_user {
               'error_null_group';
             $errors{$error} = 1;
             $q->param('errors', 1);
-            add_message($error);
+            add_alert($error);
             return %errors;
         } elsif (ref $@ && $@->isa('Krang::User::MissingGroup')) {
             my $error = "error_missing_group";
             $errors{$error} = 1;
             $q->param('errors', 1);
-            add_message($error);
+            add_alert($error);
             return %errors;
         } else {
             # it's somebody else's problem :)
@@ -673,7 +673,7 @@ sub validate_user {
     }
 
     # Add error messages
-    add_message($_) for keys %errors;
+    add_alert($_) for keys %errors;
     $q->param('errors', 1) if keys %errors;
 
     return %errors;

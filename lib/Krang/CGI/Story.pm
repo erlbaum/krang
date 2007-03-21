@@ -7,7 +7,7 @@ use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader 'CGI::Workspace';
 use Carp qw(croak);
@@ -186,17 +186,17 @@ sub create {
 
     # detect bad fields
     my @bad;
-    push(@bad, 'type'),        add_message('missing_type')
+    push(@bad, 'type'),        add_alert('missing_type')
       unless $type;
-    push(@bad, 'title'),       add_message('missing_title')
+    push(@bad, 'title'),       add_alert('missing_title')
       unless $title;
-    push(@bad, 'slug'),        add_message('missing_slug')
+    push(@bad, 'slug'),        add_alert('missing_slug')
       unless not($slug_req) or $slug;
-    push(@bad, 'slug'),        add_message('bad_slug')
+    push(@bad, 'slug'),        add_alert('bad_slug')
       if length $slug and $slug !~ /^[-\w]+$/;
-    push(@bad, 'category_id'), add_message('missing_category')
+    push(@bad, 'category_id'), add_alert('missing_category')
       unless $category_id;
-    push(@bad, 'cover_date'),  add_message('missing_cover_date')
+    push(@bad, 'cover_date'),  add_alert('missing_cover_date')
       unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
 
@@ -215,7 +215,7 @@ sub create {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
         my $class = pkg('ElementLibrary')->top_level(name => $type);
-        add_message('duplicate_url', 
+        add_alert('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,                    
                     which    => join(' and ', 
@@ -274,7 +274,7 @@ sub check_in_and_save {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url',
+        add_alert('duplicate_url',
                     story_id => $dup->story_id,
                     url      => $dup->url,
                     which    => join(' and ',
@@ -284,7 +284,7 @@ sub check_in_and_save {
 
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_message('missing_category_on_save');
+        add_alert('missing_category_on_save');
         return $self->edit;
     } elsif ($@) {
         # rethrow
@@ -301,9 +301,15 @@ sub check_in_and_save {
     $story->checkin();
     my $result = $story->move_to_desk($query->param('checkin_to'));
  
-    add_message(($result ? "moved_story" : "story_cant_move"),
-                id   => $story->story_id, 
-                desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
+    if( $result ) {
+        add_message("moved_story",
+                    id   => $story->story_id, 
+                    desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
+    } else {
+        add_alert("story_cant_move",
+                    id   => $story->story_id, 
+                    desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
+    }
  
     # redirect to that desk 
     $self->header_props(-uri => 'desk.pl?desk_id='.$query->param('checkin_to'));
@@ -611,7 +617,7 @@ sub copy {
                     slug  => $clone->slug,
                    );
     } else {
-        add_message('copied_story_no_cats',
+        add_alert('copied_story_no_cats',
                     id    => $story->story_id,
                     title => $clone->title);
     }                    
@@ -645,7 +651,7 @@ sub db_save {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url', 
+        add_alert('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,
                     which    => join(' and ', 
@@ -655,7 +661,7 @@ sub db_save {
 
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_message('missing_category_on_save');
+        add_alert('missing_category_on_save');
         return $self->edit;
     } elsif ($@) {
         # rethrow
@@ -698,7 +704,7 @@ sub db_save_and_stay {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url', 
+        add_alert('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,
                     which    => join(' and ', 
@@ -708,7 +714,7 @@ sub db_save_and_stay {
 
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_message('missing_category_on_save');
+        add_alert('missing_category_on_save');
         return $self->edit;
     } elsif ($@) {
         # rethrow
@@ -788,7 +794,7 @@ sub save_and_publish {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url', 
+        add_alert('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,
                     which    => join(' and ', 
@@ -798,7 +804,7 @@ sub save_and_publish {
 
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_message('missing_category_on_save');
+        add_alert('missing_category_on_save');
         return $self->edit;
     } elsif ($@) {
         # rethrow
@@ -1070,13 +1076,13 @@ sub _save {
         my $slug_req = (grep { $_ eq 'slug' } $story->element->class->url_attributes) ? 1 : 0;
 
         my @bad;
-        push(@bad, 'title'),       add_message('missing_title')
+        push(@bad, 'title'),       add_alert('missing_title')
           unless $title;
-        push(@bad, 'slug'),        add_message('missing_slug')
+        push(@bad, 'slug'),        add_alert('missing_slug')
           unless not($slug_req) or $slug;
-        push(@bad, 'slug'),        add_message('bad_slug')
+        push(@bad, 'slug'),        add_alert('bad_slug')
           if length $slug and $slug !~ /^[-\w]+$/;
-        push(@bad, 'cover_date'),  add_message('missing_cover_date')
+        push(@bad, 'cover_date'),  add_alert('missing_cover_date')
           unless $cover_date;
         # return to edit mode if there were problems
         return $self->edit(bad => \@bad) if @bad;
@@ -1111,14 +1117,14 @@ sub add_category {
 
     my $category_id = $query->param('new_category_id');
     unless ($category_id) {
-        add_message("added_no_category");
+        add_alert("added_no_category");
         return $self->edit();
     }
 
     # make sure this isn't a dup
     my @categories = $story->categories();
     if (grep { $_->category_id == $category_id } @categories) {
-        add_message("duplicate_category");
+        add_alert("duplicate_category");
         return $self->edit();
     }
 
@@ -1137,7 +1143,7 @@ sub add_category {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url_on_category_add', 
+        add_alert('duplicate_url_on_category_add', 
                     story_id => $dup->story_id,
                     url      => $dup->url,                    
                     category => $category->url,
@@ -1232,7 +1238,7 @@ sub delete_categories {
 
     # put together a reasonable summary of what happened
     if (@urls == 0) {
-        add_message('deleted_no_categories');
+        add_alert('deleted_no_categories');
     } elsif (@urls == 1) {
         add_message('deleted_a_category', url => $urls[0]);
     } else {

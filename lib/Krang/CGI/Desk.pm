@@ -28,7 +28,7 @@ This application manages display of stories on desks for Krang.
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget => qw(format_url);
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Desk';
 
 use Krang::ClassLoader base => 'CGI';
@@ -185,7 +185,7 @@ sub move {
     my $query = $self->query;
     my $obj = $self->_id2obj($query->param('id'));
     my $result = $obj->move_to_desk($query->param('move_'.$query->param('id')));
-    $result ? add_message("moved_story", id => $query->param('id')) : add_message("story_cant_move", id => $query->param('id')); 
+    $result ? add_message("moved_story", id => $query->param('id')) : add_alert("story_cant_move", id => $query->param('id')); 
     return $self->show;
 }
 
@@ -201,7 +201,7 @@ sub move_checked {
     foreach my $obj (map { $self->_id2obj($_) }
                      $query->param('krang_pager_rows_checked')) {
         my $result = $obj->move_to_desk($query->param('move_'.$obj->story_id));
-        $result ? add_message("moved_story", id => $obj->story_id) : add_message("story_cant_move", id => $obj->story_id);
+        $result ? add_message("moved_story", id => $obj->story_id) : add_alert("story_cant_move", id => $obj->story_id);
     }
 
     return $self->show;

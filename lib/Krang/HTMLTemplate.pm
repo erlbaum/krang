@@ -27,7 +27,7 @@ See L<HTML::Template>.
 use base 'HTML::Template';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin);
-use Krang::ClassLoader Message => qw(get_messages clear_messages);
+use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clear_alerts);
 use Krang::ClassLoader 'Navigation';
 use File::Spec::Functions qw(catdir);
 use Krang::ClassLoader Log => qw(debug);
@@ -89,9 +89,13 @@ sub output {
 
 
     if ($template->query(name => 'header_message_loop')) {
-        $template->param(header_message_loop => 
-                         [ map { { message => $_ } } get_messages() ]);
+        $template->param( header_message_loop => [ map { { message => $_ } } get_messages() ] );
         clear_messages();
+    }
+
+    if ($template->query(name => 'header_alert_loop')) {
+        $template->param( header_alert_loop => [ map { { alert => $_ } } get_alerts() ] );
+        clear_alerts();
     }
 
     pkg('Navigation')->fill_template(template => $template);

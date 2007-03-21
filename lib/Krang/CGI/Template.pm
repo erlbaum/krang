@@ -29,7 +29,7 @@ use Carp qw(verbose croak);
 use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Log => qw/critical debug info/;
-use Krang::ClassLoader Message => qw/add_message/;
+use Krang::ClassLoader Message => qw/add_message add_alert/;
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'Template';
@@ -440,7 +440,7 @@ sub delete {
     if ($@){
         if (ref $@ && $@->isa('Krang::Template::Checkout')) {
             critical("Unable to delete template id '$template_id': $@");
-            add_message('error_deletion_failure',
+            add_alert('error_deletion_failure',
                         template_id => 'template_id');
         } else {
             croak($@);
@@ -489,7 +489,7 @@ sub delete_selected {
     }
 
     if (@bad_ids) {
-        add_message('error_deletion_failure',
+        add_alert('error_deletion_failure',
                     template_id => join(", ", @bad_ids));
     } else {
         add_message('message_selected_deleted');
@@ -1193,7 +1193,7 @@ sub validate {
           unless $filename =~ /^[-\w]+\.tmpl$/;
     }
     
-    add_message($_) for keys %errors;
+    add_alert($_) for keys %errors;
     $q->param('errors', 1) if keys %errors;
 
     return %errors;
@@ -1209,7 +1209,7 @@ sub _save {
 
     if ($@) {
         if (ref($@) && $@->isa('Krang::Template::DuplicateURL')) {
-            add_message('duplicate_url',
+            add_alert('duplicate_url',
                         url => $template->url);
             $q->param('errors', 1);
             return (duplicate_url => 1);
@@ -1218,7 +1218,7 @@ sub _save {
             my ($category) = pkg('Category')->find(category_id=>$category_id);
             croak ("Can't load category_id '$category_id'")
               unless (ref($category));
-            add_message('error_no_category_access',
+            add_alert('error_no_category_access',
                         url => $category->url,
                         cat_id => $category_id );
             $q->param('errors', 1);

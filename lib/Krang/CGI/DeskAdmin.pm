@@ -6,7 +6,7 @@ use warnings;
 
 use Carp qw(croak);
 use Krang::ClassLoader 'Desk';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Log => qw(debug);
 
 =head1 NAME
@@ -110,12 +110,12 @@ sub add {
     my $q = $self->query();
 
     if (not $q->param('name')) {
-        add_message('no_name');
+        add_alert('no_name');
         return $self->edit('no_name');
     } 
 
     if (pkg('Desk')->find( name => $q->param('name')) ) {
-        add_message('duplicate_desk');
+        add_alert('duplicate_desk');
         return $self->edit('no_name');
     }
 
@@ -168,7 +168,7 @@ sub delete {
     my @delete_list = ( $q->param('desk_delete_list') );
                                                                                  
     unless (@delete_list) {
-        add_message('missing_desk_delete_list');
+        add_alert('missing_desk_delete_list');
         return $self->edit();
     }
                                                                                  

@@ -42,7 +42,7 @@ is 'search'.
 
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader 'Widget';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
@@ -385,7 +385,7 @@ sub delete {
 
     if ($@ and ref $@ and $@->isa('Krang::Group::Dependent')) {
         my $dep = $@->dependents;
-        add_message('group_has_users', name => $g->name, logins => join(", ",@$dep)); 
+        add_alert('group_has_users', name => $g->name, logins => join(", ",@$dep)); 
         return $self->edit;
     }
 
@@ -428,7 +428,7 @@ sub delete_selected {
         eval{ $g->delete() if ($g) };
         if ($@ and ref $@ and $@->isa('Krang::Group::Dependent')) {
             my $dep = $@->dependents;
-            add_message('group_has_users', name => $g->name, logins => "@$dep");
+            add_alert('group_has_users', name => $g->name, logins => "@$dep");
             $dupe = 1;
         }
     }
@@ -696,7 +696,7 @@ sub validate_group {
 
     # Add messages
     foreach my $error (keys(%errors)) {
-        add_message($error);
+        add_alert($error);
     }
 
     return %errors;
@@ -718,7 +718,7 @@ sub do_update_group {
     # Is it a dup?
     if ($@) {
         if (ref($@) and $@->isa('Krang::Group::DuplicateName')) {
-            add_message('duplicate_name');
+            add_alert('duplicate_name');
             return (duplicate_name=>1);
         } else {
             # Not our error!

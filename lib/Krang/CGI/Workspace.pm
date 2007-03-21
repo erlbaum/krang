@@ -27,7 +27,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget => qw(format_url);
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Publisher';
 use Carp qw(croak);
 
@@ -50,7 +50,6 @@ sub setup {
       deploy
       update_testing
     )]);
-
 }
 
 =item show
@@ -265,7 +264,7 @@ sub checkin {
         my $result = $obj->move_to_desk($query->param($select));
         my $id = $obj->story_id;
         $id =~ s/story_//;
-        $result ? add_message("moved_story", id => $id) : add_message("story_cant_move", id => $query->param('id'));
+        $result ? add_message("moved_story", id => $id) : add_alert("story_cant_move", id => $query->param('id'));
 
     } elsif ($obj->isa('Krang::Media')) {
         add_message("checkin_media", id => $obj->media_id);
@@ -319,7 +318,7 @@ sub checkin_checked {
             my $result = $obj->move_to_desk($query->param($select));
             my $id = $obj->story_id;
             $id =~ s/story_//;
-            $result ? add_message("moved_story", id => $id) : add_message("story_cant_move", id => $obj->story_id);
+            $result ? add_message("moved_story", id => $id) : add_alert("story_cant_move", id => $obj->story_id);
         } elsif ($obj->isa('Krang::Media')) {
             add_message("checkin_media", id => $obj->media_id);
             $obj->checkin();

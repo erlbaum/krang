@@ -16,11 +16,18 @@ var Krang = {};
     for which to apply the behaviors.
 */
 Krang.load = function(target) {
+    // apply our registered behaviours
     Behaviour.apply(target);
+
+    // run any code from Krang.onload()
     for(var i=0; i< Krang.onload_code.length; i++) {
         var code = Krang.onload_code.pop();
         if( code ) code();
     }
+
+    // show the messages and alerts if there are any
+    Krang.Messages.show();
+    Krang.Messages.show('alerts');
 }
 
 /*
@@ -323,7 +330,6 @@ Krang.Help = {
     current_topic    : '',
     current_subtopic : '',
     set              : function(topic, subtopic) {
-console.log('help topic: ' + topic);
         Krang.Help.current_topic    = topic;
         Krang.Help.current_subtopic = subtopic;
     },
@@ -336,3 +342,49 @@ console.log('help topic: ' + topic);
         Krang.popup(url);
     }
 };
+
+/*
+    Krang.Messages
+*/
+Krang.Messages = {
+    stack : { messages: [], alerts: [] },
+    add   : function(msg, level) {
+        // default to 'messages'
+        if( level === undefined ) level = 'messages';
+        Krang.Messages.stack[level].push(msg);
+    },
+    show  : function(level) {
+        // default to 'messages'
+        if( level === undefined ) level = 'messages';
+
+        var my_stack = Krang.Messages.stack[level];
+console.log('level:' + level);
+console.log('length: ' + my_stack.length);
+        if( my_stack.length ) {
+            var content = '';
+            for(var i=0; i< my_stack.length; i++) {
+                var msg = my_stack.pop();
+                if( msg ) content = content + '<p>' + msg + '</p>';
+            }
+            var el = $(level);
+            // set the content 
+            el.down('div.content').update(content);
+
+            // we need to reposition the messages div so it's
+            // at the top of the viewport
+            var pos = Position.page(el);
+            var top = pos[1];
+            if( top < 0 ) {
+                top = Math.abs(top) + 'px';
+                el.setStyle({ top: top });
+            }
+            new Effect.SlideDown(el, { duration: .5 });
+        }
+    },
+    hide  : function(level) {
+        // default to 'messages'
+        if( level === undefined ) level = 'messages';
+        new Effect.SlideUp(level, { duration: .5 });
+    }
+};
+
