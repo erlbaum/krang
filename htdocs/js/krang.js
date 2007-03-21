@@ -142,14 +142,19 @@ Krang.ajax_update = function(args) {
             // if we're successful we're not in edit mode (can be reset by the request)
             onSuccess   : function() { Krang.Nav.edit_mode(false) },
             onComplete  : function(request) {
-                // reapply any dynamic bits to the target that was updated
-                Krang.load(target);
-                // hide the indicator
-                Krang.hide_indicator(indicator);
-                // do whatever else the user wants
-                complete(args);
+                // wait 10 ms so we know that the JS in our request has been evaled
+                // since this is the time that Prototype gives for the Browser to update
+                // it's DOM
+                setTimeout(function() {
+                    // reapply any dynamic bits to the target that was updated
+                    Krang.load(target);
+                    // hide the indicator
+                    Krang.hide_indicator(indicator);
+                    // do whatever else the user wants
+                    complete(args);
+                }, 10);
             },
-            onFailure   : function(req, e)   { Krang.show_error(e) },
+            onFailure   : function(req, e) { Krang.show_error(e) },
             onException : function(req, e) { Krang.show_error(e) }
         }
     );
@@ -264,7 +269,6 @@ Krang.update_progress = function(count, total, label) {
     if( label ) document.getElementById('progress_bar_label').innerHTML = string;
 }
 
-
 /*
     Krang.show_error
     Shows an error to the user in the UI
@@ -299,8 +303,10 @@ Krang.class_suffix = function(el, prefix) {
 Krang.Nav = {
     edit_mode_flag : false,
     edit_message   : 'Are you sure you want to discard your unsaved changes?',
-    edit_mode      : function() {
-        Krang.Nav.edit_mode_flag = true;
+    edit_mode      : function(flag) {
+        // by default it's true
+        if( flag === undefined ) flag = true;
+        Krang.Nav.edit_mode_flag = flag;
     },
     goto_url       : function(url) {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
