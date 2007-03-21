@@ -270,7 +270,7 @@ BEGIN {
     __PACKAGE__->add_callback(postrun => sub {
         my $self  = shift;
         my %props = $self->header_props();
-        my $uri   = $props{'uri'} || $props{'-uri'};
+        my $uri   = $props{'uri'} || $props{'-uri'} || $props{'url'} || $props{'-url'};
         my $ajax  = $self->param('ajax');
         if( $uri && $ajax ) {
             if( $uri =~ /\?/ ) {
