@@ -265,7 +265,7 @@ sub delete {
 
         # redirect to login
         $self->header_type('redirect');
-        $self->header_props(-url=>'login.pl');
+        $self->header_props(-uri => 'login.pl');
         return "";
     }
 

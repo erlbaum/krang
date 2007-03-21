@@ -277,7 +277,7 @@ sub add_save_stay {
     # Redirect to edit
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&template_id=". $template->template_id();
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$url\">$url</a>";
 }
@@ -725,7 +725,7 @@ sub edit_save_stay {
     # Redirect to edit
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&template_id=". $template->template_id();
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$url\">$url</a>";
 }

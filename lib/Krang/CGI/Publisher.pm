@@ -528,7 +528,7 @@ sub preview_media {
         $self->header_type('redirect');
 
         my $scheme = PreviewSSL ? 'https' : 'http';
-        $self->header_props(-url=>"$scheme://$url");
+        $self->header_props(-uri => "$scheme://$url");
         return "Redirecting to <a href='$scheme://$url'>$scheme://$url</a>.";
     }
 }

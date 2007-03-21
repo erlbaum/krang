@@ -207,7 +207,7 @@ sub associate_story {
 
     # Redirect back to search
     $self->header_type('redirect');
-    $self->header_props(-url=>$new_url);
+    $self->header_props(-uri => $new_url);
 
     return "Redirect: <a href=\"$new_url\">$new_url</a>";
 }
@@ -239,7 +239,7 @@ sub associate_media {
 
     # Redirect back to search
     $self->header_type('redirect');
-    $self->header_props(-url=>$new_url);
+    $self->header_props(-uri => $new_url);
 
     return "Redirect: <a href=\"$new_url\">$new_url</a>";
 }

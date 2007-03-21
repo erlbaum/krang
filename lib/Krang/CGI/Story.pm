@@ -1576,7 +1576,7 @@ sub checkout_selected {
 
          # Redirect to Workplace
          my $url = "workspace.pl";
-         $self->header_props(-url=>$url);
+         $self->header_props(-uri=>$url);
          $self->header_type('redirect');
          return "Redirect: <a href=\"$url\">$url</a>";
      } else {

@@ -572,7 +572,7 @@ sub cancel_add {
 
     # Redirect to workspace
     my $workspace_uri = WORKSPACE_URI;
-    $self->header_props(-uri=>$workspace_uri);
+    $self->header_props(-uri => $workspace_uri);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$workspace_uri\">$workspace_uri</a>";
@@ -618,7 +618,7 @@ sub save_stay_add {
     # Redirect to edit mode
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&media_id=". $m->media_id();
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -756,7 +756,7 @@ sub save_edit {
 
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=>$uri);
+    $self->header_props(-uri => $uri);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$uri\">$uri</a>";
@@ -797,7 +797,7 @@ sub checkin_edit {
 
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=>$uri);
+    $self->header_props(-uri => $uri);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$uri\">$uri</a>";
@@ -842,7 +842,7 @@ sub save_stay_edit {
     # Redirect to edit mode
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&media_id=". $m->media_id();
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -964,7 +964,7 @@ sub save_and_associate_media {
 
     # Redirect to associate screen
     my $url = 'contributor.pl?rm=associate_media';
-    $self->header_props(-uri=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -1002,7 +1002,7 @@ sub save_and_publish {
 
     # Redirect to associate screen
     my $url = 'publisher.pl?rm=publish_media&media_id=' . $m->media_id;
-    $self->header_props(-uri=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -1037,7 +1037,7 @@ sub save_and_preview {
 
     # Redirect to associate screen
     my $url = 'publisher.pl?rm=preview_media&no_view=1&media_id=' . $m->media_id;
-    $self->header_props(-uri=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -1065,7 +1065,7 @@ sub save_and_view_log {
 
     # Redirect to associate screen
     my $url = 'history.pl?history_return_script=media.pl&history_return_params=rm&history_return_params=edit&media_id=' . $m->media_id;
-    $self->header_props(-uri=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -1175,7 +1175,7 @@ sub revert_version {
     # Redirect to edit mode
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit";
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
