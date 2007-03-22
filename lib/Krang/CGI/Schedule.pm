@@ -262,20 +262,23 @@ sub list_all {
     my $template = $self->load_tmpl('list_all.tmpl', associate => $query);
 
     my $pager = pkg('HTMLPager')->new(
-                                        cgi_query => $query,
-                                        persist_vars => {
-                                                       rm => 'list_all' },
-                                        use_module => 'Krang::Schedule',
-                                        columns => [qw( asset schedule next_run action version checkbox_column )],
-                                        column_labels => {  asset => 'Asset',
-                                                            schedule => 'Schedule',
-                                                            next_run => 'Next Run',
-                                                            action => 'Action',
-                                                            version => 'Version'
-                                                            },
-                                        row_handler => \&list_all_row_handler,
-                                        id_handler => sub { return $_[0]->schedule_id },
-                                                            );
+        cgi_query    => $query,
+        persist_vars => {
+            rm          => 'list_all',
+            is_list_all => 1,
+        },
+        use_module    => 'Krang::Schedule',
+        columns       => [qw( asset schedule next_run action version checkbox_column )],
+        column_labels => {
+            asset    => 'Asset',
+            schedule => 'Schedule',
+            next_run => 'Next Run',
+            action   => 'Action',
+            version  => 'Version'
+        },
+        row_handler => \&list_all_row_handler,
+        id_handler  => sub { return $_[0]->schedule_id },
+    );
 
     # Run pager
     $template->param(pager_html =>  $pager->output());

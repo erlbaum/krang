@@ -11,7 +11,7 @@
   }
 
   delete_selected  = function () {
-        var myform = document.forms["current_schedule_form"];
+        var myform = document.forms["krang_pager_form"];
         myform.rm.value = 'delete';
         myform.submit();
   }
@@ -20,15 +20,13 @@
 <div class="dark-bar"><p class="left">&nbsp;Scheduled Jobs</p><p class="right"><a href="help.pl?topic=schedule_job" class="help">Help</a>&nbsp;</p></div>
 
 <div class="box">
-
-<form name="current_schedule_form" method="POST" action="schedule.pl">
-<input type="hidden" name="is_list_all" value="1" override='1'>
-<br>
 <tmpl_var pager_html>
-<br>
 </div>
 
-<div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div>
-</form>                                                                      
-  </div>
+<div class="button-bar">
+  <form name="ignoreme">
+    <input type="button" value="Delete Checked" onClick="delete_selected()" class="button">
+  </form>
+</div>
+
 <tmpl_include footer.tmpl>
