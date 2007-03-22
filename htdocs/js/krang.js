@@ -386,3 +386,24 @@ Krang.Messages = {
     }
 };
 
+/* 
+    Krang.row_checked(formName, inputName)
+    Krang.pager_row_checked()
+*/
+Krang.row_checked = function( formName, inputName ) {
+    var form = document.forms[ formName ];
+
+    for ( var i = 0; i < form.elements.length; i++ ) {
+        var el = form.elements[ i ];
+        if ( el.type == 'checkbox' && el.checked && el.name == inputName ) 
+            return true;  // db2: this should be a substring match, cf. ElementEditor/edit.tmpl
+    }
+
+    return false;
+}
+
+Krang.pager_row_checked = function() {
+  return Krang.row_checked( 'krang_pager_form', 'krang_pager_rows_checked' );
+}
+
+
