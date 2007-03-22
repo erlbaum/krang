@@ -406,4 +406,18 @@ Krang.pager_row_checked = function() {
   return Krang.row_checked( 'krang_pager_form', 'krang_pager_rows_checked' );
 }
 
+/*
+    Krang.check_all(checkbox, inputPrefix)
+*/
+Krang.check_all = function( checkbox, prefix ) {
+    var form = checkbox.form;
+
+    for ( var i = 0; i < form.elements.length; i++ ) {
+        var el = f.elements[ i ];
+        if ( el.type == 'checkbox' && el.name && el.name.indexOf( prefix ) == 0 ) 
+            el.checked = checkbox.checked;
+    }
+}
+
+
 

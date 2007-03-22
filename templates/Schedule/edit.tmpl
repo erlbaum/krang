@@ -1,15 +1,6 @@
 <tmpl_include header.tmpl>
 
 <script language=javascript>
- checkall = function (checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
-  }
-
   delete_selected  = function () {
         var myform = document.forms["current_schedule_form"];
         myform.submit();
@@ -50,7 +41,7 @@
      <th width="130">Next Run</th>
      <th width="130">Action</th>
      <th width="130">Version</th>
-     <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'schedule_delete_list')"></th>
+     <th><input type="checkbox" name="checkallbox" value="1" onClick="Krang.check_all(this, 'schedule_delete_list')"></th>
    </tr>                                                                       
   <tmpl_loop existing_schedule_loop>
    <tr>

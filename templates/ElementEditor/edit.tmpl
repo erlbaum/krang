@@ -78,15 +78,6 @@
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  checkall = function (checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
-  }
-
 // updates the order pull downs to stay consistent
 update_order = function (obj, prefix) {
     var form  = obj.form;
@@ -207,7 +198,7 @@ Words: <span id=bulk_edit_words></span> &nbsp;&nbsp;&nbsp;Characters: <span id=b
     <td width="125">Element</td>
     <td width="275">Data Entry</td>
     <td width="85">Order</td>
-    <td width="75"><tmpl_unless no_reorder><input type="checkbox" onclick="checkall(this, 'remove_')"></tmpl_unless></td>
+    <td width="75"><tmpl_unless no_reorder><input type="checkbox" onclick="Krang.check_all(this, 'remove_')"></tmpl_unless></td>
   </tr> 
 
  <tmpl_loop child_loop>

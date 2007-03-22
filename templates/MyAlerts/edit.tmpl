@@ -1,15 +1,6 @@
 <tmpl_include header.tmpl>
 <script language=javascript>
 
-checkall = function (checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
-}
-
 delete_checked = function() {
     document.forms['current_alert_form'].submit();
 }
@@ -29,7 +20,7 @@ add_alert = function() {
 
 <table cellspacing="0" cellpadding="4" class="form-head">
 <tr><td width="160">Action</td><td width="300">Site/Category</td><td width="55">Desk</td><td align="right"><input type="checkbox" name="checkallbox" value="1"
-onClick="checkall(this, 'alert_delete_list')"></td></tr></table>
+onClick="Krang.check_all(this, 'alert_delete_list')"></td></tr></table>
 
     <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
 	 <tmpl_loop alert_loop>
