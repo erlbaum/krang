@@ -3,11 +3,6 @@
 <script language="javascript" type="text/javascript">
   nav_edit_mode();
 
-  preview_story_session = function () {
-        Preview = window.open("publisher.pl?rm=preview_story&session=story", "<tmpl_var "instance_name">");
-        Preview.focus();
-  }
-        
   db_save = function () {
         document.forms[0].rm.value = 'db_save';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); } 

@@ -3,16 +3,6 @@
 <script language="javascript" type="text/javascript">
   <tmpl_if was_edit>nav_edit_mode();</tmpl_if>
 
-  preview_story = function (id) {
-        Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
-        Preview.focus();
-  }
-
-  preview_media = function (id) {
-        Preview = window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var "instance_name">");
-        Preview.focus();
-  }
-
   edit_story = function () {
     document.forms[0].rm.value = 'checkout_and_edit';
     document.forms[0].submit();

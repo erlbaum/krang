@@ -2,11 +2,6 @@
 
 <script language="JavaScript" type="text/javascript">
 
-  preview_media = function (id) {
-        Preview = window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var "instance_name">");
-        Preview.focus();
-  }
-
   view_media  = function (id) {
     document.find_media.rm.value = 'view';
     document.find_media.media_id.value = id;

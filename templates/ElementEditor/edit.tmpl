@@ -1,14 +1,4 @@
 <script language=javascript>
-  preview_media = function (id) {
-        aWindow=window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var instance_name>");
-        aWindow.focus();
-  }
-
-  preview_story = function (id) {
-        aWindow=window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var instance_name>");
-        aWindow.focus();
-  }
-
   find_story = function (p) {
         document.forms[0].rm.value = 'save_and_find_story_link';
         document.forms[0].jump_to.value = p;

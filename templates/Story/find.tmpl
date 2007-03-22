@@ -14,11 +14,6 @@
 	return false;
   }
 
-  preview_story = function (id) {
-        Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
-        Preview.focus();
-  }
-
   edit_story  = function (id) {
     document.find_story.rm.value = 'checkout_and_edit';
     document.find_story.story_id.value = id;
