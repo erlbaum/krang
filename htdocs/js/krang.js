@@ -413,7 +413,7 @@ Krang.check_all = function( checkbox, prefix ) {
     var form = checkbox.form;
 
     for ( var i = 0; i < form.elements.length; i++ ) {
-        var el = f.elements[ i ];
+        var el = form.elements[ i ];
         if ( el.type == 'checkbox' && el.name && el.name.indexOf( prefix ) == 0 ) 
             el.checked = checkbox.checked;
     }
