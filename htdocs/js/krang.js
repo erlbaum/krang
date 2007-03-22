@@ -462,3 +462,22 @@ Krang.update_order = function( select, prefix ) {
         inputs[i -1].value = i;
 }
 
+/*
+    Krang.preview(type, id)
+
+    Opens up a new window to preview an element of a certain type
+    (either 'story' or 'media') with a certain id (if not id is present
+    the it will preview the one currently in the session)
+*/
+Krang.preview = function(type, id) {
+    var url = 'publisher.pl?rm=preview_' + type + '&amp;'
+            + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) );
+
+    var instance = Krang.instance;
+    // IE has problems with some characters that can appear in the instance name
+    instance.s.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' )
+    var pop = window.open( url, ( instance + 'preview' ) );
+
+    pop.focus();
+}
+

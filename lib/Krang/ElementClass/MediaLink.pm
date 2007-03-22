@@ -44,9 +44,9 @@ sub input_form {
         my $thumbnail_path = $media->thumbnail_path(relative => 1);
         $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .
           ($thumbnail_path ? 
-           qq{<a href="javascript:preview_media($media_id)"><img src="$thumbnail_path" align=bottom border=0></a> } :
+           qq{<a href="javascript:Krang.preview('media',$media_id)"><img src="$thumbnail_path" align=bottom border=0></a> } :
            "") . 
-             qq{<a href="javascript:preview_media($media_id)">} . 
+             qq{<a href="javascript:Krang.preview('media',$media_id)">} . 
                $media->filename . qq{</a> ${size}} . 
                  qq{</div>};
     }
@@ -99,9 +99,9 @@ sub view_data {
         my $path = $media->file_path(relative => 1);
         my $thumbnail_path = $media->thumbnail_path(relative => 1);       
         $html .= ($thumbnail_path ? 
-                  qq{<a href="javascript:preview_media($media_id)"><img src="$thumbnail_path" align=bottom border=0></a> }  : 
+                  qq{<a href="javascript:Krang.preview('media',$media_id)"><img src="$thumbnail_path" align=bottom border=0></a> }  : 
                   "") .
-                    qq{<a href="javascript:preview_media($media_id)">} . 
+                    qq{<a href="javascript:Krang.preview('media',$media_id)">} . 
                       $media->filename . qq{</a> ${size}};
     } else {
         $html = "No media object assigned.";

@@ -59,7 +59,7 @@
               <td class="form-cell" width="40"><tmpl_var id></td>
               <td class="form-cell" width="200"><tmpl_var url></td>
               <td class="form-cell"><tmpl_var title></td>
-              <td class="form-cell" width="80"><tmpl_if thumbnail><a href="javascript:preview_media(<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border="0"></a><tmpl_else>&nbsp;</tmpl_if></td>
+              <td class="form-cell" width="80"><tmpl_if thumbnail><a href="javascript:Krang.preview('media',<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border="0"></a><tmpl_else>&nbsp;</tmpl_if></td>
               <td class="form-cell" width="50"><tmpl_if status><tmpl_var status><tmpl_else>&nbsp;</tmpl_if></td>
             </tr></table>
           </tmpl_loop>

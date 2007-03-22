@@ -581,7 +581,7 @@ sub _build_asset_list {
         if ($asset->isa('Krang::Story')) {
             push @stories, {id          => $asset->story_id,
                             url         => format_url(url    => $asset->url,
-                                                      linkto => "javascript:preview_story('" . $asset->story_id . "')",
+                                                      linkto => "javascript:Krang.preview('story', '" . $asset->story_id . "')",
                                                       length => 20
                                                      ),
                             title       => $asset->title,
@@ -591,7 +591,7 @@ sub _build_asset_list {
         } elsif ($asset->isa('Krang::Media')) {
             push @media, {id          => $asset->media_id,
                           url         => format_url(url    => $asset->url,
-                                                    linkto => "javascript:preview_media('".$asset->media_id."')",
+                                                    linkto => "javascript:Krang.preview('media', '".$asset->media_id."')",
                                                     length => 20
                                                  ),
                           title       => $asset->title,

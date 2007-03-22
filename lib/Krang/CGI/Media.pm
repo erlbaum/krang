@@ -1296,14 +1296,14 @@ sub list_active_row_handler {
     # thumbnail path   
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
-        $row->{thumbnail} = "<a href='javascript:preview_media('".$row->{media_id}."')'><img src=\"$thumbnail_path\" border=0></a>";
+        $row->{thumbnail} = "<a href='javascript:Krang.preview('media','".$row->{media_id}."')'><img src=\"$thumbnail_path\" border=0></a>";
     } else {
         $row->{thumbnail} = "&nbsp;";
     }
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $media->url(),
-                              linkto => "javascript:preview_media('". $row->{media_id} ."')" );
+                              linkto => "javascript:Krang.preview('media','". $row->{media_id} ."')" );
 
     # title
     $row->{title} = $q->escapeHTML($media->title);
@@ -1410,7 +1410,7 @@ sub make_media_tmpl_data {
         my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
         $tmpl_data{thumbnail_path} = $thumbnail_path;
         $tmpl_data{url} = format_url( url => $m->url(),
-                                      linkto => "javascript:preview_media_session()",
+                                      linkto => "javascript:Krang.preview('media', null)",
                                       length => 50 );
         $tmpl_data{published_version} = $m->published_version();
         $tmpl_data{version} = $m->version();
@@ -1514,7 +1514,7 @@ sub make_media_view_tmpl_data {
     $tmpl_data{thumbnail_path} = $thumbnail_path;
 
     $tmpl_data{url} = format_url( url => $m->url(),
-                                  linkto => "javascript:preview_media('". $tmpl_data{media_id} ."')",
+                                  linkto => "javascript:Krang.preview('media','". $tmpl_data{media_id} ."')",
                                   length => 50 );
 
     $tmpl_data{published_version} = $m->published_version();
@@ -1678,7 +1678,7 @@ sub find_media_row_handler {
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $media->url(),
-                              linkto => "javascript:preview_media('". $media_id ."')" );
+                              linkto => "javascript:Krang.preview('media','". $media_id ."')" );
 
     # title
     $row->{title} = $self->query->escapeHTML($media->title);
@@ -1687,7 +1687,7 @@ sub find_media_row_handler {
     if ($show_thumbnails) {
         my $thumbnail_path = $media->thumbnail_path(relative => 1);
         if ($thumbnail_path) {
-            $row->{thumbnail} = "<a href='javascript:preview_media($media_id)'><img src=\"$thumbnail_path\" border=0></a>";
+            $row->{thumbnail} = "<a href='javascript:Krang.preview('media',$media_id)'><img src=\"$thumbnail_path\" border=0></a>";
         } else {
             $row->{thumbnail} = "&nbsp;";
         }

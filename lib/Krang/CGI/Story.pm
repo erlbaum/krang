@@ -385,7 +385,7 @@ sub edit {
                      url               => $story->url ? 
                                             format_url(
                                                        url => $story->url,
-                                                       linkto => "javascript:preview_story_session()",
+                                                       linkto => "javascript:Krang.preview('story', null)",
                                                        length => 50,
                                                       ) : "");
 
@@ -513,7 +513,7 @@ sub view {
                      type              => $story->element->display_name,
                      url               => format_url(
                                                      url => $story->url,
-                                                     linkto => "javascript:preview_story('". $story->story_id() ."')",
+                                                     linkto => "javascript:Krang.preview('story','". $story->story_id() ."')",
                                                      length => 50,
                                                     ),
                      version           => $story->version);
@@ -1634,7 +1634,7 @@ sub find_story_row_handler {
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $story->url(),
-                              linkto => "javascript:preview_story('". $row->{story_id} ."')" );
+                              linkto => "javascript:Krang.preview('story','". $row->{story_id} ."')" );
 
     # title
     $row->{title} = $self->query->escapeHTML($story->title);
@@ -1695,7 +1695,7 @@ sub list_active_row_handler {
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $story->url(),
-                              linkto => "javascript:preview_story('". $row->{story_id} ."')" );
+                              linkto => "javascript:Krang.preview('story','". $row->{story_id} ."')" );
 
     # title
     $row->{title} = $q->escapeHTML($story->title);

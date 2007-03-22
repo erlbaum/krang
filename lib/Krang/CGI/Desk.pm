@@ -147,7 +147,7 @@ sub _row_handler {
     $row->{story_type} = $obj->class->display_name;
     $row->{url} = format_url(url    => $obj->url,
                              linkto => 
-                             "javascript:preview_story($row->{id})",
+                             "javascript:Krang.preview('story',$row->{id})",
                              length => 50);
     $row->{may_edit} = $obj->may_edit;
 

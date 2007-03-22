@@ -553,7 +553,7 @@ sub find_story_link_row_handler {
         $url_lines[-1] .= "/" . $_;
     }
     $row->{url} = join('<br>', 
-                       map { qq{<a href="javascript:preview_story($row->{story_id})">$_</a>} } @url_lines);
+                       map { qq{<a href="javascript:Krang.preview('story',$row->{story_id})">$_</a>} } @url_lines);
 
 
     # title
@@ -732,11 +732,11 @@ sub find_media_link_row_handler {
         $url_lines[-1] .= "/" . $_;
     }
     $row->{url} = join('<br>', 
-                       map { qq{<a href="javascript:preview_media($row->{media_id})">$_</a>} } @url_lines);
+                       map { qq{<a href="javascript:Krang.preview('media',$row->{media_id})">$_</a>} } @url_lines);
 
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
-        $row->{thumbnail} = qq{<a href="javascript:preview_media($row->{media_id})"><img src="$thumbnail_path" border=0></a>};
+        $row->{thumbnail} = qq{<a href="javascript:Krang.preview('media',$row->{media_id})"><img src="$thumbnail_path" border=0></a>};
     } else {
         $row->{thumbnail} = "&nbsp;";
     }

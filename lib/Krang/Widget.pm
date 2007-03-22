@@ -50,7 +50,7 @@ Krang::Widget - interface widgets for use by Krang::CGI modules
                           query => $query);
 
   $url_html = format_url(url => 'http://my.host/some/long/url.html',
-                         linkto => "javascript:preview_media('". $id ."')" );
+                         linkto => "javascript:Krang.preview('media','". $id ."')" );
 
 =head1 DESCRIPTION
 

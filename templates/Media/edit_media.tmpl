@@ -89,7 +89,7 @@
   <td width="135">ID:</td>
   <td><tmpl_var media_id></td>
 
-  <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media_session()"></tmpl_if><tmpl_if thumbnail_path><img border="0" src="<tmpl_var thumbnail_path>"></tmpl_if><tmpl_if media_id></a></tmpl_if></td>
+  <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:Krang.preview('media', null)"></tmpl_if><tmpl_if thumbnail_path><img border="0" src="<tmpl_var thumbnail_path>"></tmpl_if><tmpl_if media_id></a></tmpl_if></td>
 </tr>
 
 <tr class="light">
@@ -134,7 +134,7 @@
 
 <tr>
   <td>*Upload File:<tmpl_if filename><br />
-<tmpl_if media_id><a href="javascript:preview_media_session()"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if media_id></a></tmpl_if>
+<tmpl_if media_id><a href="javascript:Krang.preview('media', null)"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if media_id></a></tmpl_if>
 <tmpl_var escape=HTML file_size></tmpl_if></td>
   <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_media_file><span class="invalid"></tmpl_if><input type="file" name="media_file" size="32" class="button"><tmpl_if error_media_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
@@ -208,7 +208,7 @@ Version: <tmpl_var media_version_chooser>
   <input type="button" value="Save" onClick="do_save()" class="button">
   <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
   <tmpl_if may_publish><input type="button" value="Publish" onClick="publish_media('<tmpl_var media_id>')" class="button"></tmpl_if>
-  <input type="button" value="Publish to Preview" onClick="preview_media('<tmpl_var media_id>')" class="button">
+  <input type="button" value="Publish to Preview" onClick="Krang.preview('media','<tmpl_var media_id>')" class="button">
   <tmpl_unless add_mode><input type="button" value="Delete" onClick="do_delete()" class="button"></tmpl_unless>&nbsp;
 </div></div>
 
