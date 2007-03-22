@@ -47,7 +47,7 @@ Krang.onload = function(code) {
     Open the url into a new popup window consistently
 */
 Krang.popup = function(url) {
-    var win =window.open(url,"thewindow","width=500,height=500,left=200,top=0,status=no,toolbar=no,menubar=no,scrollbars=yes,location=no,directories=no,resizable=no");
+    var win = window.open( url, 'thewindow', 'width=500,height=500,top=0,left=200,scrollbars' );
     win.focus();
 }
 
@@ -130,9 +130,9 @@ Krang.ajax_update = function(args) {
     var url_parts = url.split("?");
     var query_params;
     if( url_parts[1] == null || url_parts == '' ) {
-        query_params = 'ajax=1'
+        query_params = 'ajax=1';
     } else {
-        query_params = url_parts[1] + '&ajax=1'
+        query_params = url_parts[1] + '&ajax=1';
     }
 
     // the default target
@@ -267,7 +267,7 @@ Krang.update_progress = function(count, total, label) {
     var prog  = ( count + 1 ) / total;
 
     // can't go over 100%
-    if( prog > 1 ) prog = 1
+    if( prog > 1 ) prog = 1;
 
     var width = Math.floor( prog * 400 );
 
@@ -313,6 +313,7 @@ Krang.Nav = {
     edit_mode      : function(flag) {
         // by default it's true
         if( flag === undefined ) flag = true;
+
         Krang.Nav.edit_mode_flag = flag;
     },
     goto_url       : function(url) {
@@ -459,7 +460,7 @@ Krang.update_order = function( select, prefix ) {
 
     // walk elements and assign indices
     for ( var i = 1; i <= inputs.length; i++ ) 
-        inputs[i -1].value = i;
+        inputs[i - 1].value = i;
 }
 
 /*
@@ -475,7 +476,8 @@ Krang.preview = function(type, id) {
 
     var instance = Krang.instance;
     // IE has problems with some characters that can appear in the instance name
-    instance.s.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' )
+    instance.s.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
+
     var pop = window.open( url, ( instance + 'preview' ) );
 
     pop.focus();
