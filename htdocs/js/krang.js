@@ -419,5 +419,46 @@ Krang.check_all = function( checkbox, prefix ) {
     }
 }
 
+/*
+    Krang.update_order(select, prefix)
 
+    Changes the values of a group of pull downs to reflect changes
+    in their order. The given select box is the one which is assumed
+    to have changed and all other inputs in the same form which have
+    names that match the given prefix will also be updated.
+*/
+Krang.update_order = function( select, prefix ) {
+    var position = select.value;
+    var inputs   = [];
+  
+    // get the list of relevant elements
+    for ( var i = 0; i < select.form.elements.length; i++ ) {
+        var el = select.form.elements[i];
+        if ( el.options && el.name && el.name.indexOf( prefix ) == 0 ) {
+            inputs.push( el );
+        }
+    }
+
+    // this sort function works for sorting with an upward or downward
+    // bias if there is a tie
+    var sort_function = function ( a, b, upward ) {
+        var val = (a.value - b.value);
+        if( val == 0 ) {
+            if( a.name == select.name )      val = upward ? -1 :  1;
+            else if( b.name == select.name ) val = upward ?  1 : -1;
+        }
+        return val;
+    }
+
+    inputs.sort(function(a, b) { return sort_function(a, b, false) });
+
+    // that didn't do it? reverse bias!
+    if ( inputs[ position -1 ] != select ) {
+        inputs.sort(function(a, b) { return sort_function(a, b, true) });
+    }
+
+    // walk elements and assign indices
+    for ( var i = 1; i <= inputs.length; i++ ) 
+        inputs[i -1].value = i;
+}
 

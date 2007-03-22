@@ -307,7 +307,7 @@ sub associate_search {
         my $associated_contrib_id_type = sprintf("%d:%d", $c->contrib_id, $contrib_type_id);
         my $order_contrib_popup_menu = $q->popup_menu(
                                                       -name => 'order_contrib_' . $associated_contrib_id_type,
-                                                      -onChange => "update_order(this, 'order_contrib_')",
+                                                      -onChange => "Krang.update_order(this, 'order_contrib_')",
                                                       -values => [ (1..$ass_contrib_count) ],
                                                       -default => ++$curr_contrib_pos,
                                                       -override => 1,
