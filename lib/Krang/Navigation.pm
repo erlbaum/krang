@@ -81,15 +81,15 @@ sub render {
     return if $condition and not $condition->($perms);
 
     # handle root
-    return join('', map { $pkg->render($_, $perms, $depth+1, ++$index) } 
+    return join('', map { $pkg->render($_, $perms, $depth+1, ++$index) }
                       $node->daughters)
       unless $node->mother;
-    
+
     # recurse and build up kids
     my $i = 1;
-    my $kids = 
-      join("<br>", grep { defined }
-                   map { $pkg->render($_, $perms, $depth+1, $index + $i++) } 
+    my $kids =
+      join("</dt>\n<dt>", grep { defined }
+                   map { $pkg->render($_, $perms, $depth+1, $index + $i++) }
                          $node->daughters);
 
     # get link for node
@@ -98,27 +98,29 @@ sub render {
 
     # format name with link
     my $name =
-      ($link ? 
+      ($link ?
        qq{<a href="javascript:Krang.Nav.goto_url('} . $link . qq{')">} : "") .
       $node->name .
       ($link ? qq{</a>} : '');
+    my $class = lc($node->name);
+    $class =~ s/\s+/_/g;
 
     # setup blocks as needed
     my ($pre, $post) = ("", "");
 
-    if ($index == 1) {
-        # the first block is funny-looking
-        $pre = qq{<div class="dark-bar-nav">$name</div><div class="plain-cell">};
-        $post = '</div>';
-
-    } elsif ($depth == 1) {
-        # blocks get funky little arrows
-        $pre = qq{<div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">$name</div><div class="form-cell-nav">};
-        $post = '</div>';
+    if ($depth == 1) {
+        if ($index == 1) {
+            $pre = qq{<div class="first nav_panel"><h2 class="$class">$name</h2><div class="contain"><dl>\n<dt>};
+        } else {
+            $pre = qq{<div class="nav_panel"><h2 class="$class">$name</h2><div class="contain"><dl>\n<dt>};
+        }
+        $post = qq{</dt>\n</dl></div></div>\n\n};
     } elsif ($depth == 2) {
-        $pre = $name . 
-          ($kids ? qq{<div style="margin-left: 5px;">} : '');
-        $post = '</div>' if $kids;
+        if( $kids ) {
+            $pre = qq{<b>$name</b></dt>\n<dt>};
+        } else {
+            $pre = $name;
+        }
    } else {
        $pre = $name;
     }

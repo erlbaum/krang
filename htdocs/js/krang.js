@@ -585,3 +585,104 @@ Krang.preview = function(type, id) {
     pop.focus();
 }
 
+/*
+    new Krang.Navigation()
+
+    Class for creating and controlling the expandable navigation menu.
+*/
+Krang.Navigation = Class.create();
+
+Object.extend( Krang.Navigation.prototype, {
+    cookie_name: 'KRANG_NAV_ACCORDION_OPEN_PANELS',
+    initialize: function() {
+        // all elements of '#S .nav_panel' are our panels
+        this.panels = document.getElementsByClassName('nav_panel', $('S'));
+        // get the opened panels from our cookie
+        this.opened_panels = this.opened_panels_from_cookie();
+
+        // this is to remember which panels are being acted upon
+        this.action_panels = [];
+
+        // now cycle through each panel, open it if appropriate, close
+        // it other wise. Also add the onclick handlers
+        var pos = 0;
+        $A(this.panels).each(function(panel) {
+            var label    = panel.childNodes[ 0 ];
+            var contents = panel.childNodes[ 1 ];
+
+            // is this panel opened?
+            if ( this.opened_panels.indexOf( pos ) == -1 )
+              Element.hide( contents );
+            else
+              Element.show( contents );
+
+            // set the onclick handler to BlindDown if it's not visible
+            // else BlindUp if it is
+            label.observe(
+                'click', 
+                this._label_onclick(contents, pos).bindAsEventListener(this)
+            );
+
+            ++pos;
+       }.bindAsEventListener(this));
+    },
+    _label_onclick: function(content, pos) {
+        return function () {
+            if( Element.visible(content) && !this.action_panels[pos]) {
+                this.action_panels[pos] = true;
+                new Effect.BlindUp(
+                    content,
+                    {
+                        duration : .3,
+                        afterFinish: function() { this.action_panels[pos] = false }.bindAsEventListener(this)
+                    }
+                );
+                this.remove_opened_panel(pos);
+            } else if( !this.action_panels[pos] ) {
+                this.action_panels[pos] = true;
+                new Effect.BlindDown(
+                    content,
+                    {
+                        duration : .3,
+                        afterFinish: function() { this.action_panels[pos] = false }.bindAsEventListener(this)
+                    }
+                );
+                this.add_opened_panel(pos);
+            }
+        }.bindAsEventListener(this);
+    },
+    save_opened_panels: function(positions) {
+        Krang.set_cookie(this.cookie_name, escape(positions.join(',')));
+        this.opened_panels = positions;
+    },
+    remove_opened_panel: function(pos) {
+        var panels = this.opened_panels;
+        var index  = panels.indexOf( pos );
+
+        // if we have it already
+        if ( index != -1 ) panels.splice( index, 1 );
+
+        this.save_opened_panels(panels);
+    },
+    add_opened_panel: function(pos) {
+        var panels = this.opened_panels;
+
+        // if we don't have it already
+        if ( panels.indexOf(pos) == -1 ) panels.push(pos);
+
+        this.save_opened_panels(panels);
+    },
+    opened_panels_from_cookie: function() {
+        var value = Krang.get_cookie(this.cookie_name);
+        var panels = [];
+
+        // if we have nav cookie, then just use what it gives us
+        if ( value && value != '' ) {
+            panels = value.split(',');
+        } else { // just show the first panel
+            panels = [ 0 ];
+        }
+        return panels;
+    }
+} );
+
