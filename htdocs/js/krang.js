@@ -149,8 +149,8 @@ Krang.ajax_update = function(args) {
             // if we're successful we're not in edit mode (can be reset by the request)
             onSuccess   : function() { Krang.Nav.edit_mode(false) },
             onComplete  : function(request) {
-                // wait 10 ms so we know that the JS in our request has been evaled
-                // since this is the time that Prototype gives for the Browser to update
+                // wait 12 ms so we know that the JS in our request has been evaled
+                // since Prototype will wait 10 gives for the Browser to update
                 // it's DOM
                 setTimeout(function() {
                     // reapply any dynamic bits to the target that was updated
@@ -159,7 +159,7 @@ Krang.ajax_update = function(args) {
                     Krang.hide_indicator(indicator);
                     // do whatever else the user wants
                     complete(args);
-                }, 10);
+                }, 12);
             },
             onFailure   : function(req, e) { Krang.show_error(e) },
             onException : function(req, e) { Krang.show_error(e) }
