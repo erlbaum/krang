@@ -142,19 +142,6 @@ sub default_tree {
     $root = pkg('NavigationNode')->new();
     $root->name('Root');
 
-    # My Workspace block
-    $node = $root->new_daughter();
-    $node->name('My Workspace');
-    $node->link('workspace.pl');
-
-    $sub  = $node->new_daughter();
-    $sub->name('My Preferences');
-    $sub->link('my_pref.pl');
-
-    $sub  = $node->new_daughter();
-    $sub->name('My Alerts');
-    $sub->link('my_alerts.pl');
-
     # Story block
     $node = $root->new_daughter();
     $node->name('Story');
