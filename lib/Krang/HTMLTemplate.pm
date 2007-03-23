@@ -87,7 +87,6 @@ sub output {
     $template->param(header_instance_name => InstanceDisplayName)
       if $template->query(name => 'header_instance_name');
 
-
     if ($template->query(name => 'header_message_loop')) {
         $template->param( header_message_loop => [ map { { message => $_ } } get_messages() ] );
         clear_messages();

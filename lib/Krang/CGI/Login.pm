@@ -136,7 +136,6 @@ sub show_form {
     my $template = $self->load_tmpl("login.tmpl",
                                     associate => $query);
     $template->param(alert => $arg{alert} || $query->param('alert'));
-    $template->param(instance_name => InstanceDisplayName);
     return $template->output();
 }
 
