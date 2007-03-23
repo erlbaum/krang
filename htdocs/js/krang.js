@@ -97,6 +97,83 @@ Krang.my_prefs = function() {
 }
 
 /*
+    Krang.ajax_request({ url: 'story.pl' })
+    Creates an Ajax.Updater object with Krang's specific needs
+    in mind.
+    Takes the following args in it's hash:
+
+    url       : the full url of the request (required)
+    indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
+    onComplete: a callback function to be executed after the normal processing (optional)
+                Receives as arguments, the same args passed into ajax_update the AJAX transport
+                object, and any JSON object returned in the X-JSON HTTP header.
+    onFailure : a callback function to be executed in case of an error. Receives as arguments
+                the AJAX transport object and the exception thrown. This is in addition to the
+                normal error message the Krang will show to in the UI.
+
+    Krang.ajax_request({
+        url        : '/app/some_mod/something',
+        indicator  : 'add_indicator',
+        onComplete : function(args, transport, json) {
+            // do something
+        },
+        onFailure  : function(transport, exception) {
+            // do something
+        }
+    });
+
+    TODO: handle GET and POST differently
+*/
+Krang.ajax_request = function(args) {
+    var url       = args['url'];
+    var indicator = args['indicator'];
+    var complete  = args['onComplete'] || Prototype.emptyFunction;
+    var failure   = args['onFailure'] || Prototype.emptyFunction;
+
+    // tell the user that we're doing something
+    Krang.show_indicator(indicator);
+
+    // add the ajax=1 flag to the existing query params
+    var url_parts = url.split("?");
+    var query_params;
+    if( url_parts[1] == null || url_parts == '' ) {
+        query_params = 'ajax=1';
+    } else {
+        query_params = url_parts[1] + '&ajax=1';
+    }
+
+    new Ajax.Request(
+        url_parts[0],
+        {
+            parameters  : query_params,
+            evalScripts : true,
+            asynchronous: true,
+            // if we're successful we're not in edit mode (can be reset by the request)
+            onSuccess   : function() { Krang.Nav.edit_mode(false) },
+            onComplete  : function(transport, json) {
+                // wait 12 ms so we know that the JS in our request has been evaled
+                // since Prototype will wait 10 gives for the Browser to update
+                // it's DOM
+                setTimeout(function() {
+                    // hide the indicator
+                    Krang.hide_indicator(indicator);
+                    // do whatever else the user wants
+                    complete(args, transport, json);
+                }, 12);
+            },
+            onFailure   : function(transport, e) { 
+                failure(transport, e);
+                Krang.show_error(e);
+            },
+            onException : function(transport, e) { 
+                failure(transport, e);
+                Krang.show_error(e);
+            }
+        }
+    );
+}
+
+/*
     Krang.ajax_update({ url: 'story.pl' })
     Creates an Ajax.Updater object with Krang's specific needs
     in mind.
@@ -105,23 +182,33 @@ Krang.my_prefs = function() {
     url       : the full url of the request (required)
     target    : the id of the target element receiving the contents (optional defaults to 'C')
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
-    onComplete: a call back function to be executed after the normal processing (optional)
-                Receives as arguments, the same args passed into ajax_update
+    onComplete: a callback function to be executed after the normal processing (optional)
+                Receives as arguments, the same args passed into ajax_update the AJAX transport
+                object, and any JSON object returned in the X-JSON HTTP header.
+    onFailure : a callback function to be executed in case of an error. Receives as arguments
+                the AJAX transport object and the exception thrown. This is in addition to the
+                normal error message the Krang will show to in the UI.
 
     Krang.ajax_update({
         url        : '/app/some_mod/something',
         target     : 'target_name',
         indicator  : 'add_indicator',
-        onComplete : function(args) {
+        onComplete : function(args, transport, json) {
+          // do something
+        },
+        onFailure  : function(transport, exception) {
           // do something
         }
     });
+
+    TODO: handle GET and POST differently
 */
 Krang.ajax_update = function(args) {
     var url       = args['url'];
     var target    = args['target'];
     var indicator = args['indicator'];
     var complete  = args['onComplete'] || Prototype.emptyFunction;
+    var failure   = args['onFailure'] || Prototype.emptyFunction;
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
@@ -148,7 +235,7 @@ Krang.ajax_update = function(args) {
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
             onSuccess   : function() { Krang.Nav.edit_mode(false) },
-            onComplete  : function(request) {
+            onComplete  : function(transport, json) {
                 // wait 12 ms so we know that the JS in our request has been evaled
                 // since Prototype will wait 10 gives for the Browser to update
                 // it's DOM
@@ -158,11 +245,17 @@ Krang.ajax_update = function(args) {
                     // hide the indicator
                     Krang.hide_indicator(indicator);
                     // do whatever else the user wants
-                    complete(args);
+                    complete(args, transport, json);
                 }, 12);
             },
-            onFailure   : function(req, e) { Krang.show_error(e) },
-            onException : function(req, e) { Krang.show_error(e) }
+            onFailure   : function(transport, e) { 
+                failure(transport, e);
+                Krang.show_error(e);
+            },
+            onException : function(transport, e) { 
+                failure(transport, e);
+                Krang.show_error(e);
+            }
         }
     );
 }
@@ -170,8 +263,22 @@ Krang.ajax_update = function(args) {
 /*
     Krang.ajax_form_submit(form)
     Submit a form using AJAX.
+
+    TODO: set the method from the form
 */
 Krang.ajax_form_submit = function(form) {
+    Krang.ajax_update({
+        url       : Krang.form_as_url(form),
+        target    : Krang.class_suffix(form, 'for_'),
+        indicator : Krang.class_suffix(form, 'show_')
+    });
+};
+
+/*
+    Krang.form_as_url(form)
+    Create a URL representation of a current form state
+*/
+Krang.form_as_url = function(form) {
     var url;
     if( form.action ) {
         url = form.readAttribute('action');
@@ -181,12 +288,7 @@ Krang.ajax_form_submit = function(form) {
         url = url.replace(/\?.*/, '');
     }
     url = url + "?" + Form.serialize(form);
-
-    Krang.ajax_update({
-        url       : url,
-        target    : Krang.class_suffix(form, 'for_'),
-        indicator : Krang.class_suffix(form, 'show_')
-    });
+    return url;
 };
 
 /*
