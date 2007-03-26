@@ -366,9 +366,10 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
-The time_chooser() implements itself in HTML via three separate query
-parameters.  They are named based on the provided name, plus "_hour",
-"_minute", and "_ampm" respectively. CGI query data from 
+The time_chooser() implements itself in HTML via a text input with some
+Javascript popup magic. The string input from the user can be retrieved
+via the CGI query object using the same name given during the creation
+of the widget.
 
 =cut
 
@@ -379,65 +380,33 @@ sub time_chooser {
     croak("Missing required args: name and query")
       unless $name and $query;
 
+    # pull the time from the query first, then from given hour/minute and
+    # finally from localtime
+    if( $query->param($name) ) {
+    } else {
+        unless( $nochoice ) {
+            my $current_date = localtime();
+            $hour   ||= $current_date->hour;
+            $minute ||= $current_date->minute;
+        }
+    }
+
     my $current_date = localtime();
 
     unless ($nochoice) {
-        $hour = $hour ? $hour : $current_date->hour();
-        $minute = $minute ? $minute : $current_date->minute();
-    }
-    my @hour_values = (1..12);
-    my %hour_labels = ();
-                                                                                
-    my @minute_values = (0..59);
-    my %minute_labels = ();
-    $minute_labels{0} = '00';
-    for (my $count = 0; $count <= 9; $count++) {
-        $minute_labels{$count} = '0'.$count;
-    }
-    my @ampm_values = ('AM','PM');
-    my %ampm_labels = (AM => 'AM', PM => 'PM');
-
-    # set defaults
-    if ($nochoice) {
-        # Hour
-        unshift(@hour_values, 0);
-        $hour_labels{0} = 'Hour';
-                                                                                
-        # Minute
-        unshift(@minute_values, 'undef');
-        $minute_labels{undef} = 'Minute';
-                                                                                
+        $hour ||= $current_date->hour();
+        $minute ||= $current_date->minute();
     }
 
-    my $hour_12;
-    if ($hour) {
-        $hour_12 = ($hour >= 13) ? ($hour - 12) : $hour;    
-    }
-                                                                                
-    my $h_sel = $query->popup_menu(-name      => $name .'_hour',
-                                   -default   => ($hour) ? $hour_12 : 0,
-                                   -values    => \@hour_values,
-                                   -labels    => \%hour_labels,
-                                  );
-                                                                                
-    my $min_sel = $query->popup_menu(-name      => $name .'_minute',
-                                   -default   => ($minute) ? $minute : 'undef',
-                                   -values    => \@minute_values,
-                                   -labels    => \%minute_labels,
-                                  );
-                                                                                
-    my $ampm = 'AM';
-    if ($hour) {
-        $ampm = 'PM' if ($hour >= 12);
-    }
-                                                                                
-    my $ampm_sel = $query->popup_menu(-name      => $name .'_ampm',
-                                   -default   => $ampm,
-                                   -values    => \@ampm_values,
-                                   -labels    => \%ampm_labels,
-                                  );
+    $hour = $hour && $hour >= 13 ? $hour - 12 : $hour;
+    my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
 
-    return $h_sel . "&nbsp;" . $min_sel . "&nbsp;" . $ampm_sel;
+    my $value = $hour && $minute ? sprintf('%i:%2i %s', $hour, $minute, $ampm) : "HH:MM AM/PM";
+    return qq|
+        <input type="text" name="$name" value="$value" size="9" id="$value">
+        <img src="images/clock.gif" id="${name}_trigger">
+        <script type="text/javascript">Krang.Widget.time_chooser('$name')</script>
+    |;
 }
 
 =item $chooser_html = datetime_chooser(name => 'date', query => $query)
@@ -462,9 +431,6 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
-  onchange  - set this to a javascript function to run when the user
-              makes a selection in any of the dropdowns.
-
 The date_chooser() implements itself in HTML via six separate
 query parameters.  They are named based on the provided name,
 plus "_month", "_day", "_year", "_hour", "_minute", and 
@@ -476,128 +442,27 @@ object via decode_date().
 
 sub datetime_chooser {
     my %args = @_;
-    my ($name, $query, $date, $nochoice, $onchange) =
-      @args{qw(name query date nochoice onchange)};
-    croak("Missing required args: name and query")
-      unless $name and $query;
+    my ($name, $date, $query, $nochoice) = @args{qw(name date query nochoice)};
+    croak("Missing required arg: name") unless $name;
 
-    # Set date to today if it is NOT already set, AND if we do not allow "no choice"
-    $date ||= localtime() unless ($nochoice);
-                                                                                
-    # Set up month input
-    my @month_values = (1..12);
-    my %month_labels = (
-                        1  => 'Jan',
-                        2  => 'Feb',
-                        3  => 'Mar',
-                        4  => 'Apr',
-                        5  => 'May',
-                        6  => 'Jun',
-                        7  => 'Jul',
-                        8  => 'Aug',
-                        9  => 'Sep',
-                        10 => 'Oct',
-                        11 => 'Nov',
-                        12 => 'Dec'
-                       );
-                                                                                
-    my @day_values = (1..31);
-    my %day_labels = ();
-                                                                                    my @year_values = ((localtime()->year() - 10) .. (localtime()->year() + 10));
-    my %year_labels = ();
-
-    my @hour_values = (1..12);
-    my %hour_labels = ();
-
-    my @minute_values = (0..59);
-    my %minute_labels = ();
-    $minute_labels{0} = '00';
-    for (my $count = 0; $count <= 9; $count++) {
-        $minute_labels{$count} = '0'.$count;
-    }
-    my @ampm_values = ('AM','PM');
-    my %ampm_labels = (AM => 'AM', PM => 'PM');
-
-    # Set up dummy vals if "no choice" IS allowed
-    if ($nochoice) {
-        # Month
-        unshift(@month_values, 0);
-        $month_labels{0} = 'Month';
-                                                                                
-        # Day
-        unshift(@day_values, 0);
-        $day_labels{0} = 'Day';
-                                                                                
-        # Year
-        unshift(@year_values, 0);
-        $year_labels{0} = 'Year';
-        
-        # Hour
-        unshift(@hour_values, 0);
-        $hour_labels{0} = 'Hour';
-
-        # Minute
-        unshift(@minute_values, 'undef');
-        $minute_labels{undef} = 'Minute';
-
-    }
-                                                                                
-    my $m_sel = $query->popup_menu(-name      => $name .'_month',
-                                   -default   => ($date) ? $date->mon() : 0,
-                                   -values    => \@month_values,
-                                   -labels    => \%month_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-    my $d_sel = $query->popup_menu(-name      => $name .'_day',
-                                   -default   => ($date) ? $date->mday() : 0,
-                                   -values    => \@day_values,
-                                   -labels    => \%day_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-    my $y_sel = $query->popup_menu(-name      => $name .'_year',
-                                   -default   => ($date) ? $date->year() : 0,
-                                   -values    => \@year_values,
-                                   -labels    => \%year_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-
-    my $hour_12; 
-    if ($date) {
-        $hour_12 = ($date->hour() >= 13) ? ($date->hour() - 12) : $date->hour();
-        $hour_12 = 12 if ($hour_12 == 0);
-    } 
-
-    my $h_sel = $query->popup_menu(-name      => $name .'_hour',
-                                   -default   => ($date) ? $hour_12 : 0,
-                                   -values    => \@hour_values,
-                                   -labels    => \%hour_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-
-    my $min_sel = $query->popup_menu(-name      => $name .'_minute',
-                                   -default   => ($date) ? $date->minute() : 'undef',
-                                   -values    => \@minute_values,
-                                   -labels    => \%minute_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-
-    my $ampm = 'AM';
-    if ($date) {
-        $ampm = 'PM' if ($date->hour >= 12);
-    }
-
-    my $ampm_sel = $query->popup_menu(-name      => $name .'_ampm',
-                                   -default   => $ampm,
-                                   -values    => \@ampm_values,
-                                   -labels    => \%ampm_labels,
-                                  );
-                                                                                
-                                                                                
-    return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel . "&nbsp;" . $h_sel . "&nbsp;" . $min_sel . "&nbsp;" . $ampm_sel;
+    # get the first part from the date_chooser
+    my $html = date_chooser(%args);
+    $html .= '&nbsp;';
+    # and get the 2nd part from the time_chooser
+    my $hour = $date ? $date->hour : undef;
+    my $minute = $date ? $date->minute : undef;
+    $html .= time_chooser(
+        name     => "${name}_time",
+        hour     => $hour,
+        minute   => $minute,
+        nochoice => $nochoice,
+        query    => $query
+    );
+    return $html;
 }
 
 
-=item $chooser_html = date_chooser(name => 'cover_date', query => $query)
+=item $chooser_html = date_chooser(name => 'cover_date')
 
 Returns a block of HTML implementing the standard Krang date
 chooser.  The C<name> and C<query> parameters are required.
@@ -619,80 +484,33 @@ Additional optional parameters are as follows:
               the "no choice" option.
 
 
-The date_chooser() implements itself in HTML via three separate 
-query parameters.  They are named based on the provided name, 
-plus "_month", "_day", and "_year", respectively. CGI query data from 
-date_chooser can be retrieved and converted back into a date 
-object via decode_date().
+The date_chooser() implements itself in HTML via a text input
+with a Javascript popup calendar. The full string typed by the
+user can be retrieved via the CGI object, or you can retrieve
+a L<Time::Piece> object via C<decode_date()>.
 
 =cut
 
 sub date_chooser {
     my %args = @_;
-    my ($name, $query, $date, $nochoice) =
-      @args{qw(name query date nochoice)};
-    croak("Missing required args: name and query")
-      unless $name and $query;
+    my ($name, $date, $query, $nochoice) = @args{qw(name date query nochoice)};
+    croak("Missing required args: name and query") unless $name and $query;
 
-    # Set date to today if it is NOT already set, AND if we do not allow "no choice"
-    $date ||= localtime() unless ($nochoice);
-
-    # Set up month input
-    my @month_values = (1..12);
-    my %month_labels = (
-                        1  => 'Jan',
-                        2  => 'Feb',
-                        3  => 'Mar',
-                        4  => 'Apr',
-                        5  => 'May',
-                        6  => 'Jun',
-                        7  => 'Jul',
-                        8  => 'Aug',
-                        9  => 'Sep',
-                        10 => 'Oct',
-                        11 => 'Nov',
-                        12 => 'Dec'
-                       );
-
-    my @day_values = (1..31);
-    my %day_labels = ();
-
-    my @year_values = ((localtime()->year() - 10)..(localtime()->year() + 10));
-    my %year_labels = ();
-
-    # Set up blanks if "no choice" IS allowed
-    if ($nochoice) {
-        # Month
-        unshift(@month_values, 0);
-        $month_labels{0} = '';
-
-        # Day
-        unshift(@day_values, 0);
-        $day_labels{0} = '';
-
-        # Year
-        unshift(@year_values, 0);
-        $year_labels{0} = '';
+    # use the date from the query first, if not there use
+    if( $query->param($name) ) {
+        $date = $query->param($name);
+    } else {
+        # Set date to today if it is NOT already set, AND if we do not allow "no choice"
+        $date ||= localtime() unless ($nochoice);
+        $date = $date ? $date->strftime('%m/%d/%Y') : '';
     }
 
-    my $m_sel = $query->popup_menu(-name      => $name .'_month',
-                                   -default   => ($date) ? $date->mon() : 0,
-                                   -values    => \@month_values,
-                                   -labels    => \%month_labels,
-                                  );
-    my $d_sel = $query->popup_menu(-name      => $name .'_day',
-                                   -default   => ($date) ? $date->mday() : 0,
-                                   -values    => \@day_values,
-                                   -labels    => \%day_labels,
-                                  );
-    my $y_sel = $query->popup_menu(-name      => $name .'_year',
-                                   -default   => ($date) ? $date->year() : 0,
-                                   -values    => \@year_values,
-                                   -labels    => \%year_labels,
-                                  );
+    return qq|
+        <input type="text" name="$name" value="$date" size="11" id="$name">
+        <img src="images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
+        <script type="text/javascript">Krang.onload(function() { Krang.Widget.date_chooser('$name') } );</script>
+    |;
 
-
-    return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
 }
 
 
@@ -719,39 +537,9 @@ sub decode_datetime {
     croak("Missing required args: name and query")
       unless $name and $query;
 
-    my $m = $query->param($name . '_month');
-    my $d = $query->param($name . '_day');
-    my $y = $query->param($name . '_year');
-    my $h = $query->param($name . '_hour');
-    my $min = $query->param($name . '_minute');
-    my $ampm;
-    my $sec = '00';
-    if ( (defined $min) and ($min eq 'undef') ) {
-        if ($ntie and ($h eq 0)) {
-            $ampm = 'na';
-            $min  = 59;
-            $h    = 23;
-            $sec  = '59';
-        } else {
-            $min = 0;
-        }
-    }
-    $ampm = $query->param($name . '_ampm') unless $ampm;
-
-    # deal with converting AM/PM to 24 hour time
-    if (defined($h)) {
-        if ($h == 12) {
-            $h = 0 if ($ampm eq 'AM'); 
-        } else {
-            $h = $h + 12 if ((defined $ampm) and ($ampm eq 'PM'));
-        }
-    } else { 
-        $h = 12 if ((defined $ampm) and ($ampm eq 'PM'));
-    }
-
-    return undef unless $m and $d and $y;
-
-    return Time::Piece->strptime("$y-$m-$d $h:$min:$sec", '%Y-%m-%d %H:%M:%S');
+    my $date = $query->param($name);
+    my $time = $query->param($name . '_time');
+    return Time::Piece->strptime("$date $time", '%m/%d/%Y %I:%M %p');
 }
 
 =item $date_obj = decode_date(name => 'cover_date', query => $query)
@@ -772,15 +560,11 @@ sub decode_date {
     croak("Missing required args: name and query")
       unless $name and $query;
 
-    my $m = $query->param($name . '_month');
-    my $d = $query->param($name . '_day');
-    my $y = $query->param($name . '_year');
-    return undef unless $m and $d and $y;
-
-    return Time::Piece->strptime("$m/$d/$y", '%m/%d/%Y');
+    my $value = $query->param($name);
+    if( $value ) {
+        return Time::Piece->strptime($value, '%m/%d/%Y');
+    }
 }
-
-
 
 =item $url_html = format_url(url => 'http://my.host/url.html', linkto => 'url.html', length => 15);
 

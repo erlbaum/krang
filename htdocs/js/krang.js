@@ -383,10 +383,11 @@ Krang.update_progress = function(count, total, label) {
     Shows an error to the user in the UI
 */
 Krang.show_error = function(msg) {
-    msg = 'An error occurred! ' + msg;
-    // XXX - just show an alert for right now
-    // We'll replace this with something better later
-    alert(msg);
+    var msg = "<h3>Whoops!</h3><strong>An error has occurred on the server.</strong><br>";
+    msg += "Please notify the administrator of the time this occurred and what you were trying to do.<br>";
+    msg += "<em>Thank you and sorry for the inconvenience.</em>";
+
+    Notify.Alert(msg);
 }
 
 /*
@@ -685,4 +686,28 @@ Object.extend( Krang.Navigation.prototype, {
         return panels;
     }
 } );
+
+Krang.Widget = {};
+/* 
+    Krang.Widget.date_chooser(inputName)
+    Primarily used by the HTML output by Krang::Widget::date_chooser()
+*/
+Krang.Widget.date_chooser = function(inputName) {
+    // create a calendar object
+    var cal = Calendar.setup({
+        inputField  : inputName,
+        ifFormat    : "%m/%d/%Y",
+        button      : inputName + '_trigger',
+        weekNumbers : false,
+        showOthers  : true
+    });
+}
+
+/*
+    Krang.Widget.time_chooser(inputName)
+    Primarily used by the HTML output by Krang::Widget::time_chooser()
+*/
+Krang.Widget.time_chooser = function(inputName) {
+}
+    
 
