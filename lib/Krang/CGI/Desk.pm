@@ -130,11 +130,6 @@ sub show {
     # Run the pager
     $pager->fill_template($template);
 
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
-
     return $template->output;
 }
 

@@ -97,11 +97,6 @@ sub show {
     my %admin_perms = pkg('Group')->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
 
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
-
     # setup paging list of objects
     my $pager = pkg('HTMLPager')->new
       (

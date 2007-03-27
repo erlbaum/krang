@@ -83,9 +83,9 @@ sub output {
         $template->param(header_user_name => $user->first_name . " " . 
                                              $user->last_name) if $user;
     }
-    
-    $template->param(header_instance_name => InstanceDisplayName)
-      if $template->query(name => 'header_instance_name');
+
+    $template->param(instance_display_name => InstanceDisplayName)
+      if $template->query(name => 'instance_display_name');
 
     if ($template->query(name => 'header_message_loop')) {
         $template->param( header_message_loop => [ map { { message => $_ } } get_messages() ] );
@@ -98,7 +98,7 @@ sub output {
     }
 
     pkg('Navigation')->fill_template(template => $template);
-                                                 
+
     return $template->SUPER::output();
 }
 

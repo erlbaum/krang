@@ -746,11 +746,6 @@ sub edit {
     # Convert Krang::Contrib object to tmpl data
     my $contrib_tmpl = $self->get_contrib_tmpl($c);
 
-    # instance_name needed for preview media
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $t->param(instance_name => $instance_name);
-
     # Propagate to template
     $t->param($contrib_tmpl);
 
