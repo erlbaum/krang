@@ -28,7 +28,7 @@ Krang.load = function(target) {
     // show the messages and alerts if there are any
     Krang.Messages.show();
     Krang.Messages.show('alerts');
-}
+};
 
 /*
     Krang.onload()
@@ -40,7 +40,7 @@ Krang.load = function(target) {
 Krang.onload_code = [];
 Krang.onload = function(code) {
     Krang.onload_code.push(code);
-}
+};
 
 /*
     Krang.popup(url)
@@ -49,7 +49,7 @@ Krang.onload = function(code) {
 Krang.popup = function(url) {
     var win = window.open( url, 'thewindow', 'width=500,height=500,top=0,left=200,scrollbars' );
     win.focus();
-}
+};
 
 /*
     Krang.get_cookie(name)
@@ -76,7 +76,7 @@ Krang.get_cookie = function(name) {
         }
     }
     return value;
-}
+};
 
 /*
     Krang.set_cookie(name, value)
@@ -84,7 +84,7 @@ Krang.get_cookie = function(name) {
 */
 Krang.set_cookie = function(name, value) {
     document.cookie = name + '=' + value;
-}
+};
 
 /*
     Krang.my_prefs()
@@ -94,7 +94,7 @@ Krang.set_cookie = function(name, value) {
 Krang.my_prefs = function() {
     var json = Krang.get_cookie('KRANG_PREFS');
     return eval('(' + json + ')');
-}
+};
 
 /*
     Krang.ajax_request({ url: 'story.pl' })
@@ -171,7 +171,7 @@ Krang.ajax_request = function(args) {
             }
         }
     );
-}
+};
 
 /*
     Krang.ajax_update({ url: 'story.pl' })
@@ -258,7 +258,7 @@ Krang.ajax_update = function(args) {
             }
         }
     );
-}
+};
 
 /*
     Krang.ajax_form_submit(form)
@@ -322,9 +322,10 @@ Krang.form_submit = function(formName, inputs, new_window) {
         form.non_ajax_submit ? form.non_ajax_submit() : form.submit();
         form.target = old_target;
     } else {
+        Krang.show_indicator();
         form.submit();
     }
-}
+};
 
 /*
     Krang.show_indicator(id)
@@ -339,7 +340,7 @@ Krang.show_indicator = function(indicator) {
     indicator = $(indicator);
     if( indicator != null )
         Element.show(indicator);
-}
+};
 
 /*
     Krang.hide_indicator(id)
@@ -354,7 +355,7 @@ Krang.hide_indicator = function(indicator) {
     indicator = $(indicator);
     if( indicator != null )
         Element.hide(indicator);
-}
+};
 
 /*
     Krang.update_progress(count, total, label)
@@ -376,7 +377,7 @@ Krang.update_progress = function(count, total, label) {
     bar.style.width = width + 'px';
     perc.innerHTML = Math.floor( prog * 100) + '%';
     if( label ) document.getElementById('progress_bar_label').innerHTML = string;
-}
+};
 
 /*
     Krang.show_error
@@ -388,7 +389,7 @@ Krang.show_error = function(msg) {
     msg += "<em>Thank you and sorry for the inconvenience.</em>";
 
     Notify.Alert(msg);
-}
+};
 
 /*
     Krang.class_suffix(element, prefix)
@@ -405,7 +406,7 @@ Krang.class_suffix = function(el, prefix) {
     if( matches != null ) suffix = matches[2];
 
     return suffix;
-}
+};
 
 /* 
     Krang.Nav
@@ -504,11 +505,11 @@ Krang.row_checked = function( formName, inputName ) {
     }
 
     return false;
-}
+};
 
 Krang.pager_row_checked = function() {
   return Krang.row_checked( 'krang_pager_form', 'krang_pager_rows_checked' );
-}
+};
 
 /*
     Krang.check_all(checkbox, inputPrefix)
@@ -521,7 +522,7 @@ Krang.check_all = function( checkbox, prefix ) {
         if ( el.type == 'checkbox' && el.name && el.name.indexOf( prefix ) == 0 ) 
             el.checked = checkbox.checked;
     }
-}
+};
 
 /*
     Krang.update_order(select, prefix)
@@ -701,13 +702,62 @@ Krang.Widget.date_chooser = function(inputName) {
         weekNumbers : false,
         showOthers  : true
     });
-}
+};
 
 /*
     Krang.Widget.time_chooser(inputName)
     Primarily used by the HTML output by Krang::Widget::time_chooser()
 */
 Krang.Widget.time_chooser = function(inputName) {
-}
+    // we need to find the associated clock and make the trigger display it
+    var trigger = $(inputName + '_trigger');
+    var clock   = $(inputName + '_clock');
+
+    trigger.observe('click', function(event) {
+        if( clock.visible() ) {
+            clock.hide();
+            // re-disable the inputs
+            var hour = clock.down('select', 0);
+            var minute = clock.down('select', 1);
+            var ampm = clock.down('select', 2);
+
+            hour.disabled   = true;
+            minute.disabled = true;
+            ampm.disabled   = true;
+
+        } else {
+            // position the clock to the right (30px) of the trigger
+            var pos = Position.positionedOffset(trigger);
+            clock.setStyle({ left: (pos[0] + 30) +'px', top: pos[1] +'px' });
+
+            // un-disable the inputs
+            var hour = clock.down('select', 0);
+            var minute = clock.down('select', 1);
+            var ampm = clock.down('select', 2);
+
+            hour.disabled   = false;
+            minute.disabled = false;
+            ampm.disabled   = false;
+
+            // parse the date in the input. If we get a valid time, then
+            // set the selected values of the dropdowns
+            current = $(inputName).value;
+            var regex = /^(\d+):(\d+)\s*(AM|PM)$/i;
+            if( regex.exec($(inputName).value) ) {
+                hour.value   = RegExp.$1;
+                minute.value = RegExp.$2;
+                ampm.value   = RegExp.$3.toUpperCase();
+            }
+            
+            clock.show();
+        }
+    });
+};
+Krang.Widget.update_time_chooser = function(inputName) {
+    var clock = $(inputName + '_clock');
+    var new_value = clock.down('select', 0).value + ':' + clock.down('select', 1).value + ' ' + clock.down('select', 2).value;
+
+    $(inputName).value = new_value;
+};
     
 
