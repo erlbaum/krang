@@ -26,12 +26,14 @@ See L<HTML::Template>.
 
 use base 'HTML::Template';
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin);
+use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS);
 use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clear_alerts);
 use Krang::ClassLoader 'Navigation';
-use File::Spec::Functions qw(catdir);
 use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'AddOn';
+
+use File::Spec::Functions qw(catdir);
+use Carp qw(croak);
 
 # setup paths to templates
 our @PATH;
@@ -74,6 +76,7 @@ sub _compute_path {
 }
 
 # overload output() to setup template variables
+my %CUSTOM_CSS;
 sub output {
     my $template = shift;
 
@@ -95,6 +98,28 @@ sub output {
     if ($template->query(name => 'header_alert_loop')) {
         $template->param( header_alert_loop => [ map { { alert => $_ } } get_alerts() ] );
         clear_alerts();
+    }
+
+    if (CustomCSS() and $template->query(name => 'custom_css') ) {
+        # read in the custom css file if we can find it
+        my $file = pkg('File')->find(CustomCSS());
+        if( $file ) {
+            my $css;
+            if( $CUSTOM_CSS{$file} ) {
+                $css = $CUSTOM_CSS{$file};
+            } else {
+                my $IN;
+                open($IN, $file) or croak "Could not open file $file for reading: $!";
+                # hopefull a tiny file, so slurp it
+                {
+                    local $/;
+                    $css = <$IN>;
+                }
+                close($IN);
+                $CUSTOM_CSS{$file} = $css;
+            }
+            $template->param(custom_css => $css);
+        }
     }
 
     pkg('Navigation')->fill_template(template => $template);
