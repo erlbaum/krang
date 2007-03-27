@@ -387,8 +387,7 @@ Krang.show_error = function(msg) {
     var msg = "<h3>Whoops!</h3><strong>An error has occurred on the server.</strong><br>";
     msg += "Please notify the administrator of the time this occurred and what you were trying to do.<br>";
     msg += "<em>Thank you and sorry for the inconvenience.</em>";
-
-    Notify.Alert(msg);
+    alert(msg);
 };
 
 /*
