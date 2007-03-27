@@ -146,7 +146,7 @@ sub default_tree {
 
     # Story block
     $node = $root->new_daughter();
-    $node->name('Story');
+    $node->name('Stories');
     $node->condition(sub { shift->{asset}{story} ne 'hide' });
 
     $sub  = $node->new_daughter();
@@ -198,7 +198,7 @@ sub default_tree {
 
     # template block
     $node = $root->new_daughter();
-    $node->name('Template');
+    $node->name('Templates');
     $node->condition(sub { shift->{asset}{template} ne 'hide' });
 
     $sub  = $node->new_daughter();
