@@ -10,7 +10,7 @@ use Time::Piece::MySQL;
 use Krang::ClassLoader 'Schedule';
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Widget => qw(time_chooser datetime_chooser decode_datetime);
+use Krang::ClassLoader Widget => qw(time_chooser decode_time datetime_chooser decode_datetime);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'AddOn';
 
@@ -454,19 +454,11 @@ sub add {
                                             minute => $q->param('hourly_minute'));
         } 
     } elsif ($repeat eq 'daily') {
-        my $minute = $q->param('daily_time_minute') || 0;
-        $minute = 0 if ($minute eq 'undef');
-
-        my $hour = $q->param('daily_time_hour');
+        my ($hour, $minute) = decode_time(name => 'daily_time', query => $q);
+        $minute = 0 if (! defined $minute);
         unless ($hour) {
             add_alert('no_hour');
             return $self->edit('no_hour');
-        }
-        my $ampm = $q->param('daily_time_ampm');
-        if ($ampm eq 'PM') {
-            $hour = ($hour + 12) unless ($hour == 12);
-        } else {
-            $hour = 0 if ($hour == 12);
         }
         
         if ($version) { 
@@ -487,22 +479,13 @@ sub add {
  
         } 
     } elsif ($repeat eq 'weekly') {
-        my $minute = $q->param('weekly_time_minute');
-        $minute = 0 if ($minute eq 'undef');
-                                                                                  
-        my $hour = $q->param('weekly_time_hour');
+        my ($hour, $minute) = decode_time(name => 'weekly_time', query => $q);
+        $minute = 0 if (! defined $minute);
         unless ($hour) {
             add_alert('no_hour');
             return $self->edit('no_weekly_hour');
         }
         
-        my $ampm = $q->param('weekly_time_ampm');
-        if ($ampm eq 'PM') {
-            $hour = ($hour + 12) unless ($hour == 12);
-        } else {
-            $hour = 0 if ($hour == 12);
-        }
-       
         my $day = $q->param('weekly_day');
 
         if ($version) { 
@@ -607,19 +590,11 @@ sub add_admin {
                                             minute => $q->param('hourly_minute'));
         } 
     } elsif ($repeat eq 'daily') {
-        my $minute = $q->param('daily_time_minute') || 0;
-        $minute = 0 if ($minute eq 'undef');
-
-        my $hour = $q->param('daily_time_hour');
+        my ($hour, $minute) = decode_time(name => 'daily_time', query => $q);
+        $minute = 0 if (! defined $minute);
         unless ($hour) {
             add_alert('no_hour');
             return $self->edit_admin('no_hour');
-        }
-        my $ampm = $q->param('daily_time_ampm');
-        if ($ampm eq 'PM') {
-            $hour = ($hour + 12) unless ($hour == 12);
-        } else {
-            $hour = 0 if ($hour == 12);
         }
         
         if ($version) { 
@@ -640,22 +615,13 @@ sub add_admin {
  
         } 
     } elsif ($repeat eq 'weekly') {
-        my $minute = $q->param('weekly_time_minute');
-        $minute = 0 if ($minute eq 'undef');
-                                                                                  
-        my $hour = $q->param('weekly_time_hour');
+        my ($hour, $minute) = decode_time(name => 'weekly_time', query => $q);
+        $minute = 0 if (! defined $minute);
         unless ($hour) {
             add_alert('no_hour');
             return $self->edit_admin('no_weekly_hour');
         }
         
-        my $ampm = $q->param('weekly_time_ampm');
-        if ($ampm eq 'PM') {
-            $hour = ($hour + 12) unless ($hour == 12);
-        } else {
-            $hour = 0 if ($hour == 12);
-        }
-       
         my $day = $q->param('weekly_day');
 
         if ($version) { 

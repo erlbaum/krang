@@ -22,6 +22,7 @@ our @EXPORT_OK = qw(
     category_chooser
     category_chooser_object
     time_chooser
+    decode_time
     date_chooser
     datetime_chooser
     decode_date
@@ -383,11 +384,7 @@ sub time_chooser {
     # pull the time from the query first, then from given hour/minute and
     # finally from localtime
     if( $query->param($name) ) {
-        my $time = $query->param($name);
-        $time =~ /^(\d+):(\d+)\s*(AM|PM)$/i;
-        $hour = $1;
-        $minute = $2;
-        $hour += 12 if( uc $3 eq 'PM' );
+        ($hour, $minute) = decode_time(name => $name, query => $query);
     } else {
         unless( $nochoice ) {
             my $current_date = localtime();
@@ -412,18 +409,9 @@ sub time_chooser {
         <img src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div style="display:none" class="clock_widget" id="${name}_clock">
             <select name="${name}_hour" disabled="disabled" onChange="Krang.Widget.update_time_chooser('$name');">
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-                <option>6</option>
-                <option>7</option>
-                <option>8</option>
-                <option>9</option>
-                <option>10</option>
-                <option>11</option>
-                <option>12</option>
+                <option>1</option> <option>2</option>  <option>3</option>  <option>4</option>
+                <option>5</option> <option>6</option>  <option>7</option>  <option>8</option>
+                <option>9</option> <option>10</option> <option>11</option> <option>12</option>
             </select>
             :
             <select name="${name}_minute" disabled="disabled" onChange="Krang.Widget.update_time_chooser('$name');">
@@ -447,6 +435,35 @@ sub time_chooser {
         </div>
         <script type="text/javascript">Krang.Widget.time_chooser('$name')</script>
     |;
+}
+
+=item $date_obj = decode_time(name => 'daily_time', query => $query)
+
+Reads CGI data submitted via a standard Krang time_chooser
+and returns 2 integers representing the hour and minute
+that were selected.
+
+If decode_time() is unable to parse the time it will return 2
+undef values.
+
+Standard Krang time choosers can be created via C<time_chooser()>.
+
+=cut
+
+sub decode_time {
+    my %args = @_;
+    my ($name, $query) = @args{qw(name query)};
+    croak("Missing required args: name and query")
+      unless $name and $query;
+
+    my $value = $query->param($name);
+    my ($hour, $minute);
+    if( $value =~ /^(\d+):(\d+)\s?(am|pm)$/i ) {
+        $hour = $1;
+        $minute = $2;
+        $hour += 12 if( uc $3 eq 'PM' );
+    }
+    return ($hour, $minute);
 }
 
 =item $chooser_html = datetime_chooser(name => 'date', query => $query)
