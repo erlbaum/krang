@@ -579,7 +579,7 @@ Krang.preview = function(type, id) {
 
     var instance = Krang.instance;
     // IE has problems with some characters that can appear in the instance name
-    instance.s.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
+    instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
 
     var pop = window.open( url, ( instance + 'preview' ) );
 
