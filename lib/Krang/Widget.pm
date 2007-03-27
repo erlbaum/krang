@@ -403,7 +403,7 @@ sub time_chooser {
     $hour = $hour && $hour >= 13 ? $hour - 12 : $hour;
     my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
 
-    my $value = $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "1:00 AM";
+    my $value = $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
     return qq|
         <input type="text" name="$name" value="$value" size="9" id="$name">
         <img src="images/clock.gif" id="${name}_trigger" class="clock_trigger">

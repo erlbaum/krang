@@ -741,12 +741,16 @@ Krang.Widget.time_chooser = function(inputName) {
 
             // parse the date in the input. If we get a valid time, then
             // set the selected values of the dropdowns
-            current = $(inputName).value;
+            var input = $(inputName);
+            current = input.value;
             var regex = /^(\d+):(\d+)\s*(AM|PM)$/i;
-            if( regex.exec($(inputName).value) ) {
+            if( regex.exec(current) ) {
                 hour.value   = RegExp.$1;
                 minute.value = RegExp.$2;
                 ampm.value   = RegExp.$3.toUpperCase();
+            } else if(! current ) {
+                // set the 1:00 AM since that's what the dropdown default to
+                input.value = '1:00 AM';
             }
             
             clock.show();
