@@ -5,6 +5,13 @@
 <head>
 <title>Error previewing media</title>
 <link rel="stylesheet" href="/krang.css" type="text/css" />
+
+<tmpl_if custom_css>
+<style type="text/css">
+<tmpl_var custom_css>
+</style>
+</tmpl_if>
+
 </head>
 <body>
 <tmpl_loop error_loop><div class=alert><tmpl_var err></div>

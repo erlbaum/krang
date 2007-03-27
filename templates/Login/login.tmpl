@@ -3,6 +3,13 @@
 <head>
 <title><tmpl_var instance_display_name> Login</title>
 <style type="text/css"><tmpl_include ../htdocs/krang_login.css></style>
+
+<tmpl_if custom_css>
+<style type="text/css">
+<tmpl_var custom_css>
+</style>
+</tmpl_if>
+
 </head>
 
 <body onload="logform.username.focus();">

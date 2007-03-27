@@ -23,6 +23,12 @@
 Krang.instance = '<tmpl_var escape=js instance_display_name>';
 </script>
 
+<tmpl_if custom_css>
+<style type="text/css">
+<tmpl_var custom_css>
+</style>
+</tmpl_if>
+
 </head><body>
 
 <div id="indicator" style="display:none">Working...<img src="images/indicator.gif"></div>
