@@ -367,6 +367,8 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
+  onchange  - Javascript code to be executed when the date is changed.
+
 The time_chooser() implements itself in HTML via a text input with some
 Javascript popup magic. The string input from the user can be retrieved
 via the CGI query object using the same name given during the creation
@@ -376,8 +378,8 @@ of the widget.
 
 sub time_chooser {
     my %args = @_;
-    my ($name, $query, $hour, $minute, $nochoice) =
-      @args{qw(name query hour minute nochoice)};
+    my ($name, $query, $hour, $minute, $nochoice, $onchange) =
+      @args{qw(name query hour minute nochoice onchange)};
     croak("Missing required args: name and query")
       unless $name and $query;
 
@@ -404,8 +406,11 @@ sub time_chooser {
     my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
 
     my $value = $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
+
+    # setup the onchange
+    $onchange = qq/onchange="$onchange"/ if $onchange;
     return qq|
-        <input type="text" name="$name" value="$value" size="9" id="$name">
+        <input type="text" name="$name" value="$value" size="9" id="$name" $onchange>
         <img src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div style="display:none" class="clock_widget" id="${name}_clock">
             <select name="${name}_hour" disabled="disabled" onChange="Krang.Widget.update_time_chooser('$name');">
@@ -488,32 +493,31 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
-The date_chooser() implements itself in HTML via six separate
-query parameters.  They are named based on the provided name,
-plus "_month", "_day", "_year", "_hour", "_minute", and 
-"_ampm" respectively. CGI query data from
-date_chooser can be retrieved and converted back into a date
-object via decode_date().
+  onchange  - Javascript code to be executed when either the date
+              or time values are changed.
+
+The C<datetime_chooser()> implements via the C<date_chooser()>
+and C<time_chooser()>. The values input by the user can be retrieved
+via C<decode_datetime()>.
 
 =cut
 
 sub datetime_chooser {
     my %args = @_;
-    my ($name, $date, $query, $nochoice) = @args{qw(name date query nochoice)};
-    croak("Missing required arg: name") unless $name;
+    croak("Missing required args: name and query") unless $args{name} and $args{query};
 
     # get the first part from the date_chooser
     my $html = date_chooser(%args);
     $html .= '&nbsp;';
     # and get the 2nd part from the time_chooser
+    my $date = $args{date};
     my $hour = $date ? $date->hour : undef;
     my $minute = $date ? $date->minute : undef;
     $html .= time_chooser(
-        name     => "${name}_time",
+        %args,
+        name     => $args{name} . '_time',
         hour     => $hour,
         minute   => $minute,
-        nochoice => $nochoice,
-        query    => $query
     );
     return $html;
 }
@@ -526,11 +530,11 @@ chooser.  The C<name> and C<query> parameters are required.
 
 Additional optional parameters are as follows:
 
-  date      - if set to a date object (Time::Piece), chooser will
-              be prepopulated with that date.  If not set to a
-              date object, will default to current date (localtime)
-              unless "nochoice" is true, in which case chooser
-              will be set to blank.
+  date      - if set to a date object (L<Time::Piece> or L<DateTime>), 
+              chooser will be prepopulated with that date. If not set 
+              to a date object, will default to current date (localtime) 
+              unless "nochoice" is true, in which case chooser will be 
+              set to blank.
 
   nochoice  - if set to a true value, blanks will be provided
               as choices in the chooser.  Used in conjunction
@@ -539,6 +543,9 @@ Additional optional parameters are as follows:
 
               The value "0" will be returned if a user chooses
               the "no choice" option.
+
+  onchange  - Javascript code to be executed when the date value
+              is changed.
 
 
 The date_chooser() implements itself in HTML via a text input
@@ -550,7 +557,7 @@ a L<Time::Piece> object via C<decode_date()>.
 
 sub date_chooser {
     my %args = @_;
-    my ($name, $date, $query, $nochoice) = @args{qw(name date query nochoice)};
+    my ($name, $date, $query, $nochoice, $onchange) = @args{qw(name date query nochoice onchange)};
     croak("Missing required args: name and query") unless $name and $query;
 
     # use the date from the query first, if not there use
@@ -562,8 +569,11 @@ sub date_chooser {
         $date = $date ? $date->strftime('%m/%d/%Y') : '';
     }
 
+    # setup the default onchange value
+    $onchange = qq/onchange="$onchange"/ if $onchange;
+
     return qq|
-        <input type="text" name="$name" value="$date" size="11" id="$name">
+        <input type="text" name="$name" value="$date" size="11" id="$name" $onchange>
         <img src="images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
         <script type="text/javascript">Krang.onload(function() { Krang.Widget.date_chooser('$name') } );</script>
     |;
