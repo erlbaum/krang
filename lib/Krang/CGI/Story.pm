@@ -186,18 +186,12 @@ sub create {
 
     # detect bad fields
     my @bad;
-    push(@bad, 'type'),        add_alert('missing_type')
-      unless $type;
-    push(@bad, 'title'),       add_alert('missing_title')
-      unless $title;
-    push(@bad, 'slug'),        add_alert('missing_slug')
-      unless not($slug_req) or $slug;
-    push(@bad, 'slug'),        add_alert('bad_slug')
-      if length $slug and $slug !~ /^[-\w]+$/;
-    push(@bad, 'category_id'), add_alert('missing_category')
-      unless $category_id;
-    push(@bad, 'cover_date'),  add_alert('missing_cover_date')
-      unless $cover_date;
+    push(@bad, 'type'),        add_alert('missing_type') unless $type;
+    push(@bad, 'title'),       add_alert('missing_title') unless $title;
+    push(@bad, 'slug'),        add_alert('missing_slug') unless not($slug_req) or $slug;
+    push(@bad, 'slug'),        add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
+    push(@bad, 'category_id'), add_alert('missing_category') unless $category_id;
+    push(@bad, 'cover_date'),  add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
 
     # create the object
