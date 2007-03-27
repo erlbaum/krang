@@ -63,6 +63,7 @@ sub show {
     my $template = $self->load_tmpl("desk.tmpl", 
                                     associate         => $query,
                                     die_on_bad_params => 0,
+                                    loop_context_vars => 1,
                                     global_vars       => 1
                                    );
 
