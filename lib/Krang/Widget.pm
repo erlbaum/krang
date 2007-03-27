@@ -408,7 +408,7 @@ sub time_chooser {
     my $value = $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
 
     # setup the onchange
-    $onchange = qq/onchange="$onchange"/ if $onchange;
+    $onchange = $onchange ? qq/onchange="$onchange"/ : '';
     return qq|
         <input type="text" name="$name" value="$value" size="9" id="$name" $onchange>
         <img src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
@@ -463,7 +463,7 @@ sub decode_time {
 
     my $value = $query->param($name);
     my ($hour, $minute);
-    if( $value =~ /^(\d+):(\d+)\s?(am|pm)$/i ) {
+    if( $value && $value =~ /^(\d+):(\d+)\s?(am|pm)$/i ) {
         $hour = $1;
         $minute = $2;
         $hour += 12 if( uc $3 eq 'PM' );
@@ -570,7 +570,7 @@ sub date_chooser {
     }
 
     # setup the default onchange value
-    $onchange = qq/onchange="$onchange"/ if $onchange;
+    $onchange = $onchange ? qq/onchange="$onchange"/ : '';
 
     return qq|
         <input type="text" name="$name" value="$date" size="11" id="$name" $onchange>
@@ -606,7 +606,11 @@ sub decode_datetime {
 
     my $date = $query->param($name);
     my $time = $query->param($name . '_time');
-    return Time::Piece->strptime("$date $time", '%m/%d/%Y %I:%M %p');
+    if( $date && $time ) {
+        return Time::Piece->strptime("$date $time", '%m/%d/%Y %I:%M %p');
+    } else {
+        return;
+    }
 }
 
 =item $date_obj = decode_date(name => 'cover_date', query => $query)
@@ -630,6 +634,8 @@ sub decode_date {
     my $value = $query->param($name);
     if( $value ) {
         return Time::Piece->strptime($value, '%m/%d/%Y');
+    } else {
+        return;
     }
 }
 
