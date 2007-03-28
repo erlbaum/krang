@@ -638,11 +638,11 @@ Object.extend( Krang.Navigation.prototype, {
             // else BlindUp if it is
             label.observe(
                 'click', 
-                this._label_onclick(contents, pos).bindAsEventListener(this)
+                this._label_onclick(contents, pos).bind(this)
             );
 
             ++pos;
-       }.bindAsEventListener(this));
+       }.bind(this));
     },
     _label_onclick: function(content, pos) {
         return function () {
@@ -652,7 +652,7 @@ Object.extend( Krang.Navigation.prototype, {
                     content,
                     {
                         duration : .3,
-                        afterFinish: function() { this.action_panels[pos] = false }.bindAsEventListener(this)
+                        afterFinish: function() { this.action_panels[pos] = false }.bind(this)
                     }
                 );
                 this.remove_opened_panel(pos);
@@ -662,12 +662,12 @@ Object.extend( Krang.Navigation.prototype, {
                     content,
                     {
                         duration : .3,
-                        afterFinish: function() { this.action_panels[pos] = false }.bindAsEventListener(this)
+                        afterFinish: function() { this.action_panels[pos] = false }.bind(this)
                     }
                 );
                 this.add_opened_panel(pos);
             }
-        }.bindAsEventListener(this);
+        }.bind(this);
     },
     save_opened_panels: function(positions) {
         Krang.set_cookie(this.cookie_name, escape(positions.join(',')));

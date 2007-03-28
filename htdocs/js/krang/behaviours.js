@@ -21,6 +21,8 @@ var rules = {
 
         // only continue if we don't have any inputs of type 'file'
         // since you can't send those vi AJAX
+        // We might fix this in the future if we get adventurous and decide
+        // to use a hidden iframe to old-school async stuff.
         for(var i=0; i < el.elements.length; i++) {
             var field = el.elements[i];
             if( field.type == 'file' ) return;
@@ -36,7 +38,7 @@ var rules = {
         el.non_ajax_submit = function() {
             if( !this.old_onsubmit || this.old_onsubmit() ) 
                 this.old_submit();
-        }.bindAsEventListener(el);
+        }.bind(el);
 
         // Krang likes to call submit() directly on forms
         // which unfortunately in JS is handled differently 
@@ -46,10 +48,10 @@ var rules = {
             if( !this.old_onsubmit || this.old_onsubmit() ) 
                 Krang.ajax_form_submit(this);
             return false;
-        }.bindAsEventListener(el);
+        }.bind(el);
         el.submit = function() {
             this.onsubmit();
-        }.bindAsEventListener(el);
+        }.bind(el);
     },
     // create an autocomplete widget. This involves creating a div
     // in which to place the results and creating an Ajax.Autocompleter
