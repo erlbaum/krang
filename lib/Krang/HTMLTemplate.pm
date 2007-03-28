@@ -110,7 +110,7 @@ sub output {
             } else {
                 my $IN;
                 open($IN, $file) or croak "Could not open file $file for reading: $!";
-                # hopefull a tiny file, so slurp it
+                # hopefully a tiny file, so slurp it
                 {
                     local $/;
                     $css = <$IN>;
