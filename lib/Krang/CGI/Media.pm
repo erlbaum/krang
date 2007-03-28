@@ -1276,7 +1276,7 @@ sub list_active_row_handler {
     # thumbnail path   
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
-        $row->{thumbnail} = "<a href='javascript:Krang.preview('media','".$row->{media_id}."')'><img src=\"$thumbnail_path\" border=0></a>";
+        $row->{thumbnail} = qq|<a href="javascript:Krang.preview('media','$row->{media_id}')"><img alt="" src="$thumbnail_path"></a>|;
     } else {
         $row->{thumbnail} = "&nbsp;";
     }
@@ -1667,7 +1667,7 @@ sub find_media_row_handler {
     if ($show_thumbnails) {
         my $thumbnail_path = $media->thumbnail_path(relative => 1);
         if ($thumbnail_path) {
-            $row->{thumbnail} = "<a href='javascript:Krang.preview('media',$media_id)'><img src=\"$thumbnail_path\" border=0></a>";
+            $row->{thumbnail} = qq|<a href="javascript:Krang.preview('media','$media_id')"><img alt="" src="$thumbnail_path"></a>|;
         } else {
             $row->{thumbnail} = "&nbsp;";
         }
