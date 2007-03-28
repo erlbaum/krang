@@ -292,17 +292,12 @@ Krang.form_as_url = function(form) {
 };
 
 /*
-    Krang.form_submit(formName, { input: 'value' }, new_window)
-    Select a form, optionally sets the values of those
-    elements and then submits the form.
-
-    You can also specify a third parameter which is a boolean
-    indicating whether or not the results will open up in a new
-    window.
+    Krang.form_set(formName, { input: 'value'})
+    Select a form and set the values of it's inputs
 */
-Krang.form_submit = function(formName, inputs, new_window) {
+Krang.form_set = function(formName, inputs) {
     var form = document.forms[formName];
-    var err = 'Krang.form_submit(): ';
+    var err = 'Krang.form_set(): ';
 
     if( !form ) alert(err + 'form "' + formName + '" does not exist!');
 
@@ -313,6 +308,28 @@ Krang.form_submit = function(formName, inputs, new_window) {
             el.value = pair.value;
         });
     }
+}
+
+/*
+    Krang.form_submit(formName, { input: 'value' }, new_window)
+    Select a form, optionally sets the values of those
+    elements and then submits the form.
+
+    You can also specify a third parameter which is a boolean
+    indicating whether or not the results will open up in a new
+    window.
+
+    *NOTE* - This should not be used by the onclick handler of
+    an input of type 'button' if the form is not of the 'non_ajax'
+    class. This is because the browser won't stop the chain of events
+    when we reach form.submit(), but will instead call the form's onsubmit()
+    handler and then possibly submit the form again for the 2nd time.
+    In the case of inputs of type 'submit', just use Krang.form_set()
+    to set the values and let the form take care of the rest.
+*/
+Krang.form_submit = function(formName, inputs, new_window) {
+    Krang.form_set(formName, inputs);
+    var form = document.forms[formName];
 
     if( new_window ) {
         // save the old target of the form so we can restore it after
@@ -323,7 +340,7 @@ Krang.form_submit = function(formName, inputs, new_window) {
         form.target = old_target;
     } else {
         Krang.show_indicator();
-        form.submit();
+        return form.submit();
     }
 };
 
