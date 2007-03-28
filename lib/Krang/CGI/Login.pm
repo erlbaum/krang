@@ -22,14 +22,15 @@ None.
 
 =cut
 
-
 use Krang::ClassLoader base => 'CGI';
 use Digest::MD5 qw(md5_hex md5);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'MyPref';
+use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader 'Log' => qw(debug);
+use Krang::ClassLoader 'Message' => qw(add_message add_alert);
 use Krang::ClassLoader Conf => qw(
     BadLoginCount
     BadLoginWait
@@ -63,11 +64,7 @@ END
 sub setup {
     my $self = shift;
     $self->start_mode('show_form');
-    $self->run_modes(show_form  => 'show_form',
-                     login      => 'login',
-                     logout     => 'logout',
-                     login_wait => 'login_wait',
-                    );
+    $self->run_modes([qw(show_form login logout login_wait forgot_pw reset_pw)]);
     $self->tmpl_path('Login/');
 
     # use CAP::RateLimit to limit the number of bad logins
@@ -103,7 +100,7 @@ sub login_wait {
           . BadLoginCount
           . " failed login attempts.";
 
-        debug( __PACKAGE__ . "->send() - sending email to $email_to : $msg" );
+        debug( __PACKAGE__ . "->login_wait() - sending email to $email_to : $msg" );
         my $sender = Mail::Sender->new(
             {
                 smtp      => SMTPServer,
@@ -121,11 +118,8 @@ sub login_wait {
         );
     }
 
-    return $self->show_form(
-        alert => "Invalid login. You have failed more than " 
-            . BadLoginCount . " login attempts and must wait " 
-            . BadLoginWait . " minutes before logging in again."
-    );
+    add_alert('login_wait', count => BadLoginCount, minutes => BadLoginWait);
+    return $self->show_form();
 }
 
 # show the login form
@@ -135,7 +129,9 @@ sub show_form {
     my %arg      = @_;
     my $template = $self->load_tmpl("login.tmpl",
                                     associate => $query);
-    $template->param(alert => $arg{alert} || $query->param('alert'));
+    # this can be an arbitrary message coming from some other place
+    my $msg = $arg{alert} || $query->param('alert');
+    add_alert('custom_msg', msg => $msg) if $msg;
     return $template->output();
 }
 
@@ -145,7 +141,6 @@ sub login {
     my $query    = $self->query();
     my $username = $query->param('username');
     my $password = $query->param('password');
-    my $target   = $query->param('target') || './';
     my $dbh      = dbh();
 
     # make sure they don't need to wait
@@ -157,10 +152,14 @@ sub login {
         }
     }
 
-    return $self->show_form(alert =>
-                            "User name and password are required fields.")
-      unless defined $username and length $username and
-             defined $password and length $password;
+    unless( 
+        defined $username and length $username
+        and
+        defined $password and length $password
+    ) {
+        add_alert('missing_username_pw');
+        return $self->show_form();
+    }
 
     # check username and password
     my $user_id = pkg('User')->check_auth($username, $password);
@@ -171,10 +170,17 @@ sub login {
         if( BadLoginCount ) {
             $self->rate_limit->record_hit(action => 'failed_login');
         }
-        return $self->show_form(
-            alert => "Invalid login. Please check your user name and password and try again."
-        );
+        add_alert('failed_login');
+        return $self->show_form();
     }
+
+    return $self->_do_login($user_id);
+}
+
+sub _do_login {
+    my ($self, $user_id) = @_;
+    my $q      = $self->query();
+    my $target = $q->param('target') || './';
 
     # if we are enforcing password changes every few days
     if( PasswordChangeTime ) {
@@ -189,7 +195,6 @@ sub login {
     # create a cookie with username, session_id and instance.  Include
     # an MD5 hash with $SALT to allow the PerlAuthenHandler to check
     # for tampering
-    my $q = $self->query();
     my $session_id = (defined($ENV{KRANG_SESSION_ID})) ?
       $ENV{KRANG_SESSION_ID} : pkg('Session')->create();
     my $instance   = pkg('Conf')->instance();
@@ -251,6 +256,105 @@ sub logout {
                         -cookie => $cookie->as_string);
     $self->header_type('redirect');
     return "";
+}
+
+sub forgot_pw {
+    my $self = shift;
+    my $q    = $self->query;
+    my $tmpl = $self->load_tmpl('forgot_pw.tmpl', associate => $q);
+
+    if( $q->param('email') ) {
+        my $email = $q->param('email');
+        add_message('forgot_pw');
+
+        # find the user this email address belongs to
+        my ($user) = pkg('User')->find(email => $email);
+        if( $user ) {
+            my $port = InstanceApachePort || ApachePort;
+            my $site_url = 'http://' . InstanceHostName . ($port == 80 ? '' : ":$port");
+
+            # create the link
+            my $instance = pkg('Conf')->instance();
+            my $ticket = md5_hex($user->user_id . $instance . $SALT) . '-' . $user->user_id;
+
+            # send the email
+            my $sender = Mail::Sender->new({
+                smtp      => SMTPServer,
+                from      => FromAddress,
+                on_errors => 'die'
+            });
+
+            my $msg_tmpl = $self->load_tmpl('forgot_pw_email.tmpl');
+            $msg_tmpl->param(
+                site_url  => $site_url,
+                ticket    => $ticket,
+            );
+
+            $sender->MailMsg({
+                to      => $email,
+                subject => "[" . InstanceHostName . "] Forgot Password?",
+                msg     => $msg_tmpl->output,
+            });
+            debug( __PACKAGE__ . "->forgot_pw() - sending forgot_pw email to $email" );
+        } else {
+            debug( __PACKAGE__ . "->forgot_pw() - no user found with email '$email'" );
+        }
+    }
+
+    return $tmpl->output;
+}
+
+# intended to only be entered via a link generated by forgot_pw
+sub reset_pw {
+    my $self = shift;
+    my $q    = $self->query;
+    my $t    = $q->param('t');
+
+    # decode the ticket
+    $t =~ /^(.*)-(\d+)$/;
+    my $hash = $1;
+    my $user_id = $2;
+    my $instance = pkg('Conf')->instance();
+            
+    debug( __PACKAGE__ . "->reset_pw() - decoding ticket $t: user_id = $user_id'" );
+
+    # if it matches what we need it to
+    if( md5_hex($user_id . $instance . $SALT) eq $hash ) {
+        my $new_pw    = $q->param('new_password');
+        my $new_pw_re = $q->param('new_password_re');
+        my $alert     = '';
+
+        # if we have the necessary info to change it
+        if( $new_pw || $new_pw_re ) {
+            if( $new_pw eq $new_pw_re ) {
+                my ($user) = pkg('User')->find(user_id => $user_id);
+                if( $user ) {
+                    # check the password constraints
+                    my $valid = pkg('PasswordHandler')->check_pw(
+                        $new_pw,
+                        $user->login,
+                        $user->email,
+                        $user->first_name,
+                        $user->last_name,
+                    );
+
+                    if( $valid ) {
+                        $user->password($new_pw);
+                        $user->save;
+                        add_message("changed_password");
+                        return $self->_do_login($user_id);
+                    }
+                } else {
+                    add_alert('invalid_account');
+                }
+            } else {
+                add_alert('passwords_dont_match');
+            }
+        }
+
+        my $tmpl = $self->load_tmpl('reset_pw.tmpl', associate => $q);
+        return $tmpl->output;
+    }
 }
 
 1;
