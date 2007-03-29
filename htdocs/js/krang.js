@@ -311,13 +311,20 @@ Krang.form_set = function(formName, inputs) {
 }
 
 /*
-    Krang.form_submit(formName, { input: 'value' }, new_window)
+    Krang.form_submit(formName, { input: 'value' }, { new_window: true })
     Select a form, optionally sets the values of those
     elements and then submits the form.
 
-    You can also specify a third parameter which is a boolean
-    indicating whether or not the results will open up in a new
-    window.
+    You can also specify a third parameter which contains other optional
+    flags that can be passed to dictact the behaviour.
+    These flags include:
+    
+        new_window : open the request into a new window.
+                     Defaults to false.
+        to_top     : if the request will be performed using AJAX sometimes
+                     you don't want to force the user to go back to the top 
+                     of the page. Setting this to false will do just that. 
+                     Defaults to true.
 
     *NOTE* - This should not be used by the onclick handler of
     an input of type 'button' if the form is not of the 'non_ajax'
@@ -327,11 +334,12 @@ Krang.form_set = function(formName, inputs) {
     In the case of inputs of type 'submit', just use Krang.form_set()
     to set the values and let the form take care of the rest.
 */
-Krang.form_submit = function(formName, inputs, new_window) {
+Krang.form_submit = function(formName, inputs, options) {
     Krang.form_set(formName, inputs);
     var form = document.forms[formName];
+    if(options == null ) options = {};
 
-    if( new_window ) {
+    if( options.new_window ) {
         // save the old target of the form so we can restore it after
         // submission
         var old_target = form.target;
@@ -340,6 +348,7 @@ Krang.form_submit = function(formName, inputs, new_window) {
         form.target = old_target;
     } else {
         Krang.show_indicator();
+        if( options.to_top ) Krang.to_top();
         return form.submit();
     }
 };
@@ -505,6 +514,14 @@ Krang.Messages = {
         if( level === undefined ) level = 'messages';
         new Effect.SlideUp(level, { duration: .5 });
     }
+};
+
+/*
+    Krang.to_top()
+    Takes the user to the top of the page.
+*/
+Krang.to_top = function() {
+    $('H').scrollTo();
 };
 
 /* 
