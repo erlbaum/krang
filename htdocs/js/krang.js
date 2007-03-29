@@ -182,6 +182,8 @@ Krang.ajax_request = function(args) {
     url       : the full url of the request (required)
     target    : the id of the target element receiving the contents (optional defaults to 'C')
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
+    to_top    : whether or not the page should scroll back up to the top after the update.
+                Defaults to true.
     onComplete: a callback function to be executed after the normal processing (optional)
                 Receives as arguments, the same args passed into ajax_update the AJAX transport
                 object, and any JSON object returned in the X-JSON HTTP header.
@@ -209,6 +211,7 @@ Krang.ajax_update = function(args) {
     var indicator = args['indicator'];
     var complete  = args['onComplete'] || Prototype.emptyFunction;
     var failure   = args['onFailure'] || Prototype.emptyFunction;
+    var to_top    = args['to_top'] == false ? false : true; // defaults to true
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
@@ -236,6 +239,7 @@ Krang.ajax_update = function(args) {
             // if we're successful we're not in edit mode (can be reset by the request)
             onSuccess   : function() { Krang.Nav.edit_mode(false) },
             onComplete  : function(transport, json) {
+                if(to_top) Krang.to_top();
                 // wait 12 ms so we know that the JS in our request has been evaled
                 // since Prototype will wait 10 gives for the Browser to update
                 // it's DOM
@@ -261,16 +265,18 @@ Krang.ajax_update = function(args) {
 };
 
 /*
-    Krang.ajax_form_submit(form)
+    Krang.ajax_form_submit(form, options)
     Submit a form using AJAX.
 
     TODO: set the method from the form
 */
-Krang.ajax_form_submit = function(form) {
+Krang.ajax_form_submit = function(form, options) {
+    if( options == null ) options = {};
     Krang.ajax_update({
         url       : Krang.form_as_url(form),
         target    : Krang.class_suffix(form, 'for_'),
-        indicator : Krang.class_suffix(form, 'show_')
+        indicator : Krang.class_suffix(form, 'show_'),
+        to_top    : options.to_top
     });
 };
 
@@ -337,6 +343,8 @@ Krang.form_set = function(formName, inputs) {
 Krang.form_submit = function(formName, inputs, options) {
     Krang.form_set(formName, inputs);
     var form = document.forms[formName];
+
+    // take care of our default options
     if(options == null ) options = {};
 
     if( options.new_window ) {
@@ -348,8 +356,7 @@ Krang.form_submit = function(formName, inputs, options) {
         form.target = old_target;
     } else {
         Krang.show_indicator();
-        if( options.to_top ) Krang.to_top();
-        return form.submit();
+        return form.submit(options);
     }
 };
 

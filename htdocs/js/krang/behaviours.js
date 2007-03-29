@@ -44,13 +44,13 @@ var rules = {
         // which unfortunately in JS is handled differently 
         // than a user clicking on a 'submit' button. So we put the magic in 
         // onsubmit() and then have submit() call onsubmit().
-        el.onsubmit = function() {
-            if( !this.old_onsubmit || this.old_onsubmit() ) 
-                Krang.ajax_form_submit(this);
+        el.onsubmit = function(options) {
+            if( !this.old_onsubmit || this.old_onsubmit() )
+                Krang.ajax_form_submit(this, options);
             return false;
         }.bind(el);
-        el.submit = function() {
-            this.onsubmit();
+        el.submit = function(options) {
+            this.onsubmit(options);
         }.bind(el);
     },
     // create an autocomplete widget. This involves creating a div
