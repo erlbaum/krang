@@ -1,74 +1,95 @@
 <tmpl_include header.tmpl>
 
-<script language=javascript>
-  delete_selected  = function () {
-        var myform = document.forms["current_schedule_form"];
-        myform.submit();
-  }
+<script type="text/javascript">
+//Krang.onload( function() {
+//  Krang.Help.set( '' );
+//} );
 
- save_and_view = function () {
-        document.forms[0].rm.value = 'save_and_view';
-        document.forms[0].submit();
-  }
-
+//(db2)no apparent call to these functions:
+//delete_selected = function()
+//{
+//  Krang.form_submit('current_schedule_form', {}, { to_top: false });
+//}
+//
+//save_and_view = function()
+//{
+//  Krang.form_submit('add_schedule_form', { rm: 'save_and_view' });
+//}
 </script>
 
-<div class="dark-bar"><p class="left">&nbsp;Schedule Editor</p><p class="right"><a href="help.pl?topic=schedule" class="help">Help</a>&nbsp;</p></div>
+<h2>
+Schedule Editor
+</h2>
 
-<form name="add_schedule_form" method="POST" action="schedule.pl">
-<input type="hidden" name="advanced_schedule" value="1" override="1">
-<input type="hidden" name="rm" value="add_admin" override='1'>
+<form name="add_schedule_form" method="post" action="schedule.pl">
 
-<br>
-<table cellspacing="0" width="571" cellpadding="0" class="form-cell">
-<tr class="form-head">
-  <th align="left" colspan="2">Add to Schedule</th>
-</tr>
+<input name="rm" value="add_admin" type="hidden">
+<input name="advanced_schedule" value="1" type="hidden">
+
+<h3>
+Add Action
+</h3>
+
+<table summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
 <tr>
-  <td class="form-cell" width="80" style="border-left:none;">Date/Time</td>
-  <td class="form-cell" style="border-right:none;">
-    <table>
-    <tr>
-      <td <tmpl_if no_date_type>class="invalid"</tmpl_if>>
-        <input type="radio" name="repeat" value="never" <tmpl_if repeat_never>CHECKED</tmpl_if>>Once at:
-      </td>
-      <td <tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var full_date_selector><br></td>
-    </tr>
-    <tr>
-      <td <tmpl_if no_date_type>class="invalid"</tmpl_if>>
-        <input type="radio" name="repeat" value="hourly" <tmpl_if repeat_hourly>CHECKED</tmpl_if>>Hourly at:
-      </td>
-      <td><tmpl_var hourly_minute_selector> minutes after the hour</td>
-    </tr>
-    <tr>
-      <td <tmpl_if no_date_type>class="invalid"</tmpl_if>>
-        <input type="radio" name="repeat" value="daily" <tmpl_if repeat_daily>CHECKED</tmpl_if>>Daily at:
-      </td>
-      <td <tmpl_if no_hour>class="invalid"</tmpl_if>><tmpl_var daily_time_selector>
-      </td>
-    </tr>
-    <tr>
-      <td <tmpl_if no_date_type>class="invalid"</tmpl_if>>
-        <input type="radio" name="repeat" value="weekly" <tmpl_if repeat_weekly>CHECKED</tmpl_if>>Weekly on:
-      </td>
-      <td <tmpl_if no_weekly_hour>class="invalid"</tmpl_if>>
-        <tmpl_var weekly_day_selector>
-        - <tmpl_var weekly_time_selector>
-      </td>
-    </tr>
-    </table>
-  </td>
+<th>Action</th>
+<td><tmpl_var action_selector></td>
 </tr>
-<tr>
-  <td class="form-cell" style="border-top:none; border-right:none;">Action:</td>
-  <td class="form-cell" style="border-top:none; border-left:none;"><tmpl_var action_selector></td>
+
+<tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if invalid_datetime> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<th>
+<input name="repeat" value="never" type="radio"<tmpl_if repeat_never> checked</tmpl_if>>
+Trigger Once
+</th>
+<td><tmpl_var full_date_selector></td>
 </tr>
+
+<tr<tmpl_if no_date_type> class="ERR-ROW"</tmpl_if>>
+<th>
+<input name="repeat" value="hourly" type="radio"<tmpl_if repeat_hourly> checked</tmpl_if>>
+Trigger Hourly
+</th>
+<td>
+<tmpl_var hourly_minute_selector>
+minutes after the hour
+</td>
+</tr>
+
+<tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if no_hour> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<th>
+<input name="repeat" value="daily" type="radio"<tmpl_if repeat_daily> checked</tmpl_if>>
+Trigger Daily
+</th>
+<td>
+<tmpl_var daily_time_selector>
+</td>
+</tr>
+
+<tr class="last<tmpl_if no_date_type> ERR-ROW<tmpl_else><tmpl_if no_weekly_hour> ERR-ROW</tmpl_if></tmpl_if>">
+<th>
+<input name="repeat" value="weekly" type="radio"<tmpl_if repeat_weekly> checked</tmpl_if>>
+Trigger Weekly
+</th>
+<td>
+<tmpl_var weekly_day_selector>
+&ndash;
+<tmpl_var weekly_time_selector>
+</td>
+</tr>
+
 </table>
 
-<div class="button-bar">
-  <input type="button" value="Add to Schedule" onclick="submit()" class="button">
+<div class="panel">
+<input value="Schedule Action" type="submit">
 </div>
 
 </form>
 
 <tmpl_include footer.tmpl>
+

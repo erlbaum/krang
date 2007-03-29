@@ -1,60 +1,90 @@
 <tmpl_include header.tmpl>
 
 <script type="text/javascript">
-<!--
-check_match = function ( f )
+Krang.onload( function() {
+  Krang.Help.set( 'preference' );
+} );
+
+badPassword = function( pA, pB, s )
 {
-  var pA = f.elements[ 'new_password' ];
-  var pB = f.elements[ 'new_password_repeat' ];
+  pA.focus();    //db2:FF(osx) ignores post-alert() focus()
+  alert( s );
+  pA.value = pB.value = '';
+
+  return false;
+}
+
+check_match = function( f )
+{
+  var pA = f[ 'new_password' ];
+  var pB = f[ 'new_password_repeat' ];
 
   if ( pA.value != pB.value )
-  {
-    alert( 'New passwords do not match.' );
-    return false;
-  }
+    return badPassword( pA, pB, 'New passwords do not match.' );
+  else if ( pA.value && ( pA.value.length < 6 ) )
+    return badPassword( pA, pB, 'New password must be at least 6 characters long.' );
   else
     return true;
 }
-
-change_prefs = function() {
-    document.forms['edit_pref_form'].submit();
-}
-//-->
 </script>
 
-<div class="dark-bar"><p class="left">&nbsp;My Preferences</p><p class="right"><a href="help.pl?topic=my_pref" class="help">Help</a>&nbsp;</p></div>
-<div class="box">
-<br>
-<form name="edit_pref_form" method="post" onsubmit="return check_match(this)" action="my_pref.pl">
-  <input type="hidden" name="rm" value="update_prefs">
-  <tmpl_if password_only><input name="password_only" value="1" type="hidden" /></tmpl_if>
-  <table cellpadding="4" cellspacing="0" class="form-head">
-    <tr class="form-head"><td>Preferences</td></tr>
-  </table>
-  <table width="571" cellpadding="2" cellspacing="0" class="form-cell">
-  <tmpl_unless password_only>
-    <tr>
-      <td class="form-cell" width="160">Search Results/Page</td>
-      <td class="form-cell"><tmpl_var search_results_selector></td>
-    </tr>
-    <tr>
-      <td class="form-cell" width="160">Use Auto-Completion for Searches?</td>
-      <td class="form-cell"><tmpl_var use_autocomplete_selector></td>
-    </tr>
-  </tmpl_unless>
-  <tr>
-    <td class="form-cell" width="160">Change Password:</td>
-    <td class="form-cell">
-      <input type="password" name="new_password"> (new password)
-      <br>
-      <input type="password" name="new_password_repeat"> (repeat)
-    </td>
-  </tr>
-  </table>
-<br>
+<h2>
+Preferences
+</h2>
 
-<div class="button-bar"><input type="submit" value="Commit Changes" class="button"></div>
-</form>
+<form name="edit_pref_form" method="post" onsubmit="return(check_match(this))" action="my_pref.pl">
+
+<input name="rm" value="update_prefs" type="hidden">
+<tmpl_if password_only>
+  <input name="password_only" value="1" type="hidden">
+</tmpl_if>
+
+<table summary="">
+
+<colgroup>
+<col style="width: 19em">
+<col>
+</colgroup>
+
+<tmpl_unless password_only>
+<tr>
+<th>Search Results per Page</th>
+<td>
+<tmpl_var search_results_selector>
+</td>
+</tr>
+
+<tr>
+<th>Use Auto-Completion for Searches?</th>
+<td>
+<tmpl_var use_autocomplete_selector>
+</td>
+</tr>
+
+</tmpl_unless>
+
+<tr>
+<th>Change Account Password</th>
+<td>
+<input name="new_password" type="password">
+(new password)
+<br>
+<input name="new_password_repeat" type="password">
+(repeat)
+</td>
+</tr>
+
+<tr class="last">
+  <td colspan="2">Must be at least 8 characters and include at least one number and at least one symbol</td>
+</tr>
+
+</table>
+
+<div class="panel">
+<input value="Update Preferences" type="submit">
 </div>
 
+</form>
+
 <tmpl_include footer.tmpl>
+

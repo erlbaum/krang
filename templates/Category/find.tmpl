@@ -1,74 +1,79 @@
-<tmpl_include /header.tmpl>
+<tmpl_include header.tmpl>
 
-<script language="javascript" type="text/javascript">
-<!-- //
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'category' );
+} );
 
-    add_category  = function () {
-        var myform = document.forms["add_category_form"];
-        myform.submit();
-    }
-
-    edit_category  = function (category_id) {
-        var myform = document.forms["edit_category_form"];
-        myform.category_id.value = category_id;
-        myform.submit();
-    }
-
-    delete_selected  = function () {
-        if (confirm("Are you SURE you want to delete these categories?")) {
-            var myform = document.forms["krang_pager_form"];
-            myform.rm.value = 'delete_selected';
-            myform.submit();
-        }
-    }
-
-
-// -->
-</script>
-
-<form name="add_category_form" method="POST" action="category.pl">
-<input type="hidden" name="rm" value="new_category">
-</form>
-
-<form name="edit_category_form" method="POST" action="category.pl">
-<input type="hidden" name="rm" value="edit">
-<input type="hidden" name="category_id" value="">
-</form>
-
-<div class="dark-bar"><p class="left">&nbsp;Category Lists</p><p class="right"><a href="help.pl?topic=category" class="help">Help</a>&nbsp;</p></div>
-
-<form name="search_form" method="POST" action="category.pl">
-<div class="boxb"> 
- <div class="light">
-
-  <p>SEARCH</p>
-  <input type="hidden" name="rm" value="find">
-  <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>" class="autocomplete">
-  &nbsp;&nbsp;&nbsp;
-  <input type="submit" value="Search" class="button">
- </div>
-
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
-</form>
-
-<div class="no-border">
-
-<p><b><a href="javascript:add_category()">Add A Category</a></b></p></div>
-
-
-<!-- START Krang::HTMLPager output -->
-<tmpl_var pager_html>
-<!-- END Krang::HTMLPager output -->
-</div>
+add_category = function()
+{
+  Krang.form_submit( 'add_category_form' );
+}
 
 <tmpl_if row_count>
-  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div>
+  edit_category = function( id )
+  {
+    Krang.form_submit( 'edit_category_form', { category_id: id } );
+  }
+
+  delete_selected = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( 'Nothing selected to delete!' );
+    else if ( confirm( 'Are you SURE you want to delete these Categories?' ) )
+      Krang.form_submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
+  }
 </tmpl_if>
+</script>
+
+<h2>
+Category Lists
+</h2>
+
+<form name="search_form" action="category.pl" method="post">
+
+<input name="rm" value="find" type="hidden">
+<input name="krang_pager_curr_page_num" value="" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+
+<div class="finder">
+
+<p>
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+<input value="Search" type="submit" class="button">
+</p>
+
 </div>
 
-<tmpl_include /footer.tmpl>
+</form>
+
+<div class="pager">
+
+<!--Krang::HTMLPager:-->
+<tmpl_var pager_html>
+<!--:Krang::HTMLPager-->
+
+</div>
+
+<div class="panel"><form name="ignoreme">
+<input value="Add Category" onclick="add_category()" type="button"<tmpl_if row_count> class="west"</tmpl_if>>
+<tmpl_if row_count>
+  <input value="Delete" onclick="delete_selected()" type="button">
+</tmpl_if>
+</form></div>
+
+<form name="add_category_form" action="category.pl" method="post">
+<input name="rm" value="new_category" type="hidden">
+</form>
+
+<tmpl_if row_count>
+  <form name="edit_category_form" action="category.pl" method="post">
+  <input name="rm" value="edit" type="hidden">
+  <input name="category_id" value="" type="hidden">
+  </form>
+</tmpl_if>
+
+<tmpl_include footer.tmpl>
+

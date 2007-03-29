@@ -1,693 +1,316 @@
-/*** default text setup ***/
-body {
-  background-color: <tmpl_var BackgroundColor>;
-  color:            <tmpl_var TextColor>;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-  margin:			  0px 10px;
-  padding:          0px;
-  background-image: url("/images/left-bg.gif");
-  background-repeat: repeat-y;
-}
-
-html {
-	width: 770px;
-	height: 100%;
-}
-/*** Positioning ***/
-
-#frame {
-		width:770px;
-		padding:0px;
-		text-align:left;
-		}
+html { background: #333; color: #FFF; }
+body { width: 960px; margin: 0 auto 18px; padding: 0; font: 11px/1 "Helvetica Neue",arial,helvetica,sans-serif; }
+#H   { }
+#M   { background-color: #FFF; color: #000; min-height: 420px; border: 1px solid #FFF; border-width: 1px 0; }
+#S   { width: 178px; margin: 25px 0; }
+#C   { float: right; width: 740px; margin: 25px 20px; }
+#F   { }
 
 
-#header {
-  padding: 			  10px; 
-  width:				  760px;
-  height:           47px; 
-  background-color: <tmpl_var BackgroundColor>;	
-}
+a                 { background-color: inherit; color: #690; font-weight: bold; text-decoration: none; }
+a:hover, a:active { background-color: #FF9; color: #360; }
+a:focus           { outline: none; }/*:FF borks layout otherwise(db2)*/
+a img             { border: 0; }
 
-#header div.logo {
-	position: static;
-	left: 0px;
-	top: 15px;
-  background-color: <tmpl_var BackgroundColor>;	
-}
 
-#header div.title { 
-	position: absolute;
-	left: 184px;
-	top: 23px; 
-  width:            240px;	
-  background-color: <tmpl_var BackgroundColor>;	
-}
+form { margin: 0; padding: 0; }
+input, select, textarea { font-size: 1em; }
+textarea { line-height: 1.1; font-family: "Helvetica Neue",arial,helvetica,sans-serif; }
+input:focus, select:focus, textarea:focus { background-color: #FF9; color: #000; }
 
-#header div.log {
+
+#H h1 { background: <tmpl_var BackgroundColor> url("/images/bkg-logo.jpg") no-repeat; color: <tmpl_var TextColor>; margin: 0; padding: 0 0 0 12px; font-size: 1em; }
+
+#H ul.nav     , #F ul.nav      { background: #DDD; color: #666; height: 2.28em; list-style: none; margin: 0; padding: 0 20px 0 0; text-align: right; }
+#H .nav li    , #F .nav li     { display: -moz-inline-box; display: inline-block; border-left: thin solid #CCC; }
+#H .nav li.l  , #F .nav li.l   { border-right: thin solid #CCC; }
+#H .nav a     , #F .nav a      { height: 2.28em; display: block; padding: 0 10px; line-height: 2.28; cursor: default; }
+#H .nav a span, #F .nav a span { color: #666; font-weight: normal; }
+#instance_logo                 { float: right; margin-right: 30px; z-index: 100; }
+
+
+#S div           { border-bottom: 1px solid #CCC; }
+#S div.first     { border-top: 1px solid #CCC; }
+#S div div       { border-bottom: 0; }
+#S h2            { background: #EEE url("/images/nav-icons.gif") 0 50% no-repeat; color: #369; margin: 0; padding: 4px 0 4px 38px; font: normal 1.27em Georgia,serif; text-transform: uppercase; }
+#S h2:hover      { cursor: pointer; background-color: #FF9; color: #369; }
+#S dl            { background: #EEE; color: #999; margin: 0; padding: 0 0 10px; }
+#S dt a, #S dt b { display: block; border: 1px solid #EEE; border-width: 1px 0; padding: 4px 0 4px 38px; }
+#S dt a:hover    { border-color: #CCC; }
+
+#S h2.stories   { }                                      #S h2.stories:hover   { background-position:  -156px 50%; }
+#S h2.media     { background-position:  -312px 50%; }    #S h2.media:hover     { background-position:  -468px 50%; }
+#S h2.templates { background-position:  -624px 50%; }    #S h2.templates:hover { background-position:  -780px 50%; }
+#S h2.mailings  { background-position:  -936px 50%; }    #S h2.mailings:hover  { background-position: -1092px 50%; }
+#S h2.list      { background-position: -1248px 50%; }    #S h2.list:hover      { background-position: -1404px 50%; }
+#S h2.reports   { background-position: -1560px 50%; }    #S h2.reports:hover   { background-position: -1716px 50%; }
+#S h2.admin     { background-position: -1872px 50%; }    #S h2.admin:hover     { background-position: -2028px 50%; }
+
+
+#C .west { float: left; }
+#C .east { float: right; }
+#C .glue { white-space: nowrap; }
+#C .scrunch { margin-top: 0; }
+
+#C ul.notes  { background: #FFC; color: <tmpl_var InvalidColor>; border: thin solid <tmpl_var BorderColor>; margin: 0 0 .25em; padding: .5em .5em .5em 2em; font-size: 1.27em; font-weight: bold; overflow: hidden; word-wrap: break-word; }
+#C .notes li { margin: .5em 0; }
+
+#C h2, #C h3 { background: inherit; color: #369; margin: 0; font-weight: normal; font-family: Georgia,serif; text-transform: uppercase; }
+#C h2 { border-bottom: thin solid #CEE7FF; font-size: 2.72em; letter-spacing: 1px; word-spacing: 3px; }
+#C h3 { font-size: 1.27em; margin-top: 20px; }
+
+#C .finder { margin: 20px 0 0; border: 10px solid #DDD; }
+#C .pager { }/*:Krang::HTMLPager(db2)*/
+#C .panel { margin: 20px 0 0; text-align: right; }
+
+#C p, #C table { margin: 20px 0 0; }
+
+#C table      { width: 100%; table-layout: fixed; border-style: hidden; border-collapse: collapse; }
+#C table.list { border-bottom: 1px solid <tmpl_var BorderColor>; }
+#C thead      { background-color: #CEE7FF; border-style: hidden; }
+#C tr         { border-bottom: 1px solid <tmpl_var BorderColor>; }
+#C tr.meld    { border-bottom-style: hidden; }
+#C tr.hilite  { background-color: #FF9; }/*:this won't work in IE - fix(db2)*/
+#C th         { font-weight: bold; text-align: left; white-space: nowrap; }
+#C th.wrap    { white-space: normal; }
+#C th, #C td  { padding: .5em .25em; overflow: hidden; word-wrap: break-word; }
+#C .meld th, #C .meld td { padding-bottom: 0; }
+
+#C table table    { margin-top: 0; table-layout: auto; }/*:ONLY ElementEditor(db2)*/
+#C table table td { padding-left: 0; overflow: visible; word-wrap: normal; }/*:ONLY ElementEditor(db2)*/
+
+#C col.c-date    { width: 12em; }
+#C col.c-flag    { width:  2em; }
+#C col.c-id      { width:  6em; }
+#C col.c-link    { width: 10em; }
+#C col.c-stat    { width:  6em; }
+#C col.c-sum     { width:  6em; }
+#C col.c-big-sum { width:  8em; }
+#C col.c-thumb   { width:  4em; }
+#C col.c-type    { width:  5em; }
+#C col.c-user    { width:  8em; }
+
+#C col.c-deed  { width:  6em; }
+#C col.c-label { width: 14em; }
+#C col.c-mini  { width:  8em; }
+#C col.c-nano  { width:  3em; }
+
+#C col.tick { width: 2em; }
+#C tr .tick { padding-right: 0; padding-left: 0; text-align: center; }
+
+#C col.series { width: 6em; }
+#C tr .series { text-align: center; }
+
+
+#C .edit textarea { width: 100%; }
+
+#C .full input, #C .full select, #C .full textarea { width: 100%; }
+#C .demi input, #C .demi select, #C .demi textarea { width:  75%; }
+#C .half input, #C .half select, #C .half textarea { width:  50%; }
+#C .full .usual, #C .demi .usual, #C .half .usual  { width: auto; }
+
+
+#C .button { overflow: visible; width: auto !important; background: <tmpl_var BorderColor>; color: <tmpl_var ButtonColor>; margin: 0 8px; border: thin outset; padding: 1px; font-weight: bold; line-height: 1; }
+#C table .button { margin: 0; }
+
+
+#C .panel input      { overflow: visible; width: auto; background: <tmpl_var BorderColor>; color: <tmpl_var ButtonColor>; margin: 0 0 0 8px; border: thin outset; padding: 2px; font-weight: bold; }
+#C .panel input.west { margin-right: 8px; margin-left: 0; }
+#C .panel div.west   { text-align: left; }/*:IE(mac) Workspace+Desk(db2)*/
+
+#C .lame            { text-align: left; }
+#C .lame input.west { float: none; margin: 0; }
+
+
+/*(db2)Publisher/progress + ReportDownload/progress ONLY:*/
+#C .publish              { background-color: <tmpl_var BackgroundColor>; border: 1px solid <tmpl_var BorderColor>; padding: 0 24px 44px 24px; text-align: center; }
+#C #progress             { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; float: left; height: 15px; width: 400px; margin: 0 auto; border: 1px solid <tmpl_var BorderColor>; padding: 1px; text-align: left; }
+#C #progress_bar         { background-image: url("/images/progress_bg.gif"); background-repeat: repeat-x; color: <tmpl_var TextColor>; height: 15px; width: 0; overflow: hidden; border-right: 1px solid <tmpl_var BorderColor>; text-align: right; }
+#C #progress_bar_label   { height: 40px; padding: 0 0 5px 140px; text-align: left; vertical-align: bottom; }
+#C #progress_bar_percent { color: <tmpl_var LightColor>; float: left; clear: both; width: 60px; padding: 0 0 10px 140px; font-size: 1.45em; font-weight: bold; text-align: left; }
+#C .alertp               { background: #FFC; color: <tmpl_var InvalidColor>; margin: 4px 0 0; border: 1px solid <tmpl_var BorderColor>; padding: 24px; font-size: 1.27em; font-weight: bold; }/*:cf. lib/Krang/CGI/Publisher.pm(db2)*/
+
+
+/*(db2)ListUpload/check_data + ListUpload/commit_data ONLY:*/
+#C #upload_progress           { background: <tmpl_var BrightColor>; color: <tmpl_var LightTextColor>; height: 15px; width: 300px; border: 1px solid <tmpl_var BorderColor>; padding: 1px; text-align: left; }
+#C #upload_progress_bar       { background: <tmpl_var DarkColor>; color: <tmpl_var LightTextColor>; height: 15px; width: 0; overflow: hidden; text-align: right; }
+#C #upload_progress_bar_label { text-align: center; }
+#C .upload_error              { background: #FFC; color: <tmpl_var InvalidColor>; margin: 12px 0 0; border: 1px solid <tmpl_var BorderColor>; padding: 2px; }
+
+
+.alert { color: <tmpl_var AlertColor>; margin-bottom: 5px; font-weight: bold; }/*:???(db2)*/
+
+
+/*(db2)errors:*/
+#C .ERR-ROW th   { color: <tmpl_var InvalidColor>; }
+#C .ERR-ROW td * { background: #FFC; color: <tmpl_var InvalidColor>; }
+
+
+/*(db2)Bugzilla/edit ONLY:*/
+#C dl.eg        { background: <tmpl_var BackgroundColor>; margin: 12px 0 0; padding: 0; }
+#C dl.eg dt     { margin: 12px 0 0; font-weight: bold; }
+#C dl.eg .first { margin: 0; }
+#C dl.eg .bad   { color: #900; }
+#C dl.eg .good  { color: #090; }
+#C dl.eg dd     { margin: 0 0 0 12px; font-style: italic; }
+#C .ERR-ROW td p, #C .ERR-ROW td dl * { background: <tmpl_var BackgroundColor>; }/*:hack(db2)*/
+
+
+/*(db2)Krang::ElementClass::mark_form_invalid() ONLY:*/
+.invalid, .invalid textarea, .invalid input, .invalid select { background: #F50; }
+
+
+/*(db2)Publisher/progress ONLY:*/
+.solo body { margin-bottom: 0; border-bottom-width: 0; }
+.solo #C   { float: none; width: auto; margin-bottom: 0; }
+
+
+/*(db2)Debug/debug + Publisher/media_error ONLY:*/
+.wide body { width: auto; margin: 0; border: none; }
+.wide #C   { float: none; width: auto; margin: 0; }
+
+
+/* Global Busywait */
+#indicator     { background-color: #CEE7FF; color: #666; filter: alpha(opacity=90); opacity: .9; position: fixed; left: 0; bottom: 0; height: 3em; width: auto; border: 1px solid #369; padding: 0 1em; font-size: .91em; line-height: 3; font-weight: bold; white-space: nowrap; }
+#indicator img { padding: 0 1em 0 0; vertical-align: middle; }
+
+
+/******************
+ * Autocompletion *
+ ******************/
+input.autocomplete           { }
+div.autocomplete             { background-color: #F0F0F0; position: absolute; overflow: auto; max-height: 200px; width: 250px; margin: 0; border: 1px solid <tmpl_var BorderColor>; padding: 0; font-size: 1.27em; }
+div.autocomplete ul          { list-style: none; margin: 0; padding: 0; }
+div.autocomplete li          { display: block; margin: 0; padding: 2px; cursor: pointer; }
+div.autocomplete li.selected { background-color: <tmpl_var BackgroundColor>; }
+div.autocomplete ul.selector { list-style-type: none; margin: 0; padding: 0; }
+div.autocomplete ul.selector li.selected { background-color: #BFDFFF; }
+div.autocomplete ul.selector li { display: block; list-style-type: none; }
+div.autocomplete ul.selector li span.extra { color: #888; font-size: .91em; }
+div.autocomplete ul.selector li span.real_data { display: none; }
+
+
+/********************
+* Messages and Alerts
+ ********************/
+
+#messages, #alerts {
   position: absolute;
-	top: 23px; 
-	left: 400px;
-	width: 370px;
-  text-align:       right;
-  background-color: <tmpl_var BackgroundColor>;	 
-  }
-
-#header div.dkblu {	
-  position: absolute;
-  top:         40px;
-  left:      180px; 
-  border-top: <tmpl_var DarkColor> 1px solid;
-  background-color: <tmpl_var BackgroundColor>;  
-  height:           1px;
-  width:            590px; 
-}
-
-#header div.blue { 
-  position: absolute;
-  top:         43px;
-  left:      10px; 
-  height:          14px;  
-  background-color: <tmpl_var LightColor>;
-  width: 760px;
-}	
-
-#left-nav {
-  position:         absolute;
-  left:             10px;
-  top:              67px;
-  width:            157px;
-  background-color: <tmpl_var BackgroundColor>;
-}
-
-#content {
-  width:            590px;
-  margin-left:      168px;
-  background-color: <tmpl_var BackgroundColor>;  
-} 
-
-#footer {
-	background-color: transparent;
-   color:            <tmpl_var TextColor>;
-	width:            760px;
-	margin-top:        3px;
-	clear:            both;
-}
-
-#copy {
-	background-color: <tmpl_var LightColor>;
-   color:            <tmpl_var TextColor>;
-	padding-top:      4px;
-	padding-bottom:   4px;
-	float:            right;
-	width:            590px;  
-	text-align:       left;
-}
-
-#login {
-	position:          absolute;
-	left:              220px;
-	top:               100px;
-	width:             340px; 
-}
-
-#indicator {
-	position: fixed;
-	right:    10px;
-	top:      5px;
-    border:   1px solid <tmpl_var BorderColor>;
-    padding:  10px;
-}
-
-/*** General Classes ***/
-
-b {
-	font-weight:      bold;
-}
-
-i {
-	font-style: italic;
-}
-
-a img { border: 0; }
-
-p.logl {
-   float:             left;   
-	padding-left:       95px;
-	padding-top:        20px;
-	padding-bottom:     20px;
-}
-
-p.logr {
-   float:             right;   
-	padding-right:     40px;
-	padding-top:        20px;
-	padding-bottom:     20px;
-}
-
-div.publish {
-	position:          absolute;
-	left:              180px;
-	top:               10px;
-	width:             590px; 
-	text-align:        center;
-}
-
-div.box {
-  border-right:     1px <tmpl_var BorderColor> solid;
-  border-left:      1px <tmpl_var BorderColor> solid;
-  border-bottom:    1px <tmpl_var BorderColor> solid;
-  width:            588px;
-}
-
-div.boxb {
-  border-right:     1px <tmpl_var BorderColor> solid;
-  border-left:      1px <tmpl_var BorderColor> solid;
-  border-bottom:    1px <tmpl_var BorderColor> solid;
-  margin-top:       3px;
-  width:            588px;
-}
-
-div.boxc {
-  border:          1px <tmpl_var BorderColor> solid;
-  margin-top:      6px;
-  padding-top:     6px;
-  padding-bottom:  6px;
-  width:           588px;
-}
-
-div.boxc p{
-	padding:       3px 3px 0px 7px;
-	margin-bottom: 3px;
-}
-
-div.boxd {
-  border:     1px <tmpl_var BorderColor> solid;
-  margin-top:       6px;
-  padding-top:      6px;
-  width:            588px;
-}
-
-div.boxe {
-  border:          1px <tmpl_var BorderColor> solid;
-  margin-top:      6px;
-  width:           588px;
-}
-
-div.boxe p{
-	margin:       3px 3px 3px 3px;
-}
-
-form {
-	margin: 0px;
-	padding: 0px;
-}
-
-td, th {
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-}
-
-
-.left2 {
-  margin-top:	     0px;
-  height:           auto; 
-  padding-bottom:   3px;
-}
-
-/*** generic style palette ***/
-
-.light { 
-  background-color: <tmpl_var LightColor>;
-  color:            <tmpl_var TextColor>;
-  padding-top:          3px;
-  padding-left:        10px;
-  padding-bottom:       6px;
-  margin-top: 0px;
-}
-.light p {
-	margin-top:       0px;
-	margin-bottom:    5px;
-}
-
-.bright {
-  background-color: <tmpl_var BrightColor>;
-  color:            <tmpl_var TextColor>;
-}
-
-/*** Colored UI elements ***/
-.light-bar { 
-  background-color: <tmpl_var LightColor>;
-  color:            <tmpl_var TextColor>;
-  padding:          4px;
-  height:           12px;
-}
-
-.light-bar .left {
-  width:            49%;
-  float:            left;
-  text-align:       left; 
-}
-
-.light-bar .right {
-  width:            49%;
-  float:            right;
-  text-align:       right;
-}
-
-.dark-bar { 
-  background-color: <tmpl_var DarkColor>;
-  color:            <tmpl_var LightTextColor>;
-  padding:          4px 4px 0px 4px;
-  height:           20px;
-  font-weight:      bold;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-}
-
-.dark-bar p.left {
-	float:           left;
-	margin: 0px;
-}
-
-.dark-bar p.right {
-	float:           right;
-	margin: 0px;
-}
-
-.dark-bar p.center {
-	text-align:       center;
-	margin: 0px;
-}
-
-.dark-bar2 { 
-  background-color: <tmpl_var DarkColor>;
-  color:            <tmpl_var LightTextColor>;
-  padding:          4px;
-  height:           20px;
-  font-weight:      bold;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-  width:            576px;
-}
-
-.button-bar {
-  background-color: <tmpl_var BrightColor>;
-  color:            <tmpl_var TextColor>;
-  text-align:       right;
-  padding:          3px;
-  margin-top:       10px;
-}
-
-.button-bar input {
-  margin-left:      15px;
-}
-
-.form-head {
-  background-color: <tmpl_var LightColor>;
-  color:            <tmpl_var TextColor>;
-  border-top:       1px solid <tmpl_var BorderColor>;
-  text-align:       left;
-  padding: 			  4px;
-  margin-left:      8px;
-  margin-right:     8px;
-  margin-top:       5px; 
-  width:            571px; 
-     
-}
-
-.form-head2 {
-  background-color: <tmpl_var LightColor>;
-  color:            <tmpl_var TextColor>;
-  border-top:       1px solid <tmpl_var BorderColor>;
-  text-align:       left;
-  padding: 			  4px;
-  margin-left:      8px;
-  margin-right:     8px;
-  margin-top:       5px; 
-     
-}
-.form-cell {
-  border:         1px solid <tmpl_var BorderColor>;
-  border-collapse:collapse;
-  text-align:       left;
-  padding:          4px;
-  margin-left:      8px;
-  margin-right:     8px;   
-  vertical-align:   top;
-  background-color: <tmpl_var BackgroundColor>;
-}
-
-.tight-form-box {
-  border:         1px solid <tmpl_var BorderColor>;
-}
-
-.no-border { 
-  background-color: <tmpl_var BackgroundColor>;
-  color:            <tmpl_var TextColor>;
-  padding: 3px 12px 3px 10px;
-  height:           auto;
-}
-.no-border p.left {
-	float:           left;
-	margin: 0px;
-}
-
-.no-border p.right {
-	float:           right;
-	margin: 0px;
-}
-
-/*** prettier buttons ***/
-.button {
-   background-color: <tmpl_var BackgroundColor>;
-   color:            <tmpl_var ButtonColor>;
-   font-family:      Verdana,Helvetica,Arial,sans-serif;
-   font-size:        12px;
-}
-
-/*** form field classes ***/
-.invalid { 
-    background-color: <tmpl_var InvalidColor>
-}
-.invalid textarea { 
-    background-color: <tmpl_var InvalidColor>
-}
-.invalid input    { 
-    background-color: <tmpl_var InvalidColor>
-}
-.invalid select   {
-    background-color: <tmpl_var InvalidColor>
-}
-
-.alert {
-  color:          <tmpl_var AlertColor>;
-  font-weight:    bold;
-  margin-bottom:  5px;
-}
-
-.alertp {
-  position:      absolute;
-  color:         <tmpl_var AlertColor>;
-  font-weight:   bold;
-  width:        400px;
-  left:         275px;
-  top:          140px; 
-}
-
-/*** link styles ***/
-a:link { 
-  color:            <tmpl_var LinkColor>
-}
-a:visited { 
-  color:            <tmpl_var LinkColor>
-}
-a:active {
-  color:            <tmpl_var BrightColor>
-}
-
-.dark-bar a { 
-  color:            <tmpl_var LightTextColor>;
-  text-decoration:   none;
-}
-.dark-bar a:link { 
-  color:            <tmpl_var LightTextColor>;
-  text-decoration:   none;
-}
-.dark-bar a:visited { 
-  color:            <tmpl_var LightTextColor>;
-  text-decoration:   none;
-}
-.dark-bar a:active {
-  color:            <tmpl_var LightTextColor>;
-  text-decoration:   none;
-}
-
-/*** Template Chooser Styles ***/
-.tmpl_chooser_has_template { background-color: <tmpl_var LightColor>; }
-
-
-/*** Category Chooser Styles ***/
-.hpts-outer {
-     visibility:       hidden;
-     position:         absolute;
-     top:              0px;
-     left:             0px;
-     border:           2px outset <tmpl_var TextColor>;
-     background-color: <tmpl_var BackgroundColor>;
-     filter:           progid:DXImageTransform.Microsoft.dropShadow( Color=bababa,offx=3,offy=3,positive=true);
-}
-
-.hpts-inner {
-     overflow:         auto;
-     width:            225px;
-     height:           200px;
-}
-
-.hpts-title {
-     padding:          3px;
-     margin-bottom:    4px;     
-     background-color: <tmpl_var DarkColor>;
-     color:            <tmpl_var LightTextColor>;
-     width:            225px;
-}
-
-.hpts-bbar {
-    background-color: <tmpl_var BrightColor>;
-    color:            <tmpl_var TextColor>;
-    text-align:       right;
-    padding:          3px;
-    margin-top:       10px;
-    width:            225px;
-}
-
-.hpts-botbar {
-    background-color: <tmpl_var BrightColor>;
-    color:            <tmpl_var TextColor>;
-    width:            225px;
-    font-size:        7px;
-    padding:          3px;
-}
-
-.hpts-block {
-     margin-left:      24px;
-     display:          none;
-}
-
-.hpts-bbar .hpts-button {
-    margin-left:      15px;
-
-}
-
-.hpts-button {
-    background-color: <tmpl_var BackgroundColor>;
-    color:            <tmpl_var ButtonColor>;
-    font-family:      Verdana,Helvetica,Arial,sans-serif;
-}
-
-.hpts-label-selected {
-     background:       <tmpl_var LightColor>;
-}
-
-.hpts-label-unselected {
-     background:       <tmpl_var BackgroundColor>;
-}
-
-
-/*** New Left Nav Styles ***/
-
-.dark-bar-nav { 
-  background-color: <tmpl_var DarkColor>;
-  color:            <tmpl_var LightTextColor>;
-  padding:          4px 0px 0px 8px;
-  height:           20px;
-  font-weight:      bold;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-}
-
-.dark-bar-nav a:link { 
-  background-color: <tmpl_var DarkColor>;
-  color:            <tmpl_var LightTextColor>;
-  font-weight:      bold;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-  text-decoration:  none;
-}
-.dark-bar-nav a:visited { 
-  background-color: <tmpl_var DarkColor>;
-  color:            <tmpl_var LightTextColor>;
-  font-weight:      bold;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-}
-.dark-bar-nav a:active { 
-  background-color: <tmpl_var DarkColor>;
-  color:            <tmpl_var LightTextColor>;
-  font-weight:      bold;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-}
-.light-bar-nav { 
-  background-color: <tmpl_var LightColor>;
-  color:            <tmpl_var TextColor>;
-  padding:          4px 4px 0px 4px;
-  height:           20px;
-  font-weight:      bold;
-}
-.light-bar-nav img {
-	margin-left:    5px;
-	margin-right:   5px;
-}
-.form-cell-nav {
-  border:         1px solid <tmpl_var BorderColor>;
-  border-top:     none;
-  padding:        4px 24px;
-  line-height:    150%;
-  margin-bottom:  3px;
-}
-.plain-cell {
-  padding:        2px 24px;
-  line-height:    150%;
-  margin-bottom:       3px;
-}
-.blue-border {
-	background:    <tmpl_var BackgroundColor>;
-   height:       3px;
-}
-
-/*** Help Styles ***/
-
-#hheader {
-  margin: 			  10px; 
-  width:				  460px;
-  height:           47px; 
-  background-color: <tmpl_var BackgroundColor>;	
-}
-
-#hheader div.logo {
-	position: static;
-	left: 0px;
-	top: 15px;
-  background-color: <tmpl_var BackgroundColor>;	
-}
-
-#hheader div.dkblu {	
-  position: absolute;
-  top:         38px;
-  left:      180px; 
-  border-top: <tmpl_var DarkColor> 1px solid;
-  background-color: <tmpl_var BackgroundColor>;  
-  height:           1px;
-  width:            300px; 
-}
-
-#hheader div.blue { 
-  position: absolute;
-  top:         43px;
-  left:      20px; 
-  height:          14px;  
-  background-color: <tmpl_var LightColor>;
-  width: 460px;
-}	
-
-#hheader div.dark-bar {  
-  position: absolute;
-  top:         65px;
-  left:      20px; 
-  background-color: <tmpl_var DarkColor>;
-  color:            <tmpl_var LightTextColor>;
-  padding:          4px 4px 0px 4px;
-  height:           20px;
-  font-weight:      bold;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-  width: 453px;
-}
-
-div.boxh {
-  margin-left:      10px;
-  padding:          5px; 
-  border-right:     1px <tmpl_var BorderColor> solid;
-  border-left:      1px <tmpl_var BorderColor> solid;
-  border-bottom:    1px <tmpl_var BorderColor> solid;
-  width:            449px;
-}
-
-.helptitle {
-	font-weight:     bold;
-	font-size:       14px;
-}
-
-.helpsub {
-	font-weight:     bold;
-	font-size:       11px;	
-}
-
-.helpnote {
-	font-style:     italic;
-	font-size:       10px;	
-}
-
-.helpsubhead {
-	font-style:     italic;
-	font-size:       12px;	
-}
-
-a.helplink { 
-  color:            <tmpl_var LinkColor>;
-  text-decoration:  underline; 
-}
-a.helplink:visited { 
-  color:            <tmpl_var LinkColor>;
-  text-decoration:  underline;
-}
-a.helplink:active {
-  color:            <tmpl_var BrightColor>;
-  text-decoration:  underline;
-} 
-#hfooter {
-	background-color: transparent;
-    color:            <tmpl_var TextColor>;
-	width:            461px;
-	margin-top:        10px;
-	margin-left:      10px;
-}
-#hcopy {
-	background-color: <tmpl_var LightColor>;
-    color:            <tmpl_var TextColor>;
-	padding-top:      4px;
-	padding-bottom:   4px;
-	width:            460px;
-	font-size:         10px;  
-	text-align:       left;
-}
-
-/* styling for the auto-completer */
-div.autocomplete {
-    position:absolute;
-    width:250px;
-    background-color: <tmpl_var LightColor>;
-    border:1px solid <tmpl_var BorderColor>;
-    margin:0px;
-    padding:0px;
-    max-height: 200px;
-    overflow: auto;
-}
-div.autocomplete ul {
-    list-style-type:none;
-    margin:0px;
-    padding:0px;
-}
-div.autocomplete ul li.selected { 
-    background-color: <tmpl_var BackgroundColor>;
-}
-div.autocomplete ul li {
-    list-style-type:none;
-    display:block;
-    margin:0;
-    padding:2px;
-    cursor:pointer;
-}
+  width: 950px;
+}
+
+#messages .wrapper, #alerts .wrapper {
+  background-color: #E0F0FF;
+  filter: alpha(opacity=90);
+  opacity: .9;
+  width: 500px;
+  margin: 0 auto;
+  border: 1px solid <tmpl_var BorderColor>;
+}
+
+#messages .content, #alerts .content {
+  background: url("images/info.gif") no-repeat;
+  color: #000;
+  min-height: 50px;
+  margin: 10px 15px;
+  padding: 0 0 0 60px;
+  font-size: 1.3em;
+}
+
+#alerts .content {
+  background: url("images/alert.gif") no-repeat;
+}
+
+#messages .control, #alerts .control {
+  background-color: #CEE7FF;
+  padding: 5px 10px 5px 0;
+  text-align: right;
+}
+
+
+/******************
+ * PopUp Calendar *
+*******************/
+
+div.calendar                { position: relative; width: 200px; }
+.calendar, .calendar table  { font-size: 11px; color: #fff; cursor: default; background: #999; font-family: Helvetica, sans-serif; }
+/* "<<", "<", ">", ">>" buttons have this class */
+.calendar .button           { text-align: center; height: 15px; font-weight: bold; }
+.calendar .nav              { background: #999 url(images/cal_button_bg.gif) repeat-x bottom right; color: #690; font-size: 15px; padding: 0 2px 0 2px; }
+/* This holds the current "month, year" */
+.calendar thead .title      { font-weight: bold; text-align: center; font-size: 11px; background: #999; color: #fff; }
+/* Row <TR> containing navigation buttons */
+.calendar thead .headrow    { background: #778; color: #fff; }
+/* Row <TR> containing the day names */
+.calendar thead .daynames   { background: #bdf; }
+/* Cells <TD> containing the day names */
+.calendar thead .name       { background-color: #ddd; color: #369; text-align: center; font-family: Georgia, serif; font-size: 14px; }
+/* How do the buttons in header appear when hover */
+.calendar thead .hilite     { color: #000; }
+/* Active (pressed) buttons in header */
+.calendar thead .active     { color: #999; }
+/* Cells <TD> containing month days dates */
+.calendar tbody .day        { width: 2em; color: #690; text-align: center; padding: 2px 4px 2px 2px; }
+.calendar tbody .day.othermonth { font-weight: normal; }
+.calendar tbody td          { background-color: #fff; font-size: 11px; font-weight: bold; }
+/* Hovered cells <TD> */
+.calendar tbody td.hilite   { background-color: #ddd; color: #360; }
+/* Active (pressed) cells <TD> */
+.calendar tbody td.active   { background: #999; }
+/* Cell showing selected date */
+.calendar tbody td.selected { background-color: #ff9; color: #360; }
+/* Cells showing weekend days */
+.calendar tbody td.weekend, .calendar tbody td.oweekend { background-color: #cee7ff } 
+/* Cell showing selected date */
+.calendar tbody td.today    { color: #000; }
+.calendar tbody .disabled   { color: #999; }
+.calendar tbody .emptycell  { visibility: hidden; }
+/* Empty row (some months need less than 6 rows) */
+.calendar tbody .emptyrow   { display: none; }
+/* don't display this at all right now */
+.calendar tfoot             { display: none; }
+
+/* Combo boxes (menus that display months/years for direct selection) */
+.calendar .combo { position: absolute; display: none; top: 0px; left: 0px; width: 4em; cursor: default; border: 1px solid #999; background: #ddd; color: #000; font-size: 90%; z-index: 100; }
+.calendar .combo .label, .calendar .combo .label-IEfix { text-align: center; padding: 1px; }
+.calendar .combo .label-IEfix { width: 4em; }
+.calendar .combo .hilite { background: #cee7ff; }
+.calendar .combo .active { border-top: 1px solid #999; border-bottom: 1px solid #999; background: #cee7ff; font-weight: bold; }
+
+/* calendar and clock triggers */
+img.calendar_trigger:hover   { cursor: pointer }
+img.clock_trigger:hover      { cursor: pointer }
+div.clock_widget             { position: absolute; border: 1px solid #999; background-color: #cee7ff; padding: 3px;}
+
+
+/*************************
+ * HTML::PopupTreeSelect *
+ *************************/
+
+.hpts-outer
+{
+  z-index: 32767; visibility: hidden; position: absolute; background-color: <tmpl_var BackgroundColor>; top: 0; left: 0; border: 2px outset <tmpl_var TextColor>;
+  filter:progid:DXImageTransform.Microsoft.dropshadow(color=#BABABA,offX=3,offY=3,positive=true);
+}
+
+.hpts-outer *   { width: 225px; }
+.hpts-outer * * { width: auto; }
+
+.hpts-title { overflow: hidden; background: <tmpl_var DarkColor>; color: <tmpl_var LightTextColor>; margin-bottom: 4px; padding: 2px 0; font-weight: bold; white-space: nowrap; }
+.hpts-inner { overflow: auto; height: 200px; }
+.hpts-block { display: none; margin-left: 24px; }
+.hpts-inner span a { text-decoration: none; }
+.hpts-label-selected a { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
+.hpts-label-unselected a { }
+.hpts-bbar   { overflow: hidden; background: <tmpl_var BrightColor>; color: <tmpl_var TextColor>; margin-top: 10px; padding: 3px 0; text-align: right; white-space: nowrap; }
+.hpts-botbar { }
+.hpts-button { overflow: visible; width: auto !important; background: <tmpl_var BorderColor>; color: <tmpl_var ButtonColor>; margin: 0 0 0 8px; border: thin outset; padding: 1px; font-weight: bold; line-height: 1; }
+.hpts-bbar .hpts-button { margin: 0 4px 0 0; }
+
+/*(db2)hacks:*/
+#C .ERR-ROW .hpts-outer, #C .ERR-ROW .hpts-outer * { background: <tmpl_var BackgroundColor>; color: <tmpl_var TextColor>; }
+#C .ERR-ROW .hpts-title { background: <tmpl_var DarkColor>; color: <tmpl_var LightTextColor>; }
+#C .ERR-ROW .hpts-label-selected a { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
+#C .ERR-ROW .hpts-bbar { background: <tmpl_var BrightColor>; color: <tmpl_var TextColor>; }
+#C .ERR-ROW .hpts-button { background: <tmpl_var BorderColor>; color: <tmpl_var ButtonColor>; }
 

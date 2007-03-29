@@ -1,56 +1,64 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
-<html>
-<head>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="en-US" class="wide"><head>
+
 <title>Krang Debugger</title>
-<link rel="stylesheet" href="krang.css" type="text/css">
-</head>
-<body style="background-image: none">
+
+<link href="favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
+
+<link href="/krang.css" rel="stylesheet" type="text/css">
+
+</head><body><div id="C">
+
+<h2>
+Krang Debugger
+</h2>
 
 <form action="debug.pl" method="post" class="non_ajax">
 
-<div class="dark-bar">Krang Debugger</div>
-
 <p>
-
-This is the Krang Debugger.  You can type Perl code into the Perl
-Console and see the results in the Perl Screen.  The code you type is
-compiled into a subroutine and the return value is shown using
-Data::Dumper.  If your code die()s then the message is shown.  Both
-strict and warnings are off for your code.
-
+This is the Krang Debugger.
+You can type Perl code into the Perl Console and see the results in the Perl Screen.
+The code you type is compiled into a subroutine and the return value is shown using Data::Dumper.
+If your code die()s then the message is shown.
+Both strict and warnings are off for your code.
 </p>
 
-<div class="form-box">
-<table width="100%" cellpadding="5" cellspacing="0" border="0">
+<table class="full" summary="">
 
-<tr class="light">
-<td width="135" valign=top>Perl Screen:</td>
-<td><textarea readonly name=eval cols=80 rows=5><tmpl_var output></textarea>
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tr>
+<th>Perl Screen</th>
+<td><textarea name="eval" rows="5" cols="80" readonly><tmpl_var escape=html output></textarea>
 </td>
 </tr>
 
-<tr class="light">
-<td width="135" valign=top>Perl Console:</td>
-<td><textarea name=perl cols=60 rows=3></textarea><br>
-<input class=button type=submit value="eval">
+<tr>
+<th>Perl Console</th>
+<td>
+<textarea name="perl" rows="3" cols="60"></textarea>
+<br>
+<input value="eval" type="submit" class="button">
 </td>
 </tr>
 
-<tr class="light">
-<td width="135" valign=top>tail -n300 krang.log:</td>
-<td><textarea readonly name=log cols=80 rows=10><tmpl_var escape=html log></textarea></td>
+<tr>
+<th>tail -n300 krang.log</th>
+<td><textarea name="log" rows="10" cols="80" readonly><tmpl_var escape=html log></textarea></td>
 </tr>
 
-<tr class="light">
-<td width="135" valign=top>krang.conf:</td>
-<td><textarea readonly name=conf cols=80 rows=10><tmpl_var escape=html conf></textarea></td>
+<tr class="last">
+<th>krang.conf</th>
+<td><textarea name="conf" rows="10" cols="80" readonly><tmpl_var escape=html conf></textarea></td>
 </tr>
-
 
 </table>
-</div>
 
 </form>
 
-</body>
-</html>
+</div></body></html>
+

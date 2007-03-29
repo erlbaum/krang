@@ -1,69 +1,116 @@
 <tmpl_include header.tmpl>
 
-<script language=javascript>
-  delete_selected  = function () {
-        var myform = document.forms["current_desk_form"];
-        myform.submit();
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'desk_admin' );
+} );
+
+<tmpl_if existing_desk_loop>
+  delete_selected = function()
+  {
+    if ( !Krang.row_checked( 'current_desk_form', 'desk_delete_list' ) )
+      alert( 'Nothing selected to delete!' );
+    else if ( confirm( 'Are you SURE you want to delete these Desks?' ) )
+      Krang.form_submit('current_desk_form', {}, { to_top: false });
   }
 
-  reorder  = function () {
-        var myform = document.forms["current_desk_form"];
-        myform.rm.value = "reorder";
-        myform.submit();
+  reorder = function()
+  {
+    Krang.form_submit('current_desk_form', { rm: 'reorder' }, {}, { to_top: false });
   }
-
-  add_desk = function () {
-        var myform = document.forms["add_desk_form"];
-        myform.submit();
-  }
-
+</tmpl_if>
 </script>
 
-<div class="dark-bar"><p class="left">&nbsp;Desk Editor</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="help.pl?topic=desk_admin" class="help">Help</a>&nbsp;</p></div>
-<TMPL_IF existing_desk_loop>
-<form name="current_desk_form" method="POST" action="desk_admin.pl">
-<input type="hidden" name="total_desks" value="<tmpl_var total_desks>" override='1'>
-<input type="hidden" name="rm" value="delete" override='1'>
-<div class="box">
-<br>
- <table cellspacing="0" class="form-head" cellpadding="4">                                                                        
-      <tr>
-          <th width="240">Name</th>
-          <th width="202">Order</th>
-          <th><input type="checkbox" name="checkallbox" value="1" onClick="Krang.check_all(this, 'desk_delete_list')"></th>
-      </tr></table>                                       
-		<table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-		<tmpl_loop existing_desk_loop> 
-      <tr>
-          <td class="form-cell" width="240"><tmpl_var ESCAPE=HTML name></td>
-          <td class="form-cell" width="200"><select onchange="Krang.update_order(this, 'order_')" name="order_<tmpl_var desk_id>"><tmpl_loop desk_count_loop><option value="<tmpl_var count>" <tmpl_if selected>selected</tmpl_if>><tmpl_var count></tmpl_loop></td>
-          <td class="form-cell"><input type="checkbox" name="desk_delete_list" value="<tmpl_var ESCAPE=HTML desk_id>"></td>
-      </tr></tmpl_loop></table><br>
+<h2>
+Desk Editor
+</h2>
 
- <div class="button-bar"><input type="button" value="Reorder Desks" onClick="reorder()" class="button">&nbsp;&nbsp;&nbsp;<input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div>
+<h3>
+Current Desks
+</h3>
 
-</form>                                                                      
-<TMPL_ELSE>
- <div class="no-border">No Desks Found</div>
-</TMPL_IF>
-<br>
-<form name="add_desk_form" method="POST" action="desk_admin.pl">
-<input type="hidden" name="rm" value="add" override='1'>
-<table cellspacing="0" class="form-head" cellpadding="4">
-      <tr>
-          <th colspan=2 align=left>Add New Desk</th>
-      </tr></table>
-		<table cellspacing="0" width="571" class="form-cell">
-        <tr>
-            <td class="form-cell" width="240">Name:</td>
-            <td class="form-cell"><input <tmpl_if no_name>class="invalid"</tmpl_if> name="name" type="text" <tmpl_if no_name>value="<tmpl_var name>"</tmpl_if>></td>
-        </tr>
-        <tr>
-            <td class="form-cell" width="240">Order:</td>
-            <td class="form-cell"><tmpl_var order_selector></td>
-        </tr></table><br></div>
-		  
-		  <div class="button-bar"><input type="button" value="Add Desk" onclick="add_desk()" class="button"></div></form></div>
+<tmpl_unless existing_desk_loop>
+
+  <p>
+  No Desks Found
+  </p>
+
+<tmpl_else>
+
+  <form name="current_desk_form" action="desk_admin.pl" method="post">
+
+  <input name="rm" value="delete" type="hidden">
+  <input name="total_desks" value="<tmpl_var escape=html total_desks>" type="hidden">
+
+  <table class="list select_row" summary="">
+
+  <colgroup>
+  <col class="series">
+  <col>
+  <col class="tick">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="series">Order</th>
+  <th>Name</th>
+  <th class="tick"><input name="checkallbox" value="1" onclick="Krang.check_all(this,'desk_delete_list')" type="checkbox"></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop existing_desk_loop>
+    <tr>
+    <td class="series"><select name="order_<tmpl_var escape=html desk_id>" onchange="Krang.update_order(this,'order_')"><tmpl_loop desk_count_loop>
+      <option value="<tmpl_var escape=html count>"<tmpl_if selected> selected</tmpl_if>><tmpl_var escape=html count></option>
+    </tmpl_loop></select></td>
+    <td><tmpl_var escape=html name></td>
+    <td class="tick"><input name="desk_delete_list" value="<tmpl_var escape=html desk_id>" type="checkbox"></td>
+    </tr>
+  </tmpl_loop></tbody>
+
+  </table>
+
+  <div class="panel">
+  <input value="Reorder" onclick="reorder()" type="button" class="west">
+  <input value="Delete" onclick="delete_selected()" type="button">
+  </div>
+
+  </form>
+
+</tmpl_unless>
+
+<form name="add_desk_form" action="desk_admin.pl" method="post">
+
+<input name="rm" value="add" type="hidden">
+
+<h3>
+Add New Desk
+</h3>
+
+<table summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tr class="demi<tmpl_if no_name> ERR-ROW</tmpl_if>">
+<th>Name</th>
+<td><input name="name" value="<tmpl_var escape=html name>"></td>
+</tr>
+
+<tr class="last">
+<th>Order</th>
+<td><tmpl_var order_selector><!--:markup--></td>
+</tr>
+
+</table>
+
+<div class="panel">
+<input value="Add Desk" type="submit">
 </div>
 
+</form>
+
 <tmpl_include footer.tmpl>
+

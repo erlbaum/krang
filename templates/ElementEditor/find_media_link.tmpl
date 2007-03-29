@@ -1,130 +1,160 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript" type="text/javascript">
-  nav_edit_mode();
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  //Krang.Help.set( '' );
+} );
 
-  select_media = function (id) {
-        document.forms[0].rm.value = 'select_media';
-        document.forms[0].selected_media_id.value = id;
-        document.forms[0].submit();
+<tmpl_if advanced>
+  simple_search = function()
+  {
+    Krang.form_submit('select_media', { advanced: 0 }, { to_top: false });
   }
 
-  cancel_select = function () {
-        document.forms[0].rm.value = 'edit';
-        document.forms[0].path.value = '<tmpl_var parent_path>';
-        document.forms[0].submit();
-  }  
-
-  advanced_search = function () {
-    document.forms[0].advanced.value = 1;
-    document.forms[0].submit();
+  clear_advanced_search = function()
+  {
+    Krang.form_submit('clear_advanced_search_form' {}, { to_top: false });
   }
-
-  simple_search = function () {
-    document.forms[0].advanced.value = 0;
-    document.forms[0].submit();
+<tmpl_else>
+  advanced_search = function()
+  {
+    Krang.form_submit('select_media', { advanced: 1 }, { to_top: false });
   }
+</tmpl_if>
 
-  clear_advanced_search  = function () {
-    var myform = document.clear_advanced_search_form;
-    myform.submit();
+//[tmpl_if row_count] db2: not populated
+  select_media = function( id )
+  {
+    Krang.form_submit('select_media', { rm: 'select_media', selected_media_id: id });
   }
+//[/tmpl_if]
 
-  perform_search = function() {
-    var myform = document.select_media;
-    myform.submit();
-  }
-
+cancel_select = function()
+{
+  Krang.form_submit('select_media', { rm: 'edit', path: '<tmpl_var escape=js parent_path>' });
+}
 </script>
 
-<div class="dark-bar">
-  <p class="left">&nbsp;Select Media</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p>
+<h2>
+Select Media
+</h2>
+
+<form name="select_media" action="<tmpl_var escape=html action>" method="post">
+
+<input name="rm" value="find_media_link" type="hidden">
+<input name="selected_media_id" type="hidden">
+<input name="advanced" value="<tmpl_var escape=html advanced>" type="hidden">
+<input name="path" value="<tmpl_var escape=html path>" type="hidden">
+<input name="krang_pager_curr_page_num" value="" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+<tmpl_var hard_find_hidden>
+<tmpl_if advanced>
+  <input name="search_filter" value="" type="hidden">
+</tmpl_if>
+
+<div class="finder">
+
+<div class="east">
+<a href="javascript:<tmpl_if advanced>simple<tmpl_else>advanced</tmpl_if>_search()"><tmpl_if advanced>Simple<tmpl_else>Advanced</tmpl_if> Search</a>
 </div>
 
-<div class="box">
-<form name="select_media" method="post" action="<tmpl_var action>">
-  <input type="hidden" name="selected_media_id">
-  <input type="hidden" name="rm" value="find_media_link">
-  <input type="hidden" name="advanced" value="<tmpl_var escape=1 advanced>">
-  <input type="hidden" name="path" value="<tmpl_var escape=1 path>">
-  <tmpl_var hard_find_hidden>
-  <tmpl_if advanced>
-    <input type="hidden" name="search_filter" value="">
-    <table border="0" cellpadding="6" cellspacing="0" width="571">
-    <tr>
-      <td>SEARCH (<a href="javascript:simple_search()">Simple Search</a>)</td>
-    </tr>
-    <!-- Advanced Search Form -->
-    <tr>
-      <td>
-        <table border="0" cellspacing="5" cellpadding="2">
-        <tr>
-          <td>File:</td>
-          <td><input size="40" type="text" name="search_filename" value="<tmpl_var escape=HTML search_filename>"></td>
-        </tr>
-        <tr>
-          <td>Title:</td>
-          <td><input size="40" type="text" name="search_title" value="<tmpl_var escape=HTML search_title>"></td>
-        </tr>
-        <tr>
-          <td>ID:</td>
-          <td><input size="40" type="text" name="search_media_id" value="<tmpl_var escape=HTML search_media_id>"></td>
-        </tr>
-        <tr>
-          <td>Site/Category:</td>
-          <td><tmpl_var category_chooser></td>
-        </tr>
-        <tr>
-          <td>Creation Date:</td>
-          <td><tmpl_var date_chooser></td>
-        </tr>
-        <tr>
-          <td>Has No Attributes:</td>
-          <td><input type="checkbox" name="search_no_attributes" value="1"<tmpl_if search_no_attributes> checked</tmpl_if>></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>
-            <input type="button" value="Clear" onClick="clear_advanced_search()" class="button">
-            &nbsp;
-            <input type="button" value="Search" onclick="perform_search()" class="button">
-          </td>
-        </tr>
-        </table>
-      </td>
-    </tr>
-    </table>
-  </div>
-  <tmpl_else>
-  <div class="boxb"> 
-   <div class="light">
-    <p>SEARCH (<a href="javascript:advanced_search()">Advanced Search</a>)</p>
-    <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-    <input type="button" value="Search" onclick="perform_search()" class="button">
-   </div>
-  </div>
-  </tmpl_if>
+<h3>
+<tmpl_if advanced>
+  Advanced
+<tmpl_else>
+  Simple
+</tmpl_if>
+Search
+</h3>
 
-  <!-- Krang::HTMLPager params -->
-  <input type="hidden" name="krang_pager_curr_page_num" value="">
-  <input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-  <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-  <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+<tmpl_if advanced>
+
+  <table summary="">
+
+  <colgroup>
+  <col class="c-label">
+  <col>
+  </colgroup>
+
+  <tbody class="demi">
+  <tr>
+  <th>File</th>
+  <td><input name="search_filename" value="<tmpl_var escape=html search_filename>"></td>
+  </tr>
+
+  <tr>
+  <th>Title</th>
+  <td><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
+  </tr>
+
+  <tr>
+  <th>Media ID</th>
+  <td><input name="search_media_id" value="<tmpl_var escape=html search_media_id>"></td>
+  </tr>
+
+  <tr>
+  <th>Site/Category</th>
+  <td><tmpl_var category_chooser></td>
+  </tr>
+  </tbody>
+
+  <tbody>
+  <tr>
+  <th>Creation Date</th>
+  <td><tmpl_var date_chooser></td>
+  </tr>
+
+  <tr>
+  <th>Without Attributes</th>
+  <td><input name="search_no_attributes" value="1" type="checkbox"<tmpl_if search_no_attributes> checked</tmpl_if>></td>
+  </tr>
+
+  <tr class="last">
+  <td colspan="2" style="text-align:right">
+  <input value="Clear" onclick="clear_advanced_search()" type="button" class="button">
+  <input value="Search" type="submit" class="button">
+  </td>
+  </tr>
+  </tbody>
+
+  </table>
+
+<tmpl_else>
+
+  <p>
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+  <input value="Search" type="submit" class="button">
+  </p>
+
+</tmpl_if>
+
+</div>
+
 </form>
 
-<form name="clear_advanced_search_form" method="POST" action="<tmpl_var action>">
-  <input type="hidden" name="rm" value="find_media_link">
-  <input type="hidden" name="path" value="<tmpl_var path>">
-  <input type="hidden" name="advanced" value=1>
-  <input type="hidden" name="search_filter" value="">
-</form>
+<div class="pager">
 
+<!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
+<!--:Krang::HTMLPager-->
+
 </div>
 
-<div class="button-bar">
-    <input type="button" value="Cancel" onclick="cancel_select()" class="button">
-</div>
+<div class="panel lame"><form name="ignoreme">
+<input value="Cancel" onclick="cancel_select()" type="button" class="west">
+</form></div>
 
+<tmpl_if advanced>
+  <form name="clear_advanced_search_form" action="<tmpl_var escape=html action>" method="post">
+  <input name="rm" value="find_media_link" type="hidden">
+  <input name="path" value="<tmpl_var escape=html path>" type="hidden">
+  <input name="advanced" value="1" type="hidden">
+  <input name="search_filter" value="" type="hidden">
+  </form>
+</tmpl_if>
 
 <tmpl_include footer.tmpl>
+
