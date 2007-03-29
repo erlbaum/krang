@@ -90,6 +90,7 @@ sub output {
     $template->param(instance_display_name => InstanceDisplayName)
       if $template->query(name => 'instance_display_name');
 
+    # add the message and alert loops
     if ($template->query(name => 'header_message_loop')) {
         $template->param( header_message_loop => [ map { { message => $_ } } get_messages() ] );
         clear_messages();
