@@ -47,8 +47,8 @@ Krang.onload = function(code) {
     Open the url into a new popup window consistently
 */
 Krang.popup = function(url) {
-    var win = window.open( url, 'thewindow', 'width=500,height=500,top=0,left=200,scrollbars' );
-    win.focus();
+    var win = window.open( url, 'thewindow', 'width=500,height=500,top=0,left=200,resizable,scrollbars,status' );
+    if ( win ) win.focus();
 };
 
 /*
@@ -595,12 +595,12 @@ Krang.preview = function(type, id) {
             + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) );
 
     var instance = Krang.instance;
-    // IE has problems with some characters that can appear in the instance name
+    // remove problematic characters for use as window name (IE may otherwise choke)
     instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
 
     var pop = window.open( url, ( instance + 'preview' ) );
 
-    pop.focus();
+    if ( pop ) pop.focus();
 }
 
 /*
@@ -779,5 +779,4 @@ Krang.Widget.update_time_chooser = function(inputName) {
 
     $(inputName).value = new_value;
 };
-    
 
