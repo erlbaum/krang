@@ -89,16 +89,14 @@ var rules = {
     },
     // if a checkbox is selected in this table, then highlight
     // the row that checkbox belongs to
-    'table.select_row input[type="checkbox"]' : function(el) {
+    'table.select_row tbody input[type="checkbox"]' : function(el) {
         el.observe('change', function(event) {
             var clicked = Event.element(event);
-            if( clicked.tagName == 'INPUT' && clicked.type == 'checkbox' ) {
-                var row = clicked.up('tr');
-                if( clicked.checked ) {
-                    row.addClassName('hilite');
-                } else {
-                    row.removeClassName('hilite');
-                }
+            var row = clicked.up('tr');
+            if( clicked.checked ) {
+                row.addClassName('hilite');
+            } else {
+                row.removeClassName('hilite');
             }
         }.bindAsEventListener(el));
     }
