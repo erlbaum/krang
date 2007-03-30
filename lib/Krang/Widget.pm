@@ -438,7 +438,7 @@ sub time_chooser {
                 <option>AM</option> <option>PM</option>
             </select>
         </div>
-        <script type="text/javascript">Krang.Widget.time_chooser('$name')</script>
+        <script type="text/javascript">Krang.onload(function() { Krang.Widget.time_chooser('$name')} );</script>
     |;
 }
 
