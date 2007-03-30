@@ -16,6 +16,10 @@ var Krang = {};
     for which to apply the behaviors.
 */
 Krang.load = function(target) {
+    // show the messages and alerts if there are any
+    Krang.Messages.show();
+    Krang.Messages.show('alerts');
+
     // apply our registered behaviours
     Behaviour.apply(target);
 
@@ -24,10 +28,6 @@ Krang.load = function(target) {
         var code = Krang.onload_code.pop();
         if( code ) code();
     }
-
-    // show the messages and alerts if there are any
-    Krang.Messages.show();
-    Krang.Messages.show('alerts');
 };
 
 /*
@@ -497,7 +497,8 @@ Krang.Messages = {
         var my_stack = Krang.Messages.stack[level];
         if( my_stack.length ) {
             var content = '';
-            for(var i=0; i< my_stack.length; i++) {
+            var size = my_stack.length;
+            for(var i=0; i< size; i++) {
                 var msg = my_stack.pop();
                 if( msg ) content = content + '<p>' + msg + '</p>';
             }
