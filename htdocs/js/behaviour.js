@@ -15,6 +15,8 @@ var Behaviour = {
     apply : function(el) {
         Behaviour.rules.each(function(pair) { 
             var rule = pair.key;
+//var start_time = new Date().valueOf();
+//console.log('applying: ' + rule);
             var behaviour = pair.value;
             // if we have an element, use Element.getElementsBySelector()
             // else use $$() to find the targets
@@ -28,6 +30,8 @@ var Behaviour = {
             if( targets.size() > 0 ) {
                 targets.each(function(target) { behaviour(target) });
             }
+//var end_time = new Date().valueOf();
+//console.log('  took: ' + (end_time - start_time));
         });
     }
 };
