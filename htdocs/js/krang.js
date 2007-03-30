@@ -561,8 +561,14 @@ Krang.check_all = function( checkbox, prefix ) {
 
     for ( var i = 0; i < form.elements.length; i++ ) {
         var el = form.elements[ i ];
-        if ( el.type == 'checkbox' && el.name && el.name.indexOf( prefix ) == 0 ) 
+        if ( el.type == 'checkbox' && el.name && el.name.indexOf( prefix ) == 0 ) {
             el.checked = checkbox.checked;
+            var row = el.up('tr');
+            if( checkbox.checked )
+                row.addClassName('hilite');
+            else
+                row.removeClassName('hilite');
+        }
     }
 };
 
