@@ -962,14 +962,18 @@ sub autocomplete_values {
             my $answer = lc($row->[$pos]);
             # remove any potential file suffixes
             $answer =~ s/\.\w{3,5}$//;
+            # remove these characters
+            $answer =~ s/['"\.\,:]//g;
 
             # split on '_' or \s to make words and only keep the ones that
             # start with our phrase
             foreach (split(/(?:_|\s|\/)+/, $answer)) {
                 my $w = lc($_);
-                $words{$w} = 1 if( index($w, $phrase) == 0 );
+                if( index($w, $phrase) == 0 ) {
+                    $words{$w} = 1;
+                }
             }
-            # if it has an '_' and no spaces, keep the whole word
+            # if it has an '_' and no spaces, keep the whole word as well
             if( $answer =~ /_/ && $answer !~ /\s/ && ( index($answer, $phrase) == 0 ) ) {
                 $words{$answer} = 1;
             }
