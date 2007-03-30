@@ -286,8 +286,9 @@ sub forgot_pw {
 
             my $msg_tmpl = $self->load_tmpl('forgot_pw_email.tmpl');
             $msg_tmpl->param(
-                site_url  => $site_url,
-                ticket    => $ticket,
+                site_url => $site_url,
+                ticket   => $ticket,
+                username => $user->login,
             );
 
             $sender->MailMsg({
