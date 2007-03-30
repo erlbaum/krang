@@ -24,7 +24,8 @@ Krang.load = function(target) {
     Behaviour.apply(target);
 
     // run any code from Krang.onload()
-    for(var i=0; i< Krang.onload_code.length; i++) {
+    var size = Krang.onload_code.length;
+    for(var i=0; i< size; i++) {
         var code = Krang.onload_code.pop();
         if( code ) code();
     }
