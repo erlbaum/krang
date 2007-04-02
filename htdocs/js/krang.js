@@ -242,7 +242,7 @@ Krang.ajax_update = function(args) {
             evalScripts : true,
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
-            onSuccess   : function() { 
+            onSuccess   : function(transport, json) { 
                 Krang.Nav.edit_mode(false); 
                 if(to_top) Krang.to_top();
                 // wait 12 ms so we know that the JS in our request has been evaled
