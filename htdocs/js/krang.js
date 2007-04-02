@@ -758,7 +758,9 @@ Krang.Widget.date_chooser = function(inputName) {
         ifFormat    : "%m/%d/%Y",
         button      : inputName + '_trigger',
         weekNumbers : false,
-        showOthers  : true
+        showOthers  : true,
+        align       : 'BR',
+        cache       : true
     });
 };
 
@@ -803,12 +805,11 @@ Krang.Widget.time_chooser = function(inputName) {
             current = input.value;
             var regex = /^(\d+):(\d+)\s*(AM|PM)$/i;
             if( regex.exec(current) ) {
-                hour.value   = RegExp.$1;
-                minute.value = RegExp.$2;
+                hour.value   = RegExp.$1 || '';
+                minute.value = RegExp.$2 || '';
                 ampm.value   = RegExp.$3.toUpperCase();
             } else if(! current ) {
-                // set the 1:00 AM since that's what the dropdown default to
-                input.value = '1:00 AM';
+                input.value = '';
             }
             
             clock.show();
@@ -816,9 +817,12 @@ Krang.Widget.time_chooser = function(inputName) {
     });
 };
 Krang.Widget.update_time_chooser = function(inputName) {
-    var clock = $(inputName + '_clock');
-    var new_value = clock.down('select', 0).value + ':' + clock.down('select', 1).value + ' ' + clock.down('select', 2).value;
-
-    $(inputName).value = new_value;
+    var clock  = $(inputName + '_clock');
+    var hour   = clock.down('select', 0).value;
+    var minute = clock.down('select', 1).value;
+    var ampm   = clock.down('select', 2).value;
+    if( hour && minute && ampm ) {
+        $(inputName).value = hour + ':' + minute + ' ' + ampm;
+    }
 };
 
