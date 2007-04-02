@@ -1983,6 +1983,7 @@ Calendar.setup = function (params) {
                                 cal.setDate(params.date);
                         cal.hide();
                 }
+
                 if (params.multiple) {
                         cal.multiple = {};
                         for (var i = params.multiple.length; --i >= 0;) {
@@ -1991,20 +1992,31 @@ Calendar.setup = function (params) {
                                 cal.multiple[ds] = d;
                         }
                 }
-                cal.showsOtherMonths = params.showOthers;
-                cal.yearStep = params.step;
-                cal.setRange(params.range[0], params.range[1]);
-                cal.params = params;
-                cal.setDateStatusHandler(params.dateStatusFunc);
-                cal.getDateText = params.dateText;
-                cal.setDateFormat(dateFmt);
-                if (mustCreate)
-                        cal.create();
-                cal.refresh();
-                if (!params.position)
-                        cal.showAtElement(params.button || params.displayArea || params.inputField, params.align);
-                else
-                        cal.showAt(params.position[0], params.position[1]);
+
+                // only open a new calendar if the window.calendar_input points
+                // to a different input. This is to allow clicking the calendar trigger
+                // twice to close it
+                if( window.calendar_input == dateEl ) {
+                    cal.hide();
+                    window.calendar_input = null;
+                } else {
+                    window.calendar_input = dateEl;
+                    cal.showsOtherMonths = params.showOthers;
+                    cal.yearStep = params.step;
+                    cal.setRange(params.range[0], params.range[1]);
+                    cal.params = params;
+                    cal.setDateStatusHandler(params.dateStatusFunc);
+                    cal.getDateText = params.dateText;
+                    cal.setDateFormat(dateFmt);
+                    if (mustCreate) {
+                            cal.create();
+                    }
+                    cal.refresh();
+                    if (!params.position)
+                            cal.showAtElement(params.button || params.displayArea || params.inputField, params.align);
+                    else
+                            cal.showAt(params.position[0], params.position[1]);
+                }
                 return false;
         };
 
