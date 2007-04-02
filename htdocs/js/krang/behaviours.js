@@ -36,8 +36,9 @@ var rules = {
         // (like sending the request to a new window via Krang.submit_form_new_window )
         el.old_submit = el.submit;
         el.non_ajax_submit = function() {
-            if( !this.old_onsubmit || this.old_onsubmit() ) 
+            if( !this.old_onsubmit || this.old_onsubmit() ) {
                 this.old_submit();
+            }
         }.bind(el);
 
         // Krang likes to call submit() directly on forms
@@ -45,8 +46,9 @@ var rules = {
         // than a user clicking on a 'submit' button. So we put the magic in 
         // onsubmit() and then have submit() call onsubmit().
         el.onsubmit = function(options) {
-            if( !this.old_onsubmit || this.old_onsubmit() )
+            if( !this.old_onsubmit || this.old_onsubmit() ) {
                 Krang.ajax_form_submit(this, options);
+            }
             return false;
         }.bind(el);
         el.submit = function(options) {
@@ -99,6 +101,14 @@ var rules = {
                 row.removeClassName('hilite');
             }
         }.bindAsEventListener(el));
+    },
+    '#error_msg_trigger' : function(el) {
+        Krang.Error.modal = new Control.Modal(el, {
+            opacity  : .6,
+            zindex   : 999,
+            position : 'absolute',
+            mode     : 'named'
+        });
     }
 };
 Behaviour.register(rules);

@@ -164,11 +164,11 @@ Krang.ajax_request = function(args) {
             },
             onFailure   : function(transport, e) { 
                 failure(transport, e);
-                Krang.show_error(e);
+                Krang.Error.show();
             },
             onException : function(transport, e) { 
                 failure(transport, e);
-                Krang.show_error(e);
+                Krang.Error.show();
             }
         }
     );
@@ -199,6 +199,9 @@ Krang.ajax_request = function(args) {
         onComplete : function(args, transport, json) {
           // do something
         },
+        onSuccess  : function(args, transport, json) {
+          // do something
+        },
         onFailure  : function(transport, exception) {
           // do something
         }
@@ -211,7 +214,8 @@ Krang.ajax_update = function(args) {
     var target    = args['target'];
     var indicator = args['indicator'];
     var complete  = args['onComplete'] || Prototype.emptyFunction;
-    var failure   = args['onFailure'] || Prototype.emptyFunction;
+    var success   = args['onSuccess']  || Prototype.emptyFunction;
+    var failure   = args['onFailure']  || Prototype.emptyFunction;
     var to_top    = args['to_top'] == false ? false : true; // defaults to true
 
     // tell the user that we're doing something
@@ -238,8 +242,8 @@ Krang.ajax_update = function(args) {
             evalScripts : true,
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
-            onSuccess   : function() { Krang.Nav.edit_mode(false) },
-            onComplete  : function(transport, json) {
+            onSuccess   : function() { 
+                Krang.Nav.edit_mode(false); 
                 if(to_top) Krang.to_top();
                 // wait 12 ms so we know that the JS in our request has been evaled
                 // since Prototype will wait 10 gives for the Browser to update
@@ -247,19 +251,25 @@ Krang.ajax_update = function(args) {
                 setTimeout(function() {
                     // reapply any dynamic bits to the target that was updated
                     Krang.load(target);
-                    // hide the indicator
-                    Krang.hide_indicator(indicator);
-                    // do whatever else the user wants
-                    complete(args, transport, json);
+                    // user callback
+                    success(args, transport, json);
                 }, 12);
             },
+            onComplete  : function(transport, json) {
+                // user callback
+                complete(args, transport, json);
+                // hide the indicator
+                Krang.hide_indicator(indicator);
+            },
             onFailure   : function(transport, e) { 
+                // user callback
                 failure(transport, e);
-                Krang.show_error(e);
+                Krang.Error.show();
             },
             onException : function(transport, e) { 
+                // user callback
                 failure(transport, e);
-                Krang.show_error(e);
+                Krang.Error.show();
             }
         }
     );
@@ -414,14 +424,14 @@ Krang.update_progress = function(count, total, label) {
 };
 
 /*
-    Krang.show_error
-    Shows an error to the user in the UI
+    Krang.Error.show()
+    Shows an error to the user in the UI (an ISE)
 */
-Krang.show_error = function(msg) {
-    var msg = "<h3>Whoops!</h3><strong>An error has occurred on the server.</strong><br>";
-    msg += "Please notify the administrator of the time this occurred and what you were trying to do.<br>";
-    msg += "<em>Thank you and sorry for the inconvenience.</em>";
-    alert(msg);
+Krang.Error = {
+    show : function() {
+        Krang.Error.modal.open();
+    },
+    modal : null
 };
 
 /*
