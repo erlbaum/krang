@@ -398,7 +398,7 @@ sub time_chooser {
     my $current_date = localtime();
 
     unless ($nochoice) {
-        $hour ||= $current_date->hour();
+        $hour   ||= $current_date->hour();
         $minute ||= $current_date->minute();
     }
 
@@ -414,12 +414,14 @@ sub time_chooser {
         <img src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div style="display:none" class="clock_widget" id="${name}_clock">
             <select name="${name}_hour" disabled="disabled" onChange="Krang.Widget.update_time_chooser('$name');">
+                <option value="">Hour</option>
                 <option>1</option> <option>2</option>  <option>3</option>  <option>4</option>
                 <option>5</option> <option>6</option>  <option>7</option>  <option>8</option>
                 <option>9</option> <option>10</option> <option>11</option> <option>12</option>
             </select>
             :
             <select name="${name}_minute" disabled="disabled" onChange="Krang.Widget.update_time_chooser('$name');">
+                <option value="">Minute</option>
                 <option>00</option> <option>01</option> <option>02</option> <option>03</option> <option>04</option>
                 <option>05</option> <option>06</option> <option>07</option> <option>08</option> <option>09</option>
                 <option>10</option> <option>11</option> <option>12</option> <option>13</option> <option>14</option>
