@@ -110,9 +110,9 @@ sub render {
 
     if ($depth == 1) {
         if ($index == 1) {
-            $pre = qq{<div class="first nav_panel"><h2 class="$class">$name</h2><div class="contain"><dl>\n<dt>};
+            $pre = qq{<div class="first nav_panel"><h2 class="$class"><span>$name</span></h2><div><dl>\n<dt>};
         } else {
-            $pre = qq{<div class="nav_panel"><h2 class="$class">$name</h2><div class="contain"><dl>\n<dt>};
+            $pre = qq{<div class="nav_panel"><h2 class="$class"><span>$name</span></h2><div><dl>\n<dt>};
         }
         $post = qq{</dt>\n</dl></div></div>\n\n};
     } elsif ($depth == 2) {
@@ -121,7 +121,7 @@ sub render {
         } else {
             $pre = $name;
         }
-   } else {
+    } else {
        $pre = $name;
     }
 
