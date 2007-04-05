@@ -103,7 +103,8 @@ Krang.my_prefs = function() {
     in mind.
     Takes the following args in it's hash:
 
-    url       : the full url of the request (required)
+    url       : the url of the request (required)
+    params    : a hash of params for the request
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
     onComplete: a callback function to be executed after the normal processing (optional)
                 Receives as arguments, the same args passed into ajax_update the AJAX transport
@@ -114,6 +115,10 @@ Krang.my_prefs = function() {
 
     Krang.ajax_request({
         url        : '/app/some_mod/something',
+        params     : {
+            rm  : 'foo',
+            bar : '123'
+        },
         indicator  : 'add_indicator',
         onComplete : function(args, transport, json) {
             // do something
@@ -127,6 +132,7 @@ Krang.my_prefs = function() {
 */
 Krang.ajax_request = function(args) {
     var url       = args['url'];
+    var params    = args['params'] || {};
     var indicator = args['indicator'];
     var complete  = args['onComplete'] || Prototype.emptyFunction;
     var failure   = args['onFailure'] || Prototype.emptyFunction;
@@ -135,18 +141,12 @@ Krang.ajax_request = function(args) {
     Krang.show_indicator(indicator);
 
     // add the ajax=1 flag to the existing query params
-    var url_parts = url.split("?");
-    var query_params;
-    if( url_parts[1] == null || url_parts == '' ) {
-        query_params = 'ajax=1';
-    } else {
-        query_params = url_parts[1] + '&ajax=1';
-    }
+    params['ajax'] = 1;
 
     new Ajax.Request(
-        url_parts[0],
+        url,
         {
-            parameters  : query_params,
+            parameters  : params,
             evalScripts : true,
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
@@ -180,7 +180,8 @@ Krang.ajax_request = function(args) {
     in mind.
     Takes the following args in it's hash:
 
-    url       : the full url of the request (required)
+    url       : the url of the request (required)
+    params    : a hash of params for the request
     target    : the id of the target element receiving the contents (optional defaults to 'C')
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
     to_top    : whether or not the page should scroll back up to the top after the update.
@@ -194,6 +195,10 @@ Krang.ajax_request = function(args) {
 
     Krang.ajax_update({
         url        : '/app/some_mod/something',
+        params     : {
+            rm  : 'foo',
+            bar : '123'
+        },
         target     : 'target_name',
         indicator  : 'add_indicator',
         onComplete : function(args, transport, json) {
@@ -211,6 +216,7 @@ Krang.ajax_request = function(args) {
 */
 Krang.ajax_update = function(args) {
     var url       = args['url'];
+    var params    = args['params'] || {};
     var target    = args['target'];
     var indicator = args['indicator'];
     var complete  = args['onComplete'] || Prototype.emptyFunction;
@@ -218,17 +224,12 @@ Krang.ajax_update = function(args) {
     var failure   = args['onFailure']  || Prototype.emptyFunction;
     var to_top    = args['to_top'] == false ? false : true; // defaults to true
 
+
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
 
     // add the ajax=1 flag to the existing query params
-    var url_parts = url.split("?");
-    var query_params;
-    if( url_parts[1] == null || url_parts == '' ) {
-        query_params = 'ajax=1';
-    } else {
-        query_params = url_parts[1] + '&ajax=1';
-    }
+    params['ajax'] = 1;
 
     // the default target
     if( target == null || target == '' )
@@ -236,9 +237,9 @@ Krang.ajax_update = function(args) {
 
     new Ajax.Updater(
         { success : target },
-        url_parts[0],
+        url,
         {
-            parameters  : query_params,
+            parameters  : params,
             evalScripts : true,
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
@@ -288,19 +289,6 @@ Krang.ajax_update = function(args) {
 */
 Krang.ajax_form_submit = function(form, options) {
     if( options == null ) options = {};
-    Krang.ajax_update({
-        url       : Krang.form_as_url(form),
-        target    : Krang.class_suffix(form, 'for_'),
-        indicator : Krang.class_suffix(form, 'show_'),
-        to_top    : options.to_top
-    });
-};
-
-/*
-    Krang.form_as_url(form)
-    Create a URL representation of a current form state
-*/
-Krang.form_as_url = function(form) {
     var url;
     if( form.action ) {
         url = form.readAttribute('action');
@@ -309,8 +297,14 @@ Krang.form_as_url = function(form) {
         // remove any possible query bits
         url = url.replace(/\?.*/, '');
     }
-    url = url + "?" + Form.serialize(form);
-    return url;
+        
+    Krang.ajax_update({
+        url       : url,
+        params    : Form.serialize(form, true),
+        target    : Krang.class_suffix(form, 'for_'),
+        indicator : Krang.class_suffix(form, 'show_'),
+        to_top    : options.to_top
+    });
 };
 
 /*
