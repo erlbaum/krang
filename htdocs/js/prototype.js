@@ -646,7 +646,7 @@ Object.extend(Hash, {
         else {
         	key = encodeURIComponent(pair.key);
           values.each(function(value) {
-            value = value != undefined ? encodeURIComponent(value) : '';
+            value = value != undefined ? value : '';
             parts.push(key + '=' + encodeURIComponent(value));
           });
           return;
@@ -815,6 +815,7 @@ Ajax.Base.prototype = {
     this.options.method = this.options.method.toLowerCase();
     if (typeof this.options.parameters == 'string')
       this.options.parameters = this.options.parameters.toQueryParams();
+
   }
 }
 
@@ -842,7 +843,9 @@ Ajax.Request.prototype = Object.extend(new Ajax.Base(), {
       this.method = 'post';
     }
 
+console.log($H(params).inspect());
     params = Hash.toQueryString(params);
+console.log(params);
     if (params && /Konqueror|Safari|KHTML/.test(navigator.userAgent)) params += '&_='
 
     // when GET, append parameters to URL
