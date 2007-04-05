@@ -16,10 +16,6 @@ var Krang = {};
     for which to apply the behaviors.
 */
 Krang.load = function(target) {
-    // show the messages and alerts if there are any
-    Krang.Messages.show();
-    Krang.Messages.show('alerts');
-
     // apply our registered behaviours
     Behaviour.apply(target);
 
@@ -29,6 +25,10 @@ Krang.load = function(target) {
         var code = Krang.onload_code.pop();
         if( code ) code();
     }
+
+    // show messages and alerts that have been added
+    Krang.Messages.show();
+    Krang.Messages.show('alerts');
 };
 
 /*
@@ -249,17 +249,22 @@ Krang.ajax_update = function(args) {
                 // since Prototype will wait 10 gives for the Browser to update
                 // it's DOM
                 setTimeout(function() {
-                    // reapply any dynamic bits to the target that was updated
-                    Krang.load(target);
                     // user callback
                     success(args, transport, json);
                 }, 12);
             },
             onComplete  : function(transport, json) {
-                // user callback
-                complete(args, transport, json);
-                // hide the indicator
-                Krang.hide_indicator(indicator);
+                // wait 12 ms so we know that the JS in our request has been evaled
+                // since Prototype will wait 10 gives for the Browser to update
+                // it's DOM
+                setTimeout(function() {
+                    // reapply any dynamic bits to the target that was updated
+                    Krang.load(target);
+                    // user callback
+                    complete(args, transport, json);
+                    // hide the indicator
+                    Krang.hide_indicator(indicator);
+                }, 12);
             },
             onFailure   : function(transport, e) { 
                 // user callback
