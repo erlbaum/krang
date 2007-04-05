@@ -215,6 +215,19 @@ sub save_stay_add {
     my $user = $session{EDIT_USER} || 0;
     croak("Can't retrieve EDIT_USER from session") unless $user;
 
+    # now validate the password
+    my $valid = pkg('PasswordHandler')->check_pw(
+        $q->param('new_password'),
+        $user->login,
+        $q->param('email'),
+        $q->param('first_name'),
+        $q->param('last_name'),
+    );
+    unless ($valid) {
+        $q->param(errors => 1);
+        return $self->add();
+    }
+
     %errors = $self->update_user($user);
     return $self->add(%errors) if %errors;
 
@@ -405,6 +418,21 @@ sub save_edit {
     my $user = $session{EDIT_USER} || 0;
     croak("Can't retrieve EDIT_USER from session") unless $user;
 
+    # now validate the password
+    if( $q->param('new_password') ) {
+        my $valid = pkg('PasswordHandler')->check_pw(
+            $q->param('new_password'),
+            $user->login,
+            $q->param('email')      || $user->email,
+            $q->param('first_name') || $user->first_name,
+            $q->param('last_name')  || $user->last_name,
+        );
+        unless ($valid) {
+            $q->param(errors => 1);
+            return $self->edit();
+        }
+    }
+
     %errors = $self->update_user($user);
     return $self->edit(%errors) if %errors;
 
@@ -438,6 +466,21 @@ sub save_stay_edit {
     # Get user from session
     my $user = $session{EDIT_USER} || 0;
     croak("Can't retrieve EDIT_USER from session") unless $user;
+
+    # now validate the password
+    if( $q->param('new_password') ) {
+        my $valid = pkg('PasswordHandler')->check_pw(
+            $q->param('new_password'),
+            $user->login,
+            $q->param('email')      || $user->email,
+            $q->param('first_name') || $user->first_name,
+            $q->param('last_name')  || $user->last_name,
+        );
+        unless ($valid) {
+            $q->param(errors => 1);
+            return $self->edit();
+        }
+    }
 
     %errors = $self->update_user($user);
     return $self->edit(%errors) if %errors;
