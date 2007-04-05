@@ -524,7 +524,7 @@ Krang.Messages = {
                 top = Math.abs(top) + 'px';
                 el.setStyle({ top: top });
             }
-            new Effect.SlideDown(el, { duration: .5 });
+            new Effect.SlideDown(el, { duration: .75 });
         }
     },
     hide  : function(level) {
