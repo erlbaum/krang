@@ -843,9 +843,7 @@ Ajax.Request.prototype = Object.extend(new Ajax.Base(), {
       this.method = 'post';
     }
 
-console.log($H(params).inspect());
     params = Hash.toQueryString(params);
-console.log(params);
     if (params && /Konqueror|Safari|KHTML/.test(navigator.userAgent)) params += '&_='
 
     // when GET, append parameters to URL
