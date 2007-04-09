@@ -185,19 +185,6 @@ Autocompleter.Base.prototype = {
   },
   
   onBlur: function(event) {
-/*@cc_on
-alert('hi');
-      if (
-          event
-          && ( Element.getStyle( this.update, 'height' ) != '' )
-          && Position.within( this.update, Event.pointerX( event ), Event.pointerY( event ) )
-         )
-      {
-        Event.observe( this.update, 'blur', this.onBlur.bindAsEventListener( this ), true );
-        return;
-      }
-@*/
-
     // needed to make click events working
     setTimeout(this.hide.bind(this), 250);
     this.hasFocus = false;
