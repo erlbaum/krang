@@ -1212,7 +1212,7 @@ Calendar.prototype._init = function (firstDayOfWeek, date) {
 		if (!(hasdays || this.showsOtherMonths))
 			row.className = "emptyrow";
 	}
-	this.title.innerHTML = Calendar._MN[month] + ", " + year;
+	this.title.innerHTML = Calendar._MN[month] + " " + year;
 	this.onSetTime();
 	this.table.style.visibility = "visible";
 	this._initMultipleDates();
