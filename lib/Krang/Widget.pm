@@ -340,6 +340,7 @@ sub category_chooser_object {
         dynamic_url       => $query->url,
         dynamic_params    => "rm=category_chooser_node&name=${name}",
         include_prototype => 0,
+        include_full_js   => 0,
     );
 }
 
@@ -893,6 +894,7 @@ sub template_chooser_object {
         dynamic_url       => $query->url,
         dynamic_params    => "rm=template_chooser_node&name=${name}",
         include_prototype => 0,
+        include_full_js   => 0,
     );
 }
 
