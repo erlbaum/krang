@@ -1979,9 +1979,9 @@ Calendar.setup = function (params) {
                         cal.weekNumbers = params.weekNumbers;
                         mustCreate = true;
                 } else {
-                        if (params.date)
-                                cal.setDate(params.date);
-                        cal.hide();
+                    if (params.date)
+                            cal.setDate(params.date);
+                    cal.hide();
                 }
 
                 if (params.multiple) {
@@ -1997,7 +1997,6 @@ Calendar.setup = function (params) {
                 // to a different input. This is to allow clicking the calendar trigger
                 // twice to close it
                 if( window.calendar_input == dateEl ) {
-                    cal.hide();
                     window.calendar_input = null;
                 } else {
                     window.calendar_input = dateEl;
