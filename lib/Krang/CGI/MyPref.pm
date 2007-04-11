@@ -93,7 +93,7 @@ sub edit {
     $template->param(
         message_timeout_selector => scalar $q->popup_menu(
             -name   => 'message_timeout',
-            -values => [ 1..10 ],
+            -values => [ 0..10 ],
             -default => pkg('MyPref')->get('message_timeout'),
         )
     );

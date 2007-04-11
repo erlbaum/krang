@@ -533,10 +533,13 @@ Krang.Messages = {
                         // hide them according to our preference
                         if( level == 'messages' ) {
                             var prefs = Krang.my_prefs();
-                            window.setTimeout(
-                                function() { Krang.Messages.hide(level) }, 
-                                prefs.message_timeout * 1000
-                            );
+                            var secs = prefs.message_timeout;
+                            if( secs > 0 ) {
+                                window.setTimeout(
+                                    function() { Krang.Messages.hide(level) }, 
+                                    secs * 1000
+                                );
+                            }
                         }
                     }
                 }
@@ -546,7 +549,9 @@ Krang.Messages = {
     hide  : function(level) {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
-        new Effect.SlideUp(level, { duration: .5 });
+        if( Element.visible(level) ) {
+            new Effect.SlideUp(level, { duration: .5 });
+        }
     }
 };
 
