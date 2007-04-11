@@ -22,7 +22,6 @@ DBPass
 DBUser
 DBHost
 DBSock
-DisableFTP
 EnableBugzilla
 EnableSiteServer
 EnableSSL
@@ -278,7 +277,7 @@ sub check {
 
     # check required directives
     foreach my $dir (qw(KrangUser KrangGroup ApacheAddr ApachePort
-                        HostName LogLevel FTPPort FTPHostName FTPAddress
+                        HostName LogLevel FTPPort FTPHostName
                         SMTPServer FromAddress BugzillaEmail BugzillaServer
                         BugzillaPassword BugzillaComponent)) {
         _broked("Missing required $dir directive") 
