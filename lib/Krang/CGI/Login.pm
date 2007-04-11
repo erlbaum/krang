@@ -219,7 +219,7 @@ sub _do_login {
     # put our preferences into our cookie via JSON so that the JS
     # on the client side can access it
     my %prefs;
-    for my $name qw(search_page_size use_autocomplete) {
+    for my $name qw(search_page_size use_autocomplete message_timeout) {
         $prefs{$name} = pkg('MyPref')->get($name);
     }
     my $pref_cookie = $q->cookie(

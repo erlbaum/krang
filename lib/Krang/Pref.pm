@@ -76,6 +76,10 @@ our %CONFIG = (
         type => 'scalar',
         row  => 'use_autocomplete',
     },
+    message_timeout => {
+        type => 'scalar',
+        row  => 'message_timeout',
+    },
 );
 
 =pod

@@ -90,6 +90,14 @@ sub edit {
         )
     );
 
+    $template->param(
+        message_timeout_selector => scalar $q->popup_menu(
+            -name   => 'message_timeout',
+            -values => [ 1..10 ],
+            -default => pkg('MyPref')->get('message_timeout'),
+        )
+    );
+
     return $template->output; 
 }
 
@@ -105,7 +113,7 @@ sub update_prefs {
     my $prefs_changed = 0;
 
     # look at each pref
-    my @prefs = qw(search_page_size use_autocomplete);
+    my @prefs = qw(search_page_size use_autocomplete message_timeout);
     for my $name (@prefs) {
         my $old = pkg('MyPref')->get($name);
         my $new = $q->param($name);

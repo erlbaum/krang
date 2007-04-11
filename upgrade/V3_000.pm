@@ -18,6 +18,10 @@ sub per_instance {
     $dbh->do(qq/
         INSERT INTO pref (id, value) VALUES ("use_autocomplete", "1");
     /);
+    # add the 'message_timeout' preference
+    $dbh->do(qq/
+        INSERT INTO pref (id, value) VALUES ("message_timeout", "5");
+    /);
 }
 
 1;
