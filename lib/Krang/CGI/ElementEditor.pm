@@ -560,8 +560,7 @@ sub find_story_link_row_handler {
     $row->{cover_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
 
     # pub_status
-    $row->{pub_status} = $story->published_version() ? 
-      '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
+    $row->{pub_status} = $story->published_version() ? '<b>P</b>' : '&nbsp;';
 }
 
 sub find_media_link {
@@ -742,8 +741,7 @@ sub find_media_link_row_handler {
     $row->{creation_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
 
     # pub_status
-    $row->{pub_status} = $media->published_version() ? 
-      '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
+    $row->{pub_status} = $media->published_version() ? '<b>P</b>' : '&nbsp;';
 }
 
 sub select_story {

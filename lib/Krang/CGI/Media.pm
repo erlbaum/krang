@@ -1678,8 +1678,7 @@ sub find_media_row_handler {
     $row->{creation_date} = (ref($tp)) ? $tp->strftime('%b %e, %Y %l:%M %p') : '[n/a]';
 
     # pub_status
-    my $pub_status = ($media->published()) ? 'P' : '&nbsp;' ;
-    $row->{pub_status} = '&nbsp;<b>'. $pub_status .'</b>&nbsp;';
+    $row->{pub_status} = $media->published() ? '<b>P</b>' : '&nbsp;';
 
     if ( not($media->may_edit) or (($media->checked_out) and ($media->checked_out_by ne $ENV{REMOTE_USER})) ) {
         $row->{checkbox_column} = "&nbsp;";

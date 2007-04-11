@@ -427,7 +427,7 @@ sub preview_story {
 
     # dynamic redirect to preview if we've got a url to redirect to
     my $scheme = PreviewSSL ? 'https' : 'http';
-    print "<script language='javascript'>window.location = '$scheme://$url'</script>\n"
+    print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
       if $url;
 }
 
@@ -441,7 +441,7 @@ sub _progress_callback {
     } else {
         $string = "Media " . $object->media_id . ": " . $object->url;
     }
-    print "<script language='javascript'>Krang.update_progress($counter, $total, '$string');</script>\n";
+    print qq|<script type="text/javascript">\nKrang.update_progress( $counter, $total, '$string' );\n</script>\n|;
 }
 
 =item preview_media
@@ -732,7 +732,7 @@ sub _publish_assets_now {
     die $err if $err;
 
     # dynamic redirect to workspace
-    print "<form action=workspace.pl></form><script language='javascript'>document.forms[0].submit();</script>\n";
+    print qq|<form action="workspace.pl"></form><script type="text/javascript">\ndocument.forms[ 0 ].submit();\n</script>\n|;
 
     return;
 }
