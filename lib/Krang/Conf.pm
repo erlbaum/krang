@@ -51,6 +51,7 @@ PasswordChangeTime
 PasswordChangeCount
 PreviewSSL
 SchedulerMaxChildren
+Secret
 SiteServerAddr
 SiteServerPort
 SMTPServer
@@ -278,7 +279,7 @@ sub check {
 
     # check required directives
     foreach my $dir (qw(KrangUser KrangGroup ApacheAddr ApachePort
-                        HostName LogLevel 
+                        HostName LogLevel Secret
                         SMTPServer FromAddress BugzillaEmail BugzillaServer
                         BugzillaPassword BugzillaComponent)) {
         _broked("Missing required $dir directive") 

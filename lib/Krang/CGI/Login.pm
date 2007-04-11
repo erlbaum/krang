@@ -32,34 +32,20 @@ use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader 'Log' => qw(debug);
 use Krang::ClassLoader 'Message' => qw(add_message add_alert);
 use Krang::ClassLoader Conf => qw(
-    BadLoginCount
-    BadLoginWait
-    BadLoginNotify
-    PasswordChangeTime
-    SMTPServer
-    FromAddress
-    InstanceHostName
-    InstanceDisplayName
-    InstanceApachePort
     ApachePort
+    BadLoginCount
+    BadLoginNotify
+    BadLoginWait
+    FromAddress
+    InstanceApachePort
+    InstanceDisplayName
+    InstanceHostName
+    PasswordChangeTime
+    Secret
+    SMTPServer
 );
 use CGI::Application::Plugin::RateLimit;
 use JSON qw(objToJson);
-
-# secret salt for creating login cookies
-our $SALT = <<END;
-   Your heart manholed
-   for the installation of feeling.
-
-   Your motherland's parts
-   prefabricated.
-
-   Your milk-sister
-   a shovel.
-
-   -Paul Celan
-END
-
 
 sub setup {
     my $self = shift;
@@ -193,7 +179,7 @@ sub _do_login {
     }
 
     # create a cookie with username, session_id and instance.  Include
-    # an MD5 hash with $SALT to allow the PerlAuthenHandler to check
+    # an MD5 hash with Secret to allow the PerlAuthenHandler to check
     # for tampering
     my $session_id = (defined($ENV{KRANG_SESSION_ID})) ?
       $ENV{KRANG_SESSION_ID} : pkg('Session')->create();
@@ -202,7 +188,7 @@ sub _do_login {
                        session_id => $session_id,
                        instance   => $instance,
                        hash       => md5_hex($user_id . $instance .
-                                             $session_id . $SALT) );
+                                             $session_id . Secret()) );
 
     # Propagate user ID to environment
     $ENV{REMOTE_USER}  = $user_id;
@@ -276,7 +262,7 @@ sub forgot_pw {
 
             # create the link
             my $instance = pkg('Conf')->instance();
-            my $ticket = md5_hex($user->user_id . $instance . $SALT) . '-' . $user->user_id;
+            my $ticket = md5_hex($user->user_id . $instance . Secret()) . '-' . $user->user_id;
 
             # send the email
             my $sender = Mail::Sender->new({
@@ -321,7 +307,7 @@ sub reset_pw {
     debug( __PACKAGE__ . "->reset_pw() - decoding ticket $t: user_id = $user_id'" );
 
     # if it matches what we need it to
-    if( md5_hex($user_id . $instance . $SALT) eq $hash ) {
+    if( md5_hex($user_id . $instance . Secret()) eq $hash ) {
         my $new_pw    = $q->param('new_password');
         my $new_pw_re = $q->param('new_password_re');
         my $alert     = '';

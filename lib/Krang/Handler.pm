@@ -89,7 +89,7 @@ use Krang::ClassLoader 'CGI::Login';
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize);
+use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize Secret);
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
@@ -272,7 +272,7 @@ sub authen_handler ($$) {
     my %cookie = $cookies{$instance}->value;
     my $session_id = $cookie{session_id};
     my $hash = md5_hex($cookie{user_id} . $cookie{instance} . 
-                       $session_id . $Krang::CGI::Login::SALT);
+                       $session_id . Secret());
     if ($cookie{hash} ne $hash or $cookie{instance} ne $instance) {
         # invalid cookie, send to login
         critical("Invalid cookie found, possible breakin attempt from IP " . 

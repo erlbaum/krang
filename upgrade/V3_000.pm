@@ -26,24 +26,31 @@ sub per_instance {
     _update_config();
 }
 
+# add new EnableFTP and Secret directives if they aren't already there
 sub _update_config {
-    # add the new EnableFTP directive if we need to
     open(CONF, '<', catfile(KrangRoot, 'conf', 'krang.conf'))
       or die "Unable to open conf/krang.conf: $!";
     my $conf = do { local $/; <CONF> };
     close(CONF);
 
-    # already has a EnableFTP setting?
-    return if $conf =~ /^\s*EnableFTP/m;
-
-    # write out conf and add the new line
+    # write out conf and add the new lines
     open(CONF, '>', catfile(KrangRoot, 'conf', 'krang.conf'))
       or die "Unable to open conf/krang.conf: $!";
     print CONF $conf;
-    print CONF <<END;
-EnableFTP 1
-END
+    print CONF "\nEnableFTP 1\n" unless $conf =~ /^\s*EnableFTP/m;
+
+    # create a random secret
+    my $secret = _random_secret();
+    print CONF "\nSecret '$secret'\n" unless $conf =~ /^\s*Secret/m;
     close(CONF);
+}
+
+sub _random_secret {
+    my $length = int(rand(10) + 20);
+    my $secret = '';
+    my @chars = ('a'..'z', 'A'..'Z', 0..9, qw(! @ $ % ^ & - _ = + | ; : . / < > ?));
+    $secret .= $chars[int(rand($#chars + 1))] for(0..$length);
+    return $secret;
 }
 
 1;
