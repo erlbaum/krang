@@ -59,10 +59,10 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup FTPAddress);
+use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup EnableFTP);
 
-unless( FTPAddress ) {
-    print "No FTPAddress configured. Refusing to start FTP server.\n";
+unless( EnableFTP ) {
+    print "FTP has been disabled.\n";
     exit(0);
 }
 

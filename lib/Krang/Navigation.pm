@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader 'Desk';
-use Krang::ClassLoader Conf => qw(FTPAddress FTPHostName FTPPort EnableBugzilla);
+use Krang::ClassLoader Conf => qw(EnableFTP FTPHostName FTPPort EnableBugzilla);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'NavigationNode';
 use Krang::ClassLoader Log => qw(debug info critical);
@@ -215,7 +215,7 @@ sub default_tree {
     $sub->link('template.pl?rm=list_active');
 
     # setup template FTP link (which is dynamic) unless it's disabled
-    if( FTPAddress ) {
+    if( EnableFTP ) {
         $sub  = $node->new_daughter();
         $sub->name('FTP');
         $sub->link(
