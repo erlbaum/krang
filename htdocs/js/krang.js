@@ -792,29 +792,28 @@ Krang.Widget.time_chooser = function(inputName) {
     // we need to find the associated clock and make the trigger display it
     var trigger = $(inputName + '_trigger');
     var clock   = $(inputName + '_clock');
+    var hour    = clock.down('select', 0);
+    var minute  = clock.down('select', 1);
+    var ampm    = clock.down('select', 2);
+
+    var hide_clock = function() {
+        clock.hide();
+        // re-disable the inputs
+        hour.disabled   = true;
+        minute.disabled = true;
+        ampm.disabled   = true;
+    };
 
     trigger.observe('click', function(event) {
         if( clock.visible() ) {
-            clock.hide();
-            // re-disable the inputs
-            var hour = clock.down('select', 0);
-            var minute = clock.down('select', 1);
-            var ampm = clock.down('select', 2);
-
-            hour.disabled   = true;
-            minute.disabled = true;
-            ampm.disabled   = true;
+            hide_clock();
 
         } else {
             // position the clock to the right (30px) of the trigger
             var pos = Position.positionedOffset(trigger);
             clock.setStyle({ left: (pos[0] + 30) +'px', top: pos[1] +'px' });
 
-            // un-disable the inputs
-            var hour = clock.down('select', 0);
-            var minute = clock.down('select', 1);
-            var ampm = clock.down('select', 2);
-
+            // re-enable the inputs
             hour.disabled   = false;
             minute.disabled = false;
             ampm.disabled   = false;
@@ -833,6 +832,17 @@ Krang.Widget.time_chooser = function(inputName) {
             }
             
             clock.show();
+        }
+    });
+
+    // handle closing it if we click elsewhere
+    Event.observe(document, 'mousedown', function(evt) {
+        if( clock.visible() ) {
+            // if we didn't click on the clock or it's trigger
+            var el = Event.element(evt);
+            var tag = el.tagName ? el.tagName.toUpperCase() : '';
+            if( el != clock && el != hour && el != minute && el != ampm && tag != 'OPTION' && el != trigger )
+                clock.hide();
         }
     });
 };
