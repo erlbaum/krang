@@ -732,7 +732,7 @@ sub _publish_assets_now {
     die $err if $err;
 
     # dynamic redirect to workspace
-    print qq|<form action="workspace.pl"></form><script type="text/javascript">\ndocument.forms[ 0 ].submit();\n</script>\n|;
+    print qq|<script type="text/javascript">\nlocation.replace('workspace.pl');\n</script>\n|;
 
     return;
 }
