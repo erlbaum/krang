@@ -852,11 +852,13 @@ sub add {
     # add the child element and save the element tree
     my $kid = $element->add_child(class => $child);
 
-    # start editing the new element if it has children
-    $query->param(path => $kid->xpath()) if $kid->is_container;
-    
-    add_message('added_element', child  => $kid->display_name(),
-                                 parent => $element->display_name());
+    # does this element have children?
+    if( $kid->is_container ) {
+        # start editing the new element
+        $query->param(path => $kid->xpath());
+        add_message('added_element', child  => $kid->display_name(),
+                                     parent => $element->display_name());
+    }
 
     # toss to edit
     return $self->edit();
