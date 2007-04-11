@@ -51,7 +51,7 @@ Krang::Widget - interface widgets for use by Krang::CGI modules
                           query => $query);
 
   $url_html = format_url(url => 'http://my.host/some/long/url.html',
-                         linkto => "javascript:Krang.preview('media','". $id ."')");
+                         linkto => "javascript:Krang.preview('media','" . $id . "')");
 
 =head1 DESCRIPTION
 
@@ -93,7 +93,7 @@ this site and its descendant categories.
 
 =item onchange
 
-can be set to the name of a javascript function
+can be set to the name of a JavaScript function
 that will be called when the user picks a category.  
 
 =item label   
@@ -368,10 +368,10 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
-  onchange  - Javascript code to be executed when the date is changed.
+  onchange  - JavaScript code to be executed when the date is changed.
 
 The time_chooser() implements itself in HTML via a text input with some
-Javascript popup magic. The string input from the user can be retrieved
+JavaScript popup magic. The string input from the user can be retrieved
 via the CGI query object using the same name given during the creation
 of the widget.
 
@@ -409,19 +409,19 @@ sub time_chooser {
     my $value = $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
 
     # setup the onchange
-    $onchange = $onchange ? qq/onchange="$onchange"/ : '';
+    $onchange = $onchange ? qq/ onchange="$onchange"/ : '';
     return qq|
-        <input type="text" name="$name" value="$value" size="9" id="$name" $onchange>
-        <img src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
-        <div style="display:none" class="clock_widget" id="${name}_clock">
-            <select name="${name}_hour" disabled="disabled" onChange="Krang.Widget.update_time_chooser('$name');">
+        <input id="$name" name="$name" value="$value" size="9"$onchange>
+        <img alt="" src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
+        <div id="${name}_clock" class="clock_widget" style="display:none">
+            <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name')" disabled>
                 <option value="">Hour</option>
                 <option>1</option> <option>2</option>  <option>3</option>  <option>4</option>
                 <option>5</option> <option>6</option>  <option>7</option>  <option>8</option>
                 <option>9</option> <option>10</option> <option>11</option> <option>12</option>
             </select>
             :
-            <select name="${name}_minute" disabled="disabled" onChange="Krang.Widget.update_time_chooser('$name');">
+            <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name')" disabled>
                 <option value="">Minute</option>
                 <option>00</option> <option>01</option> <option>02</option> <option>03</option> <option>04</option>
                 <option>05</option> <option>06</option> <option>07</option> <option>08</option> <option>09</option>
@@ -437,11 +437,13 @@ sub time_chooser {
                 <option>55</option> <option>56</option> <option>57</option> <option>58</option> <option>59</option>
             </select>
             &nbsp;
-            <select name="${name}_ampm" disabled="disabled" onChange="Krang.Widget.update_time_chooser('$name');">
+            <select name="${name}_ampm" onchange="Krang.Widget.update_time_chooser('$name')" disabled>
                 <option>AM</option> <option>PM</option>
             </select>
         </div>
-        <script type="text/javascript">Krang.onload(function() { Krang.Widget.time_chooser('$name')} );</script>
+        <script type="text/javascript">
+        Krang.onload( function() { Krang.Widget.time_chooser( '$name' ); } );
+        </script>
     |;
 }
 
@@ -496,7 +498,7 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
-  onchange  - Javascript code to be executed when either the date
+  onchange  - JavaScript code to be executed when either the date
               or time values are changed.
 
 The C<datetime_chooser()> implements via the C<date_chooser()>
@@ -547,12 +549,12 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
-  onchange  - Javascript code to be executed when the date value
+  onchange  - JavaScript code to be executed when the date value
               is changed.
 
 
 The date_chooser() implements itself in HTML via a text input
-with a Javascript popup calendar. The full string typed by the
+with a JavaScript popup calendar. The full string typed by the
 user can be retrieved via the CGI object, or you can retrieve
 a L<Time::Piece> object via C<decode_date()>.
 
@@ -573,12 +575,14 @@ sub date_chooser {
     }
 
     # setup the default onchange value
-    $onchange = $onchange ? qq/onchange="$onchange"/ : '';
+    $onchange = $onchange ? qq/ onchange="$onchange"/ : '';
 
     return qq|
-        <input type="text" name="$name" value="$date" size="11" id="$name" $onchange>
-        <img src="images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
-        <script type="text/javascript">Krang.onload(function() { Krang.Widget.date_chooser('$name') } );</script>
+        <input id="$name" name="$name" value="$date" size="11"$onchange>
+        <img alt="" src="images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
+        <script type="text/javascript">
+        Krang.onload( function() { Krang.Widget.date_chooser( '$name' ); } );
+        </script>
     |;
 
 }
@@ -682,8 +686,7 @@ sub format_url {
     my @url_lines = split("\n",$url);
     if ($linkto) {
         # URL with links
-        $format_url_html = qq{<a href="$linkto">} . 
-          join('<wbr>', @url_lines) . qq{</a>};
+        $format_url_html = qq{<a href="$linkto">} . join('<wbr>', @url_lines) . qq{</a>};
     } else {
         # URL without links
         $format_url_html = join( '<wbr>', @url_lines );
@@ -718,7 +721,7 @@ category.  Defaults to the value set for C<name> if not set.
 
 =item onchange
 
-Can be set to the name of a javascript function that will be called when
+Can be set to the name of a JavaScript function that will be called when
 the user picks a category.
 
 =item label
