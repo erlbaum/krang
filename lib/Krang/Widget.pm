@@ -51,7 +51,7 @@ Krang::Widget - interface widgets for use by Krang::CGI modules
                           query => $query);
 
   $url_html = format_url(url => 'http://my.host/some/long/url.html',
-                         linkto => "javascript:Krang.preview('media','". $id ."')" );
+                         linkto => "javascript:Krang.preview('media','". $id ."')");
 
 =head1 DESCRIPTION
 
@@ -674,7 +674,7 @@ sub format_url {
     # put spaces after /'s so that wrap() will try to wrap to them if
     # possible
     $url =~ s!/!/ !g;
-    $url = wrap("","",$url);    
+    $url = wrap("","",$url);
     $url =~ s!/ !/!g;
 
     # format wrapped URL in HTML
@@ -683,10 +683,10 @@ sub format_url {
     if ($linkto) {
         # URL with links
         $format_url_html = qq{<a href="$linkto">} . 
-          join('<br>', @url_lines ) . qq{</a>};
+          join('<wbr>', @url_lines) . qq{</a>};
     } else {
         # URL without links
-        $format_url_html = join( '<br>', @url_lines );
+        $format_url_html = join( '<wbr>', @url_lines );
     }
 
     return $format_url_html;

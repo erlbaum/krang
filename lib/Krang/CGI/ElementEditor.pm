@@ -548,7 +548,7 @@ sub find_story_link_row_handler {
         }
         $url_lines[-1] .= "/" . $_;
     }
-    $row->{url} = join('<br>', 
+    $row->{url} = join('<wbr>', 
                        map { qq{<a href="javascript:Krang.preview('story',$row->{story_id})">$_</a>} } @url_lines);
 
 
@@ -727,7 +727,7 @@ sub find_media_link_row_handler {
         }
         $url_lines[-1] .= "/" . $_;
     }
-    $row->{url} = join('<br>', 
+    $row->{url} = join('<wbr>', 
                        map { qq{<a href="javascript:Krang.preview('media',$row->{media_id})">$_</a>} } @url_lines);
 
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
