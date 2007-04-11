@@ -93,13 +93,12 @@ sub publish_story {
     $t->param(asset_id_list => [{id => "story_$story_id"}]);
 
     # add date chooser
-    $t->param(publish_date_chooser => datetime_chooser(name => 'publish_date',
-                                                       query => $query,
-                                                       onchange => 'document.forms[0].publish_now[1].checked = true;',
+    $t->param(publish_date_chooser => datetime_chooser(name     => 'publish_date',
+                                                       query    => $query,
+                                                       onchange => "this.form['publish_now'][1].checked = true",
                                                       ));
 
     return $t->output();
-
 }
 
 
@@ -196,9 +195,9 @@ sub publish_story_list {
 
     # add date chooser
     $t->param(publish_date_chooser => 
-              datetime_chooser(name => 'publish_date',
-                               query => $query,
-                               onchange => 'document.forms[0].publish_now[1].checked = true;')
+              datetime_chooser(name     => 'publish_date',
+                               query    => $query,
+                               onchange => "this.form['publish_now'][1].checked = true")
              );
     return $t->output();
 
