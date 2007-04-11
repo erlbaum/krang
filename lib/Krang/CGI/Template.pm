@@ -1108,7 +1108,7 @@ sub make_pager {
 # Handles rows for search run mode
 sub search_row_handler {
     my ($row, $template) = @_;
-    $row->{deployed} = $template->deployed ? 'D' : '';
+    $row->{deployed} = $template->deployed ? '<b>D</b>' : '&nbsp;';
     $row->{filename} = $template->filename;
     $row->{template_id} = $template->template_id;
     $row->{url} = format_url(url => $template->url, length => 30);
