@@ -22,6 +22,7 @@ DBPass
 DBUser
 DBHost
 DBSock
+DisableFTP
 EnableBugzilla
 EnableSiteServer
 EnableSSL

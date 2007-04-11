@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader 'Desk';
-use Krang::ClassLoader Conf => qw(FTPHostName FTPPort EnableBugzilla);
+use Krang::ClassLoader Conf => qw(DisableFTP FTPHostName FTPPort EnableBugzilla);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'NavigationNode';
 use Krang::ClassLoader Log => qw(debug info critical);
@@ -214,17 +214,19 @@ sub default_tree {
     $sub->name('Active Templates');
     $sub->link('template.pl?rm=list_active');
 
-    # setup template FTP link, which is dynamic
-    $sub  = $node->new_daughter();
-    $sub->name('FTP');
-    $sub->link(
-       sub {
-           my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
-           return "ftp://" . $user->login . '@' . 
-                   FTPHostName . ':' . FTPPort .  '/' . $ENV{KRANG_INSTANCE} .
-                   '/template';
-       });
-    $sub->condition(sub { shift->{asset}{template} ne 'read-only' });
+    # setup template FTP link (which is dynamic) unless it's disabled
+    unless( DisableFTP ) {
+        $sub  = $node->new_daughter();
+        $sub->name('FTP');
+        $sub->link(
+           sub {
+               my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+               return "ftp://" . $user->login . '@' . 
+                       FTPHostName . ':' . FTPPort .  '/' . $ENV{KRANG_INSTANCE} .
+                       '/template';
+           });
+        $sub->condition(sub { shift->{asset}{template} ne 'read-only' });
+    }
 
     # admin block
     my $admin_node = $root->new_daughter();
