@@ -108,8 +108,7 @@ sub show {
                         'command_column', 'checkbox_column'],
        columns_sortable => [ ],
        command_column_commands => [ 'log', 'edit' ],
-       command_column_labels => { edit => 'Edit',
-                                  log  => 'Log' },
+       command_column_labels => { log  => 'View Log', edit => 'Edit' },
        id_handler  => sub { $self->_obj2id( @_ ) },
        row_handler => sub { $self->_row_handler(@_,\@desk_loop) },
       );
@@ -131,7 +130,7 @@ sub _row_handler {
         $row->{is_story} = 1;
         $row->{url} =format_url(url    => $obj->url,
                                 linkto => 
-                                "javascript:Krang.preview('story',".$obj->story_id.")",
+                                "javascript:Krang.preview('story'," . $obj->story_id . ")",
                                 length => 50);
     } elsif ($obj->isa('Krang::Media')) {
         $row->{media_id} = $obj->media_id;
@@ -141,7 +140,7 @@ sub _row_handler {
         $row->{is_media} = 1;
         $row->{url} =format_url(url    => $obj->url,
                                 linkto => 
-                                "javascript:Krang.preview('media',".$obj->media_id.")",
+                                "javascript:Krang.preview('media'," . $obj->media_id . ")",
                                 length => 50);
     } else {
         $row->{template_id} = $obj->template_id;

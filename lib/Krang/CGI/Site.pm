@@ -466,11 +466,11 @@ sub search {
                                       [qw(url preview_url)],
                                       columns_sort_map => {},
                                       command_column_commands =>
-                                      [qw(edit_site view_site)],
+                                      [qw(view_site edit_site)],
                                       command_column_labels =>
                                       {
+                                       view_site => 'View Detail',
                                        edit_site => 'Edit',
-                                       view_site => 'View',
                                       },
                                       row_handler => \&search_row_handler,
                                       id_handler =>

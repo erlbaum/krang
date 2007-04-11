@@ -403,20 +403,20 @@ sub list_active {
        columns => [(qw(
                        media_id
                        thumbnail
-                       url
                        title
+                       url
                        user
                        commands_column
                       )), ($may_checkin_all ? ('checkbox_column') : ())],
        column_labels => {
                          media_id => 'ID',
                          thumbnail => 'Thumbnail',
-                         url => 'URL',
                          title => 'Title',
+                         url => 'URL',
                          user  => 'User',
                          commands_column => '',
                         },
-       columns_sortable => [qw( media_id url title )],
+       columns_sortable => [qw( media_id title url )],
        row_handler => sub { $self->list_active_row_handler(@_); },
        id_handler => sub { return $_[0]->media_id },
       );
@@ -1289,8 +1289,7 @@ sub list_active_row_handler {
     $row->{title} = $q->escapeHTML($media->title);
 
     # commands column
-    $row->{commands_column} = '<a href="javascript:view_media(' .
-      $media->media_id . ')">View</a>';
+    $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $media->checked_out_by);
@@ -1607,8 +1606,8 @@ sub make_pager {
                      pub_status 
                      media_id 
                      thumbnail
-                     url
                      title 
+                     url
                      creation_date
                      commands_column
                      checkbox_column
@@ -1618,10 +1617,10 @@ sub make_pager {
                          pub_status => '',
                          media_id => 'ID',
                          thumbnail => 'Thumbnail',
-                         url => 'URL',
-                         commands_column => '',
                          title => 'Title',
+                         url => 'URL',
                          creation_date => 'Date',
+                         commands_column => '',
                         );
 
     # Hide thumbnails
@@ -1638,7 +1637,7 @@ sub make_pager {
                                       find_params => $find_params,
                                       columns => \@columns,
                                       column_labels => \%column_labels,
-                                      columns_sortable => [qw( media_id url title creation_date )],
+                                      columns_sortable => [qw( media_id title url creation_date )],
                                       row_handler => sub { $self->find_media_row_handler($show_thumbnails, @_); },
                                       id_handler => sub { return $_[0]->media_id },
                                      );
@@ -1682,11 +1681,11 @@ sub find_media_row_handler {
 
     if ( not($media->may_edit) or (($media->checked_out) and ($media->checked_out_by ne $ENV{REMOTE_USER})) ) {
         $row->{checkbox_column} = "&nbsp;";
-        $row->{commands_column} = '<a href="javascript:view_media('."'".$media->media_id."'".')">View</a>'
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|;
     } else {
-        $row->{commands_column} = '<a href="javascript:edit_media('."'".$media->media_id."'".')">Edit</a>'
-        . '&nbsp;|&nbsp;'
-        . '<a href="javascript:view_media('."'".$media->media_id."'".')">View</a>'
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|
+        . ' '
+        . qq|<input value="Edit" onclick="edit_media('| . $media->media_id . qq|')" type="button" class="button">|;
     }
 
 }

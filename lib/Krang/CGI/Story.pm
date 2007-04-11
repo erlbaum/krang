@@ -379,7 +379,7 @@ sub edit {
                      url               => $story->url ? 
                                             format_url(
                                                        url => $story->url,
-                                                       linkto => "javascript:Krang.preview('story', null)",
+                                                       linkto => "javascript:Krang.preview('story',null)",
                                                        length => 50,
                                                       ) : "");
 
@@ -427,7 +427,7 @@ sub edit {
         $template->param(category_chooser => 
                          category_chooser(name     => 'new_category_id',
                                           query    => $query,
-                                          label    => 'Add Site / Category',
+                                          label    => 'Add Site/Category',
                                           display  => 0,
                                           onchange => 'add_category',
                                           may_edit => 1,
@@ -502,7 +502,7 @@ sub view {
                      type              => $story->element->display_name,
                      url               => format_url(
                                                      url => $story->url,
-                                                     linkto => "javascript:Krang.preview('story','". $story->story_id() ."')",
+                                                     linkto => "javascript:Krang.preview('story','" . $story->story_id() . "')",
                                                      length => 50,
                                                     ),
                      version           => $story->version);
@@ -1413,8 +1413,8 @@ sub find {
                                       columns => [qw(
                                                      pub_status 
                                                      story_id 
-                                                     url 
                                                      title 
+                                                     url 
                                                      cover_date 
                                                      commands_column 
                                                      status 
@@ -1423,13 +1423,13 @@ sub find {
                                       column_labels => {
                                                         pub_status => '',
                                                         story_id => 'ID',
-                                                        url => 'URL',
                                                         title => 'Title',
+                                                        url => 'URL',
                                                         commands_column => '',
                                                         cover_date => 'Date',
                                                         status => 'Status',
                                                        },
-                                      columns_sortable => [qw( story_id url title cover_date )],
+                                      columns_sortable => [qw( story_id title url cover_date )],
                                       row_handler => sub { $self->find_story_row_handler(@_); },
                                       id_handler => sub { return $_[0]->story_id },
                                      );
@@ -1470,19 +1470,19 @@ sub list_active {
        find_params => \%find_params,
        columns => [(qw(
                        story_id 
-                       url 
                        title 
+                       url 
                        user
                        commands_column
                       )), ($admin_perms{may_checkin_all} ? ('checkbox_column') : ())],
        column_labels => {
                          story_id => 'ID',
-                         url => 'URL',
                          title => 'Title',
+                         url => 'URL',
                          user  => 'User',
                          commands_column => '',
                         },
-       columns_sortable => [qw( story_id url title )],
+       columns_sortable => [qw( story_id title url )],
        row_handler => sub { $self->list_active_row_handler(@_); },
        id_handler => sub { return $_[0]->story_id },
       );
@@ -1607,7 +1607,7 @@ sub find_story_row_handler {
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $story->url(),
-                              linkto => "javascript:Krang.preview('story','". $row->{story_id} ."')" );
+                              linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')" );
 
     # title
     $row->{title} = $self->query->escapeHTML($story->title);
@@ -1617,40 +1617,35 @@ sub find_story_row_handler {
     $row->{cover_date} = (ref($tp)) ? $tp->strftime('%b %e, %Y %l:%M %p') : '[n/a]';
 
     # pub_status
-    if ($story->published_version) {
-        $row->{pub_status} = '&nbsp;<b>P</b>&nbsp;';
-    } else {
-        $row->{pub_status} = '&nbsp;&nbsp;&nbsp;';
-    }
+    $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
 
     if (($story->checked_out) and 
-        ($story->checked_out_by ne $ENV{REMOTE_USER}) 
+        ($story->checked_out_by ne $ENV{REMOTE_USER})
         or not $story->may_edit ) {
-        $row->{commands_column} = '<a href="javascript:view_story('."'".$story->story_id."'".')">View</a>'
-          . '&nbsp;|&nbsp;'
-        . '<a href="javascript:view_story_log('."'".$story->story_id."'".')">Log</a>';
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| . $story->story_id . qq|')" type="button" class="button">|
+            . ' '
+            . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id . qq|')" type="button" class="button">|;
         $row->{checkbox_column} = "&nbsp;";
     } else {
-        $row->{commands_column} = '<a href="javascript:edit_story('."'".$story->story_id."'".')">Edit</a>'
-        . '&nbsp;|&nbsp;'
-        . '<a href="javascript:view_story('."'".$story->story_id."'".')">View</a>'
-        . '&nbsp;|&nbsp;'
-        . '<a href="javascript:view_story_log('."'".$story->story_id."'".')">Log</a>';
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| . $story->story_id . qq|')" type="button" class="button">|
+            . ' '
+            . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id . qq|')" type="button" class="button">|
+            . ' '
+            . qq|<input value="Edit" onclick="edit_story('| . $story->story_id . qq|')" type="button" class="button">|;
     }
- 
+
     # status 
     if ($story->checked_out) {
-        $row->{status} = "Checked out by <b>" . 
-          (pkg('User')->find(user_id => $story->checked_out_by))[0]->login.
-            '</b>';
+        $row->{status} = "Checked out by <b>"
+            . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login
+            . '</b>';
     } elsif ($story->desk_id) {
-        $row->{status} = "On <b> " . 
-          (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . 
-            '</b> desk';
+        $row->{status} = "On <b>"
+            . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
+            . '</b> Desk';
     } else {
         $row->{status} = '&nbsp;';
     }
-    
 
 }
 
@@ -1668,14 +1663,13 @@ sub list_active_row_handler {
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $story->url(),
-                              linkto => "javascript:Krang.preview('story','". $row->{story_id} ."')" );
+                              linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')" );
 
     # title
     $row->{title} = $q->escapeHTML($story->title);
 
     # commands column
-    $row->{commands_column} = '<a href="javascript:view_story(' .
-      $story->story_id . ')">View</a>';
+    $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| . $story->story_id . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $story->checked_out_by);

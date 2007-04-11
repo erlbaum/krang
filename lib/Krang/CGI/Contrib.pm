@@ -161,7 +161,7 @@ sub search {
                                       column_labels => {
                                                         last => 'Last Name',
                                                         first_middle => 'First, Middle Name',
-                                                        type => 'Types',
+                                                        type => 'Type',
                                                        },
                                       columns_sortable => [qw( last first_middle type )],
                                       columns_sort_map => {first_middle => 'first,middle'},
@@ -896,7 +896,7 @@ sub list_view_ass_contrib_row_handler {
     my ($row_hashref, $contrib, $associated_contrib_filter, $contrib_type_prefs) = @_;
 
     $row_hashref->{first_middle} = $contrib->first;
-    $row_hashref->{first_middle} .= '&nbsp;' . $contrib->middle if ($contrib->middle);
+    $row_hashref->{first_middle} .= ' ' . $contrib->middle if ($contrib->middle);
     $row_hashref->{last} = $contrib->last;
 
     # 'type' isn't actually used.  Loop 'contrib_types' instead

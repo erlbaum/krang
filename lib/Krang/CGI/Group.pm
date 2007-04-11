@@ -797,7 +797,7 @@ sub make_permissions_radio {
     my $group = $session{EDIT_GROUP};
     croak("No group available") unless ($group);
 
-    my $default = "[N/A]";
+    my $default = "[n/a]";
     if ($param_name =~ /^desk\_(\d+)$/) {
         # Got desk
         my $desk_id = $1;

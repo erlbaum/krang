@@ -136,8 +136,7 @@ sub upload {
         # store file in tempdir
         my $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
         my $filepath = catfile($path, $filename );
-        open (FILE, ">$filepath") || croak("Unable to open $filepath for writing
-media!");
+        open (FILE, ">$filepath") || croak("Unable to open $filepath for writing media!");
                                                                          
         my $buffer;
         while (read($fh, $buffer, 10240)) { print FILE $buffer }

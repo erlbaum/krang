@@ -396,14 +396,13 @@ sub preview_story {
             } else {
                 # something not expected so log the error.  Can't croak()
                 # here because that will trigger bug.pl.
-                print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
+                print qq|<div class="alertp">An internal server error occurred. Please check the error logs for details.</div>\n|;
                 critical($error);
             }
 
             # put the messages on the screen
             foreach my $msg (get_alerts()) {
-                print "<div class='alertp'>" . $query->escapeHTML($msg) . 
-                  "</div>\n";
+                print '<div class="alertp">' . $query->escapeHTML($msg) . "</div>\n";
             }
             clear_alerts();
 
@@ -580,7 +579,7 @@ sub _build_asset_list {
         if ($asset->isa('Krang::Story')) {
             push @stories, {id          => $asset->story_id,
                             url         => format_url(url    => $asset->url,
-                                                      linkto => "javascript:Krang.preview('story', '" . $asset->story_id . "')",
+                                                      linkto => "javascript:Krang.preview('story','" . $asset->story_id . "')",
                                                       length => 20
                                                      ),
                             title       => $asset->title,
@@ -590,7 +589,7 @@ sub _build_asset_list {
         } elsif ($asset->isa('Krang::Media')) {
             push @media, {id          => $asset->media_id,
                           url         => format_url(url    => $asset->url,
-                                                    linkto => "javascript:Krang.preview('media', '".$asset->media_id."')",
+                                                    linkto => "javascript:Krang.preview('media','" . $asset->media_id . "')",
                                                     length => 20
                                                  ),
                           title       => $asset->title,

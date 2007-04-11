@@ -929,19 +929,19 @@ sub list_active {
        find_params => \%find_params,
        columns => [(qw(
                        template_id
-                       url
                        filename
+                       url
                        user
                        commands_column
                       )), ($may_checkin_all ? ('checkbox_column') : ())],
        column_labels => {
                          template_id => 'ID',
+                         filename => 'File Name',
                          url => 'URL',
-                         filename => 'Filename',
                          user  => 'User',
                          commands_column => '',
                         },
-       columns_sortable => [qw( template_id url filename )],
+       columns_sortable => [qw( template_id filename url )],
        row_handler => sub { $self->list_active_row_handler(@_); },
        id_handler => sub { return $_[0]->template_id },
       );
@@ -1077,11 +1077,11 @@ sub make_pager {
                      checkbox_column
                     );
 
-    my %column_labels = (deployed => '',
-                         template_id => 'ID',
+    my %column_labels = (deployed        => '',
+                         template_id     => 'ID',
+                         filename        => 'File Name',
+                         url             => 'URL',
                          commands_column => '',
-                         filename => 'Filename',
-                         url => 'URL',
                         );
 
     my $q = $self->query();
@@ -1116,15 +1116,12 @@ sub search_row_handler {
     if (not($template->may_edit()) or
         (($template->checked_out) and
          ($template->checked_out_by ne $ENV{REMOTE_USER}))) {
-        $row->{commands_column} = '<a href="javascript:view_template('."'".
-          $template->template_id."'".')">View</a>';
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|;
         $row->{checkbox_column} = "&nbsp;";
     } else {
-        $row->{commands_column} = '<a href="javascript:edit_template('."'".
-          $template->template_id."'".')">Edit</a>'
-            . '&nbsp;|&nbsp;'
-              . '<a href="javascript:view_template('."'".
-                $template->template_id."'".')">View</a>';
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|
+            . ' '
+            . qq|<input value="Edit" onclick="edit_template('| . $template->template_id . qq|')" type="button" class="button">|;
     }
 }
 
@@ -1250,8 +1247,7 @@ sub list_active_row_handler {
     $row->{filename} = $template->filename();
 
     # commands column
-    $row->{commands_column} = '<a href="javascript:view_template(' .
-      $template->template_id . ')">View</a>';
+    $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $template->checked_out_by);
