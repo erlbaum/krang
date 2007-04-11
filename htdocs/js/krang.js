@@ -524,14 +524,23 @@ Krang.Messages = {
                 top = Math.abs(top) + 'px';
                 el.setStyle({ top: top });
             }
-            new Effect.SlideDown(el, { duration: .50 });
-
-            // if it's normal messages (not alerts) then let's
-            // hide them according to our preference
-            if( level == 'messages' ) {
-                var prefs = Krang.my_prefs();
-                window.setTimeout(function() { Krang.Messages.hide(level) }, prefs.message_timeout * 1000);
-            }
+            new Effect.SlideDown(
+                el, 
+                { 
+                    duration: .50,
+                    afterFinish : function() {
+                        // if it's normal messages (not alerts) then let's
+                        // hide them according to our preference
+                        if( level == 'messages' ) {
+                            var prefs = Krang.my_prefs();
+                            window.setTimeout(
+                                function() { Krang.Messages.hide(level) }, 
+                                prefs.message_timeout * 1000
+                            );
+                        }
+                    }
+                }
+            );
         }
     },
     hide  : function(level) {
