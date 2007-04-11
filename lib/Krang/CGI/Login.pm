@@ -266,6 +266,7 @@ sub forgot_pw {
     if( $q->param('email') ) {
         my $email = $q->param('email');
         add_message('forgot_pw');
+        $tmpl->param(email_sent => 1);
 
         # find the user this email address belongs to
         my ($user) = pkg('User')->find(email => $email);
