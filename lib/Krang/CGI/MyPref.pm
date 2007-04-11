@@ -93,7 +93,8 @@ sub edit {
     $template->param(
         message_timeout_selector => scalar $q->popup_menu(
             -name   => 'message_timeout',
-            -values => [ 0..10 ],
+            -values => [ (1..10), 0 ],
+            -labels => { 0 => 'Never' },
             -default => pkg('MyPref')->get('message_timeout'),
         )
     );
@@ -148,7 +149,7 @@ sub update_prefs {
         my $new_pw = $q->param('new_password');
         my $pw_re  = $q->param('new_password_repeat');
         if( $new_pw ne $pw_re ) {
-            add_message('password_mismatch');
+            add_alert('password_mismatch');
             return $self->edit();
         }
 
