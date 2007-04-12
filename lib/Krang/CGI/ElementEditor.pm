@@ -274,7 +274,7 @@ sub element_edit {
     # whip up child element picker from available classes
     my @available =  $element->available_child_classes();
     if (@available) {
-        my @values = map { $_->name } @available;
+        my @values = sort { $a cmp $b } map { $_->name } @available;
         my %labels = map { ($_->name, $_->display_name) } @available;
         $template->param(child_select => 
                          $query->popup_menu(-name   => "child",
