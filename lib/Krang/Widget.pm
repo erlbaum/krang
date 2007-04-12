@@ -418,19 +418,20 @@ sub time_chooser {
     my $value = $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
 
     # setup the onchange
-    $onchange = $onchange ? qq/ onchange="$onchange"/ : '';
+    $onchange ||= '';
+    my $onchange_attr = $onchange ? qq/ onchange="$onchange"/ : '';
     return qq|
-        <input id="$name" name="$name" value="$value" size="9"$onchange>
+        <input id="$name" name="$name" value="$value" size="9"$onchange_attr>
         <img alt="" src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div id="${name}_clock" class="clock_widget" style="display:none">
-            <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name')" disabled>
+            <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
                 <option value="">Hour</option>
                 <option>1</option> <option>2</option>  <option>3</option>  <option>4</option>
                 <option>5</option> <option>6</option>  <option>7</option>  <option>8</option>
                 <option>9</option> <option>10</option> <option>11</option> <option>12</option>
             </select>
             :
-            <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name')" disabled>
+            <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
                 <option value="">Minute</option>
                 <option>00</option> <option>01</option> <option>02</option> <option>03</option> <option>04</option>
                 <option>05</option> <option>06</option> <option>07</option> <option>08</option> <option>09</option>
@@ -446,7 +447,7 @@ sub time_chooser {
                 <option>55</option> <option>56</option> <option>57</option> <option>58</option> <option>59</option>
             </select>
             &nbsp;
-            <select name="${name}_ampm" onchange="Krang.Widget.update_time_chooser('$name')" disabled>
+            <select name="${name}_ampm" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
                 <option>AM</option> <option>PM</option>
             </select>
         </div>
