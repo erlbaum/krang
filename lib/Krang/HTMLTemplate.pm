@@ -31,6 +31,7 @@ use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clea
 use Krang::ClassLoader 'Navigation';
 use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader 'Info';
 
 use File::Spec::Functions qw(catdir);
 use Carp qw(croak);
@@ -122,6 +123,12 @@ sub output {
             $template->param(custom_css => $css);
         }
     }
+
+    # add the Krang version and Product name
+    $template->param(krang_version => pkg('Info')->version )
+        if $template->query(name => 'krang_version');
+    $template->param(krang_product_name => pkg('Info')->product_name )
+        if $template->query(name => 'krang_product_name');
 
     pkg('Navigation')->fill_template(template => $template);
 
