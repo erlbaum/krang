@@ -131,6 +131,11 @@ Defaults to 0.
 Hash key that indicates where in the session hash to
 look for a pre-existing value.
 
+=item allow_clear
+
+Shows a button labeled 'Clear' that allows a user to undo
+their choice. Defaults to true.
+
 =back
 
 The template for the category chooser is located in
@@ -147,6 +152,9 @@ sub category_chooser {
 
     # field defaults to name
     $field ||= $name;
+
+    # allow_clear defaults to true
+    my $allow_clear = exists $args{allow_clear} ? $args{allow_clear} : 1;
 
     my $chooser = category_chooser_object(%args);
     # if we didn't get a choose it's cause there are no categories to choose from
@@ -179,12 +187,13 @@ sub category_chooser {
 
     # send data to the template
     $template->param(
-        chooser  => $chooser->output,
-        name     => $name,
-        field    => $field,
-        display  => defined $display ? $display : 1,
-        formname => $formname,
-        onchange => $onchange
+        chooser     => $chooser->output,
+        name        => $name,
+        field       => $field,
+        display     => defined $display ? $display : 1,
+        formname    => $formname,
+        onchange    => $onchange,
+        allow_clear => $allow_clear,
     );
 
     return $template->output();

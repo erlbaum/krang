@@ -425,12 +425,13 @@ sub edit {
         }
         $template->param(category_loop => \@category_loop);
         $template->param(category_chooser => 
-                         category_chooser(name     => 'new_category_id',
-                                          query    => $query,
-                                          label    => 'Add Site/Category',
-                                          display  => 0,
-                                          onchange => 'add_category',
-                                          may_edit => 1,
+                         category_chooser(name        => 'new_category_id',
+                                          query       => $query,
+                                          label       => 'Add Site/Category',
+                                          display     => 0,
+                                          onchange    => 'add_category',
+                                          may_edit    => 1,
+                                          allow_clear => 0,
                                          ));
 
         $template->param(version_selector => scalar
