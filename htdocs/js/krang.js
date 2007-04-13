@@ -410,7 +410,7 @@ Krang.hide_indicator = function(indicator) {
 Krang.update_progress = function( count, total, label ) {
     var bar      = document.getElementById('progress_bar');
     var percent  = document.getElementById('progress_bar_percent');
-    var progress = ( count + 1 ) / total;
+    var progress = total > 0 ? ( count + 1 ) / total : 1;
 
     // can't go over 100%
     if ( progress > 1 ) progress = 1;
