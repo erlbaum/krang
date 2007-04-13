@@ -793,7 +793,7 @@ sub calculate_order_by {
     my $order_by;
 
     # if we weren't given a cache key and we're called as an object method
-    $cache_key ||= ref $self ? ($self->cache_key || $self->use_module) : '';
+    $cache_key ||= ref $self ? $self->_get_cache_key : '';
 
     if( defined $q->param('krang_pager_sort_field') ) {
         $order_by = scalar $q->param('krang_pager_sort_field');
@@ -813,7 +813,7 @@ sub calculate_order_desc {
     my $order_desc;
 
     # if we weren't given a cache key and we're called as an object method
-    $cache_key ||= ref $self ? ($self->cache_key || $self->use_module) : '';
+    $cache_key ||= ref $self ? $self->_get_cache_key : '';
 
     if (defined $q->param('krang_pager_sort_order_desc')) {
         $order_desc = $q->param('krang_pager_sort_order_desc');
@@ -932,7 +932,7 @@ sub _fill_template {
 
     # Set up persist_vars
     my @pager_persist_data = ();
-    my $cache_key = $self->cache_key || $self->use_module;
+    my $cache_key = $self->_get_cache_key;
 
     while (my ($k, $v) = each(%{$self->persist_vars()})) {
         push(@pager_persist_data, $q->hidden(
@@ -952,7 +952,7 @@ sub get_pager_view {
 
     my $q = $self->cgi_query();
 
-    my $cache_key = $self->cache_key || $self->use_module;
+    my $cache_key = $self->_get_cache_key;
     my $use_module = $self->use_module;
 
     my $curr_page_num = $self->calculate_current_page_num($q);
@@ -1214,6 +1214,17 @@ sub validate_pager {
     croak ("id_handler not a subroutine reference") unless (ref($self->id_handler()) eq 'CODE');
 
     # DONE!
+}
+
+sub _get_cache_key {
+    my $self = shift;
+    if( $self->cache_key ) {
+        return $self->cache_key;
+    } else {
+        my $mod = $self->use_module;
+        $mod =~ s/^Krang:://;
+        return $mod;
+    }
 }
 
 # Hallelujah!
