@@ -58,8 +58,11 @@ var rules = {
     // create an autocomplete widget. This involves creating a div
     // in which to place the results and creating an Ajax.Autocompleter
     // object. We only do this if the use has the "use_autocomplete"
-    // preference
+    // preference.
+    // Can specifically ignore inputs by giving them the 'non_auto' class
     'input.autocomplete' : function(el) {
+        // ignore 'non_auto'
+        if( el.hasClassName('non_auto') ) return;
         var pref = Krang.my_prefs();
         if( pref.use_autocomplete ) {
             // add a new div of class 'autocomplete' right below this input
