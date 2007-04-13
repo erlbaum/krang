@@ -418,6 +418,7 @@ Krang.update_progress = function( count, total, label ) {
     var width = Math.floor( progress * 297 );
 
     bar.style.width   = width + 'px';
+
     percent.innerHTML = Math.floor( progress * 100 ) + '%';
     if ( label ) document.getElementById( 'progress_bar_label' ).innerHTML = label;
 };
@@ -611,7 +612,7 @@ Krang.check_all = function( checkbox, prefix ) {
     names that match the given prefix will also be updated.
 */
 Krang.update_order = function( select, prefix ) {
-    var position = select.value;
+    var position = select.selectedIndex;
     var inputs   = [];
   
     // get the list of relevant elements
@@ -621,14 +622,16 @@ Krang.update_order = function( select, prefix ) {
             inputs.push( el );
         }
     }
-
+    
     // this sort function works for sorting with an upward or downward
     // bias if there is a tie
     var sort_function = function ( a, b, upward ) {
         var val = (a.value - b.value);
         if( val == 0 ) {
-            if( a.name == select.name )      val = upward ? -1 :  1;
-            else if( b.name == select.name ) val = upward ?  1 : -1;
+            if( a.name == select.name )      
+                val = upward ? -1 :  1;
+            else if( b.name == select.name ) 
+                val = upward ?  1 : -1;
         }
         return val;
     }
@@ -636,13 +639,14 @@ Krang.update_order = function( select, prefix ) {
     inputs.sort(function(a, b) { return sort_function(a, b, false) });
 
     // that didn't do it? reverse bias!
-    if ( inputs[ position -1 ] != select ) {
+    if ( inputs[ position ] != select ) {
         inputs.sort(function(a, b) { return sort_function(a, b, true) });
     }
 
     // walk elements and assign indices
-    for ( var i = 1; i <= inputs.length; i++ ) 
-        inputs[i - 1].value = i;
+    for ( var i = 0; i < inputs.length; i++ ) {
+        inputs[i].value = select.options[i].value;
+    }
 }
 
 /*
