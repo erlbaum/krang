@@ -297,11 +297,13 @@ Krang.ajax_form_submit = function(form, options) {
         // remove any possible query bits
         url = url.replace(/\?.*/, '');
     }
+
+    var target = options.target || Krang.class_suffix(form, 'for_');
         
     Krang.ajax_update({
         url       : url,
         params    : Form.serialize(form, true),
-        target    : Krang.class_suffix(form, 'for_'),
+        target    : target,
         indicator : Krang.class_suffix(form, 'show_'),
         to_top    : options.to_top
     });
@@ -341,6 +343,8 @@ Krang.form_set = function(formName, inputs) {
                      you don't want to force the user to go back to the top 
                      of the page. Setting this to false will do just that. 
                      Defaults to true.
+        target     : the id of an element for which the content is intended
+                     for
 
     *NOTE* - This should not be used by the onclick handler of
     an input of type 'button' if the form is not of the 'non_ajax'
@@ -366,7 +370,11 @@ Krang.form_submit = function(formName, inputs, options) {
         form.target = old_target;
     } else {
         Krang.show_indicator();
-        return form.submit(options);
+        if( form.hasClassName('non_ajax') ) {
+            form.submit();
+        } else {
+            Krang.ajax_form_submit(form, options);
+        }
     }
 };
 

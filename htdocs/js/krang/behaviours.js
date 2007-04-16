@@ -41,19 +41,14 @@ var rules = {
             }
         }.bind(el);
 
-        // Krang likes to call submit() directly on forms
-        // which unfortunately in JS is handled differently 
-        // than a user clicking on a 'submit' button. So we put the magic in 
-        // onsubmit() and then have submit() call onsubmit().
-        el.onsubmit = function(options) {
+        // put the magic in the onsubmit handler
+        el.observe('submit', function(e) {
             if( !this.old_onsubmit || this.old_onsubmit() ) {
-                Krang.ajax_form_submit(this, options);
+                Krang.ajax_form_submit(this);
+                Event.stop(e);
             }
             return false;
-        }.bind(el);
-        el.submit = function(options) {
-            this.onsubmit(options);
-        }.bind(el);
+        }.bindAsEventListener(el));
     },
     // create an autocomplete widget. This involves creating a div
     // in which to place the results and creating an Ajax.Autocompleter
