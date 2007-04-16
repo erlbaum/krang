@@ -520,7 +520,7 @@ Krang.Messages = {
 
             for(var i=0; i< size; i++) {
                 var msg = my_stack.pop();
-                if( msg ) content = content + '<p>' + msg + '</p>';
+                if ( msg ) content += '<p>' + msg + '</p>';
             }
 
             var el = $(level);
