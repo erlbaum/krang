@@ -509,22 +509,17 @@ Krang.Messages = {
         if( my_stack.length ) {
             var content = '';
             var size = my_stack.length;
+
             for(var i=0; i< size; i++) {
                 var msg = my_stack.pop();
                 if( msg ) content = content + '<p>' + msg + '</p>';
             }
+
             var el = $(level);
+
             // set the content 
             el.down('div.content').update(content);
 
-            // we need to reposition the messages div so it's
-            // at the top of the viewport
-            var pos = Position.page(el);
-            var top = pos[1];
-            if( top < 0 ) {
-                top = Math.abs(top) + 'px';
-                el.setStyle({ top: top });
-            }
             new Effect.SlideDown(
                 el, 
                 { 
