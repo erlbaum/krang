@@ -539,8 +539,20 @@ Krang.Messages = {
                             var prefs = Krang.my_prefs();
                             var secs = prefs.message_timeout;
                             if( secs > 0 ) {
+                                // we need to mark this particular slide down
+                                // of messages with a unique marker so that our
+                                // timed hiding will only work if it's for the same
+                                // slide down. This prevents problems when there are 
+                                // multiple slide-downs during the user's preferred
+                                // timeout and earlier ones were manually cleared
+                                var unique = new Date().valueOf();
+                                $('messages').addClassName('unique_' + unique);
                                 window.setTimeout(
-                                    function() { Krang.Messages.hide(level) }, 
+                                    function() { 
+                                        if( $('messages').hasClassName('unique_' + unique) ) {
+                                            Krang.Messages.hide('messages');
+                                        }
+                                    }, 
                                     secs * 1000
                                 );
                             }
@@ -555,6 +567,7 @@ Krang.Messages = {
         if( level === undefined ) level = 'messages';
         if( Element.visible(level) ) {
             new Effect.SlideUp(level, { duration: .5 });
+            $('messages').className = 'krang-slider';
         }
     }
 };
