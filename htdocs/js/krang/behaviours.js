@@ -7,8 +7,10 @@ var rules = {
     },
     'a.ajax' : function(el) {
         el.observe('click', function(event) {
+            this.href.match(/(.*)\?(.*)/);
             Krang.ajax_update({
-                url       : this.href,
+                url       : RegExp.$1,
+                params    : RegExp.$2.toQueryParams(),
                 div       : Krang.class_suffix(el, 'for_'),
                 indicator : Krang.class_suffix(el, 'show_')
             });
