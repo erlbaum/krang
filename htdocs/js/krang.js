@@ -842,11 +842,11 @@ Krang.Widget.time_chooser = function(inputName) {
             // set the selected values of the dropdowns
             var input = $(inputName);
             current = input.value;
-            var regex = /^(\d+):(\d+)\s*(AM|PM)$/i;
-            if( regex.exec(current) ) {
-                hour.value   = RegExp.$1 || '';
-                minute.value = RegExp.$2 || '';
-                ampm.value   = RegExp.$3.toUpperCase();
+            var matches = current.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+            if( matches ) {
+                hour.value   = matches[1] || '';
+                minute.value = matches[2] || '';
+                ampm.value   = matches[3].toUpperCase();
             } else if(! current ) {
                 input.value = '';
             }
