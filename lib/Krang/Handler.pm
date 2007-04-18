@@ -223,25 +223,33 @@ sub access_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    # is it Netscape 6+, IE 5+ (but not mac), Mozilla/Firefox, Safari 1.1+ (OS X 10.3+), or Konqueror?
+    my %allow_browsers = (
+        netscape  => 7,
+        ie        => 6,
+        mozilla   => 5,
+        firefox   => 1.5,
+        safari    => 1.3,
+        konqueror => 1,
+    );
     my $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
-    if (
-        ($bd->netscape  and $bd->major >= 5) or
-        ($bd->ie        and $bd->major >= 5 and !$bd->mac) or
-        ($bd->mozilla   and $bd->major >= 1) or
-        ($bd->firefox   and (($bd->major >= 1) or
-                                                ($bd->minor == .1 or
-                                                 $bd->minor >= .8))
-        ) or
-        ($bd->safari    and $bd->major >= 1) or
-        ($bd->konqueror and $bd->major >= 1)
-       ) {
-        return OK;
+    foreach my $browser (keys %allow_browsers) {
+        if( $bd->$browser ) {
+            $allow_browsers{$browser} =~ /(\d)+\.?(\d+)?/;
+            my ($major, $minor) = ($1, $2);
+            $minor ||= 0;
+            if( 
+                $bd->major > $major 
+                or
+                ( defined $minor && $bd->major == $major && $bd->minor >= $minor )
+            ) {
+                return OK;
+            }
+        }
     }
-
+    
     # failure
     debug("Unsupported browser detected: " . $r->header_in('User-Agent'));
-    $r->custom_response(FORBIDDEN,  "<h1>Unsupported browser detected.</h1><p>This application requires Mozilla, Firefox, Konqueror, Safari 1.1+, Netscape 6+, or Internet Explorer 5+ (Windows).</p>");
+    $r->custom_response(FORBIDDEN,  "<h1>Unsupported browser detected.</h1><p>This application requires Firefox 1.5+, Safari 1.3+, Internet Explorer 6+, Mozilla 1.7+, Netscape 7+ or Konqueror 1+.</p>");
     return FORBIDDEN;
 }
 
