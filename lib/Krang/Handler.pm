@@ -234,13 +234,13 @@ sub access_handler ($$) {
     my $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
     foreach my $browser (keys %allow_browsers) {
         if( $bd->$browser ) {
-            $allow_browsers{$browser} =~ /(\d)+\.?(\d+)?/;
+            $allow_browsers{$browser} =~ /(\d)+(\.\d+)?/;
             my ($major, $minor) = ($1, $2);
-            $minor ||= 0;
+            $minor ||= ".0";
             if( 
                 $bd->major > $major 
                 or
-                ( defined $minor && $bd->major == $major && $bd->minor >= $minor )
+                ( $bd->major == $major && $bd->minor >= $minor )
             ) {
                 return OK;
             }
