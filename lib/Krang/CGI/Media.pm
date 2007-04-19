@@ -1674,7 +1674,7 @@ sub find_media_row_handler {
 
     # creation_date
     my $tp = $media->creation_date();
-    $row->{creation_date} = (ref($tp)) ? $tp->strftime('%b %e, %Y %l:%M %p') : '[n/a]';
+    $row->{creation_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 
     # pub_status
     $row->{pub_status} = $media->published() ? '<b>P</b>' : '&nbsp;';

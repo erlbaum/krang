@@ -1615,7 +1615,7 @@ sub find_story_row_handler {
 
     # cover_date
     my $tp = $story->cover_date();
-    $row->{cover_date} = (ref($tp)) ? $tp->strftime('%b %e, %Y %l:%M %p') : '[n/a]';
+    $row->{cover_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 
     # pub_status
     $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
