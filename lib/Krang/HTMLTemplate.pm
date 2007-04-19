@@ -26,7 +26,7 @@ See L<HTML::Template>.
 
 use base 'HTML::Template';
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS);
+use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS EnableBugzilla);
 use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clear_alerts);
 use Krang::ClassLoader 'Navigation';
 use Krang::ClassLoader Log => qw(debug);
@@ -90,6 +90,9 @@ sub output {
 
     $template->param(instance_display_name => InstanceDisplayName)
       if $template->query(name => 'instance_display_name');
+
+    $template->param(enable_bugzilla => EnableBugzilla)
+        if $template->query(name => 'enable_bugzilla');
 
     # add the message and alert loops
     if ($template->query(name => 'header_message_loop')) {
