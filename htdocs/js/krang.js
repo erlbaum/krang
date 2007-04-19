@@ -164,10 +164,12 @@ Krang.ajax_request = function(args) {
             },
             onFailure   : function(transport, e) { 
                 failure(transport, e);
+console.log('ajax_request->onFailure: ' + e);
                 Krang.Error.show();
             },
             onException : function(transport, e) { 
                 failure(transport, e);
+console.log('ajax_request->onException: ' + e);
                 Krang.Error.show();
             }
         }
@@ -270,11 +272,13 @@ Krang.ajax_update = function(args) {
             onFailure   : function(transport, e) { 
                 // user callback
                 failure(transport, e);
+console.log('ajax_update->onFailure: ' + e);
                 Krang.Error.show();
             },
             onException : function(transport, e) { 
                 // user callback
                 failure(transport, e);
+console.log('ajax_update->onException: ' + e);
                 Krang.Error.show();
             }
         }
@@ -475,9 +479,17 @@ Krang.Nav = {
 
         Krang.Nav.edit_mode_flag = flag;
     },
-    goto_url       : function(url) {
+    goto_url       : function(url, ajax) {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
-            window.location = url;
+            if( ajax ) {
+                var matches = url.match(/(.*)\?(.*)/);
+                Krang.ajax_update({
+                    url : matches[1],
+                    params : matches[2].toQueryParams()
+                });
+            } else {
+                window.location = url;
+            }
             Krang.Nav.edit_mode_flag = false;
         }
     }
