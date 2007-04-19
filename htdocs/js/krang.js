@@ -164,12 +164,10 @@ Krang.ajax_request = function(args) {
             },
             onFailure   : function(transport, e) { 
                 failure(transport, e);
-console.log('ajax_request->onFailure: ' + e);
                 Krang.Error.show();
             },
             onException : function(transport, e) { 
                 failure(transport, e);
-console.log('ajax_request->onException: ' + e);
                 Krang.Error.show();
             }
         }
