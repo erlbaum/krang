@@ -296,7 +296,7 @@ sub list_all_row_handler {
     my $s_params;
 
     if ($frequency eq 'One Time') {
-       $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
+       $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p');
     } elsif ($frequency eq 'Hourly') {
        ($schedule->minute eq '0') ? ($s_params = 'on the hour') : ($s_params = $schedule->minute." minutes past the hour");
     } elsif ($frequency eq 'Daily') {
@@ -310,7 +310,7 @@ sub list_all_row_handler {
     $s_params = ($frequency eq 'Daily') ? ($frequency.' at '.$s_params) : ($frequency.', '.$s_params);
 
     $row->{schedule} = $s_params;
-    $row->{next_run} = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
+    $row->{next_run} = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p');
     $row->{action} = $ALL_ACTION_LABELS{$schedule->action};
     $row->{version} = $version;
 }
@@ -340,7 +340,7 @@ sub get_existing_schedule {
         my $s_params;
 
         if ($frequency eq 'One Time') {
-            $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
+            $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p');
         } elsif ($frequency eq 'Hourly') {
             ($schedule->minute eq '0') ? ($s_params = 'on the hour') : ($s_params = $schedule->minute." minutes past the hour"); 
         } elsif ($frequency eq 'Daily') {
@@ -356,7 +356,7 @@ sub get_existing_schedule {
         push(@existing_schedule_loop, {
                                                 'schedule_id' => $schedule->schedule_id,
                                                 'schedule' => $s_params,
-                                                'next_run' => Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p'),
+                                                'next_run' => Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p'),
                                                 'action' => $ALL_ACTION_LABELS{$schedule->action},
                                                 'version' => $version
                                             });
