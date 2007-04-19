@@ -299,4 +299,3 @@ Object.extend(Control.Modal.prototype,{
 		return response;
 	}
 });
-Control.Modal.attachEvents();

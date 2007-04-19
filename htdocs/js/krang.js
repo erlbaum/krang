@@ -437,7 +437,11 @@ Krang.update_progress = function( count, total, label ) {
 */
 Krang.Error = {
     show : function() {
+        Control.Modal.load();
         Krang.Error.modal.open();
+    },
+    close : function() {
+        Krang.Error.modal.close();
     },
     modal : null
 };
