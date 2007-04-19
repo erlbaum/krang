@@ -250,11 +250,11 @@ BEGIN {
                                          map { $_->as_string } $lint->errors) .
                                            "</ul>";
         my $js = qq|
-            <script language="javascript">
-              var html_lint_window = window.open("", "html_lint_window", "height=300,width=600");
-              html_lint_window.document.write("<html><head><title>HTML Errors Detected</title></head><body><h1>HTML Errors Detected</h1>$err_text</body></html>");
-              html_lint_window.document.close();
-              html_lint_window.focus(); 
+            <script type="text/javascript">
+            var html_lint_window = window.open( '', 'html_lint_window', 'height=300,width=600' );
+            html_lint_window.document.write( '<html><head><title>HTML Errors Detected</title></head><body><h1>HTML Errors Detected</h1>$err_text</body></html>' );
+            html_lint_window.document.close();
+            html_lint_window.focus();
             </script>
         |;
             if ($$o =~ m!</body>!) {
@@ -449,11 +449,11 @@ sub dump_html {
     $output .= $self->SUPER::dump_html();
 
     # Dump Session state
-    $output .= "<P>\nSession State:<BR>\n<b><PRE>";
+    $output .= "\n<p>Session State:</p>\n<pre><b>\n";
     $output .= Data::Dumper::Dumper(\%session);
-    $output .= "</PRE></b>\n";
+    $output .= "\n</b></pre>\n";
 
-    return "<div style='text-align: left; margin-left: 170px'>$output</div>";
+    return '<div style="text-align:left;margin-left:170px">\n$output\n</div>';
 }
 
 sub script_name {
