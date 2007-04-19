@@ -224,7 +224,7 @@ sub access_handler ($$) {
     my ($r) = @_;
 
     my %allow_browsers = (
-        netscape  => 7,
+        netscape  => 7.1,
         ie        => 6,
         mozilla   => 5,
         firefox   => 1.5,
