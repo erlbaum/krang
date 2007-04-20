@@ -291,13 +291,11 @@ Krang.ajax_update = function(args) {
             onFailure   : function(transport, e) { 
                 // user callback
                 failure(transport, e);
-console.log('ajax_update->onFailure: ' + e);
                 Krang.Error.show();
             },
             onException : function(transport, e) { 
                 // user callback
                 failure(transport, e);
-console.log('ajax_update->onException: ' + e);
                 Krang.Error.show();
             }
         }
