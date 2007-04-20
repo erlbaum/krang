@@ -233,8 +233,8 @@ sub create {
 
 =item edit
 
-The category editing interface.  Expects to find a story to edit in
-$session{category}.
+The category editing interface. Expects to find a category to edit in
+$session{category} or a category_id in they query params.
 
 =cut
 
