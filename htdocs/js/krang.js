@@ -32,6 +32,27 @@ Krang.load = function(target) {
 };
 
 /*
+    Krang.is_ie_6()
+
+    Since there are lots of places where you have to work around IE 6
+    this at least let's you check it easier.
+*/
+Krang.is_ie_6 = function() {
+    var ua = navigator.userAgent;
+    var offset = ua.indexOf('MSIE ');
+    if (offset == -1) {
+        return 0;
+    } else {
+        var version = parseFloat(ua.substring(offset+5, ua.indexOf(';', offset)));
+        if (version < 7) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+}
+
+/*
     Krang.onload()
     Add some code that will get executed after the DOM is loaded
     (but without having to wait on images, etc to load).
@@ -542,46 +563,55 @@ Krang.Messages = {
             // set the content 
             el.down('div.content').update(content);
 
-            new Effect.SlideDown(
-                el, 
-                { 
-                    duration: .50,
-                    afterFinish : function() {
-                        // if it's normal messages (not alerts) then let's
-                        // hide them according to our preference
-                        if( level == 'messages' ) {
-                            var prefs = Krang.my_prefs();
-                            var secs = prefs.message_timeout;
-                            if( secs > 0 ) {
-                                // we need to mark this particular slide down
-                                // of messages with a unique marker so that our
-                                // timed hiding will only work if it's for the same
-                                // slide down. This prevents problems when there are 
-                                // multiple slide-downs during the user's preferred
-                                // timeout and earlier ones were manually cleared
-                                var unique = new Date().valueOf();
-                                $('messages').addClassName('unique_' + unique);
-                                window.setTimeout(
-                                    function() { 
-                                        if( $('messages').hasClassName('unique_' + unique) ) {
-                                            Krang.Messages.hide('messages');
-                                        }
-                                    }, 
-                                    secs * 1000
-                                );
-                            }
-                        }
+            // in some cases we want to close the message after a user-specified
+            // period of time
+            var close_message_callback = Prototype.emptyFunction;
+            if( level == 'messages' ) {
+                var prefs = Krang.my_prefs();
+                var secs = prefs.message_timeout;
+                if( secs > 0 ) {
+                    close_message_callback = function() {
+                        // unique marker so later we know that we're trying to close
+                        // the same message window that we opened.
+                        var unique = new Date().valueOf();
+                        $('messages').addClassName('unique_' + unique);
+                        window.setTimeout(
+                            function() { 
+                                if( $('messages').hasClassName('unique_' + unique) ) {
+                                    Krang.Messages.hide('messages');
+                                }
+                            }, 
+                            secs * 1000
+                        );
                     }
                 }
-            );
+            }
+
+            // in IE 6 we need to create an iframe to slide at the same time as
+            // the message's wrapper
+            if( Krang.is_ie_6() ) {
+                var wrapper = el.down('div.wrapper');
+                Krang.Widget.HideIEControls.load(wrapper);
+                el.show();
+                // resize the iframe
+                Krang.Widget.HideIEControls.resize(wrapper);
+                close_message_callback();
+            } else {
+                new Effect.SlideDown( el, { duration: .5, afterFinish : close_message_callback } );
+            }
         }
     },
     hide  : function(level) {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
-        if( Element.visible(level) ) {
-            new Effect.SlideUp(level, { duration: .5 });
-            $('messages').className = 'krang-slider';
+        el = $(level);
+        if( el.visible() ) {
+            if( Krang.is_ie_6() ) {
+                el.hide();
+            } else {
+                new Effect.SlideUp(el, { duration: .5 });
+            }
+            el.className = 'krang-slider';
         }
     }
 };
@@ -887,6 +917,57 @@ Krang.Widget.update_time_chooser = function(inputName) {
     var ampm   = clock.down('select', 2).value;
     if( hour && minute && ampm ) {
         $(inputName).value = hour + ':' + minute + ' ' + ampm;
+    }
+};
+
+// IE 6 will place some form inputs above everything else
+// This function takes an element and tries to fix this by
+// inserting an <iframe> under it. This should hide the problem.
+/*
+    Krang.Widget.HideIEControls.load('div_id');
+
+    // do something that changes the size of the element
+    Krang.Widget.HideIEControls.resize('div_id');
+
+    // ok, all done now
+    Krang.Widget.HideIEControls.unload('div_id');
+
+*/
+Krang.Widget.HideIEControls = {
+    load   : function(el) {
+        el = $(el);
+        var iframe = document.createElement('iframe');
+
+        // avoid warnings about mismatching prototcols
+        if( document.location.protocol == "https:" )
+            iframe.src ="//0";
+        else
+            iframe.src ="javascript:false";
+
+        iframe.scrolling      = "no";
+        iframe.frameBorder    = "0";
+        iframe.style.zIndex   = "-1";
+        iframe.style.position = 'absolute';
+
+        // insert the iframe under the 
+        el.parentNode.insertBefore(iframe, el.nextSibling);
+
+        // give it the correct size and position
+        Krang.Widget.HideIEControls.resize(el, iframe);
+    },
+    iframe : function(el) {
+        el = $(el);
+        return el.next('iframe');
+    },
+    unload : function(el) {
+        el = $(el);
+        iframe = el.next('iframe');
+        el.parentNode.removeChild(iframe);
+    },
+    resize : function(el, iframe) {
+        el = $(el);
+        if(! iframe ) iframe = el.next('iframe');
+        Position.clone(el, iframe);
     }
 };
 
