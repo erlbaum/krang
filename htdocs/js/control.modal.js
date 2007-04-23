@@ -153,7 +153,9 @@ Object.extend(Control.Modal.prototype,{
 			this.mode = 'named';
 			x = $(target_match[1]);
 			this.html = x.innerHTML;
-			x.remove();
+            // [mpeters] - we can't remove this since we might have multiple
+            // errors on the same "document" since we using AJAX
+			//x.remove();
 			this.href = target_match[1];
 		}else{
 			this.mode = (this.options.iframe) ? 'iframe' : 'ajax';
@@ -299,3 +301,4 @@ Object.extend(Control.Modal.prototype,{
 		return response;
 	}
 });
+Control.Modal.attachEvents();
