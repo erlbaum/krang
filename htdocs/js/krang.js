@@ -720,9 +720,9 @@ Krang.preview = function(type, id) {
 
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
-    instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
+    instance = instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
 
-    var pop = window.open( url, ( instance + 'preview' ) );
+    var pop = window.open( url, instance + 'preview' );
 
     if ( pop ) pop.focus();
 }
