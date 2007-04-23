@@ -939,14 +939,18 @@ Krang.Widget.HideIEControls = {
 
         // avoid warnings about mismatching prototcols
         if( document.location.protocol == "https:" )
-            iframe.src ="//0";
+            iframe.src = "//0";
+        else if(window.opera != "undefined")
+            iframe.src = "";
         else
-            iframe.src ="javascript:false";
+            iframe.src = "javascript:false";
 
         iframe.scrolling      = "no";
         iframe.frameBorder    = "0";
         iframe.style.zIndex   = "-1";
         iframe.style.position = 'absolute';
+        iframe.style.height   = '0px';
+        iframe.style.width    = '0px';
 
         // insert the iframe under the 
         el.parentNode.insertBefore(iframe, el.nextSibling);
