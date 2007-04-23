@@ -521,8 +521,11 @@ sub find_story_link {
        id_handler    => sub { shift->story_id },
       );
     
-    $template->param(pager_html => $pager->output());
-    $template->param(action => $self->_get_script_name);
+    $template->param(
+        pager_html => $pager->output(),
+        row_count  => $pager->row_count,
+        action     => $self->_get_script_name,
+    );
 
     return $template->output;
 }
