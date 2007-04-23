@@ -606,6 +606,7 @@ Krang.Messages = {
         if( el.visible() ) {
             if( Krang.is_ie_6() ) {
                 el.hide();
+                Krang.Widget.HideIEControls.unload(el.down('div.wrapper'));
             } else {
                 new Effect.SlideUp(el, { duration: .5 });
             }
