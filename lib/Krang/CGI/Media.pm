@@ -1610,17 +1610,19 @@ sub make_pager {
                      url
                      creation_date
                      commands_column
+                     status
                      checkbox_column
                     );
 
     my %column_labels = ( 
-                         pub_status => '',
-                         media_id => 'ID',
-                         thumbnail => 'Thumbnail',
-                         title => 'Title',
-                         url => 'URL',
-                         creation_date => 'Date',
-                         commands_column => '',
+                          pub_status      => '',
+                          media_id        => 'ID',
+                          thumbnail       => 'Thumbnail',
+                          title           => 'Title',
+                          url             => 'URL',
+                          creation_date   => 'Date',
+                          commands_column => '',
+                          status          => 'Status',
                         );
 
     # Hide thumbnails
@@ -1686,6 +1688,15 @@ sub find_media_row_handler {
         $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|
         . ' '
         . qq|<input value="Edit" onclick="edit_media('| . $media->media_id . qq|')" type="button" class="button">|;
+    }
+
+    # status 
+    if ($media->checked_out) {
+        $row->{status} = "Checked out by <b>"
+            . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login
+            . '</b>';
+    } else {
+        $row->{status} = '&nbsp;';
     }
 
 }

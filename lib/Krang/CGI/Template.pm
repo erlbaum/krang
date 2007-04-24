@@ -1074,6 +1074,7 @@ sub make_pager {
                      filename
                      url
                      commands_column
+                     status
                      checkbox_column
                     );
 
@@ -1082,6 +1083,7 @@ sub make_pager {
                          filename        => 'File Name',
                          url             => 'URL',
                          commands_column => '',
+                         status          => 'Status',
                         );
 
     my $q = $self->query();
@@ -1122,6 +1124,15 @@ sub search_row_handler {
         $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|
             . ' '
             . qq|<input value="Edit" onclick="edit_template('| . $template->template_id . qq|')" type="button" class="button">|;
+    }
+
+    # status 
+    if ($template->checked_out) {
+        $row->{status} = "Checked out by <b>"
+            . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login
+            . '</b>';
+    } else {
+        $row->{status} = '&nbsp;';
     }
 }
 
