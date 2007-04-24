@@ -236,6 +236,14 @@ sub element_edit {
     # button displayed
     $template->param(no_reorder => 1) if not @avail_ord;
     $template->param(no_delete  => 1) if not $avail_del;
+
+    # find out how many children are reorderable
+    my $multiple_reorders = 0;
+    foreach my $child (@children) {
+        $multiple_reorders++ if $child->reorderable;
+        last if $multiple_reorders > 1;
+    }
+    $multiple_reorders = 0 if $multiple_reorders < 2;
  
     foreach my $child (@children) {        
         next if $child->hidden;
@@ -250,7 +258,7 @@ sub element_edit {
                            name         => $child->display_name(),
                            path         => $child->xpath(),
                            (order_select =>
-                             $child->reorderable ? 
+                             $child->reorderable && $multiple_reorders ? 
                              $query->popup_menu(-name => "order_$index",
                                                 -values => \@avail_ord,
                                                 -default => $index + 1,
