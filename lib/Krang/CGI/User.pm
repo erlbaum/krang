@@ -579,8 +579,10 @@ sub get_user_params {
     # make group_ids multi-select
     my @cgids = $q->param('errors') ? $q->param('current_group_ids') :
       $user->group_ids;
-    my %cgids = map {$_, 1} @cgids;
-    my @pgids = grep {not exists $cgids{$_}} keys %user_groups;
+    my %cgids = map {$_, 1} 
+        sort { lc $user_groups{$a} cmp lc $user_groups{$b} } @cgids;
+    my @pgids = grep {not exists $cgids{$_}} 
+        sort { lc $user_groups{$a} cmp lc $user_groups{$b} } keys %user_groups;
     push @{$user_tmpl{possible_group_ids}},
       {id => $_, name => $user_groups{$_}} for @pgids;
     push @{$user_tmpl{current_group_ids}},
