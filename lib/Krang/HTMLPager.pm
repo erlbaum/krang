@@ -1218,13 +1218,7 @@ sub validate_pager {
 
 sub _get_cache_key {
     my $self = shift;
-    if( $self->cache_key ) {
-        return $self->cache_key;
-    } else {
-        my $mod = $self->use_module;
-        $mod =~ s/^Krang:://;
-        return $mod;
-    }
+    return defined $self->cache_key ? $self->cache_key : $self->use_module;
 }
 
 # Hallelujah!
