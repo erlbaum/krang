@@ -391,10 +391,23 @@ Krang.form_submit = function(formName, inputs, options) {
         form.target = old_target;
     } else {
         Krang.show_indicator();
-        if( form.hasClassName('non_ajax') ) {
-            form.submit();
-        } else {
+
+        // we don't use AJAX if the form specifically disallows it
+        // or it has a file input
+        var use_ajax = !form.hasClassName('non_ajax');
+        var inputs = document.forms[formName].elements;
+        for(var i=0; i < inputs.length; i++) {
+            var field = inputs[i];
+            if( field.type == 'file' ) {
+                use_ajax = false;
+                break;
+            }
+        }
+        
+        if( use_ajax ) {
             Krang.ajax_form_submit(form, options);
+        } else {
+            form.submit();
         }
     }
 };
