@@ -6,10 +6,93 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Fix various buglets regarding paging and using overridden modules
+in an addon. [Michael Peters]
+
+=item *
+
+Fixed problem with desk deletion where desks were reported to have
+stories while those stories have been checked out to the user's
+workspace.  Also make sure the desk selector preselects as the default
+checkin desk the next desk given by the desk's sorting order. [Bodo
+Schulze]
+
+=item *
+
+In docs/permissions.pod, describe admin bits 'admin_scheduler' and
+'admin_lists'. [Bodo Schulze]
+
+=item *
+
+In templates/Desk/desk.tmpl, removed 'Check out' Button and JavaScript
+goto_edit() function, since they double the 'Edit' link. [Bodo Schulze]
+
+=item *
+
+Since first and middle name are concatenated with &nbsp;, we can't
+html-escape the tmpl_var first_middle.  So we'll do it one by one in
+Krang::CGI::Contrib. [Bodo Schulze]
+
+=item *
+
+In check_categories() of Krang::CGI::Media::BulkUpload, fixed bug
+where creation of non existing categories would fail if no parent
+category is chosen. [Bodo Schulze]
+
+=item *
+
+In templates/story/view.tmpl, changed static template string 'Version'
+to 'Current Version'. [Bodo Schulze]
+
+=item *
+
+Backport to trunk of Michael Peters' Ajax branch revision 3699,
+removing warning in view() of Krang::CGI::Story occuring when story
+version is undef. [Bodo Schulze]
+
+=item *
+
+Backport to trunk of Michael Peters' Ajax branch revision 3705,
+implementing password match check in Krang::CGI::MyPref. [Bodo
+Schulze]
+
+=item *
+
+In list_active() in Krang::CGI::Media, Krang::CGI::Story and
+Krang::CGI::Template, made admin permission may_checkin_all
+consistently control whether checkin checkboxes and button should be
+displayed in "Active Media", "Active Stories" and "Active Templates".
+[Bodo Schulze]
+
+=item *
+
+In F<krang.conf>, allow multiple word InstanceDisplayName.
+[Bodo Schulze]
+
+=item *
+
+Fixed addon v2 bugs in deserialize_xml() of Krang::Alert,
+Krang::Category, Krang::Contrib, Krang::Group, Krang::List,
+Krang::ListItem, Krang::Media, Krang::Story and Krang::Template.
+[Bodo Schulze]
+
+=item *
+
+Added C<ApacheMaxSize> directive to F<krang.conf> so that you can
+adjust the memory used depending on the machine capabilities and
+the number of addons installed. [Michael Peters]
+
 =item * 
 
 Fixed handling of C<hidden> elements in the Story editor so they
 wouldn't appear in the UI as advertised. [Michael Peters]
+
+=item *
+
+Fixed problem with importing data when an addon overrode the 'Group'
+package. [Michael Peters]
 
 =back
 

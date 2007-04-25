@@ -213,7 +213,8 @@ sub _do_login {
         -value => objToJson(\%prefs),
     );
     
-    # redirect to original destination and set the cookie
+    # redirect and set the cookie
+    my $target = './';
     $self->header_add(-uri    => $target,
                       -cookie => [$session_cookie->as_string, $pref_cookie->as_string]);
 

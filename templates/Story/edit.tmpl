@@ -300,7 +300,7 @@ Properties
 <tmpl_if is_root>
   <input value="Check In To" onclick="check_in()" type="button">
   <select name="checkin_to"><tmpl_loop desk_loop>
-    <option value="<tmpl_var escape=html choice_desk_id>"><tmpl_var escape=html choice_desk_name> Desk</option>
+    <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected="selected"</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
   </tmpl_loop></select>
   <tmpl_if may_publish>
     <input value="Publish" onclick="save_and_publish()" type="button">

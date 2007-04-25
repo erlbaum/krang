@@ -391,14 +391,12 @@ sub list_active {
 
     # can checkin all?
     my %admin_perms = pkg('Group')->user_admin_permissions();
-    my %asset_perms = pkg('Group')->user_asset_permissions();
-    my $may_checkin_all = ($admin_perms{may_checkin_all} and
-                           $asset_perms{media} eq 'edit') ? 1 : 0;
+    my $may_checkin_all = $admin_perms{may_checkin_all};
 
     my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
        persist_vars => \%persist_vars,
-       use_module => 'Krang::Media',
+       use_module => pkg('Media'),
        find_params => \%find_params,
        columns => [(qw(
                        media_id
@@ -1635,7 +1633,7 @@ sub make_pager {
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => $persist_vars,
-                                      use_module => 'Krang::Media',
+                                      use_module => pkg('Media'),
                                       find_params => $find_params,
                                       columns => \@columns,
                                       column_labels => \%column_labels,

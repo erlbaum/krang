@@ -180,8 +180,7 @@ sub move {
     my $self = shift;
     my $query = $self->query;
     my $obj = $self->_id2obj($query->param('id'));
-    my $result = $obj->move_to_desk($query->param('move_'.$query->param('id')));
-    $result ? add_message("moved_story", id => $query->param('id')) : add_alert("story_cant_move", id => $query->param('id')); 
+    $self->_do_move($obj);
     return $self->show;
 }
 
@@ -192,14 +191,11 @@ Moves list of checked stories to desks.
 =cut
 
 sub move_checked {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    foreach my $obj (map { $self->_id2obj($_) }
-                     $query->param('krang_pager_rows_checked')) {
-        my $result = $obj->move_to_desk($query->param('move_'.$obj->story_id));
-        $result ? add_message("moved_story", id => $obj->story_id) : add_alert("story_cant_move", id => $obj->story_id);
+    foreach my $obj ( map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked') ) {
+        $self->_do_move($obj);
     }
-
     return $self->show;
 }
 
@@ -286,6 +282,28 @@ sub _id2obj {
     croak("Unable to load story $id")
       unless $obj;
     return $obj;
+}
+
+# move one story to another desk
+sub _do_move {
+    my ($self, $obj) = @_;
+
+    my $story_id = $obj->story_id;
+    my $desk_id = $self->query->param('move_'.$story_id);
+
+    eval {$obj->move_to_desk($desk_id); };
+
+    if ($@ and ref($@) and $@->isa('Krang::Story::CheckedOut')) {
+        add_alert( 'story_cant_move_checked_out',
+		     id   => $story_id,
+		     desk => (pkg('Desk')->find(desk_id => $desk_id))[0]->name);
+    } elsif ($@ and ref($@) and $@->isa('Krang::Story::NoDesk')) {
+        add_alert( 'story_cant_move_no_desk',
+		     story_id   => $story_id,
+		     desk_id    => $desk_id );
+    } else {
+        add_message("moved_story", id => $story_id);
+    }
 }
 
 1;

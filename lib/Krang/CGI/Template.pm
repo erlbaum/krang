@@ -919,13 +919,14 @@ sub list_active {
     # Set up find_params for pager
     my %find_params = (checked_out => 1, may_see => 1);
 
-    # FIX: this should look at user permissions
-    my $may_checkin_all = 1;
+    # may checkin all ?
+    my %admin_perms = pkg('Group')->user_admin_permissions();
+    my $may_checkin_all = $admin_perms{may_checkin_all};
 
     my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
        persist_vars => \%persist_vars,
-       use_module => 'Krang::Template',
+       use_module => pkg('Template'),
        find_params => \%find_params,
        columns => [(qw(
                        template_id
@@ -1090,7 +1091,7 @@ sub make_pager {
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => $persist_vars,
-                                      use_module => 'Krang::Template',
+                                      use_module => pkg('Template'),
                                       find_params => $find_params,
                                       columns => \@columns,
                                       column_labels => \%column_labels,

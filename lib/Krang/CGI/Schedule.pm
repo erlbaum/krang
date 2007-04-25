@@ -267,7 +267,7 @@ sub list_all {
             rm          => 'list_all',
             is_list_all => 1,
         },
-        use_module    => 'Krang::Schedule',
+        use_module    => pkg('Schedule'),
         columns       => [qw( asset schedule next_run action version checkbox_column )],
         column_labels => {
             asset    => 'Asset',

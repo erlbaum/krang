@@ -524,7 +524,7 @@ sub search {
                                                        search_filter =>
                                                        $search_filter,
                                                       },
-                                      use_module => 'Krang::User',
+                                      use_module => pkg('User'),
                                       find_params =>
                                       {simple_search => $search_filter,
                                        hidden        => 0,
