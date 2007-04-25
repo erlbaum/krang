@@ -166,7 +166,6 @@ sub login {
 sub _do_login {
     my ($self, $user_id) = @_;
     my $q      = $self->query();
-    my $target = $q->param('target') || './';
 
     # if we are enforcing password changes every few days
     if( PasswordChangeTime ) {

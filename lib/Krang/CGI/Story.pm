@@ -298,28 +298,28 @@ sub check_in_and_save {
     eval { $story->move_to_desk($desk_id); };
 
     if ($@ and ref($@) and $@->isa('Krang::Story::CheckedOut')) {
-	add_message( 'story_cant_move_checked_out',
-		     id   => $story->story_id,
-		     desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
+	add_alert(
+            'story_cant_move_checked_out',
+            id   => $story->story_id,
+            desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name
+        );
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::NoDesk')) {
-	add_message( 'story_cant_move_no_desk',
-		     story_id   => $story->story_id,
-		     desk_id    => $desk_id );
+	add_alert( 
+            'story_cant_move_no_desk',
+            story_id   => $story->story_id,
+            desk_id    => $desk_id 
+        );
 	return $self->edit;
     }
 
     # remove story from session
     delete $session{story};
  
-    if( $result ) {
-        add_message("moved_story",
-                    id   => $story->story_id, 
-                    desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
-    } else {
-        add_alert("story_cant_move",
-                    id   => $story->story_id, 
-                    desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
-    }
+    add_message(
+        "moved_story",
+        id   => $story->story_id, 
+        desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name
+    );
  
     # redirect to that desk 
     $self->header_props(-uri => 'desk.pl?desk_id='.$query->param('checkin_to'));
