@@ -10,7 +10,7 @@ use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Widget => qw(category_chooser);
-use Krang::ClassLoader Conf => qw(KrangRoot FTPHostName FTPPort);
+use Krang::ClassLoader Conf => qw(KrangRoot FTPHostName FTPPort EnableFTP);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'User';
@@ -84,16 +84,20 @@ sub choose {
     
     my $template = $self->load_tmpl('choose.tmpl', associate => $query );
 
-    $template->param( category_chooser => category_chooser(name=>'category_id', query=>$query, may_edit => 1) );
+    $template->param( 
+        enable_ftp       => EnableFTP,
+        category_chooser => category_chooser(name=>'category_id', query=>$query, may_edit => 1),
+        upload_chooser   => scalar $query->filefield(-name => 'media_file',-size => 32),
+    );
 
-    $template->param( upload_chooser => scalar $query->filefield(-name => 'media_file',
-                                                     -size => 32) );
     # FTP Settings    
-    my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});    
-    $template->param( ftp_server => FTPHostName, 
-                      ftp_port   => FTPPort, 
-                      username   => $user->login, 
-                      instance   => $ENV{KRANG_INSTANCE} );
+    if( EnableFTP ) {
+        my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});    
+        $template->param( ftp_server => FTPHostName, 
+                          ftp_port   => FTPPort, 
+                          username   => $user->login, 
+                          instance   => $ENV{KRANG_INSTANCE} );
+    }
     return $template->output; 
 }
 
