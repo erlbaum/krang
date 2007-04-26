@@ -141,7 +141,11 @@ sub search {
     my $t = $self->load_tmpl("list_view.tmpl", associate=>$q, loop_context_vars=>1);
 
     # Do simple search based on search field
-    my $search_filter = $q->param('search_filter') || '';
+    my $search_filter = $q->param('search_filter');
+    if(! defined $search_filter ) {
+        $search_filter = $session{KRANG_PERSIST}{pkg('Contrib')}{search_filter}
+            || '';
+    }
 
     # We need order_by count when counting based on contrib type
     my $order_by = $q->param('krang_pager_sort_field')
@@ -171,11 +175,14 @@ sub search {
                                       id_handler => sub { return $_[0]->contrib_id },
                                      );
 
-    # Run pager
-    $t->param(pager_html =>  $pager->output());
+    # Fill the template
+    $t->param(
+        pager_html    =>  $pager->output(),
+        row_count     => $pager->row_count(),
+        search_filter => $search_filter,
+    );
 
     # Propagate other params
-    $t->param(row_count => $pager->row_count());
 
     return $t->output();
 }

@@ -515,7 +515,11 @@ sub search {
                              loop_context_vars => 1);
 
     # simple search
-    my $search_filter = $q->param('search_filter') || '';
+    my $search_filter = $q->param('search_filter');
+    if(! defined $search_filter ) {
+        $search_filter = $session{KRANG_PERSIST}{pkg('User')}{search_filter}
+            || '';
+    }
 
     # setup pager
     my $pager = pkg('HTMLPager')->new(cgi_query => $q,
@@ -557,7 +561,10 @@ sub search {
                                      );
 
     # get pager output
-    $t->param(pager_html => $pager->output());
+    $t->param(
+        pager_html    => $pager->output,
+        search_filter => $search_filter,
+    );
 
     # get counter params
     $t->param(row_count => $pager->row_count());

@@ -439,7 +439,11 @@ sub search {
               $self->make_history_return_params(@history_param_list));
 
     # simple search
-    my $search_filter = $q->param('search_filter') || '';
+    my $search_filter = $q->param('search_filter');
+    if(! defined $search_filter ) {
+        $search_filter = $session{KRANG_PERSIST}{pkg('Site')}{search_filter}
+            || '';
+    }
 
     # setup pager
     my $pager = pkg('HTMLPager')->new(cgi_query => $q,
@@ -477,11 +481,14 @@ sub search {
                                       sub {return $_[0]->site_id},
                                      );
 
-    # get pager output
-    $t->param(pager_html => $pager->output());
+    # fill the template
+    $t->param(
+        pager_html    => $pager->output(),
+        row_count     => $pager->row_count(),
+        search_filter => $search_filter,
+    );
 
     # get counter params
-    $t->param(row_count => $pager->row_count());
 
     return $t->output();
 }

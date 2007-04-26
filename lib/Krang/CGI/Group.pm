@@ -141,7 +141,11 @@ sub search {
     my $t = $self->load_tmpl("list_view.tmpl", associate=>$q, loop_context_vars=>1);
 
     # Do simple search based on search field
-    my $search_filter = $q->param('search_filter') || '';
+    my $search_filter = $q->param('search_filter');
+    if(! defined $search_filter ) {
+        $search_filter = $session{KRANG_PERSIST}{pkg('Group')}{search_filter}
+            || '';
+    }
 
     # Configure pager
     my $pager = pkg('HTMLPager')->new(
@@ -165,11 +169,12 @@ sub search {
                                       id_handler => sub { return $_[0]->group_id },
                                      );
 
-    # Run pager
-    $t->param(pager_html =>  $pager->output());
-
-    # Propagate other params
-    $t->param(row_count => $pager->row_count());
+    # fill the template
+    $t->param(
+        pager_html    =>  $pager->output(),
+        row_count     => $pager->row_count(),
+        search_filter => $search_filter,
+    );
 
     return $t->output();
 }
