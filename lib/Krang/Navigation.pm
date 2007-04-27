@@ -35,6 +35,26 @@ This call fills the navigation variables in the supplied template.
 All navigation vars and loops start with "nav_".  If the template does
 not include the standard header.tmpl then this call with do nothing.
 
+By default, when the C<ajax> param is true in the query string then
+nothing is added to the template. This is almost always what you want
+since AJAX requests don't update the nav. But this can be changed via
+the C<force_ajax> option below.
+
+It takes the following named arguments:
+
+=over
+
+=item template
+
+The L<HTML::Template> object to fill. This argument is required.
+
+=item force_ajax
+
+Normally AJAX requests don't need to have the navigation added.
+This allows you to override that. This argument is optional.
+
+=back
+
 =back
 
 =cut
@@ -46,7 +66,7 @@ sub fill_template {
 
     # don't do this work if we're doing an ajax request
     my $q = CGI->new();
-    return if $q->param('ajax');
+    return if $q->param('ajax') && !$arg{force_ajax};
 
     # don't do the work if there's no place to put the results
     my $template = $arg{template};

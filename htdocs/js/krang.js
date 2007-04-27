@@ -274,11 +274,16 @@ Krang.ajax_update = function(args) {
                     // user callback
                     success(args, transport, json);
                 }, 12);
+
+                // update the navigation if we need to
+                if( json && json.krang_update_nav ) {
+                    Krang.ajax_update({ url: 'nav.pl', target: 'S' });
+                }
             },
             onComplete  : function(transport, json) {
                 // wait 12 ms so we know that the JS in our request has been evaled
-                // since Prototype will wait 10 gives for the Browser to update
-                // it's DOM
+                // since Prototype will wait 10ms to give the browser time to update
+                // it's DOM. Why it's not immediate beats me.
                 setTimeout(function() {
                     // reapply any dynamic bits to the target that was updated
                     Krang.load(target);

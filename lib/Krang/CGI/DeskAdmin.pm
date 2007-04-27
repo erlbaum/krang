@@ -123,6 +123,7 @@ sub add {
                         order => $q->param('order') );
 
     add_message('desk_added');
+    $self->update_nav();
     return $self->edit();
 
 }
@@ -153,6 +154,7 @@ sub reorder {
     pkg('Desk')->reorder(@desks);
 
     add_message('desks_reordered');
+    $self->update_nav();
     return $self->edit();
 }
 
@@ -188,6 +190,7 @@ sub delete {
         }
     }
                                                                                  
+    $self->update_nav();
     return $self->edit();
 }
 

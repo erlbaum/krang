@@ -786,6 +786,17 @@ sub update_group_from_query {
         # Presumably, query data is already validated and un-tainted
         $group->$gk($value);
     }
+
+    # if this user is in this group then update their nav
+    my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+    my @group_ids = $user->group_ids;
+    my $group_id = $group->group_id;
+    foreach my $gid (@group_ids) {
+        if( $gid == $group_id ) {
+            $self->update_nav();
+            last;
+        }
+    }
 }
 
 

@@ -154,17 +154,16 @@ information on the different permissions available.
 
 use base 'CGI::Application';
 
-use Krang::ClassLoader 'ErrorHandler';
-use Data::Dumper ();
-
 use Krang::ClassLoader Conf => qw(KrangRoot InstanceDisplayName Charset);
-use File::Spec::Functions qw(catdir rel2abs);
-use Krang::ClassLoader Log => qw(critical info debug);
-use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'HTMLTemplate';
-
-# Krang sessions
+use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader Session => qw/%session/;
+use Krang::ClassLoader 'User';
+
+use CGI::Application::Plugin::JSON qw(:all);
+use Data::Dumper ();
+use File::Spec::Functions qw(catdir rel2abs);
 
 # set this to one to see HTML errors in a popup in the UI
 use constant HTMLLint => 0;
@@ -458,6 +457,13 @@ sub dump_html {
 
 sub script_name {
     return shift->query->url(-relative => 1);
+}
+
+sub update_nav {
+    my $self = shift;
+    my $q = $self->query;
+
+    $self->add_json_header('krang_update_nav' => 1);
 }
 
 1;
