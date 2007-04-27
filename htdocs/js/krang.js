@@ -548,17 +548,19 @@ Krang.Help = {
     Krang.Messages
 */
 Krang.Messages = {
-    stack : { messages: [], alerts: [] },
-    add   : function(msg, level) {
+    _locked     : { messages: false, alerts: false },
+    _stack      : { messages: [], alerts: [] },
+    _slide_time : .5,
+    add         : function(msg, level) {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
-        Krang.Messages.stack[level].push(msg);
+        Krang.Messages._stack[level].push(msg);
     },
-    show  : function(level) {
+    show        : function(level) {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
 
-        var my_stack = Krang.Messages.stack[level];
+        var my_stack = Krang.Messages._stack[level];
         if( my_stack.length ) {
             var content = '';
             var size = my_stack.length;
@@ -575,12 +577,19 @@ Krang.Messages = {
 
             // in some cases we want to close the message after a user-specified
             // period of time
-            var close_message_callback = Prototype.emptyFunction;
+            var close_message_callback = function() {
+                // we no longer want to keep this message locked
+                Krang.Messages._locked[level] = false;
+            };
+
             if( level == 'messages' ) {
                 var prefs = Krang.my_prefs();
                 var secs = prefs.message_timeout;
                 if( secs > 0 ) {
                     close_message_callback = function() {
+                        // we no longer want to keep this message locked
+                        Krang.Messages._locked[level] = false;
+                        
                         // unique marker so later we know that we're trying to close
                         // the same message window that we opened.
                         var unique = new Date().valueOf();
@@ -597,21 +606,41 @@ Krang.Messages = {
                 }
             }
 
-            // in IE 6 we need to create an iframe to slide at the same time as
-            // the message's wrapper
-            if( Krang.is_ie_6() ) {
-                var wrapper = el.down('div.wrapper');
-                Krang.Widget.HideIEControls.load(wrapper);
-                el.show();
-                // resize the iframe
-                Krang.Widget.HideIEControls.resize(wrapper);
-                close_message_callback();
-            } else {
-                new Effect.SlideDown( el, { duration: .5, afterFinish : close_message_callback } );
-            }
+            // quickly hide the existing messages
+            Krang.Messages.hide(level, true);
+
+            // We need to make sure that the message container isn't in the process 
+            // of sliding (locked). Wrap this in an anonymous function so that it can 
+            // be called again and again as needed by setTimeout. 
+            var try_count = 0;
+            var _actually_show = function() {
+                if( ! Krang.Messages._locked[level] ) {
+                    // in IE 6 we need to create an iframe to slide at the same time as
+                    // the message's wrapper
+                    if( Krang.is_ie_6() ) {
+                        var wrapper = el.down('div.wrapper');
+                        Krang.Widget.HideIEControls.load(wrapper);
+                        el.show();
+                        // resize the iframe
+                        Krang.Widget.HideIEControls.resize(wrapper);
+                        close_message_callback();
+                    } else {
+                        // lock the messages (will be unlocked by afterFinish call)
+                        Krang.Messages._locked[level] = true;
+                        new Effect.SlideDown( el, { 
+                            duration    : Krang.Messages._slide_time, 
+                            afterFinish : close_message_callback 
+                        });
+                    }
+                } else {
+                    if( try_count < 7 ) window.setTimeout(_actually_show, 100);
+                    try_count++;
+                }
+            };
+            _actually_show();
         }
     },
-    hide  : function(level) {
+    hide        : function(level, quick) {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
         el = $(level);
@@ -620,8 +649,20 @@ Krang.Messages = {
                 el.hide();
                 Krang.Widget.HideIEControls.unload(el.down('div.wrapper'));
             } else {
-                new Effect.SlideUp(el, { duration: .5 });
+                if( quick ) {
+                    el.hide();
+                } else {
+                    // lock the messages (will be unlocked by afterFinish call)
+                    Krang.Messages._locked[level] = true;
+                    new Effect.SlideUp(el, { 
+                        duration    : Krang.Messages._slide_time, 
+                        afterFinish : function() { 
+                            Krang.Messages._locked[level] = false 
+                        }
+                    });
+                }
             }
+            // remove any unique_ tags we put on the class name
             el.className = 'krang-slider';
         }
     }
