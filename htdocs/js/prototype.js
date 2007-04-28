@@ -1,4 +1,4 @@
-/*  Prototype JavaScript framework, version 1.5.1_rc3
+/*  Prototype JavaScript framework, version 1.5.1_rc4
  *  (c) 2005-2007 Sam Stephenson
  *
  *  Prototype is freely distributable under the terms of an MIT-style license.
@@ -7,7 +7,7 @@
 /*--------------------------------------------------------------------------*/
 
 var Prototype = {
-  Version: '1.5.1_rc3',
+  Version: '1.5.1_rc4',
 
   Browser: {
     IE:     !!(window.attachEvent && !window.opera),
@@ -436,8 +436,7 @@ Template.prototype = {
   }
 }
 
-var $break    = new Object();
-var $continue = new Object();
+var $break = {}, $continue = new Error('"throw $continue" is deprecated, use "return" instead');
 
 var Enumerable = {
   each: function(iterator) {
@@ -1796,6 +1795,7 @@ Element._attributeTranslations = {
   Object.extend(this, {
     href: this._getAttr,
     src:  this._getAttr,
+    type: this._getAttr,
     disabled: this._flag,
     checked:  this._flag,
     readonly: this._flag,
@@ -1830,6 +1830,18 @@ Element.hasAttribute = function(element, attribute) {
 
 Element.addMethods = function(methods) {
   var F = Prototype.BrowserFeatures, T = Element.Methods.ByTag;
+
+  if (!methods) {
+    Object.extend(Form, Form.Methods);
+    Object.extend(Form.Element, Form.Element.Methods);
+    Object.extend(Element.Methods.ByTag, {
+      "FORM":     Object.clone(Form.Methods),
+      "INPUT":    Object.clone(Form.Element.Methods),
+      "SELECT":   Object.clone(Form.Element.Methods),
+      "TEXTAREA": Object.clone(Form.Element.Methods)
+    });
+  }
+
   if (arguments.length == 2) {
     var tagName = methods;
     methods = arguments[1];
@@ -2702,8 +2714,6 @@ Form.Methods = {
   }
 }
 
-Object.extend(Form, Form.Methods);
-
 /*--------------------------------------------------------------------------*/
 
 Form.Element = {
@@ -2772,18 +2782,10 @@ Form.Element.Methods = {
   }
 }
 
-Object.extend(Form.Element, Form.Element.Methods);
-Object.extend(Element.Methods.ByTag, {
-  "FORM":     Object.clone(Form.Methods),
-  "INPUT":    Object.clone(Form.Element.Methods),
-  "SELECT":   Object.clone(Form.Element.Methods),
-  "TEXTAREA": Object.clone(Form.Element.Methods)
-});
-
 /*--------------------------------------------------------------------------*/
 
 var Field = Form.Element;
-var $F = Form.Element.getValue;
+var $F = Form.Element.Methods.getValue;
 
 /*--------------------------------------------------------------------------*/
 
