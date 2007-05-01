@@ -12,7 +12,7 @@ use Krang::ClassLoader 'File';
 use Class::ISA;
 
 use base 'Exporter';
-our @EXPORT_OK = qw(add_message get_messages clear_messages add_alert get_alerts clear_alerts);
+our @EXPORT_OK = qw(add_message get_messages get_message_text clear_messages add_alert get_alerts clear_alerts);
 
 =head1 NAME
 
@@ -37,6 +37,9 @@ Krang::Message - module to handle UI messages in Krang
 
   # get messages in a hash by key
   %messages = get_messages(keys => 1);
+
+  # get the text of a message as defined in the the F<messages.conf> file.
+  $text = get_message_text('invalid_title', 'Krang::CGI::Story');
 
   # clear messages
   clear_messages();
@@ -109,29 +112,11 @@ sub add_message {
     my $from_module = delete $args{from_module} || $caller[0];
     debug("add_message($key) called from $from_module, line $caller[2].");
 
-    # look through this class and any super-classes for this message
-    my $message;
-    foreach my $module (Class::ISA::self_and_super_path($from_module)) {
-        # get handle for the module block, if there is one
-        my $conf;
-        eval { $conf = $CONF->block(Module => $module) };
-        $conf ||= $CONF;
-        
-        # get message definition
-        $message = $conf->get($key);
-        last if $message;
-    }
+    # get the text of this message with any variable substitution
+    my $message = get_message_text($key, $from_module, %args);
     croak("Unable to find message '$key' in conf/messages.conf ".
           "for '$from_module'")
       unless $message;
-
-    # perform substitutions
-    while (my ($name, $value) = each %args) {
-        unless ($message =~ s/\$\Q$name\E/$value/g) {
-            croak("Unable to find substitution variable '$name' for message ".
-                  "'$key' in conf/messages.conf");
-        }
-    }
 
     # push message
     push(@{$session{messages} ||= []}, [ $key, $message ]);
@@ -165,31 +150,13 @@ sub add_alert {
     my $from_module = delete $args{from_module} || $caller[0];
     debug("add_alert($key) called from $from_module, line $caller[2].");
 
-    # look through this class and any super-classes for this message
-    my $alert;
-    foreach my $module (Class::ISA::self_and_super_path($from_module)) {
-        # get handle for the module block, if there is one
-        my $conf;
-        eval { $conf = $CONF->block(Module => $module) };
-        $conf ||= $CONF;
-        
-        # get message definition
-        $alert = $conf->get($key);
-        last if $alert;
-    }
+    # get the text of this alert including variable substitution
+    my $alert = get_message_text($key, $from_module, %args);
     croak("Unable to find alert '$key' in conf/messages.conf ".
           "for '$from_module'")
       unless $alert;
 
-    # perform substitutions
-    while (my ($name, $value) = each %args) {
-        unless ($alert =~ s/\$\Q$name\E/$value/g) {
-            croak("Unable to find substitution variable '$name' for alert ".
-                  "'$key' in conf/messages.conf");
-        }
-    }
-
-    # push message
+    # push alert
     push(@{$session{alerts} ||= []}, [ $key, $alert ]);
 }
 
@@ -252,6 +219,41 @@ sub get_alerts {
     my %seen;
     return grep { not $seen{$_}++ } map { $_->[1] } @$alerts;
 }
+
+=item get_message_text($key, $class [, %args ]);
+
+Returns the message text for the specified C<$key> in the
+appropriate C<$class>. If ther text has variables for substitution,
+they can be provided by using passing in extra C<%args>.
+
+=cut
+
+sub get_message_text {
+    our ($CONF);
+    my ($key, $class, %args) = @_;
+    my $msg;
+    foreach my $module (Class::ISA::self_and_super_path($class)) {
+        # get handle for the module block, if there is one
+        my $conf;
+        eval { $conf = $CONF->block(Module => $module) };
+        $conf ||= $CONF;
+
+        # get message definition
+        $msg = $conf->get($key);
+        last if $msg;
+    }
+
+    # perform substitutions
+    while (my ($name, $value) = each %args) {
+        unless ($msg =~ s/\$\Q$name\E/$value/g) {
+            croak("Unable to find substitution variable '$name' for message ".
+                  "'$key' in conf/messages.conf");
+        }
+    }
+
+    return $msg;
+}
+
 
 =item clear_messages();
 
