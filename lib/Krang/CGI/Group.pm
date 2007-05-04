@@ -39,7 +39,6 @@ is 'search'.
 
 =cut
 
-
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader 'Widget';
 use Krang::ClassLoader Message => qw(add_message add_alert);
@@ -50,6 +49,7 @@ use Krang::ClassLoader 'Category';
 use Krang::ClassLoader Widget => qw(category_chooser format_url autocomplete_values);
 use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader Conf => qw(EnableFTP);
 use Carp;
 
 
@@ -680,6 +680,9 @@ sub _edit {
 
     # Propagate to template
     $t->param($group_tmpl);
+    
+    # are we using FTP
+    $t->param(enable_ftp => EnableFTP);
 
     return $t->output();
 }
