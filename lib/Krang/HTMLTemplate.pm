@@ -134,7 +134,7 @@ sub output {
         if $template->query(name => 'krang_product_name');
 
     # add any contact info
-    $template->param(krang_contact_email => ContactEmail() )
+    $template->param(cms_contact_email => ContactEmail() )
         if $template->query(name => 'cms_contact_email' );
 
     pkg('Navigation')->fill_template(template => $template);
