@@ -117,6 +117,12 @@ PasswordChangeCount 0
 # Secret is a shared secret used for encryption and checksumming
 Secret '<tmpl_var Secret>'
 
+# ContactEmail provides an optional way for you to specify how
+# users are to contact you in case of problems or compliments (heh).
+# It will place into the UI templates to fill the 'cms_contact_email'
+# template variable.
+# ContactEmail cms@company.org
+
 <tmpl_if EnableSSL>
 ##
 ##  SSL Global Context

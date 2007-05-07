@@ -26,7 +26,7 @@ See L<HTML::Template>.
 
 use base 'HTML::Template';
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS EnableBugzilla);
+use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS EnableBugzilla ContactEmail);
 use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clear_alerts);
 use Krang::ClassLoader 'Navigation';
 use Krang::ClassLoader Log => qw(debug);
@@ -132,6 +132,10 @@ sub output {
         if $template->query(name => 'krang_version');
     $template->param(krang_product_name => pkg('Info')->product_name )
         if $template->query(name => 'krang_product_name');
+
+    # add any contact info
+    $template->param(krang_contact_email => ContactEmail() )
+        if $template->query(name => 'cms_contact_email' );
 
     pkg('Navigation')->fill_template(template => $template);
 

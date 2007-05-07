@@ -17,6 +17,8 @@ BugzillaEmail
 BugzillaPassword
 BugzillaServer
 Charset
+ContactEmail
+ContactURL
 CustomCSS
 DBPass
 DBUser
