@@ -452,7 +452,7 @@ sub dump_html {
     $output .= Data::Dumper::Dumper(\%session);
     $output .= "\n</b></pre>\n";
 
-    return '<div style="text-align:left;margin-left:170px">\n$output\n</div>';
+    return qq|<div style="text-align:left;margin-left:170px">\n$output\n</div>|;
 }
 
 sub script_name {
