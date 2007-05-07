@@ -9,6 +9,7 @@ use File::Spec::Functions qw(catfile);
 use HTTP::Cookies;
 use Krang::ClassLoader Conf => qw(KrangRoot HostName ApachePort SSLApachePort EnableSSL ApacheAddr);
 use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader 'Test::Mech';
 use Test::Builder;
 
 require Exporter;
@@ -91,18 +92,23 @@ sub _do_login {
     my($username, $password) = @_;
     my $instance = pkg('Conf')->instance;
 
-    my $url = _url('login.pl');
-    my $res = $ua->request(POST $url,
-                           [ rm => 'login',
-                             username => $username ,
-                             password => $password ]);
+    my $mech = Krang::Test::Mech->new();
+    $mech->requests_redirectable([]);    # don't follow redirects
+    $mech->get_ok(_url('login.pl'));
+    $mech->submit_form(
+        form_name => 'form-login',
+        fields    => {
+            username => $username,
+            password => $password,
+        }
+    );
     # should get a redirect
-    return 0 unless $res->code == 302;
+    return 0 unless $mech->status == 302;
 
     # try to request env.pl, which will only work if the login succeeded
-    $res = $ua->request(GET _url('env.pl'));
-    return 0 unless $res->code == 200;
-    return 0 unless $res->content =~ /REMOTE_USER/;
+    $mech->get_ok(_url('env.pl'));
+    return 0 unless $mech->status == 200;
+    return 0 unless $mech->content_like(qr/REMOTE_USER/);
 
     # success
     return 1;
