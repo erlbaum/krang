@@ -149,6 +149,7 @@ sub show {
       (
        cgi_query => $query,
        persist_vars => {
+                        rm => 'show',
                         story_id => $story_id,
                         media_id => $media_id,
                         template_id => $template_id,
