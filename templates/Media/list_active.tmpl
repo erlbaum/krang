@@ -27,19 +27,17 @@ Krang.onload( function() {
 Active Media
 </h2>
 
-<div class="pager">
+<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel"><form>
+  <input value="Check In" onclick="checkin_selected()" type="button">
+</form></div></tmpl_if></tmpl_if>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-</div>
-
-<tmpl_if row_count><tmpl_if may_checkin_all>
-  <div class="panel"><form name="ignoreme">
+<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel capped"><form>
   <input value="Check In" onclick="checkin_selected()" type="button">
-  </form></div>
-</tmpl_if></tmpl_if>
+</form></div></tmpl_if></tmpl_if>
 
 <tmpl_if row_count>
   <form name="find_media" method="post" action="media.pl">

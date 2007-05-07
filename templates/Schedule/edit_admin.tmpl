@@ -18,7 +18,7 @@
 </script>
 
 <h2>
-Schedule Editor
+Edit Schedule
 </h2>
 
 <form name="add_schedule_form" method="post" action="schedule.pl">
@@ -36,6 +36,8 @@ Add Action
 <col class="c-label">
 <col>
 </colgroup>
+
+<tbody>
 
 <tr>
 <th>Action</th>
@@ -71,7 +73,7 @@ Trigger Daily
 </td>
 </tr>
 
-<tr class="last<tmpl_if no_date_type> ERR-ROW<tmpl_else><tmpl_if no_weekly_hour> ERR-ROW</tmpl_if></tmpl_if>">
+<tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if no_weekly_hour> class="ERR-ROW"</tmpl_if></tmpl_if>>
 <th>
 <input name="repeat" value="weekly" type="radio"<tmpl_if repeat_weekly> checked</tmpl_if>>
 Trigger Weekly
@@ -83,9 +85,11 @@ Trigger Weekly
 </td>
 </tr>
 
+</tbody>
+
 </table>
 
-<div class="panel">
+<div class="panel capped">
 <input value="Schedule Action" type="submit">
 </div>
 

@@ -1,12 +1,31 @@
 </div>
 
-<div id="F">
+<div id="S">
+<p>
+<tmpl_var escape=html krang_product_name>
+<tmpl_var escape=html krang_version>
+</p>
+
+<p>
+<tmpl_var escape=html instance_display_name>
+</p>
+</div>
+
+<br style="display:block;clear:both"><!--[if lt IE 7]>&nbsp;<![endif]--></div>
+
+<div id="F"><div>
 
 <ul class="nav">
 
+<!--
+...Op(9)+Sf(2)...
+--><tmpl_if cms_contact_email><li class="l"><a href="mailto:<tmpl_if cms_contact_email>">
+Contact Us
+</a></li></tmpl_if>
+
 </ul>
 
-</div>
+</div></div>
 
 </body></html>
 

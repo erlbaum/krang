@@ -9,7 +9,7 @@ Krang.onload( function() {
   delete_selected = function()
   {
     if ( !Krang.row_checked( 'current_desk_form', 'desk_delete_list' ) )
-      alert( 'Nothing selected to delete!' );
+      alert( 'No Desks selected to delete!' );
     else if ( confirm( 'Are you SURE you want to delete these Desks?' ) )
       Krang.form_submit('current_desk_form', {}, { to_top: false });
   }
@@ -22,7 +22,7 @@ Krang.onload( function() {
 </script>
 
 <h2>
-Desk Editor
+Desks
 </h2>
 
 <h3>
@@ -31,8 +31,8 @@ Current Desks
 
 <tmpl_unless existing_desk_loop>
 
-  <p>
-  No Desks Found
+  <p class="naught">
+  There currently are no Desks.
   </p>
 
 <tmpl_else>
@@ -42,7 +42,7 @@ Current Desks
   <input name="rm" value="delete" type="hidden">
   <input name="total_desks" value="<tmpl_var escape=html total_desks>" type="hidden">
 
-  <table class="list select_row" summary="">
+  <table class="result select_row" summary="">
 
   <colgroup>
   <col class="series">
@@ -54,7 +54,7 @@ Current Desks
   <tr>
   <th class="series">Order</th>
   <th>Name</th>
-  <th class="tick"><input name="checkallbox" value="1" onclick="Krang.check_all(this,'desk_delete_list')" type="checkbox"></th>
+  <th class="tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'desk_delete_list')"></th>
   </tr>
   </thead>
 
@@ -84,30 +84,34 @@ Current Desks
 <input name="rm" value="add" type="hidden">
 
 <h3>
-Add New Desk
+Create a New Desk
 </h3>
 
 <table summary="">
 
 <colgroup>
-<col class="c-label">
+<col class="c-mini">
 <col>
 </colgroup>
+
+<tbody>
 
 <tr class="demi<tmpl_if no_name> ERR-ROW</tmpl_if>">
 <th>Name</th>
 <td><input name="name" value="<tmpl_var escape=html name>"></td>
 </tr>
 
-<tr class="last">
+<tr>
 <th>Order</th>
 <td><tmpl_var order_selector><!--:markup--></td>
 </tr>
 
+</tbody>
+
 </table>
 
-<div class="panel">
-<input value="Add Desk" type="submit">
+<div class="panel lame capped">
+<input value="Add Desk" type="submit" class="west">
 </div>
 
 </form>

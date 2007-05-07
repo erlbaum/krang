@@ -9,30 +9,30 @@ Krang.onload( function() {
 <tmpl_if advanced>
   simple_search = function()
   {
-    Krang.form_submit('select_media', { advanced: 0 }, { to_top: false });
+    Krang.form_submit('select_media_form', { advanced: 0 }, { to_top: false });
   }
 
   clear_advanced_search = function()
   {
-    Krang.form_submit('clear_advanced_search_form' {}, { to_top: false });
+    Krang.form_submit('clear_advanced_search_form', {}, { to_top: false });
   }
 <tmpl_else>
   advanced_search = function()
   {
-    Krang.form_submit('select_media', { advanced: 1 }, { to_top: false });
+    Krang.form_submit('select_media_form', { advanced: 1 }, { to_top: false });
   }
 </tmpl_if>
 
 //[tmpl_if row_count] db2: not populated
   select_media = function( id )
   {
-    Krang.form_submit('select_media', { rm: 'select_media', selected_media_id: id });
+    Krang.form_submit('select_media_form', { rm: 'select_media', selected_media_id: id });
   }
 //[/tmpl_if]
 
 cancel_select = function()
 {
-  Krang.form_submit('select_media', { rm: 'edit', path: '<tmpl_var escape=js parent_path>' });
+  Krang.form_submit('select_media_form', { rm: 'edit', path: '<tmpl_var escape=js parent_path>' });
 }
 </script>
 
@@ -40,7 +40,7 @@ cancel_select = function()
 Select Media
 </h2>
 
-<form name="select_media" action="<tmpl_var escape=html action>" method="post">
+<form name="select_media_form" action="<tmpl_var escape=html action>" method="post">
 
 <input name="rm" value="find_media_link" type="hidden">
 <input name="selected_media_id" type="hidden">
@@ -55,95 +55,98 @@ Select Media
   <input name="search_filter" value="" type="hidden">
 </tmpl_if>
 
-<div class="finder">
+<div class="tabset finder">
 
-<div class="east">
-<a href="javascript:<tmpl_if advanced>simple<tmpl_else>advanced</tmpl_if>_search()"><tmpl_if advanced>Simple<tmpl_else>Advanced</tmpl_if> Search</a>
-</div>
+<ul class="tabs"><li>
+<tmpl_if advanced><a href="javascript:simple_search()"><tmpl_else><b></tmpl_if><span>
+Simple Search
+</span><tmpl_if advanced></a><tmpl_else></b></tmpl_if>
+</li><li>
+<tmpl_if advanced><b><tmpl_else><a href="javascript:advanced_search()"></tmpl_if><span>
+Advanced Search
+</span><tmpl_if advanced></b><tmpl_else></a></tmpl_if>
+</li></ul>
 
-<h3>
-<tmpl_if advanced>
-  Advanced
+<div class="tabbed">
+
+<tmpl_unless advanced>
+
+  <div class="faux-p">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+  <input value="Search" type="submit" class="button">
+  </div>
+
 <tmpl_else>
-  Simple
-</tmpl_if>
-Search
-</h3>
-
-<tmpl_if advanced>
 
   <table summary="">
 
   <colgroup>
-  <col class="c-label">
+  <col class="c-mini">
+  <col>
+  <col class="c-mini">
   <col>
   </colgroup>
 
   <tbody class="demi">
+
   <tr>
-  <th>File</th>
+  <th>File Name</th>
   <td><input name="search_filename" value="<tmpl_var escape=html search_filename>"></td>
-  </tr>
-
-  <tr>
-  <th>Title</th>
-  <td><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
-  </tr>
-
-  <tr>
   <th>Media ID</th>
   <td><input name="search_media_id" value="<tmpl_var escape=html search_media_id>"></td>
-  </tr>
-
-  <tr>
-  <th>Site/Category</th>
-  <td><tmpl_var category_chooser></td>
   </tr>
   </tbody>
 
   <tbody>
   <tr>
+  <th>Title</th>
+  <td class="demi"><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
   <th>Creation Date</th>
   <td><tmpl_var date_chooser></td>
   </tr>
 
   <tr>
-  <th>Without Attributes</th>
-  <td><input name="search_no_attributes" value="1" type="checkbox"<tmpl_if search_no_attributes> checked</tmpl_if>></td>
+  <th>Site/Category</th>
+  <td colspan="3"><tmpl_var category_chooser></td>
   </tr>
 
-  <tr class="last">
-  <td colspan="2" style="text-align:right">
-  <input value="Clear" onclick="clear_advanced_search()" type="button" class="button">
-  <input value="Search" type="submit" class="button">
+  <tr>
+  <td colspan="4">
+  <input name="search_no_attributes" value="1" type="checkbox"<tmpl_if search_no_attributes> checked</tmpl_if>>
+  Without Attributes
   </td>
   </tr>
+
   </tbody>
 
   </table>
 
-<tmpl_else>
+  <div class="panel">
+  <input value="Clear" onclick="clear_advanced_search()" type="button">
+  <input value="Search" type="submit">
+  </div>
 
-  <p>
-  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
-  <input value="Search" type="submit" class="button">
-  </p>
+</tmpl_unless>
 
-</tmpl_if>
+</div>
 
 </div>
 
 </form>
 
-<div class="pager">
+<h3>
+Search Results
+</h3>
+
+<div class="panel lame"><form>
+<input value="Cancel" onclick="cancel_select()" type="button" class="west">
+</form></div>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-</div>
-
-<div class="panel lame"><form name="ignoreme">
+<div class="panel lame capped"><form>
 <input value="Cancel" onclick="cancel_select()" type="button" class="west">
 </form></div>
 

@@ -27,12 +27,13 @@ do_return = function()
 </script>
 
 <h2>
+Edit
 <tmpl_if is_story>
   Story
 <tmpl_else><tmpl_if is_media>
   Media
 </tmpl_if></tmpl_if>
-Schedule Editor
+Schedule
 </h2>
 
 <h3>
@@ -51,9 +52,11 @@ Properties
 <col>
 </colgroup>
 
+<tbody>
+
 <tr>
-<th><tmpl_if is_story>Story<tmpl_else><tmpl_if is_media>Media</tmpl_if></tmpl_if> ID</th>
-<td><tmpl_var escape=html id></td>
+<th>URL</th>
+<td><tmpl_var escape=html url></td>
 </tr>
 
 <tmpl_if is_story>
@@ -62,6 +65,11 @@ Properties
   <td><tmpl_var escape=html story_type></td>
   </tr>
 </tmpl_if>
+
+<tr>
+<th><tmpl_if is_story>Story<tmpl_else><tmpl_if is_media>Media</tmpl_if></tmpl_if> ID</th>
+<td><tmpl_var escape=html id></td>
+</tr>
 
 <tr>
 <th>Current Version</th>
@@ -73,10 +81,7 @@ Properties
 <td><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
 </tr>
 
-<tr class="last">
-<th>URL</th>
-<td><tmpl_var escape=html url></td>
-</tr>
+</tbody>
 
 </table>
 
@@ -86,8 +91,8 @@ Current Schedule
 
 <tmpl_unless existing_schedule_loop>
 
-  <p>
-  No Actions Scheduled.
+  <p class="naught">
+  No Actions scheduled.
   </p>
 
 <tmpl_else>
@@ -100,7 +105,7 @@ Current Schedule
     <input name="advanced_schedule" value="1" type="hidden">
   </tmpl_if>
 
-  <table class="list select_row" summary=""><!--:FIX(db2)-->
+  <table class="result select_row" summary=""><!--:FIX(db2)-->
 
   <colgroup>
   <col>
@@ -116,7 +121,7 @@ Current Schedule
   <th>Version</th>
   <th>Trigger</th>
   <th>Next Event</th>
-  <th class="tick"><input name="checkallbox" value="1" onclick="Krang.check_all(this,'schedule_delete_list')" type="checkbox"></th>
+  <th class="tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'schedule_delete_list')"></th>
   </tr>
   </thead>
 
@@ -154,9 +159,9 @@ Current Schedule
   <input name="advanced_schedule" value="1" type="hidden">
 </tmpl_unless>
 
-<div class="east">
-<a href="schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type><tmpl_if simple>&amp;advanced_schedule=1</tmpl_if>"><tmpl_if simple>Advanced<tmpl_else>Simple</tmpl_if> Scheduler</a>
-</div>
+<p class="cram east">
+<input value="<tmpl_if simple>Advanced<tmpl_else>Simple</tmpl_if> Scheduler" onclick="Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type><tmpl_if simple>&amp;advanced_schedule=1</tmpl_if>')" type="button" class="button">
+</p>
 
 <h3>
 Add Action
@@ -169,6 +174,8 @@ Add Action
 <col class="c-label">
 <col>
 </colgroup>
+
+<tbody>
 
 <tr>
 <th>Action</th>
@@ -191,7 +198,7 @@ Add Action
 
 <tmpl_if simple>
 
-  <tr class="last<tmpl_if invalid_datetime> ERR-ROW</tmpl_if>">
+  <tr<tmpl_if invalid_datetime> class="ERR-ROW"</tmpl_if>>
   <th>Trigger Once</th>
   <td><tmpl_var publish_selector></td>
   </tr>
@@ -203,9 +210,7 @@ Add Action
   <input name="repeat" value="never" type="radio"<tmpl_if repeat_never> checked</tmpl_if>>
   Trigger Once
   </th>
-  <td>
-  <tmpl_var full_date_selector>
-  </td>
+  <td><tmpl_var full_date_selector></td>
   </tr>
 
   <tr<tmpl_if no_date_type> class="ERR-ROW"</tmpl_if>>
@@ -224,28 +229,28 @@ Add Action
   <input name="repeat" value="daily" type="radio"<tmpl_if repeat_daily> checked</tmpl_if>>
   Trigger Daily
   </th>
-  <td>
-  <tmpl_var daily_time_selector>
-  </td>
+  <td><tmpl_var daily_time_selector></td>
   </tr>
 
-  <tr class="last<tmpl_if no_date_type> ERR-ROW<tmpl_else><tmpl_if no_weekly_hour> ERR-ROW</tmpl_if></tmpl_if>">
+  <tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if no_weekly_hour> class="ERR-ROW"</tmpl_if></tmpl_if>>
   <th>
   <input name="repeat" value="weekly" type="radio"<tmpl_if repeat_weekly> checked</tmpl_if>>
   Trigger Weekly
   </th>
   <td>
   <tmpl_var weekly_day_selector>
-  &ndash;
+  at
   <tmpl_var weekly_time_selector>
   </td>
   </tr>
 
 </tmpl_if>
 
+</tbody>
+
 </table>
 
-<div class="panel">
+<div class="panel capped">
 <input value="Return" onclick="do_return()" type="button" class="west">
 <input value="Schedule Action" type="submit">
 </div>

@@ -31,12 +31,12 @@ save_stay = function()
 </script>
 
 <h2>
-Site
 <tmpl_if add_mode>
-  Add
+  New
 <tmpl_else>
   Edit
 </tmpl_if>
+Site
 </h2>
 
 <form name="edit_site_form" method="post" action="site.pl">
@@ -51,12 +51,14 @@ Site
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 
-<table class="demi" summary="">
+<table summary="">
 
 <colgroup>
 <col class="c-label">
 <col>
 </colgroup>
+
+<tbody class="demi">
 
 <tr<tmpl_if error_invalid_url> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_url> class="ERR-ROW"</tmpl_if></tmpl_if>>
 <th>URL</th>
@@ -73,14 +75,16 @@ Site
 <td><input name="publish_path" value="<tmpl_var escape=html publish_path>"></td>
 </tr>
 
-<tr class="last<tmpl_if error_invalid_preview_path> ERR-ROW<tmpl_else><tmpl_if duplicate_preview_path> ERR-ROW</tmpl_if></tmpl_if>">
+<tr<tmpl_if error_invalid_preview_path> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_preview_path> class="ERR-ROW"</tmpl_if></tmpl_if>>
 <th>Preview Path</th>
 <td><input name="preview_path" value="<tmpl_var escape=html preview_path>"></td>
 </tr>
 
+</tbody>
+
 </table>
 
-<div class="panel">
+<div class="panel capped">
 <input value="Cancel" onclick="cancel_site_change()" type="button" class="west">
 <input value="Save &amp; Stay" onclick="save_stay()" type="button">
 <input value="Save" onclick="do_save()" type="submit">

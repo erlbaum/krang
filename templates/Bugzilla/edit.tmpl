@@ -2,17 +2,24 @@
 
 <tmpl_unless bug_added>
 
-  <tmpl_if ise><ul class="notes"><li>
-    An internal server error has occurred.
-    This almost certainly indicates a bug in the system.
-    <tmpl_if enable_bugzilla>
-      Please use the form below to file a bug report.
-    <tmpl_else>
-      Please contact the administrator.
-    </tmpl_if>
-  </li></ul></tmpl_if>
+  <tmpl_if ise>
+    <script type="text/javascript">
+    Krang.onload( Krang.Error.show );
+    </script>
+  </tmpl_if>
 
-  <tmpl_if enable_bugzilla>
+  <tmpl_unless enable_bugzilla>
+
+    <h2>
+    Internal Server Error
+    </h2>
+
+    <p>
+    Please contact your System Administrator.
+    </p>
+
+  <tmpl_else>
+
     <script type="text/javascript">
     //Krang.onload( function() {
     //  Krang.Help.set( '' );
@@ -22,6 +29,10 @@
     <h2>
     File Bug Report
     </h2>
+
+    <p>
+    Please use the form below to file a bug report.
+    </p>
 
     <form name="bug_form" action="bug.cgi" method="post" class="non_ajax">
 
@@ -34,14 +45,16 @@
     <col>
     </colgroup>
 
+    <tbody>
+
     <tr<tmpl_if no_summary> class="ERR-ROW"</tmpl_if>>
     <th>*Summary</th>
     <td>
-    <p class="scrunch">
+    <p class="cram">
     A one-sentence problem summary.
     </p>
 
-    <p class="scrunch full">
+    <p class="cram full">
     <input name="summary" value="<tmpl_var escape=html summary>">
     </p>
 
@@ -72,11 +85,11 @@
     <tr<tmpl_if no_description> class="ERR-ROW"</tmpl_if>>
     <th>*Description</th>
     <td>
-    <p class="scrunch">
+    <p class="cram">
     Expand on the Summary.
     </p>
 
-    <p class="scrunch full">
+    <p class="cram full">
     <textarea name="description" rows="6" cols="40" wrap="hard"><tmpl_var escape=html description></textarea>
     </p>
 
@@ -107,11 +120,11 @@
     <tr>
     <th>Reproducability</th>
     <td>
-    <p class="scrunch">
+    <p class="cram">
     How often can you reproduce the problem?
     </p>
 
-    <p class="scrunch full">
+    <p class="cram full">
     <select name="reproduce">
     <option name="Always" value="Always"<tmpl_if reproduce_Always> selected</tmpl_if>>Every time.</option>
     <option name="Sometimes" value="Sometimes"<tmpl_if reproduce_Sometimes> selected</tmpl_if>>Sometimes, but not always.</option>
@@ -125,11 +138,11 @@
     <tr>
     <th>Steps to Reproduce</th>
     <td>
-    <p class="scrunch">
+    <p class="cram">
     Describe how to reproduce the problem, step by step.
     </p>
 
-    <p class="scrunch full">
+    <p class="cram full">
 <textarea name="steps" rows="4" cols="40" wrap="hard"><tmpl_if steps><tmpl_var escape=html steps><tmpl_else>1.
 2.
 3.</tmpl_if></textarea>
@@ -144,11 +157,11 @@
     <tr>
     <th>Actual Results</th>
     <td>
-    <p class="scrunch">
+    <p class="cram">
     What happened after you performed the steps above?
     </p>
 
-    <p class="scrunch full">
+    <p class="cram full">
     <textarea name="actual_results" rows="4" cols="40" wrap="hard"><tmpl_var escape=html actual_results></textarea>
     </p>
     </td>
@@ -157,24 +170,24 @@
     <tr>
     <th>Expected Results</th>
     <td>
-    <p class="scrunch">
+    <p class="cram">
     What should the system have done instead?
     </p>
 
-    <p class="scrunch full">
+    <p class="cram full">
     <textarea name="expected_results" rows="4" cols="40" wrap="hard"><tmpl_var escape=html expected_results></textarea>
     </p>
     </td>
     </tr>
 
-    <tr class="last">
+    <tr>
     <th>Severity</th>
     <td>
-    <p class="scrunch">
+    <p class="cram">
     How serious is the problem?
     </p>
 
-    <p class="scrunch full">
+    <p class="cram full">
     <select name="bug_severity">
     <option name="normal" value="normal"<tmpl_if bug_severity_normal> selected</tmpl_if>>Normal: Should be addressed.</option>
     <option name="blocker" value="blocker"<tmpl_if bug_severity_blocker> selected</tmpl_if>>Blocker: Prevents use of the system.</option>
@@ -187,14 +200,17 @@
     </td>
     </tr>
 
+    </tbody>
+
     </table>
 
-    <div class="panel">
+    <div class="panel capped">
     <input value="Report Bug" type="submit">
     </div>
 
     </form>
-  </tmpl_if>
+
+  </tmpl_unless>
 
 </tmpl_unless>
 

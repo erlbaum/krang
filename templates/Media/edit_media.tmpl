@@ -68,9 +68,18 @@ save_and_view_log = function()
 </tmpl_unless>
 </script>
 
-<tmpl_unless add_mode><p class="east">
-  <a href="javascript:save_and_view_log()">View Log</a>
-  <a href="javascript:save_and_edit_schedule()">View Schedule</a>
+<form name="edit_media_form" method="post" enctype="multipart/form-data" action="media.pl">
+
+<input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
+<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+<tmpl_unless add_mode>
+  <input name="return_script" value="media.pl" type="hidden">
+  <tmpl_var return_params>
+</tmpl_unless>
+
+<tmpl_unless add_mode><p class="cram east">
+  <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
+  <input value="View Schedule" onclick="save_and_edit_schedule()" type="button" class="button">
 </p></tmpl_unless>
 
 <h2>
@@ -82,21 +91,10 @@ save_and_view_log = function()
 Media
 </h2>
 
-<form name="edit_media_form" method="post" enctype="multipart/form-data" action="media.pl">
-
-<input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
-<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
 <tmpl_unless add_mode>
-  <input name="return_script" value="media.pl" type="hidden">
-  <tmpl_var return_params>
-</tmpl_unless>
-
-<tmpl_unless add_mode>
-  <tmpl_if thumbnail_path>
-    <div class="east">
-    <tmpl_if media_id><a href="javascript:Krang.preview('media',null)"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
-    </div>
-  </tmpl_if>
+  <tmpl_if thumbnail_path><div class="east">
+    <tmpl_if media_id><a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media',null)"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
+  </div></tmpl_if>
 
   <h3>
   Properties
@@ -108,6 +106,8 @@ Media
   <col class="c-label">
   <col>
   </colgroup>
+
+  <tbody>
 
   <tr>
   <th>Media ID</th>
@@ -129,21 +129,25 @@ Media
   <td><tmpl_var url></td>
   </tr>
 
-  <tr class="last">
+  <tr>
   <th>Creation Date</th>
   <td colspan="2"><tmpl_var escape=html creation_date></td>
   </tr>
 
+  </tbody>
+
   </table>
 </tmpl_unless>
 
-<table class="demi" summary=""><!--:FIX(db2)-->
+<table summary=""><!--:FIX(db2)-->
 
 <colgroup>
 <col class="c-label">
 <col>
 <col>
 </colgroup>
+
+<tbody class="demi">
 
 <tr<tmpl_if error_media_type_id> class="ERR-ROW"</tmpl_if>>
 <th>*Type</th>
@@ -200,7 +204,7 @@ Media
 <td colspan="2"><textarea name="notes" rows="4" cols="40"><tmpl_var escape=html notes></textarea></td>
 </tr>
 
-<tr class="last">
+<tr>
 <th>Contributors</th>
 <td>
 <tmpl_if contribs>
@@ -213,10 +217,12 @@ Media
 <td><input value="Edit Contributors" onclick="edit_contribs()" type="button" class="button"></td>
 </tr>
 
+</tbody>
+
 </table>
 
 <tmpl_unless add_mode>
-  <p>
+  <p><!--:FIXME(db2)-->
   Version
   <tmpl_var media_version_chooser><!--:markup-->
   <input value="Revert" onclick="revert_version()" type="button" class="button">
@@ -224,7 +230,7 @@ Media
   </p>
 </tmpl_unless>
 
-<div class="panel">
+<div class="panel capped">
 <input value="Save &amp; Stay" onclick="do_save_stay()" type="button">
 <input value="Save" onclick="do_save()" type="button">
 <tmpl_if may_publish>

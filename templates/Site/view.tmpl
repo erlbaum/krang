@@ -31,6 +31,8 @@ Properties
 <col>
 </colgroup>
 
+<tbody>
+
 <tr>
 <th>URL</th>
 <td><tmpl_var escape=html url></td>
@@ -46,14 +48,16 @@ Properties
 <td><tmpl_var escape=html preview_path></td>
 </tr>
 
-<tr class="last">
+<tr>
 <th>Publish Path</th>
 <td><tmpl_var escape=html publish_path></td>
 </tr>
 
+</tbody>
+
 </table>
 
-<div class="panel"><form name="ignoreme">
+<div class="panel capped"><form>
 <input value="Return" onclick="do_return()" type="button" class="west">
 <input value="Edit" onclick="do_edit_site()" type="button">
 </form></div>

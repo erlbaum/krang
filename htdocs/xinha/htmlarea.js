@@ -27,9 +27,9 @@
     --     included in the top 10 lines of the file (see the embedded edit mode)
     --
     --  $HeadURL: http://svn.xinha.python-hosting.com/trunk/htmlarea.js $
-    --  $LastChangedDate: 2005-05-04 04:37:33 +1200 (Wed, 04 May 2005) $
-    --  $LastChangedRevision: 108 $
-    --  $LastChangedBy: niko $
+    --  $LastChangedDate$
+    --  $LastChangedRevision$
+    --  $LastChangedBy$
     --------------------------------------------------------------------------*/
 
 if (typeof _editor_url == "string") {

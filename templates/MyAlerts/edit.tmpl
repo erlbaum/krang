@@ -9,7 +9,7 @@ Krang.onload( function() {
   delete_checked = function()
   {
     if ( !Krang.row_checked( 'current_alert_form', 'alert_delete_list' ) )
-      alert( 'Nothing selected to delete!' );
+      alert( 'No Alerts selected to delete!' );
     else if ( confirm( 'Are you SURE you wish to delete these Alerts?' ) )
       Krang.form_submit( 'current_alert_form', {}, { to_top: false } );
   }
@@ -20,20 +20,26 @@ Krang.onload( function() {
 Alerts
 </h2>
 
-<tmpl_if alert_loop>
+<h3>
+Current Alerts
+</h3>
+
+<tmpl_unless alert_loop>
+
+  <p class="naught">
+  There are currently no Alerts.
+  </p>
+
+<tmpl_else>
 
   <form name="current_alert_form" method="post" action="my_alerts.pl">
 
   <input name="rm" value="delete_alerts" type="hidden">
 
-  <h3>
-  Current Alerts
-  </h3>
-
-  <table class="list select_row" summary="">
+  <table class="result select_row" summary="">
 
   <colgroup>
-  <col class="c-deed">
+  <col style="width:6em">
   <col>
   <col>
   <col class="tick">
@@ -44,7 +50,7 @@ Alerts
   <th>Action</th>
   <th>Site/Category</th>
   <th>Desk</th>
-  <th class="tick"><input name="checkallbox" value="1" onclick="Krang.check_all(this,'alert_delete_list')" type="checkbox"></th>
+  <th class="tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
   </tr>
   </thead>
 
@@ -65,22 +71,24 @@ Alerts
 
   </form>
 
-</tmpl_if>
-
-<form name="add_alert_form" method="post" action="my_alerts.pl">
-
-<input name="rm" value="add" type="hidden">
+</tmpl_unless>
 
 <h3>
 Create a New Alert
 </h3>
 
-<table class="half" summary="">
+<form name="add_alert_form" method="post" action="my_alerts.pl">
+
+<input name="rm" value="add" type="hidden">
+
+<table summary="">
 
 <colgroup>
-<col class="c-label">
+<col class="c-mini">
 <col>
 </colgroup>
+
+<tbody class="half">
 
 <tr>
 <th>*Action</th>
@@ -92,15 +100,17 @@ Create a New Alert
 <td><tmpl_var category_chooser></td>
 </tr>
 
-<tr class="last">
+<tr>
 <th>Desk</th>
 <td><tmpl_var desk_selector></td>
 </tr>
 
+</tbody>
+
 </table>
 
-<div class="panel">
-<input value="Add Alert" type="submit">
+<div class="panel lame capped">
+<input value="Add Alert" type="submit" class="west">
 </div>
 
 </form>

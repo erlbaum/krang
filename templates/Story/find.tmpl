@@ -7,7 +7,7 @@ Krang.onload( function() {
 
 show_advanced_search = function( show_advanced )
 {
-  Krang.form_submit( 'krang_pager_form', { do_advanced_search: show_advanced }, { to_top: false } );
+  Krang.form_submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
 }
 
 <tmpl_if do_advanced_search>
@@ -30,7 +30,7 @@ show_advanced_search = function( show_advanced )
 
   view_story_log = function( id )
   {
-    Krang.form_submit( 'view_story_log', { story_id: id } );
+    Krang.form_submit( 'view_story_log_form', { story_id: id } );
   }
 
   delete_selected = function()
@@ -63,7 +63,7 @@ show_advanced_search = function( show_advanced )
 </script>
 
 <h2>
-Find Story
+Find Stories
 </h2>
 
 <form name="search_form" method="post" action="story.pl">
@@ -75,131 +75,126 @@ Find Story
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 <input name="do_advanced_search" value="<tmpl_if do_advanced_search>1<tmpl_else>0</tmpl_if>" type="hidden">
 
-<div class="finder">
+<div class="tabset finder">
 
-<div class="east">
-<a href="javascript:show_advanced_search('<tmpl_if do_advanced_search>0<tmpl_else>1</tmpl_if>')"><tmpl_if do_advanced_search>Simple<tmpl_else>Advanced</tmpl_if> Search</a>
-</div>
+<ul class="tabs"><li>
+<tmpl_if do_advanced_search><a href="javascript:show_advanced_search('0')"><tmpl_else><b></tmpl_if><span>
+Simple Search
+</span><tmpl_if do_advanced_search></a><tmpl_else></b></tmpl_if>
+</li><li>
+<tmpl_if do_advanced_search><b><tmpl_else><a href="javascript:show_advanced_search('1')"></tmpl_if><span>
+Advanced Search
+</span><tmpl_if do_advanced_search></b><tmpl_else></a></tmpl_if>
+</li></ul>
 
-<h3>
-<tmpl_if do_advanced_search>
-  Advanced
+<div class="tabbed">
+
+<tmpl_unless do_advanced_search>
+
+  <div class="faux-p">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+  <input value="Search" type="submit" class="button">
+  </div>
+
 <tmpl_else>
-  Simple
-</tmpl_if>
-Search
-</h3>
-
-<tmpl_if do_advanced_search>
 
   <table summary="">
 
   <colgroup>
   <col class="c-mini">
-  <col class="c-nano">
+  <col>
+  <col class="c-mini">
   <col>
   </colgroup>
 
   <tbody class="demi">
-  <tr>
-  <th>Title</th>
-  <td colspan="2"><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
-  </tr>
 
   <tr>
   <th>URL</th>
-  <td colspan="2"><input name="search_url" value="<tmpl_var escape=html search_url>"></td>
-  </tr>
-  </tbody>
-
-  <tbody>
-  <tr>
-  <th rowspan="2">Cover Date</th>
-  <td>from</td>
-  <td><tmpl_var date_chooser_cover_from></td>
+  <td><input name="search_url" value="<tmpl_var escape=html search_url>"></td>
+  <th>Title</th>
+  <td><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
   </tr>
 
-  <tr>
-  <td>to</td>
-  <td><tmpl_var date_chooser_cover_to></td>
-  </tr>
-
-  <tr>
-  <th rowspan="2">Publish Date</th>
-  <td>from</td>
-  <td><tmpl_var date_chooser_publish_from></td>
-  </tr>
-
-  <tr>
-  <td>to</td>
-  <td><tmpl_var date_chooser_publish_to></td>
-  </tr>
-  </tbody>
-
-  <tbody class="demi">
   <tr>
   <th>Story Type</th>
-  <td colspan="2"><tmpl_var search_class_chooser></td>
+  <td><tmpl_var search_class_chooser></td>
+  <th>Contributor</th>
+  <td><input name="search_contrib_simple" value="<tmpl_var escape=html search_contrib_simple>"></td>
   </tr>
 
   <tr>
   <th>Story ID</th>
-  <td colspan="2"><input name="search_story_id" value="<tmpl_var escape=html search_story_id>"></td>
-  </tr>
-
-  <tr>
-  <th>Contributor</th>
-  <td colspan="2"><input name="search_contrib_simple" value="<tmpl_var escape=html search_contrib_simple>"></td>
-  </tr>
-
-  <tr>
+  <td><input name="search_story_id" value="<tmpl_var escape=html search_story_id>"></td>
   <th>Creator</th>
-  <td colspan="2"><input name="search_creator_simple" value="<tmpl_var escape=html search_creator_simple>"></td>
+  <td><input name="search_creator_simple" value="<tmpl_var escape=html search_creator_simple>"></td>
+  </tr>
+
+  </tbody>
+
+  <tbody>
+
+  <tr>
+  <th>Cover Date</th>
+  <td colspan="3">
+  From
+  <tmpl_var date_chooser_cover_from>
+  To
+  <tmpl_var date_chooser_cover_to>
+  </td>
+  </tr>
+
+  <tr>
+  <th>Publish Date</th>
+  <td colspan="3">
+  From
+  <tmpl_var date_chooser_publish_from>
+  To
+  <tmpl_var date_chooser_publish_to>
+  </td>
   </tr>
 
   <tr>
   <th>Site/Category</th>
-  <td colspan="2"><tmpl_var category_chooser></td>
+  <td colspan="3"><tmpl_var category_chooser></td>
   </tr>
 
-  <tr class="last">
-  <td colspan="3" style="text-align:right">
-  <input value="Clear" onclick="clear_advanced_search()" type="button" class="button">
-  <input value="Search" type="submit" class="button">
-  </td>
-  </tr>
   </tbody>
 
   </table>
 
-<tmpl_else>
+  <div class="panel">
+  <input value="Clear" onclick="clear_advanced_search()" type="button">
+  <input value="Search" type="submit">
+  </div>
 
-  <p>
-  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
-  <input value="Search" type="submit" class="button">
-  </p>
+</tmpl_unless>
 
-</tmpl_if>
+</div>
 
 </div>
 
 </form>
 
-<div class="pager">
+<h3>
+Search Results
+</h3>
+
+<tmpl_if row_count><div class="panel"><form>
+  <input value="Check Out" onclick="checkout_selected()" type="button">
+  <input value="Publish" onclick="publish_selected()" type="button">
+  <input value="Delete" onclick="delete_selected()" type="button">
+</form></div></tmpl_if>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-</div>
-
-<tmpl_if row_count>
-  <div class="panel"><form name="ignoreme">
+<tmpl_if row_count><div class="panel capped"><form>
   <input value="Check Out" onclick="checkout_selected()" type="button">
   <input value="Publish" onclick="publish_selected()" type="button">
   <input value="Delete" onclick="delete_selected()" type="button">
-  </form></div>
-</tmpl_if>
+</form></div></tmpl_if>
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" method="post" action="story.pl">
@@ -210,7 +205,7 @@ Search
 </tmpl_if>
 
 <tmpl_if row_count>
-  <form name="view_story_log" action="history.pl" method="post">
+  <form name="view_story_log_form" action="history.pl" method="post">
   <input name="story_id" type="hidden">
   <input name="history_return_script" value="story.pl" type="hidden">
   <input name="history_return_params" value="rm" type="hidden">

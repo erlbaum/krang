@@ -20,27 +20,31 @@
 
   update_bulk_edit_counts = function()
   {
-    var words_span = document.getElementById( 'bulk_edit_words' );
-    var chars_span = document.getElementById( 'bulk_edit_chars' );
-    var text       = document.forms[ 0 ].bulk_data.value;
-    var words      = text.split( /\s+/ );
-    var word_count = 0;
-    var char_count = 0;
-    var re = /\S/;
+    var words_span = $( 'bulk_edit_words' );
+    var chars_span = $( 'bulk_edit_chars' );
 
-    for( var i = 0; i < words.length; i++ )
+    if ( words_span && chars_span )
     {
-      if ( re.test( words[ i ] ) && words[ i ] != '<tmpl_var escape=js bulk_edit_sep>' )
+      var text       = document.forms[ 'edit' ].bulk_data.value;
+      var words      = text.split( /\s+/ );
+      var word_count = 0;
+      var char_count = 0;
+      var re         = /\S/;
+
+      for ( var i = 0; i < words.length; i++ )
       {
-        word_count++;
-        char_count += words[ i ].length;
+        if ( re.test( words[ i ] ) && ( words[ i ] != '<tmpl_var escape=js bulk_edit_sep>' ) )
+        {
+          word_count++;
+          char_count += words[ i ].length;
+        }
       }
+
+      words_span.update( word_count );
+      chars_span.update( char_count );
+
+      setTimeout( update_bulk_edit_counts, 1000 + ( text.length / 10 ) );
     }
-
-    words_span.innerHTML = word_count;
-    chars_span.innerHTML = char_count;
-
-    setTimeout( update_bulk_edit_counts, 1000 + ( text.length / 10 ) );
   }
 
 <tmpl_else>
@@ -92,11 +96,20 @@
 
     add_child = function()
     {
-      var f    = document.forms[ 'edit' ];
-      var list = f.elements[ 'child' ];
-      var name = list.options[ list.selectedIndex ].value;
+      var f      = document.forms[ 'edit' ];
+      var list   = f.elements[ 'child' ];
+      var name   = list.options[ list.selectedIndex ].value;
+      var rm     = 'add';
+      var to_top = false;
 
-      Krang.form_submit( 'edit', { rm: ( containers[ name ] ? 'save_and_add' : 'add' ) }, { to_top: false });
+      // container elements behave differently
+      if ( containers[ name ] )
+      {
+        rm     = 'save_and_add';
+        to_top = true;
+      }
+
+      Krang.form_submit( 'edit', { rm : rm }, { to_top : to_top } );
     }
   </tmpl_if>
 
@@ -118,13 +131,9 @@
   <input name="bulk_edit_sep" value="<tmpl_var escape=html bulk_edit_sep>" type="hidden">
 </tmpl_if>
 
-<tmpl_if alert><ul class="notes"><li>
-  <tmpl_var escape=html alert>
-</li></ul></tmpl_if>
-
-<tmpl_if crumbs><div class="east">(<tmpl_loop crumbs>
+<tmpl_if crumbs><div class="east"><tmpl_loop crumbs>
   <tmpl_unless __last__><a href="javascript:jump_to('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
-</tmpl_loop>)</div></tmpl_if>
+</tmpl_loop></div></tmpl_if>
 
 <h3><tmpl_if bulk_edit>
   Bulk Edit
@@ -141,7 +150,9 @@
   <col>
   </colgroup>
 
-  <tr class="meld">
+  <tbody>
+
+  <tr>
   <td colspan="2" class="full">
   <textarea name="bulk_data" rows="20" cols="60"><tmpl_var escape=html bulk_data></textarea>
   </td>
@@ -160,10 +171,12 @@
   <td id="bulk_edit_words"></td>
   </tr>
 
-  <tr class="last">
+  <tr>
   <th>Character Count</th>
   <td id="bulk_edit_chars"></td>
   </tr>
+
+  </tbody>
 
   </table>
 
@@ -173,19 +186,19 @@
 
 <tmpl_else><tmpl_unless child_loop>
 
-  <p>
+  <p class="naught">
   No sub-elements defined.
   </p>
 
   <tmpl_if child_select>
-    <p>
+    <p><!--:FIXME(db2)-->
     <tmpl_var child_select><!--:markup-->
     <input value="Add Element" onclick="add_child()" type="button" class="button">
     </p>
   </tmpl_if>
 
   <tmpl_if bulk_edit_select>
-    <p>
+    <p><!--:FIXME(db2)-->
     <tmpl_var bulk_edit_select><!--:markup-->
     <input value="Bulk Edit" onclick="save_and_bulk_edit()" type="button" class="button">
     </p>
@@ -193,7 +206,7 @@
 
 <tmpl_else>
 
-  <table class="list edit select_row" summary=""><!--:FIX(db2)-->
+  <table class="result edit select_row" summary=""><!--:FIX(db2)-->
 
   <colgroup>
   <col class="series">
@@ -207,7 +220,7 @@
   <th class="series">Order</th>
   <th>Element</th>
   <th>Data Entry</th>
-  <th class="series"><tmpl_unless no_reorder><input onclick="Krang.check_all(this,'remove_')" type="checkbox"><tmpl_else><!-- --></tmpl_unless></th>
+  <th class="series"><tmpl_unless no_reorder><input type="checkbox" onclick="Krang.check_all(this,'remove_')"></tmpl_unless></th><!--:unnamed control(db2)-->
   </tr>
   </thead>
 
@@ -226,14 +239,14 @@
     <tmpl_var form><!--:markup-->
     </td>
 
-    <td class="series"><tmpl_if allow_delete><input name="remove_<tmpl_var escape=html index>" type="checkbox"><tmpl_else><!-- --></tmpl_if></td>
+    <td class="series"><tmpl_if allow_delete><input name="remove_<tmpl_var escape=html index>" type="checkbox"></tmpl_if></td>
     </tr>
   </tmpl_loop>
 
   <tr>
-  <td class="series"><tmpl_unless no_reorder><input value="Reorder" onclick="reorder()" type="button" class="button"><tmpl_else><!-- --></tmpl_unless></td>
+  <td class="series"><tmpl_unless no_reorder><input value="Reorder" onclick="reorder()" type="button" class="button"></tmpl_unless></td>
 
-  <td><!-- --></td>
+  <td></td>
 
   <td><!--(db2)TODO - constrain form control widths:-->
   <tmpl_if child_select>
@@ -247,7 +260,7 @@
   </tmpl_if>
   </td>
 
-  <td class="series"><tmpl_unless no_delete><input value="Delete" onclick="remove_children()" type="button" class="button"><tmpl_else><!-- --></tmpl_unless></td>
+  <td class="series"><tmpl_unless no_delete><input value="Delete" onclick="remove_children()" type="button" class="button"></tmpl_unless></td>
   </tr>
 
   </tbody>

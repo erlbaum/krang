@@ -9,16 +9,18 @@ Welcome!
 </h2>
 
 <tmpl_loop header_alert_loop>
-  <p class="err"><tmpl_var escape=html alert></p>
+  <p class="err">
+  <tmpl_var escape=html alert>
+  </p>
 </tmpl_loop>
 
-<form id="form-login" action="login.pl" method="post">
+<form id="form-login" name="form-login" action="login.pl" method="post">
 
 <input name="rm" value="login" type="hidden">
 <input name="target" value="<tmpl_var escape=html target>" type="hidden">
 
 <p>
-<label for="login-username">Username</label>
+<label for="login-username">User Name</label>
 <input id="login-username" name="username" value="<tmpl_var escape=html username>">
 </p>
 
@@ -29,7 +31,7 @@ Welcome!
 
 <p class="btn">
 <input value="Log In" type="submit">
-<a href="?rm=forgot_pw">Forgot your password?</a>
+<a href="login.pl?rm=forgot_pw">Forgot your Login?</a>
 </p>
 
 </form>

@@ -117,18 +117,18 @@ save_and_stay = function()
 </tmpl_if>
 </script>
 
-<tmpl_if is_root><tmpl_if story_id><p class="east">
-  <a href="javascript:save_and_view_log()">View Log</a>
-  <a href="javascript:save_and_edit_schedule()">View Schedule</a>
+<form name="edit" action="story.pl" method="post" enctype="multipart/form-data">
+
+<input name="rm" value="edit" type="hidden">
+
+<tmpl_if is_root><tmpl_if story_id><p class="cram east">
+  <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
+  <input value="View Schedule" onclick="save_and_edit_schedule()" type="button" class="button">
 </p></tmpl_if></tmpl_if>
 
 <h2>
 Edit Story
 </h2>
-
-<form name="edit" method="post" enctype="multipart/form-data" action="story.pl">
-
-<input name="rm" value="edit" type="hidden">
 
 <h3>
 Properties
@@ -142,6 +142,7 @@ Properties
 </colgroup>
 
 <tbody>
+
 <tr>
 <th>URL</th>
 <td><tmpl_var url><!--:markup--></td>
@@ -152,14 +153,16 @@ Properties
 <td><tmpl_var escape=html type></td>
 </tr>
 
-<tr<tmpl_unless is_root> class="last"</tmpl_unless>>
+<tr>
 <th>Story ID</th>
 <td><tmpl_var escape=html story_id></td>
 </tr>
+
 </tbody>
 
 <tmpl_if is_root>
   <tbody class="demi">
+
   <tr<tmpl_if bad_title> class="ERR-ROW"</tmpl_if>>
   <th>*Title</th>
   <td><input name="title" value="<tmpl_var escape=html title>"></td>
@@ -169,15 +172,17 @@ Properties
   <th>Slug</th>
   <td><input name="slug" value="<tmpl_var escape=html slug>"></td>
   </tr>
+
   </tbody>
 
   <tbody>
+
   <tr<tmpl_if bad_cover_date> class="ERR-ROW"</tmpl_if>>
   <th>*Cover Date</th>
   <td><tmpl_var cover_date_selector></td>
   </tr>
 
-  <tr<tmpl_if contribs_loop> class="meld"</tmpl_if>>
+  <tr>
   <th>Contributors</th>
   <td class="glue">
   <tmpl_if contribs_loop>
@@ -189,7 +194,7 @@ Properties
     </tr>
 
     <tr>
-    <th><!-- --></th>
+    <th></th>
     <td>
     <input value="Edit" onclick="save_and_edit_contribs()" type="button" class="button">
   <tmpl_else>
@@ -213,7 +218,7 @@ Properties
   <td><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
   </tr>
 
-  <tr class="last">
+  <tr>
   <th>All Versions</th>
   <td>
   <tmpl_var version_selector><!--:markup-->
@@ -221,6 +226,7 @@ Properties
   <input value="View" onclick="save_and_view()" type="button" class="button">
   </td>
   </tr>
+
   </tbody>
 
 </tmpl_if>
@@ -237,70 +243,68 @@ Properties
   Sites/Categories
   </h3>
 
-  <table class="list select_row" summary=""><!--:FIX(db2)-->
+  <tmpl_unless category_loop>
 
-  <colgroup>
-  <col class="series">
-  <col>
-  <col>
-  <col class="series">
-  </colgroup>
+    <p class="naught">
+    No Categories assigned.
+    </p>
 
-  <thead>
-  <tr>
-  <th class="series">Primary</th>
-  <th>Site</th>
-  <th>Category</th>
-  <th class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input onclick="Krang.check_all(this,'cat_remove_')" type="checkbox"></tmpl_unless></tmpl_if></tmpl_loop></th>  <!-- db2: ick, but that should work -->
-  </tr>
-  </thead>
-
-  <tbody>
-
-  <tmpl_unless category_loop><!--:even possible?(db2)-->
-
-    <tr>
-    <td colspan="4">
-    No Categories Assigned.
-    </td>
-    </tr>
+    <tmpl_var category_chooser><!--:FIXME(db2)-->
 
   <tmpl_else>
+
+    <table class="result select_row" summary=""><!--:FIX(db2)-->
+
+    <colgroup>
+    <col class="series">
+    <col>
+    <col>
+    <col class="series">
+    </colgroup>
+
+    <thead>
+    <tr>
+    <th class="series">Primary</th>
+    <th>Site</th>
+    <th>Category</th>
+    <th class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input type="checkbox" onclick="Krang.check_all(this,'cat_remove_')"></tmpl_unless></tmpl_if></tmpl_loop></th>  <!--:ick, but should work(db2)-->
+    </tr>
+    </thead>
+
+    <tbody>
 
     <tmpl_loop category_loop>
       <tr>
       <td class="series"><input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>></td>
       <td><tmpl_var escape=html site></td>
       <td><tmpl_var escape=html category></td>
-      <td class="series">
-      <tmpl_unless __first__>
+      <td class="series"><tmpl_unless __first__>
         <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox">
-      </tmpl_unless>
-      </td>
+      </tmpl_unless></td>
       </tr>
     </tmpl_loop>
 
+    <tr>
+    <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Set" onclick="set_primary_category()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
+    <td colspan="2"><tmpl_var category_chooser></td>
+    <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Delete" onclick="remove_categories()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
+    </tr>
+
+    </tbody>
+
+    </table>
+
   </tmpl_unless>
-
-  <tr>
-  <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Set" onclick="set_primary_category()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td>  <!-- db2: ick, but that should work -->
-  <td colspan="2"><tmpl_var category_chooser></td>
-  <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Delete" onclick="remove_categories()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td>  <!-- db2: ick, but that should work -->
-  </tr>
-
-  </tbody>
-
-  </table>
 
 </tmpl_if>
 
-<div class="panel">
+<div class="panel capped">
 <input value="Save &amp; Stay" onclick="<tmpl_if is_root>db_save_and_stay<tmpl_else>save_and_stay</tmpl_if>()" type="button">
 <input value="Save" onclick="<tmpl_if is_root>db_save<tmpl_else><tmpl_if bulk_edit>save_and_leave_bulk_edit<tmpl_else>save_and_go_up</tmpl_if></tmpl_if>()" type="button">
 <tmpl_if is_root>
   <input value="Check In To" onclick="check_in()" type="button">
   <select name="checkin_to"><tmpl_loop desk_loop>
-    <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected="selected"</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
+    <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
   </tmpl_loop></select>
   <tmpl_if may_publish>
     <input value="Publish" onclick="save_and_publish()" type="button">

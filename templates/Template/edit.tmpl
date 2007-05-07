@@ -62,13 +62,21 @@ save_and_view_log = function()
   do_delete = function()
   {
     if ( confirm( 'Are you SURE you want to delete this Template?' ) )
-      Krang.form_submit( 'delete_template_form'<tmpl_if add_mode>, { rm: 'cancel_add' }</tmpl_if> );
+      Krang.form_submit( 'delete_template_form'<tmpl_if add_mode>, { rm : 'cancel_add' }</tmpl_if> );
   }
 </tmpl_if>
 </script>
 
-<tmpl_unless add_mode><p class="east">
-  <a href="javascript:save_and_view_log()">View Log</a>
+<form name="edit_template_form" action="template.pl" method="post" enctype="multipart/form-data">
+
+<input name="rm" value="<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save" type="hidden">
+<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+<tmpl_unless add_mode>
+  <tmpl_var history_return_params>
+</tmpl_unless>
+
+<tmpl_unless add_mode><p class="cram east">
+  <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
 </p></tmpl_unless>
 
 <h2>
@@ -80,51 +88,43 @@ save_and_view_log = function()
 Template
 </h2>
 
-<form name="edit_template_form" method="post" enctype="multipart/form-data" action="template.pl">
-
-<input name="rm" value="<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save" type="hidden">
-<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
-<tmpl_unless add_mode>
-  <tmpl_var history_return_params>
-</tmpl_unless>
+<h3>
+Properties
+</h3>
 
 <tmpl_unless add_mode>
-
-  <h3>
-  Properties
-  </h3>
 
   <table summary="">
 
   <colgroup>
   <col class="c-label">
   <col>
+  <col class="c-label">
+  <col>
   </colgroup>
+
+  <tbody>
+
+  <tr>
+  <th>URL</th>
+  <td colspan="3"><tmpl_var escape=html url></td>
+  </tr>
 
   <tr>
   <th>Template ID</th>
   <td><tmpl_var escape=html template_id></td>
-  </tr>
-
-  <tr>
-  <th>Filename</th>
-  <td><tmpl_var escape=html filename></td>
-  </tr>
-
-  <tr>
-  <th>URL</th>
-  <td><tmpl_var escape=html url></td>
-  </tr>
-
-  <tr>
   <th>Current Version</th>
   <td><tmpl_var escape=html version></td>
   </tr>
 
-  <tr class="last">
+  <tr>
+  <th>File Name</th>
+  <td><tmpl_var escape=html filename></td>
   <th>Deployed Version</th>
   <td><tmpl_unless deployed_version>[n/a]<tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
   </tr>
+
+  </tbody>
 
   </table>
 
@@ -137,6 +137,8 @@ Template
 <col>
 </colgroup>
 
+<tbody>
+
 <tmpl_if add_mode>
   <tr<tmpl_if error_no_filename> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_url> class="ERR-ROW"<tmpl_else><tmpl_if error_element> class="ERR-ROW"</tmpl_if></tmpl_if></tmpl_if>>
   <th>Element</th>
@@ -144,13 +146,22 @@ Template
   </tr>
 
   <tr<tmpl_if error_invalid_filename> class="ERR-ROW"<tmpl_else><tmpl_if error_no_filename> class="ERR-ROW"</tmpl_if></tmpl_if>>
-  <th>Filename</th>
+  <th>File Name</th>
   <td class="demi"><input name="filename" value="<tmpl_var escape=html filename>"<tmpl_if duplicate_url> readonly</tmpl_if>></td>
   </tr>
 
   <tr<tmpl_if duplicate_url> class="ERR-ROW"<tmpl_else><tmpl_if error_category_id> class="ERR-ROW"</tmpl_if></tmpl_if>>
   <th>Site/Category</th>
   <td><tmpl_var category_chooser></td>
+  </tr>
+
+  <tr><!--:FIXME(db2)-->
+  <th>All Versions</th>
+  <td>
+  <tmpl_var version_chooser>
+  <input value="Revert" onclick="revert_version()" type="button" class="button">
+  <input value="View" onclick="view_version()" type="button" class="button">
+  </td>
   </tr>
 </tmpl_if>
 
@@ -168,27 +179,24 @@ Template
 </td>
 </tr>
 
-<tr>
-<td colspan="2" class="full"><textarea name="content" rows="30" cols="60"><tmpl_var escape=html content></textarea></td>
-</tr>
-
-<tr class="last">
-<th>Test with Template</th>
-<td><input name="testing" value="1" type="checkbox"<tmpl_if testing> checked</tmpl_if>> Yes</td>  <!-- db2: should be radio inputs? -->
-</tr>
+</tbody>
 
 </table>
 
-<tmpl_unless add_mode>
-  <p>
-  Version
-  <tmpl_var version_chooser>
-  <input value="Revert" onclick="revert_version()" type="button" class="button">
-  <input value="View" onclick="view_version()" type="button" class="button">
-  </p>
-</tmpl_unless>
+<h3>
+Content
+</h3>
 
-<div class="panel">
+<p class="full">
+<textarea name="content" rows="30" cols="60"><tmpl_var escape=html content></textarea>
+</p>
+
+<p>
+<input name="testing" value="1" type="checkbox"<tmpl_if testing> checked</tmpl_if>>
+Test
+</p>
+
+<div class="panel capped">
 <input value="Save &amp; Stay" onclick="do_save_stay()" type="button">
 <input value="Save" onclick="do_save()" type="button">
 <input value="Deploy" onclick="do_deploy()" type="button">

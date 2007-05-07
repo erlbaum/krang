@@ -41,11 +41,11 @@ Publish
 Publication Materials
 </h3>
 
-<table class="list" summary=""><!--:FIX(db2)-->
+<table class="result" summary=""><!--:FIX(db2)-->
 
 <colgroup>
-<col class="c-type">
 <col class="c-id">
+<col class="c-type">
 <col>
 <col>
 <tmpl_if media>
@@ -56,12 +56,12 @@ Publication Materials
 
 <thead>
 <tr>
-<th>Type</th>
 <th>ID</th>
-<th>URL</th>
+<th>Type</th>
 <th>Title</th>
+<th>URL</th>
 <tmpl_if media>
-  <th><!-- --></th>
+  <th></th>
 </tmpl_if>
 <th>Status</th>
 </tr>
@@ -73,28 +73,24 @@ Publication Materials
 
   <tmpl_loop stories>
     <tr<tmpl_if checked_out> class="ERR-ROW"</tmpl_if>>
-    <td>Story</td>
     <td><tmpl_var escape=html id></td>
-    <td><tmpl_var url><!--:markup--></td>
+    <td>Story</td>
     <td><tmpl_var escape=html title></td>
-    <td><!-- --></td>
+    <td><tmpl_var url><!--:markup--></td>
+    <td></td>
     <td><tmpl_var status><!--:markup--></td>
     </tr>
   </tmpl_loop>
 
   <tmpl_loop media>
     <tr<tmpl_if checked_out> class="ERR-ROW"</tmpl_if>>
-    <td>Media</td>
     <td><tmpl_var escape=html id></td>
-    <td><tmpl_var url><!--:markup--></td>
+    <td>Media</td>
     <td><tmpl_var escape=html title></td>
-    <td>
-    <tmpl_if thumbnail>
-      <a href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
-    <tmpl_else>
-      <!-- -->
-    </tmpl_if>
-    </td>
+    <td><tmpl_var url><!--:markup--></td>
+    <td><tmpl_if thumbnail>
+      <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
+    </tmpl_if></td>
     <td><tmpl_var status><!--:markup--></td>
     </tr>
   </tmpl_loop>
@@ -103,10 +99,10 @@ Publication Materials
 
   <tmpl_loop stories>
     <tr<tmpl_if checked_out> class="ERR-ROW"</tmpl_if>>
-    <td>Story</td>
     <td><tmpl_var escape=html id></td>
-    <td><tmpl_var url><!--:markup--></td>
+    <td>Story</td>
     <td><tmpl_var escape=html title></td>
+    <td><tmpl_var url><!--:markup--></td>
     <td><tmpl_var status><!--:markup--></td>
     </tr>
   </tmpl_loop>
@@ -128,6 +124,8 @@ Publication Time
 <col>
 </colgroup>
 
+<tbody>
+
 <tr>
 <th colspan="2">
 <input name="publish_now" value="1" type="radio" checked>
@@ -135,7 +133,7 @@ Immediate
 </th>
 </tr>
 
-<tr class="last<tmpl_if bad_publish_date> ERR-ROW</tmpl_if>">
+<tr<tmpl_if bad_publish_date> class="ERR-ROW"</tmpl_if>>
 <th>
 <input name="publish_now" value="0" type="radio">
 Scheduled For
@@ -145,9 +143,11 @@ Scheduled For
 </td>
 </tr>
 
+</tbody>
+
 </table>
 
-<div class="panel">
+<div class="panel capped">
 <input name="Publish" value="Publish" type="submit">
 </div>
 

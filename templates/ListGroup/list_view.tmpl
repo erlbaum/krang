@@ -22,24 +22,34 @@ List Groups
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 
-<div class="finder">
+<div class="tabset finder">
 
-<p>
+<ul class="tabs"><li>
+<b><span>
+Simple Search
+</span></b>
+</li></ul>
+
+<div class="tabbed">
+
+<div class="faux-p">
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
 <input value="Search" type="submit" class="button">
-</p>
+</div>
+
+</div>
 
 </div>
 
 </form>
 
-<div class="pager">
+<h3>
+Search Results
+</h3>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
-
-</div>
 
 <tmpl_if row_count>
   <form name="edit_list_group_form" method="post" action="list_group.pl">

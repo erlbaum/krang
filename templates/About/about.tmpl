@@ -2,7 +2,7 @@
 
 <html lang="en-US"><head>
 
-<title>About Krang</title>
+<title>About <tmpl_var escape=html krang_product_name></title>
 
 <link href="favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
 
@@ -17,16 +17,20 @@ h3 { font-size: 1.27em; }
 ul { list-style: none; padding: 0; }
 --></style>
 
+<!--[if lte IE 7]><style type="text/css">
+body { font-size: 69%; }
+
+h2 { border-bottom-width: 1px; }
+</style><![endif]-->
+
 </head><body>
 
-<h1>
-<div id="instance_logo"></div>
-<!--
---><img alt="Krang(sm)" src="/images/logo.gif" height="46" width="83"><!--
+<h1><!--
+--><img alt="<tmpl_var escape=html krang_product_name>(sm)" src="/images/logo.gif" height="46" width="83"><!--
 --></h1>
 
 <h2>
-About Krang
+About <tmpl_var escape=html krang_product_name>
 </h2>
 
 <h3>

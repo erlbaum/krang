@@ -40,12 +40,12 @@ cancel_group_change = function()
 </script>
 
 <h2>
-Group
 <tmpl_if add_mode>
-  Add
+  New
 <tmpl_else>
   Edit
 </tmpl_if>
+Group
 </h2>
 
 <form name="edit_group_form" action="group.pl" method="post">
@@ -70,10 +70,14 @@ Properties
 <col>
 </colgroup>
 
-<tr class="last demi<tmpl_if duplicate_name> ERR-ROW<tmpl_else><tmpl_if error_invalid_name> ERR-ROW</tmpl_if></tmpl_if>">
+<tbody>
+
+<tr class="demi<tmpl_if duplicate_name> ERR-ROW<tmpl_else><tmpl_if error_invalid_name> ERR-ROW</tmpl_if></tmpl_if>">
 <th>Group Name</th>
 <td><input name="name" value="<tmpl_var escape=html name>"></td>
 </tr>
+
+</tbody>
 
 </table>
 
@@ -81,7 +85,7 @@ Properties
 Site Permissions
 </h3>
 
-<table class="list" summary="">
+<table class="result" summary="">
 
 <colgroup>
 <col>
@@ -103,7 +107,7 @@ Site Permissions
 <tbody><tmpl_loop categories>
   <tr>
   <td><tmpl_var escape=html category_url></td>
-  <td><a href="javascript:edit_categories('<tmpl_var escape=html category_id>')">Set Category Permissions</a></td>
+  <td><input value="Set Category Permissions" onclick="edit_categories('<tmpl_var escape=html category_id>')" type="button" class="button"></td>
   <tmpl_loop permission_radio>
     <td class="series"><tmpl_var radio_select></td>
   </tmpl_loop>
@@ -116,7 +120,7 @@ Site Permissions
 Asset Permissions
 </h3>
 
-<table class="list" summary="">
+<table class="result" summary="">
 
 <colgroup>
 <col>
@@ -163,7 +167,7 @@ Asset Permissions
 Desk Permissions
 </h3>
 
-<table class="list" summary="">
+<table class="result" summary="">
 
 <colgroup>
 <col>
@@ -205,6 +209,8 @@ Report Permissions
 <col>
 </colgroup>
 
+<tbody>
+
 <tr>
 <td class="tick"><tmpl_var may_view_contribution_reports></td>
 <td>View Contribution Reports</td>
@@ -226,10 +232,12 @@ Report Permissions
 <td>View Call Talk Radio Reports</td>
 </tr>
 
-<tr class="last">
+<tr>
 <td class="tick"><tmpl_var may_view_contact_official_reports></td>
 <td>View Contact Elected Official Reports</td>
 </tr>
+
+</tbody>
 
 </table>
 
@@ -246,6 +254,8 @@ Mailing Permissions
 <col>
 </colgroup>
 
+<tbody>
+
 <tr>
 <td class="tick"><tmpl_var may_manage_mailings></td>
 <td>Manage Mailings</td>
@@ -253,10 +263,12 @@ Mailing Permissions
 <td>Send Mailings</td>
 </tr>
 
-<tr class="last">
+<tr>
 <td class="tick"><tmpl_var may_manage_campaigns></td>
 <td>Manage Campaigns</td>
 </tr>
+
+</tbody>
 
 </table>
 
@@ -272,6 +284,8 @@ Membership Permissions
 <col class="tick">
 <col>
 </colgroup>
+
+<tbody>
 
 <tr>
 <td class="tick"><tmpl_var may_manage_members></td>
@@ -294,6 +308,8 @@ Membership Permissions
 <td>Manage Lists</td>
 </tr>
 
+</tbody>
+
 </table>
 
 <h3>
@@ -310,6 +326,8 @@ Administrative Permissions
 <col class="tick">
 <col>
 </colgroup>
+
+<tbody>
 
 <tr>
 <td class="tick"><tmpl_var may_publish></td>
@@ -332,7 +350,7 @@ Administrative Permissions
 <td colspan="2">Manage Sites</td>
 </tr>
 
-<tr class="meld">
+<tr>
 <td class="tick"><tmpl_var admin_users></td>
 <td colspan="2">Manage Users</td>
 <td class="tick"><tmpl_var admin_categories></td>
@@ -340,12 +358,13 @@ Administrative Permissions
 </tr>
 
 <tr>
-<td><!-- --></td>
+<td></td>
 <td class="tick"><tmpl_var admin_users_limited></td>
-<td>Group Limited</td>
-<td><!-- --></td>
+<td colspan="2">Group Limited</td>
+<tmpl_if enable_ftp>
 <td class="tick"><tmpl_var admin_categories_ftp></td>
 <td>Via FTP</td>
+</tmpl_if>
 </tr>
 
 <tr>
@@ -362,16 +381,18 @@ Administrative Permissions
 <td colspan="2">Manage Lists</td>
 </tr>
 
-<tr class="last">
+<tr>
 <td class="tick"><tmpl_var may_manage_newspapers></td>
-<td colspan="2">Manage Newspaper Data</td>
+<td colspan="2">Manage Newspapers</td>
 <td class="tick"><tmpl_var may_manage_radioshows></td>
-<td colspan="2">Manage Radio Show Data</td>
+<td colspan="2">Manage Radio Shows</td>
 </tr>
+
+</tbody>
 
 </table>
 
-<div class="panel">
+<div class="panel capped">
 <input value="Cancel" onclick="cancel_group_change()" type="button" class="west">
 <tmpl_unless associate_mode>
   <input value="Save &amp; Stay" onclick="save_stay()" type="button">

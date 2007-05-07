@@ -27,7 +27,7 @@ add_category = function()
 </script>
 
 <h2>
-Category Lists
+Categories
 </h2>
 
 <form name="search_form" action="category.pl" method="post">
@@ -38,26 +38,43 @@ Category Lists
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 
-<div class="finder">
+<div class="tabset finder">
 
-<p>
+<ul class="tabs"><li>
+<b><span>
+Simple Search
+</span></b>
+</li></ul>
+
+<div class="tabbed">
+
+<div class="faux-p">
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
 <input value="Search" type="submit" class="button">
-</p>
+</div>
+
+</div>
 
 </div>
 
 </form>
 
-<div class="pager">
+<h3>
+Search Results
+</h3>
+
+<div class="panel"><form>
+<input value="Add Category" onclick="add_category()" type="button"<tmpl_if row_count> class="west"</tmpl_if>>
+<tmpl_if row_count>
+  <input value="Delete" onclick="delete_selected()" type="button">
+</tmpl_if>
+</form></div>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-</div>
-
-<div class="panel"><form name="ignoreme">
+<div class="panel capped"><form>
 <input value="Add Category" onclick="add_category()" type="button"<tmpl_if row_count> class="west"</tmpl_if>>
 <tmpl_if row_count>
   <input value="Delete" onclick="delete_selected()" type="button">

@@ -35,12 +35,6 @@ save_and_stay = function()
 </tmpl_if></tmpl_unless></tmpl_if>
 </script>
 
-<tmpl_if alerts_loop><ul class="notes"><!--(db2)no context var:--><tmpl_loop alerts_loop>
-  <li>
-  <tmpl_var escape=html alert>
-  </li>
-</tmpl_loop><!--:no context var(db2)--></ul></tmpl_if>
-
 <h2>
 Edit Category
 </h2>
@@ -60,15 +54,19 @@ Properties
 <col>
 </colgroup>
 
+<tbody>
+
 <tr>
 <th>Category ID</th>
 <td><tmpl_var escape=html category_id></td>
 </tr>
 
-<tr class="last">
+<tr>
 <th>URL</th>
 <td><tmpl_var url><!--:markup--></td>
 </tr>
+
+</tbody>
 
 </table>
 
@@ -76,7 +74,7 @@ Properties
 <tmpl_include /ElementEditor/edit.tmpl>
 <!--:ElementEditor/edit.tmpl-->
 
-<div class="panel">
+<div class="panel capped">
 <input value="Save &amp; Stay" onclick="save_and_stay()" type="button">
 <input value="Save" onclick="save_and_leave()" type="button">
 <tmpl_if is_root>

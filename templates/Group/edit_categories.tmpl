@@ -24,7 +24,7 @@ do_return = function()
 </script>
 
 <h2>
-Group Category Permissions Edit
+Edit Group Category Permissions
 </h2>
 
 <form name="edit_categories_form" action="group.pl" method="post">
@@ -51,6 +51,8 @@ Properties
 <col>
 </colgroup>
 
+<tbody>
+
 <tr>
 <th>Name</th>
 <td>
@@ -62,12 +64,14 @@ Properties
 </td>
 </tr>
 
-<tr class="last">
+<tr>
 <th>Site</th>
 <td>
 <tmpl_var site_url>
 </td>
 </tr>
+
+</tbody>
 
 </table>
 
@@ -75,23 +79,23 @@ Properties
 Current Permissions
 </h3>
 
-<table class="list" summary=""><!--:FIX(db2)-->
+<table class="result" summary=""><!--:FIX(db2)-->
 
 <colgroup>
 <col>
-<col class="tick">
-<col class="tick">
-<col class="tick">
+<col class="series">
+<col class="series">
+<col class="series">
 <col>
 </colgroup>
 
 <thead>
 <tr>
 <th>Category</th>
-<th>Edit</th>
-<th>Read-Only</th>
-<th>Hide</th>
-<th><!-- --></th>
+<th class="series">Edit</th>
+<th class="series">Read-Only</th>
+<th class="series">Hide</th>
+<th></th>
 </tr>
 </thead>
 
@@ -99,35 +103,37 @@ Current Permissions
   <tr>
   <td><tmpl_var category_url></td>
   <tmpl_loop permission_radio>
-    <td class="tick"><tmpl_var radio_select></td>
+    <td class="series"><tmpl_var radio_select></td>
   </tmpl_loop>
-  <td>
-  <tmpl_unless is_root>
+  <td><tmpl_unless is_root>
     <input value="Delete" onclick="delete_category('<tmpl_var escape=html category_id>')" type="button" class="button">
-  </tmpl_unless>
-  </td>
+  </tmpl_unless></td>
   </tr>
 </tmpl_loop></tbody>
 
 </table>
 
-<table summary="">
+<table summary=""><!--:FIX(db2)-->
 
 <colgroup>
 <col class="c-label">
 <col>
 </colgroup>
 
-<tr class="last">
+<tbody>
+
+<tr>
 <th>Add Category</th>
 <td>
 <tmpl_var category_chooser>
 </td>
 </tr>
 
+</tbody>
+
 </table>
 
-<div class="panel lame">
+<div class="panel lame capped">
 <input value="Return" onclick="do_return()" type="button" class="west">
 </div>
 

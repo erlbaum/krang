@@ -8,29 +8,29 @@ Krang.onload( function() {
 <tmpl_if do_advanced_search>
   simple_search = function()
   {
-    Krang.form_submit('search_form', { rm: 'find' }, { to_top: false });
+    Krang.form_submit( 'search_form', { rm: 'find' }, { to_top: false } );
   }
 
   clear_advanced_search = function()
   {
-    Krang.form_submit('clear_advanced_search_form', {}, { to_top: false });
+    Krang.form_submit( 'clear_advanced_search_form', {}, { to_top: false } );
   }
 <tmpl_else>
   advanced_search = function()
   {
-    Krang.form_submit('search_form', { rm: 'advanced_find' }, { to_top: false });
+    Krang.form_submit( 'search_form', { rm: 'advanced_find' }, { to_top: false } );
   }
 </tmpl_if>
 
 <tmpl_if row_count>
   edit_media = function( id )
   {
-    Krang.form_submit('find_media', { rm: 'checkout_and_edit', media_id: id });
+    Krang.form_submit( 'find_media', { rm: 'checkout_and_edit', media_id: id } );
   }
 
   view_media = function( id )
   {
-    Krang.form_submit('find_media', { rm: 'view', media_id: id });
+    Krang.form_submit( 'find_media', { rm: 'view', media_id: id } );
   }
 
   delete_selected = function()
@@ -38,7 +38,7 @@ Krang.onload( function() {
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to delete!' );
     else if ( confirm( 'Are you SURE you want to delete the checked Media?' ) )
-      Krang.form_submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
+      Krang.form_submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
   }
 
   checkout_selected = function()
@@ -46,7 +46,7 @@ Krang.onload( function() {
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to check out!' );
     else
-      Krang.form_submit('krang_pager_form', { rm: 'checkout_selected' });
+      Krang.form_submit( 'krang_pager_form', { rm: 'checkout_selected' } );
   }
 
   publish_selected = function()
@@ -56,7 +56,7 @@ Krang.onload( function() {
     else if ( confirm( 'Are you SURE you wish to publish all these items?' ) )
     {
       document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
-      Krang.form_submit('krang_pager_form', { rm: 'publish_story_list' });
+      Krang.form_submit( 'krang_pager_form', { rm: 'publish_story_list' } );
     }
   }
 </tmpl_if>
@@ -66,7 +66,7 @@ Krang.onload( function() {
 Find Media
 </h2>
 
-<form name="search_form" method="post" action="media.pl">
+<form name="search_form" action="media.pl" method="post">
 
 <input name="rm" value="<tmpl_if do_advanced_search>advanced_</tmpl_if>find" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
@@ -77,130 +77,124 @@ Find Media
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
 </tmpl_if>
 
-<div class="finder">
+<div class="tabset finder">
 
-<div class="east">
-<a href="javascript:<tmpl_if do_advanced_search>simple<tmpl_else>advanced</tmpl_if>_search()"><tmpl_if do_advanced_search>Simple<tmpl_else>Advanced</tmpl_if> Search</a>
-</div>
+<p class="cram east">
+<input name="show_thumbnails" value="1" type="checkbox"<tmpl_if show_thumbnails> checked</tmpl_if>>
+Show Thumbnails
+</p>
 
-<h3>
-<tmpl_if do_advanced_search>
-  Advanced
+<ul class="tabs"><li>
+<tmpl_if do_advanced_search><a href="javascript:simple_search()"><tmpl_else><b></tmpl_if><span>
+Simple Search
+</span><tmpl_if do_advanced_search></a><tmpl_else></b></tmpl_if>
+</li><li>
+<tmpl_if do_advanced_search><b><tmpl_else><a href="javascript:advanced_search()"></tmpl_if><span>
+Advanced Search
+</span><tmpl_if do_advanced_search></b><tmpl_else></a></tmpl_if>
+</li></ul>
+
+<div class="tabbed">
+
+<tmpl_unless do_advanced_search>
+
+  <div class="faux-p">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+  <input value="Search" type="submit" class="button">
+  </div>
+
 <tmpl_else>
-  Simple
-</tmpl_if>
-Search
-</h3>
-
-<tmpl_if do_advanced_search>
 
   <table summary="">
 
   <colgroup>
   <col class="c-mini">
-  <col class="c-nano">
+  <col>
+  <col class="c-mini">
   <col>
   </colgroup>
 
-  <tbody>
-  <tr>
-  <td colspan="3">
-  <input name="show_thumbnails" value="1" type="checkbox"<tmpl_if show_thumbnails> checked</tmpl_if>>
-  Show Thumbnails
-  </td>
-  </tr>
-  </tbody>
-
   <tbody class="demi">
+
   <tr>
-  <th>File</th>
-  <td colspan="2"><input name="search_filename" value="<tmpl_var escape=html search_filename>"></td>
+  <th>File Name</th>
+  <td><input name="search_filename" value="<tmpl_var escape=html search_filename>"></td>
+  <th>Media ID</th>
+  <td><input name="search_media_id" value="<tmpl_var escape=html search_media_id>"></td>
   </tr>
 
   <tr>
   <th>Title</th>
-  <td colspan="2"><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
-  </tr>
-
-  <tr>
-  <th>Media ID</th>
-  <td colspan="2"><input name="search_media_id" value="<tmpl_var escape=html search_media_id>"></td>
-  </tr>
-
-  <tr>
+  <td><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
   <th>Alt Text</th>
-  <td colspan="2"><input name="search_alt_tag" value="<tmpl_var escape=html search_alt_tag>"></td>
+  <td><input name="search_alt_tag" value="<tmpl_var escape=html search_alt_tag>"></td>
+  </tr>
+
+  </tbody>
+
+  <tbody>
+
+  <tr>
+  <th>Creation Date</th>
+  <td colspan="3">
+  From
+  <tmpl_var date_from_chooser>
+  To
+  <tmpl_var date_to_chooser>
+  </td>
   </tr>
 
   <tr>
   <th>Site/Category</th>
-  <td colspan="2"><tmpl_var category_chooser></td>
-  </tr>
-  </tbody>
-
-  <tbody>
-  <tr>
-  <th rowspan="2">Creation Date</th>
-  <td>from</td>
-  <td><tmpl_var date_from_chooser></td>
+  <td colspan="3"><tmpl_var category_chooser></td>
   </tr>
 
   <tr>
-  <td>to</td>
-  <td><tmpl_var date_to_chooser></td>
-  </tr>
-
-  <tr>
-  <th>Without Attributes</th>
-  <td colspan="2"><input name="search_no_attributes" value="1" type="checkbox"<tmpl_if search_no_attributes> checked</tmpl_if>></td>
-  </tr>
-
-  <tr class="last">
-  <td colspan="3" style="text-align:right">
-  <input value="Clear" onclick="clear_advanced_search()" type="button" class="button">
-  <input value="Search" type="submit" class="button">
+  <td colspan="4">
+  <input name="search_no_attributes" value="1" type="checkbox"<tmpl_if search_no_attributes> checked</tmpl_if>>
+  Without Attributes
   </td>
   </tr>
+
   </tbody>
 
   </table>
 
-<tmpl_else>
+  <div class="panel">
+  <input value="Clear" onclick="clear_advanced_search()" type="button">
+  <input value="Search" type="submit">
+  </div>
 
-  <p>
-  <input name="show_thumbnails" value="1" type="checkbox"<tmpl_if show_thumbnails> checked</tmpl_if>>
-  Show Thumbnails
-  </p>
+</tmpl_unless>
 
-  <p>
-  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
-  <input value="Search" type="submit" class="button">
-  </p>
-
-</tmpl_if>
+</div>
 
 </div>
 
 </form>
 
-<div class="pager">
+<h3>
+Search Results
+</h3>
+
+<tmpl_if row_count><div class="panel"><form>
+  <input value="Publish" onclick="publish_selected()" type="button">
+  <input value="Check Out" onclick="checkout_selected()" type="button">
+  <input value="Delete" onclick="delete_selected()" type="button">
+</form></div></tmpl_if>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-</div>
-
-<tmpl_if row_count>
-  <div class="panel"><form name="ignoreme">
+<tmpl_if row_count><div class="panel capped"><form>
   <input value="Publish" onclick="publish_selected()" type="button">
   <input value="Check Out" onclick="checkout_selected()" type="button">
   <input value="Delete" onclick="delete_selected()" type="button">
-  </form></div>
-</tmpl_if>
+</form></div></tmpl_if>
 
 <tmpl_if do_advanced_search>
-  <form name="clear_advanced_search_form" method="post" action="media.pl">
+  <form name="clear_advanced_search_form" action="media.pl" method="post">
   <input name="rm" value="advanced_find" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
@@ -209,7 +203,7 @@ Search
 </tmpl_if>
 
 <tmpl_if row_count>
-  <form name="find_media" method="post" action="media.pl">
+  <form name="find_media" action="media.pl" method="post">
   <input name="rm" value="view" type="hidden">
   <input name="media_id" type="hidden">
   <input name="return_script" value="media.pl" type="hidden">

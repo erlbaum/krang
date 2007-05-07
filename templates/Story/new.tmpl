@@ -33,6 +33,7 @@ New Story
 </colgroup>
 
 <tbody class="demi">
+
 <tr<tmpl_if bad_type> class="ERR-ROW"</tmpl_if>>
 <th>*Type</th>
 <td><tmpl_var type_selector></td>
@@ -47,23 +48,26 @@ New Story
 <th>Slug</th>
 <td><input name="slug" value="<tmpl_var escape=html slug>"></td>
 </tr>
+
 </tbody>
 
 <tbody>
+
 <tr<tmpl_if bad_cover_date> class="ERR-ROW"</tmpl_if>>
 <th>*Cover Date</th>
 <td><tmpl_var cover_date_selector></td>
 </tr>
 
-<tr class="last<tmpl_if bad_category_id> ERR-ROW</tmpl_if>">
+<tr<tmpl_if bad_category_id> class="ERR-ROW"</tmpl_if>>
 <th>*Site/Category</th>
 <td><tmpl_var category_chooser></td>
 </tr>
+
 </tbody>
 
 </table>
 
-<div class="panel">
+<div class="panel capped">
 <input value="Cancel" onclick="cancel()" type="button" class="west">
 <input value="Create" onclick="create()" type="button">
 </div>

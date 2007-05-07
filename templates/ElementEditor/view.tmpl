@@ -7,9 +7,9 @@ view_path = function( p )
 
 <input name="path" value="<tmpl_var escape=html path>" type="hidden">
 
-<tmpl_if crumbs><div class="east">(<tmpl_loop crumbs>
+<tmpl_if crumbs><div class="east"><tmpl_loop crumbs>
   <tmpl_unless __last__><a href="javascript:view_path('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
-</tmpl_loop>)</div></tmpl_if>
+</tmpl_loop></div></tmpl_if>
 
 <h3>
 Content
@@ -17,7 +17,7 @@ Content
 
 <tmpl_unless child_loop>
 
-  <p>
+  <p class="naught">
   No sub-elements defined.
   </p>
 
@@ -30,8 +30,8 @@ Content
   <col>
   </colgroup>
 
-  <tmpl_loop child_loop>
-    <tr<tmpl_if __last__> class="last"</tmpl_if>>
+  <tbody><tmpl_loop child_loop>
+    <tr>
     <th><tmpl_var escape=html name></th>
     <td>
     <tmpl_if is_container>
@@ -40,7 +40,7 @@ Content
     <tmpl_var data><!--:markup, maybe; CHILDREN MUST HANDLE ESCAPE AS NEEDED(db2)-->
     </td>
     </tr>
-  </tmpl_loop>
+  </tmpl_loop></tbody>
 
   </table>
 

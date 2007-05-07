@@ -18,13 +18,18 @@ do_return = function()
 </tmpl_if></tmpl_unless>
 </script>
 
-<!--[p class="east"]
+<!--[p class="cram east"]
 (db2)add 'View Log' here
 [/p]-->
 
 <h2>
 View Template
 </h2>
+
+<form name="return_form" action="template.pl" method="post">
+
+<tmpl_var history_return_params>
+<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
 
 <h3>
 Properties
@@ -35,45 +40,50 @@ Properties
 <colgroup>
 <col class="c-label">
 <col>
+<col class="c-label">
+<col>
 </colgroup>
+
+<tbody>
+
+<tr>
+<th>URL</th>
+<td colspan="3"><tmpl_var escape=html url></td>
+</tr>
 
 <tr>
 <th>Template ID</th>
 <td><tmpl_var escape=html template_id></td>
-</tr>
-
-<tr>
-<th>Filename</th>
-<td><tmpl_var escape=html filename></td>
-</tr>
-
-<tr>
-<th>URL</th>
-<td><tmpl_var escape=html url></td>
-</tr>
-
-<tr>
 <th>Current Version</th>
 <td><tmpl_var escape=html version></td>
 </tr>
 
-<tr class="last">
-<th>Template Markup</th>
-<td class="full"><textarea rows="30" cols="50" readonly><tmpl_var escape=html content></textarea></td>
+<tr>
+<th>File Name</th>
+<td><tmpl_var escape=html filename></td>
+<th>Deployed Version</th>
+<td><tmpl_unless deployed_version>[n/a]<tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
 </tr>
+
+</tbody>
 
 </table>
 
-<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if>"><form name="ignoreme">
+<h3>
+Content
+</h3>
+
+<p class="full">
+<textarea rows="30" cols="50" readonly><tmpl_var escape=html content></textarea>
+</p>
+
+<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped">
 <input value="Return" onclick="do_return()" type="button" class="west">
 <tmpl_unless is_old_version><tmpl_if can_edit>
   <input value="Edit" onclick="do_edit_template()" type="button">
 </tmpl_if></tmpl_unless>
-</form></div>
+</div>
 
-<form name="return_form" method="post" action="template.pl">
-<tmpl_var history_return_params>
-<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
 </form>
 
 <tmpl_unless is_old_version><tmpl_if can_edit>

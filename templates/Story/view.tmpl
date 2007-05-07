@@ -28,8 +28,19 @@ view_log = function()
 </tmpl_unless>
 </script>
 
-<p class="east">
-<a href="javascript:view_log()">View Log</a>
+<form name="view" method="post" action="story.pl">
+
+<input name="rm" value="view" type="hidden">
+<input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="version" value="<tmpl_var escape=html version>" type="hidden">
+<input name="return_script" value="<tmpl_var escape=html return_script>" type="hidden">
+<tmpl_loop return_params_loop>
+  <input name="return_params" value="<tmpl_var escape=html name>" type="hidden">
+  <input name="return_params" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
+
+<p class="cram east">
+<input value="View Log" onclick="view_log()" type="button" class="button">
 </p>
 
 <h2>
@@ -46,6 +57,8 @@ Properties
 <col class="c-label">
 <col>
 </colgroup>
+
+<tbody>
 
 <tr>
 <th>Story ID</th>
@@ -79,7 +92,7 @@ Properties
   </tr>
 </tmpl_if>
 
-<tr<tmpl_unless is_root> class="last"</tmpl_unless>>
+<tr>
 <th>URL</th>
 <td><tmpl_var url><!--:markup--></td>
 </tr>
@@ -103,7 +116,7 @@ Properties
   <td><tmpl_var escape=html priority></td>
   </tr>
 
-  <tr class="last">
+  <tr>
   <th>Contributors</th>
   <td>
   <tmpl_if contribs_loop>
@@ -117,31 +130,22 @@ Properties
   </tr>
 </tmpl_if>
 
+</tbody>
+
 </table>
-
-<form name="view" method="post" action="story.pl">
-
-<input name="rm" value="view" type="hidden">
-<input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">
-<input name="version" value="<tmpl_var escape=html version>" type="hidden">
-<input name="return_script" value="<tmpl_var escape=html return_script>" type="hidden">
-<tmpl_loop return_params_loop>
-  <input name="return_params" value="<tmpl_var escape=html name>" type="hidden">
-  <input name="return_params" value="<tmpl_var escape=html value>" type="hidden">
-</tmpl_loop>
 
 <!--/ElementEditor/view.tmpl:-->
 <tmpl_include /ElementEditor/view.tmpl>
 <!--:/ElementEditor/view.tmpl-->
 
-</form>
-
-<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if>">
+<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped">
 <input value="Return" onclick="<tmpl_if parent_path>view_path('<tmpl_var escape=html parent_path>')<tmpl_else>do_return()</tmpl_if>" type="button" class="west">
 <tmpl_unless old_version><tmpl_if can_edit>
   <input value="Edit" onclick="edit_story()" type="button">
 </tmpl_if></tmpl_unless>
 </div>
+
+</form>
 
 <form name="view_log" action="history.pl" method="post">
 <input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">

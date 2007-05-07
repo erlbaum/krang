@@ -5,7 +5,9 @@ Reset Your Password
 </h2>
 
 <tmpl_loop header_alert_loop>
-  <p class="err"><tmpl_var escape=html alert></p>
+  <p class="err">
+  <tmpl_var escape=html alert>
+  </p>
 </tmpl_loop>
 
 <form id="form-password" action="login.pl" method="post">
@@ -25,6 +27,7 @@ Reset Your Password
 
 <p class="btn">
 <input value="Reset Password" type="submit">
+<a href="login.pl?rm=show_form">Return to Log-In Screen</a>
 </p>
 
 </form>

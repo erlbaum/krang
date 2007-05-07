@@ -1,20 +1,50 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 
-<html lang="en-US" class="wide"><head>
+<html lang="en-US"><head>
 
-<title>Error - Media Preview</title>
+<title><tmpl_var escape=html krang_product_name> - <tmpl_var escape=html instance_display_name> - Error - Media Preview</title>
 
 <link href="favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
 
-<link href="/krang.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+@import url("/krang.css");
+</style>
+
+<!--[if lte IE 7]><style type="text/css">
+body { position: relative; font-size: 69%; }
+
+#C h2 { border-bottom-width: 1px; }
+</style><![endif]-->
+
+<!--[if lt IE 7]><style type="text/css">
+#M { height: 420px; }
+
+#C { display: inline; margin-left: 19px; }
+</style><![endif]-->
 
 <tmpl_if custom_css>
-<style type="text/css">
 <tmpl_var custom_css>
-</style>
 </tmpl_if>
 
-</head><body><div id="C">
+</head><body>
+
+<div id="H">
+
+<h1><!--
+--><img alt="<tmpl_var escape=html krang_product_name>(sm)" src="/images/logo-cms.jpg" height="90" width="180"><!--
+--></h1>
+
+<div id="instance_logo"></div>
+
+</div>
+
+<div id="M">
+
+<div id="C">
+
+<h2>
+Media Preview Error
+</h2>
 
 <tmpl_if error_loop><ul class="notes"><!--(db2)no context var:--><tmpl_loop error_loop>
   <li>
@@ -22,5 +52,17 @@
   </li>
 </tmpl_loop><!--:no context var(db2)--></ul></tmpl_if>
 
-</div></body></html>
+</div>
+
+<div id="S">
+<!--(db2)skipped-->
+</div>
+
+<br style="display:block;clear:both"><!--[if lt IE 7]>&nbsp;<![endif]--></div>
+
+<div id="F"><div>
+
+</div></div>
+
+</body></html>
 

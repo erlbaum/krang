@@ -52,7 +52,7 @@ Krang.onload( function() {
 </script>
 
 <h2>
-Find Template
+Find Templates
 </h2>
 
 <form name="template_search_form" method="post" action="template.pl">
@@ -66,86 +66,95 @@ Find Template
   <input name="search_filter" value="" type="hidden">
 </tmpl_if>
 
-<div class="finder">
+<div class="tabset finder">
 
-<div class="east">
-<a href="javascript:<tmpl_if do_advanced_search>simple<tmpl_else>advanced</tmpl_if>_search()"><tmpl_if do_advanced_search>Simple<tmpl_else>Advanced</tmpl_if> Search</a>
-</div>
+<ul class="tabs"><li>
+<tmpl_if do_advanced_search><a href="javascript:simple_search()"><tmpl_else><b></tmpl_if><span>
+Simple Search
+</span><tmpl_if do_advanced_search></a><tmpl_else></b></tmpl_if>
+</li><li>
+<tmpl_if do_advanced_search><b><tmpl_else><a href="javascript:advanced_search()"></tmpl_if><span>
+Advanced Search
+</span><tmpl_if do_advanced_search></b><tmpl_else></a></tmpl_if>
+</li></ul>
 
-<h3>
-<tmpl_if do_advanced_search>
-  Advanced
+<div class="tabbed">
+
+<tmpl_unless do_advanced_search>
+
+  <div class="faux-p">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+  <input value="Search" type="submit" class="button">
+  </div>
+
 <tmpl_else>
-  Simple
-</tmpl_if>
-Search
-</h3>
 
-<tmpl_if do_advanced_search>
-
-  <table class="demi" summary="">
+  <table summary="">
 
   <colgroup>
   <col class="c-mini">
   <col>
+  <col class="c-mini">
+  <col>
   </colgroup>
+
+  <tbody class="demi">
 
   <tr>
   <th>URL</th>
   <td><input name="search_url" value="<tmpl_var escape=html search_url>"></td>
-  </tr>
-
-  <tr>
-  <th>Site/Category</th>
-  <td><tmpl_var category_chooser></td>
-  </tr>
-
-  <tr>
-  <th>Element</th>
-  <td><tmpl_var element_chooser></td>
-  </tr>
-
-  <tr>
   <th>Template ID</th>
   <td><input name="search_template_id" value="<tmpl_var escape=html search_template_id>"></td>
   </tr>
 
-  <tr class="last">
-  <td colspan="2" style="text-align:right">
-  <input value="Clear" onclick="clear_advanced_search()" type="button" class="button">
-  <input value="Search" type="submit" class="button">
-  </td>
+  </tbody>
+
+  <tbody>
+
+  <tr>
+  <th>Element</th>
+  <td colspan="3"><tmpl_var element_chooser></td>
   </tr>
+
+  <tr>
+  <th>Site/Category</th>
+  <td colspan="3"><tmpl_var category_chooser></td>
+  </tr>
+
+  </tbody>
 
   </table>
 
-<tmpl_else>
+  <div class="panel">
+  <input value="Clear" onclick="clear_advanced_search()" type="button">
+  <input value="Search" type="submit">
+  </div>
 
-  <p>
-  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
-  <input value="Search" type="submit" class="button">
-  </p>
+</tmpl_unless>
 
-</tmpl_if>
+</div>
 
 </div>
 
 </form>
 
-<div class="pager">
+<h3>
+Search Results
+</h3>
+
+<tmpl_if row_count><div class="panel"><form>
+  <input value="Deploy" onclick="do_deploy()" type="button">
+  <input value="Delete" onclick="delete_selected()" type="button">
+</form></div></tmpl_if>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-</div>
-
-<tmpl_if row_count>
-  <div class="panel"><form name="ignoreme">
+<tmpl_if row_count><div class="panel capped"><form>
   <input value="Deploy" onclick="do_deploy()" type="button">
   <input value="Delete" onclick="delete_selected()" type="button">
-  </form></div>
-</tmpl_if>
+</form></div></tmpl_if>
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" method="post" action="template.pl">

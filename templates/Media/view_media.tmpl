@@ -29,11 +29,9 @@ do_return = function()
 View Media
 </h2>
 
-<tmpl_if thumbnail_path>
-  <div class="east">
-  <tmpl_if media_id><a href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
-  </div>
-</tmpl_if>
+<tmpl_if thumbnail_path><div class="east">
+  <tmpl_if media_id><a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
+</div></tmpl_if>
 
 <h3>
 Properties
@@ -45,6 +43,8 @@ Properties
 <col class="c-label">
 <col>
 </colgroup>
+
+<tbody>
 
 <tr>
 <th>Media ID</th>
@@ -82,7 +82,7 @@ Properties
 </tr>
 
 <tr>
-<th>File</th>
+<th>File Name</th>
 <td>
 <a href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><tmpl_var escape=html filename></a>
 <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
@@ -114,7 +114,7 @@ Properties
 <td><tmpl_var escape=html notes></td>
 </tr>
 
-<tr class="last">
+<tr>
 <th>Contributors</th>
 <td>
 <tmpl_if contribs><!--(db2)no context var; single item == trailing comma:-->
@@ -127,9 +127,11 @@ Properties
 </td>
 </tr>
 
+</tbody>
+
 </table>
 
-<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if>"><form name="ignoreme">
+<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped"><form>
 <input value="Return" onclick="do_return()" type="button" class="west">
 <tmpl_unless is_old_version><tmpl_if can_edit>
   <input value="Edit" onclick="do_edit_media()" type="button">

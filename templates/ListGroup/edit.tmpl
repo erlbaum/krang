@@ -322,7 +322,7 @@ do_save_stay = function()
 </script>
 
 <h2>
-List Group Edit
+Edit List Group
 </h2>
 
 <form name="edit_form" action="list_group.pl" method="post">
@@ -339,22 +339,26 @@ List Group Edit
 Description
 </h3>
 
-<table class="full" summary="">
+<table summary="">
 
 <colgroup>
 <col class="c-label">
 <col>
 </colgroup>
 
+<tbody class="full">
+
 <tr>
 <th>Group Name</th>
 <td><tmpl_var escape=html list_group_name></td>
 </tr>
 
-<tr class="last">
+<tr>
 <th>Description</th>
 <td><textarea name="list_group_description" rows="2" cols="30"><tmpl_var escape=html list_group_description></textarea></td>
 </tr>
+
+</tbody>
 
 </table>
 
@@ -369,8 +373,8 @@ Lists
 <col>
 </colgroup>
 
-<tmpl_loop list_loop>
-  <tr<tmpl_if __last__> class="last"</tmpl_if>>
+<tmpl_loop list_loop><tbody>
+  <tr>
   <th><tmpl_var escape=html list_name></th>
   <td>
   <select name="list_<tmpl_var escape=html list_count>" size="10" onchange="populate_list(<tmpl_var escape=html list_count>)" style="width:100%"><tmpl_loop list_item_loop>
@@ -381,16 +385,16 @@ Lists
   <a href="javascript:do_move(<tmpl_var escape=html list_count>)"><img alt="" src="images/arrow-desc.gif"></a>
   <br>
   <input name="new_item_<tmpl_var escape=html list_count>">
-  <input value="Add" onclick="do_add(<tmpl_var escape=html list_count>)" type="button" class="button">
+  <input value="Add List Group" onclick="do_add(<tmpl_var escape=html list_count>)" type="button" class="button">
   <input value="Replace" onclick="do_replace(<tmpl_var escape=html list_count>)" type="button" class="button">
   <input value="Delete" onclick="do_delete(<tmpl_var escape=html list_count>)" type="button" class="button">
   </td>
   </tr>
-</tmpl_loop>
+</tbody></tmpl_loop>
 
 </table>
 
-<div class="panel">
+<div class="panel capped">
 <input value="Save &amp; Stay" onclick="do_save_stay()" type="button">
 <input value="Save" onclick="do_save()" type="submit">
 </div>

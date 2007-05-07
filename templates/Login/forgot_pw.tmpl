@@ -1,27 +1,49 @@
 <tmpl_include login_header.tmpl>
 
 <h2>
-Forgot Your Password?
+Forgot Your Login?
 </h2>
 
-<tmpl_loop header_message_loop>
-  <p class="err"><tmpl_var escape=html message></p>
-</tmpl_loop>
+<tmpl_if email_sent>
 
-<form id="form-forgot" action="login.pl" method="post">
+  <tmpl_loop header_message_loop>
+    <p class="err">
+    <tmpl_var escape=html message>
+    </p>
+  </tmpl_loop>
 
-<input name="rm" value="forgot_pw" type="hidden">
+  <p>
+  <a href="login.pl?rm=show_form">Return to Log-In Screen</a>
+  </p>
 
-<p>
-<label for="forgot-email">Email</label>
-<input id="forgot-email" name="email" value="<tmpl_var escape=html email>">
-</p>
+<tmpl_else>
 
-<p class="btn">
-<input value="Submit" type="submit">
-</p>
+  <p>
+  Enter your email address and we'll send your log in name and instructions
+  on how to reset your password.
+  </p>
 
-</form>
+  <tmpl_loop header_message_loop>
+    <p class="err"><tmpl_var escape=html message></p>
+  </tmpl_loop>
+
+  <form id="form-forgot" action="login.pl" method="post">
+
+  <input name="rm" value="forgot_pw" type="hidden">
+
+  <p>
+  <label for="forgot-email">Email</label>
+  <input id="forgot-email" name="email" value="<tmpl_var escape=html email>">
+  </p>
+
+  <p class="btn">
+  <input value="Submit" type="submit">
+  <a href="login.pl?rm=show_form">Return to Log-In Screen</a>
+  </p>
+
+  </form>
+
+</tmpl_if>
 
 <tmpl_include login_footer.tmpl>
 
