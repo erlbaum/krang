@@ -170,21 +170,21 @@ sub lacks_message {
     }
 }
 
-=item C<< login(username => $user, password => $password) >>
+=item C<< login_ok($username, $password) >>
 
-Creates a login form and logs in this mech with the given the username and password.
+Attempts to login with the given the username and password.
 If a username and password are not provided then we will use the C<KRANG_USERNAME>
 and C<KRANG_PASSWORD> environment variables.
 
 =cut
 
-sub login {
-    my $self = shift;
-    my %args = validate(@_, { username => 1, password => 1 });
-    my $user = exists $args{username} ? $args{username} : $ENV{KRANG_USERNAME};
-    my $pw   = exists $args{password} ? $args{password} : $ENV{KRANG_PASSWORD};
+sub login_ok {
+    my ($self, $username, $password) = @_;
+    $username ||= $ENV{KRANG_USERNAME};
+    $password ||= $ENV{KRANG_PASSWORD};
 
     $self->get($self->script_url('login.pl'));
+    $self->requests_redirectable([]);    # don't follow redirects
     $self->submit_form(
         form_name => 'form-login',
         fields    => {
@@ -192,7 +192,16 @@ sub login {
             password => $pw,
         },
     );
-    $self->submit();
+    # should get a redirect
+    return 0 unless $mech->status == 302;
+
+    # try to request env.pl, which will only work if the login succeeded
+    $mech->get($self->script_url('env.pl'));
+    return 0 unless $mech->status == 200;
+    return 0 unless $mech->content_like(qr/REMOTE_USER/);
+
+    # success
+    return 1;
 }
 
 =item C<< change_hiddens() >>
