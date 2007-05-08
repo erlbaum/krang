@@ -216,6 +216,8 @@ sub change_hiddens {
 
 =head2 CLASS METHODS
 
+=over
+
 =item C<< script_url($script_name) >>
 
 Returns the full URL to access the given script taking into account
@@ -239,8 +241,6 @@ sub script_url {
     return $uri->as_string;
 }
 
-
-=over
 
 =back
 
