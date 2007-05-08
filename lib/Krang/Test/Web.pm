@@ -1,4 +1,4 @@
-package Krang::Test::Mech;
+package Krang::Test::Web;
 use strict;
 use warnings;
 use base 'Test::WWW::Mechanize';
@@ -8,10 +8,11 @@ use File::Spec::Functions qw(catfile);
 use Params::Validate qw(validate);
 use Carp qw(carp);
 use URI;
+use Test::Builder;
 
 =head1 NAME
 
-Krang::Test::Mech - Test::WWW::Mechanize subclass with Krang specific helper methods
+Krang::Test::Web - Test::WWW::Mechanize subclass with Krang specific helper methods
 
 =head1 DESCRIPTION
 
@@ -20,8 +21,8 @@ some simple constructs that are useful when writing Krang web tests.
 
 =head1 SYNOPSIS
 
-    use Krang::Test::Mech;
-    my $mech = Krang::Test::Mech->new();
+    use Krang::Test::Web;
+    my $mech = Krang::Test::Web->new();
     ...
     $mech->contains_message('email_missing', pkg('User'));
     $mech->lacks_message('email_missing', pkg('User'));
@@ -170,21 +171,50 @@ sub lacks_message {
     }
 }
 
-=item C<< login_ok($username, $password) >>
+=item C<< login_ok($username, $password, $description) >>
 
 Attempts to login with the given the username and password.
 If a username and password are not provided then we will use the C<KRANG_USERNAME>
-and C<KRANG_PASSWORD> environment variables.
+and C<KRANG_PASSWORD> environment variables. If those don't exist then it
+will use 'admin' and 'whale' respectively.
 
 =cut
 
 sub login_ok {
-    my ($self, $username, $password) = @_;
-    $username ||= $ENV{KRANG_USERNAME};
-    $password ||= $ENV{KRANG_PASSWORD};
+    my ($self, $username, $password, $desc) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my $test = Test::Builder->new();
+    my $ok = $self->_do_login($username, $password);
+    $test->ok($ok, $desc);
+    return $ok;
+}
+
+=item C<< login_not_ok($username, $password, $description) >>
+
+Works the same as C<login_ok> but the test has it's logic reversed.
+
+=cut
+
+sub login_not_ok {
+    my ($self, $username, $password, $desc) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    my $test = Test::Builder->new();
+    my $ok = ! $self->_do_login($username, $password);
+    $test->ok($ok, $desc);
+    return $ok;
+}
+
+sub _do_login {
+    my ($self, $user, $pw) = @_;
+    $user ||= ( $ENV{KRANG_USERNAME} || 'admin' );
+    $pw   ||= ( $ENV{KRANG_PASSWORD} || 'whale' );
+    my $ok = 0;
+
+    # don't follow redirects for the time being
+    my $redirectables =  $self->requests_redirectable();
+    $self->requests_redirectable([]);
 
     $self->get($self->script_url('login.pl'));
-    $self->requests_redirectable([]);    # don't follow redirects
     $self->submit_form(
         form_name => 'form-login',
         fields    => {
@@ -193,15 +223,18 @@ sub login_ok {
         },
     );
     # should get a redirect
-    return 0 unless $mech->status == 302;
+    if( $self->status == 302 ) {
+        # try to request env.pl, which will only work if the login succeeded
+        $self->get($self->script_url('env.pl'));
+        if( $self->status == 200 && $self->content =~ /REMOTE_USER/ ) {
+            $ok = 1;
+        }
+    }
 
-    # try to request env.pl, which will only work if the login succeeded
-    $mech->get($self->script_url('env.pl'));
-    return 0 unless $mech->status == 200;
-    return 0 unless $mech->content_like(qr/REMOTE_USER/);
+    # restore our redirectables
+    $self->requests_redirectable($redirectables);
 
-    # success
-    return 1;
+    return $ok;
 }
 
 =item C<< change_hiddens() >>
