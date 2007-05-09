@@ -2,6 +2,7 @@ package Krang::Test::Web;
 use strict;
 use warnings;
 use base 'Test::WWW::Mechanize';
+use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Message => qw(get_message_text);
 use Krang::ClassLoader Conf    => qw(KrangRoot HostName ApachePort EnableSSL SSLApachePort);
 use File::Spec::Functions qw(catfile);
@@ -277,7 +278,8 @@ sub script_url {
     $uri->host(HostName . ':' . (EnableSSL ? SSLApachePort : ApachePort));
 
     # if we have a script add it to the instance, else use the instance
-    $path = $path ? catfile($ENV{KRANG_INSTANCE}, $path) : $ENV{KRANG_INSTANCE};
+    my $instance = pkg('Conf')->instance();
+    $path = $path ? catfile($instance, $path) : $instance;
     $uri->path($path);
 
     return $uri->as_string;
