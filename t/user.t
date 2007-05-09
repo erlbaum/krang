@@ -5,6 +5,7 @@ use warnings;
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Template';
+use Krang::ClassLoader DB => qw(dbh);
 
 use Test::More qw(no_plan);
 use Carp qw(croak);
@@ -169,6 +170,19 @@ $template->delete();
 $site->delete();
 
 END {
+    # delete the old passwords for this user first
+    dbh()->do(
+        'DELETE FROM old_password WHERE user_id = ?',
+        {},
+        $user->user_id
+    );
     # success
     is($user->delete(), 1, 'delete()');
+
+    # delete the old passwords for $admin
+    dbh()->do(
+        'DELETE FROM old_password WHERE user_id = ?',
+        {},
+        $admin->user_id
+    );
 }
