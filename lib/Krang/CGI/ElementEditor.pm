@@ -203,7 +203,7 @@ sub element_edit {
       unless defined $root;
 
     # find the element being edited using path
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     # crumbs let the user jump up the tree
     my $pointer = $element;
@@ -319,7 +319,7 @@ sub element_bulk_edit {
       unless defined $root;
 
     # find the element being edited using path
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     # get list of existing elements to be bulk edited
     my $name = $query->param('bulk_edit_child');
@@ -371,7 +371,7 @@ sub find_story_link {
 
     # find the root element, loading from the session or the DB
     my $root = $self->_get_element;
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     $template->param(parent_path => $element->parent->xpath());
 
@@ -588,7 +588,7 @@ sub find_media_link {
 
     # find the root element, loading from the session or the DB
     my $root = $self->_get_element;
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     $template->param(parent_path => $element->parent->xpath());
 
@@ -764,7 +764,7 @@ sub select_story {
     my $story_id = $self->query->param('selected_story_id');
 
     my $root    = $self->_get_element;
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     # find story and set it in element data
     my ($story) = pkg('Story')->find(story_id => $story_id);
@@ -789,7 +789,7 @@ sub select_media {
     my $media_id = $self->query->param('selected_media_id');
 
     my $root    = $self->_get_element;
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     # find media and set it in element data
     my ($media) = pkg('Media')->find(media_id => $media_id);
@@ -814,7 +814,7 @@ sub element_view {
     my $path    = $query->param('path') || '/';
 
     # find the element being edited using path
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     # crumbs let the user jump up the tree
     my $pointer = $element;
@@ -858,7 +858,7 @@ sub add {
 
     # find our element
     my $root    = $self->_get_element;
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     # add the child element and save the element tree
     my $kid = $element->add_child(class => $child);
@@ -875,9 +875,9 @@ sub add {
     return $self->edit();
 }
 
-# finds an element given the root and a path, optionally building @crumbs loop
+# finds an element given the root and a path
 sub _find_element {
-    my ($root, $path, $crumbs) = @_;
+    my ($self, $root, $path) = @_;
 
     my ($element) = $root->match($path);
     croak("Unable to find element for path '$path'.")
@@ -892,7 +892,7 @@ sub element_bulk_save {
     my $path    = $query->param('path') || '/';
 
     my $root = $args{element};
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     my $sep = $query->param('bulk_edit_sep');
     $sep = ($sep eq "__TWO_NEWLINE__") ? "\r?\n[ \t]*\r?\n" : "\r?\n?[ \t]*${sep}[ \t]*\r?\n?";
@@ -940,7 +940,7 @@ sub element_save {
     $self->revise('reorder', 1);
 
     my $root    = $args{element};
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     # validate data
     my @msgs;
@@ -1005,7 +1005,7 @@ sub revise {
 
     my $path = $query->param('path') || '/';
     my $root = $self->_get_element;
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
 
     # get list of existing children and their query parameters
     my @old = grep { !$_->hidden } $element->children();
@@ -1078,7 +1078,7 @@ sub delete_element {
     my $path = $query->param('path') || '/';
 
     my $root = $self->_get_element;
-    my $element = _find_element($root, $path);
+    my $element = $self->_find_element($root, $path);
     my $name    = $element->display_name;
 
     my $parent = $element->parent();

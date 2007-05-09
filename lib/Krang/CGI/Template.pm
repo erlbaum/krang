@@ -365,7 +365,7 @@ sub advanced_search {
     # Set up category chooser
     $t->param(category_chooser => category_chooser(query      => $q,
                                                    formname   => 'template_search_form',
-                                                   persistkey => 'Template',
+                                                   persistkey => pkg('Template'),
                                                    name       =>
                                                    'search_below_category_id',
                                                   ));
@@ -1099,7 +1099,7 @@ sub make_pager {
                                       ['template_id',
                                        'filename',
                                        'url',],
-                                      row_handler => \&search_row_handler,
+                                      row_handler => sub { $self->search_row_handler(@_) },
                                       id_handler =>
                                       sub {return $_[0]->template_id},
                                      );
@@ -1110,7 +1110,7 @@ sub make_pager {
 
 # Handles rows for search run mode
 sub search_row_handler {
-    my ($row, $template) = @_;
+    my ($self, $row, $template) = @_;
     $row->{deployed} = $template->deployed ? '<b>D</b>' : '&nbsp;';
     $row->{filename} = $template->filename;
     $row->{template_id} = $template->template_id;

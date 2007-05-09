@@ -193,8 +193,9 @@ Moves list of checked stories to desks.
 sub move_checked {
     my $self  = shift;
     my $query = $self->query;
-    foreach my $obj ( map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked') ) {
-        $self->_do_move($obj);
+    foreach my $obj (map { $self->_id2obj($_) }
+                     $query->param('krang_pager_rows_checked')) {
+	    $self->_do_move($obj);
     }
     return $self->show;
 }

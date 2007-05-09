@@ -287,7 +287,7 @@ sub list_all {
 }
 
 sub list_all_row_handler {
-    my ($row, $schedule) = @_;
+    my ($self, $row, $schedule) = @_;
     $row->{asset} = ucfirst($schedule->object_type).' '.$schedule->object_id;
     
     my %context = $schedule->context ? @{$schedule->context} : ();

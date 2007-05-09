@@ -36,6 +36,14 @@ ApachePort <tmpl_var ApachePort>
 ApacheMaxSize 64000
 
 #
+# ApacheMaxSize and ApacheMaxUnsharedSize are used to control the memory
+# usage of individual Apache children. Adding more addons may increase your
+# memory usage. 0 means there is no limit.
+#
+ApacheMaxSize 64000
+ApacheMaxUnsharedSize 0
+
+#
 # HostName: the virtual host for the root server, which
 # displays a list of available instances.
 #

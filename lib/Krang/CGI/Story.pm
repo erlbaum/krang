@@ -289,7 +289,6 @@ sub check_in_and_save {
                 url      => $story->url,
                 version  => $story->version);
                                                                                                        
-
     # check it in
     $story->checkin();
 
@@ -513,7 +512,7 @@ sub view {
     # load story from DB
     my $version = $query->param('version');
     my ($story) = pkg('Story')->find(story_id => $story_id,
-                                     ($version && length $version ? 
+                                     ($version && length($version) ? 
                                       (version => $version) : ()),
                                     );
     croak("Unable to load story '" . $query->param('story_id') . "'" . 
@@ -1405,7 +1404,7 @@ sub find {
                            name       => 'search_below_primary_category_id',
                            query      => $q,
                            formname   => 'search_form',
-                           persistkey => 'Story',
+                           persistkey => pkg('Story'),
                           );
 
         # Date choosers

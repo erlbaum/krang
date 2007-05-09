@@ -302,7 +302,8 @@ Checks in checked objects (to specified desk for stories).
 sub checkin_checked {
     my $self  = shift;
     my $query = $self->query;
-    foreach my $obj ( map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked') ) {
+    foreach my $obj (map { $self->_id2obj($_) }
+                     $query->param('krang_pager_rows_checked')) {
         $self->_do_checkin($obj);
     }
     return $self->show;
