@@ -5,7 +5,6 @@ use base 'Test::WWW::Mechanize';
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Message => qw(get_message_text);
 use Krang::ClassLoader Conf    => qw(KrangRoot HostName ApachePort EnableSSL SSLApachePort);
-use File::Spec::Functions qw(catfile);
 use Params::Validate qw(validate);
 use Carp qw(carp);
 use URI;
@@ -69,6 +68,24 @@ sub new {
 =head2 OBJECT METHODS
 
 =over
+
+=item C<< get($url, [...]) >> 
+
+This method extends the one from L<Test::WWW::Mechanize> so that
+it will do the right thing with krang urls.
+
+For instance, given a url of 'my_pref.pl' it will look at which ever
+instance is active and change that url to 'http://hostname.org/instance_name/my_pref.pl'
+
+=cut
+
+sub get {
+    my ($self, $url, @other_args) = @_;
+    if ( $url !~ /^http/ && $url =~ /^(\w+\.pl)/ ) {
+        $url = $self->script_url($url);
+    }
+    return $self->SUPER::get($url, @other_args);
+}
 
 =item C<< contains_message($key, $class [, %args ]) >>
 
@@ -172,9 +189,35 @@ sub lacks_message {
     }
 }
 
-=item C<< login_ok($username, $password, $description) >>
+=item C<< login($username, $password) >>
 
 Attempts to login with the given the username and password.
+If a username and password are not provided then we will use the C<KRANG_USERNAME>
+and C<KRANG_PASSWORD> environment variables. If those don't exist then it
+will use 'admin' and 'whale' respectively.
+
+=cut
+
+sub login {
+    my ($self, $user, $pw) = @_;
+    $user ||= ( $ENV{KRANG_USERNAME} || 'admin' );
+    $pw   ||= ( $ENV{KRANG_PASSWORD} || 'whale' );
+
+    $self->get('login.pl');
+    $self->submit_form(
+        form_name => 'form-login',
+        fields    => {
+            username => $user, 
+            password => $pw,
+        },
+    );
+    return $self->success;
+}
+
+
+=item C<< login_ok($username, $password, $description) >>
+
+Test method that attempts to login with the given the username and password.
 If a username and password are not provided then we will use the C<KRANG_USERNAME>
 and C<KRANG_PASSWORD> environment variables. If those don't exist then it
 will use 'admin' and 'whale' respectively.
@@ -215,7 +258,7 @@ sub _do_login {
     my $redirectables =  $self->requests_redirectable();
     $self->requests_redirectable([]);
 
-    $self->get($self->script_url('login.pl'));
+    $self->get('login.pl');
     $self->submit_form(
         form_name => 'form-login',
         fields    => {
@@ -226,7 +269,7 @@ sub _do_login {
     # should get a redirect
     if( $self->status == 302 ) {
         # try to request env.pl, which will only work if the login succeeded
-        $self->get($self->script_url('env.pl'));
+        $self->get('env.pl');
         if( $self->status == 200 && $self->content =~ /REMOTE_USER/ ) {
             $ok = 1;
         }
@@ -277,12 +320,17 @@ sub script_url {
     $uri->scheme(EnableSSL ? 'https' : 'http');
     $uri->host(HostName . ':' . (EnableSSL ? SSLApachePort : ApachePort));
 
+    # pull off any query params from the path
+    $path =~ s/\?(.*)$//;
+    my $params = "?$1" || '';
+
     # if we have a script add it to the instance, else use the instance
     my $instance = pkg('Conf')->instance();
-    $path = $path ? catfile($instance, $path) : $instance;
+    $path = $path ? "$instance/$path" : $instance;
+
     $uri->path($path);
 
-    return $uri->as_string;
+    return $uri->as_string . $params;
 }
 
 
