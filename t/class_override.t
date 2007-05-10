@@ -42,14 +42,14 @@ SKIP: {
 
     # hit about.pl and see if the server is in CGI mode, skip if not
     # since the addon won't be registered
-    $mech->get_ok($mech->script_url('about.pl'));
+    $mech->get_ok('about.pl');
     skip "Apache server isn't running in CGI mode, skipping live tests", 5
       unless $mech->content =~ /running\s+in\s+CGI\s+mode/i;
 
     $mech->content_like(qr/PLUS BIG IMPROVEMENTS/);
 
     # hit the barf runmode which tests messages.conf extensions
-    $mech->get_ok($mech->script_url('about.pl') . '?rm=barf');
+    $mech->get_ok('about.pl?rm=barf');
     $mech->content_like(qr/Barf!/);
     $mech->content_like(qr/Barf\s+Barf/);
 }

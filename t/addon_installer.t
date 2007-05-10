@@ -174,12 +174,12 @@ SKIP: {
 
     # hit about.pl and see if the server is in CGI mode, skip if not
     # since the addon won't be registered
-    $mech->get_ok($mech->script_url('about.pl'), "Request for about.pl");
+    $mech->get_ok('about.pl', "Request for about.pl");
     skip "Apache server isn't running in CGI mode, skipping live tests", 5
       unless $mech->content =~ /running\s+in\s+CGI\s+mode/i;
 
     # hit workspace.pl and look for the new nav entries
-    $mech->get_ok($mech->script_url('workspace.pl'));
+    $mech->get_ok('workspace.pl');
     $mech->content_conains('Log Tools');
     $mech->content_like(qr/<a.*?log_viewer.pl.*>.*?View Log/);
     ## SchedulerAddon entry
@@ -189,7 +189,7 @@ SKIP: {
     $mech->content_contains('<html><head><title>');
 
     # try the script
-    $mech->get_ok($mech->script_url('log_viewer.pl'));
+    $mech->get_ok('log_viewer.pl');
     $mech->content_like(qr/hi mom/i);
 }
 
