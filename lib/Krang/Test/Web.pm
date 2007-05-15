@@ -322,7 +322,7 @@ sub script_url {
 
     # pull off any query params from the path
     $path =~ s/\?(.*)$//;
-    my $params = "?$1" || '';
+    my $params = $1 ? "?$1" : '';
 
     # if we have a script add it to the instance, else use the instance
     my $instance = pkg('Conf')->instance();
