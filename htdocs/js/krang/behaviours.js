@@ -102,6 +102,13 @@ var rules = {
             position : 'absolute',
             mode     : 'named'
         });
+    },
+    //IE6 requires a little help with the flyout navigation menuing:
+    '#H .nav .menu' : function( el ) {
+        if ( Krang.is_ie_6() )
+            el.onmouseover = el.onmouseout = function(){ this.toggleClassName( 'over' ); };
     }
 };
-Behaviour.register(rules);
+
+Behaviour.register( rules );
+
