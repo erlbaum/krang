@@ -27,8 +27,8 @@ Krang.load = function(target) {
     }
 
     // show messages and alerts that have been added
-    Krang.Messages.show();
     Krang.Messages.show('alerts');
+    Krang.Messages.show();
 };
 
 /*
@@ -565,6 +565,12 @@ Krang.Messages = {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
 
+        // if it's a "messages" level and the "alerts" are locked (being show) 
+        // then just return since we don't want to show them both at the same 
+        // time. When "alerts" are hidden they will show "messages" so nothing 
+        // is ever not shown.
+        if( level == 'messages' && Krang.Messages._locked['alerts'] ) return;
+
         var my_stack = Krang.Messages._stack[level];
         if( my_stack.length ) {
             var content = '';
@@ -620,6 +626,8 @@ Krang.Messages = {
             var try_count = 0;
             var _actually_show = function() {
                 if( ! Krang.Messages._locked[level] ) {
+                    // lock the messages (will be unlocked by afterFinish call)
+                    Krang.Messages._locked[level] = true;
                     // in IE 6 we need to create an iframe to slide at the same time as
                     // the message's wrapper
                     if( Krang.is_ie_6() ) {
@@ -630,8 +638,6 @@ Krang.Messages = {
                         Krang.Widget.HideIEControls.resize(wrapper);
                         close_message_callback();
                     } else {
-                        // lock the messages (will be unlocked by afterFinish call)
-                        Krang.Messages._locked[level] = true;
                         new Effect.SlideDown( el, { 
                             duration    : Krang.Messages._slide_time, 
                             afterFinish : close_message_callback 
@@ -649,21 +655,26 @@ Krang.Messages = {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
         el = $(level);
+        var finish_callback = function() {
+            Krang.Messages._locked[level] = false;
+            if( level == 'alerts' ) Krang.Messages.show('messages');
+        };
+
         if( el.visible() ) {
             if( Krang.is_ie_6() ) {
                 el.hide();
+                finish_callback();
                 Krang.Widget.HideIEControls.unload(el.down('div.wrapper'));
             } else {
                 if( quick ) {
                     el.hide();
+                    finish_callback();
                 } else {
                     // lock the messages (will be unlocked by afterFinish call)
                     Krang.Messages._locked[level] = true;
                     new Effect.SlideUp(el, { 
                         duration    : Krang.Messages._slide_time, 
-                        afterFinish : function() { 
-                            Krang.Messages._locked[level] = false 
-                        }
+                        afterFinish : finish_callback
                     });
                 }
             }
