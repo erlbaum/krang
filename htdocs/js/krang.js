@@ -69,7 +69,7 @@ Krang.onload = function(code) {
     Open the url into a new popup window consistently
 */
 Krang.popup = function(url) {
-    var win = window.open( url, 'thewindow', 'width=500,height=500,top=0,left=200,resizable,scrollbars,status' );
+    var win = window.open( url, 'krangpopup', 'width=800,height=600,top=25,left=50,resizable,scrollbars,status' );
     if ( win ) win.focus();
 };
 
