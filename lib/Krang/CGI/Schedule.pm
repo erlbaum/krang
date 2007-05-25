@@ -140,7 +140,7 @@ sub edit {
     my $self = shift;
     my $invalid = shift;
     my $query = $self->query;
-    my $template = $self->load_tmpl('edit.tmpl', associate => $query);
+    my $template = $self->load_tmpl('edit.tmpl', associate => $query, loop_context_vars => 1);
 
     $template->param ( $invalid => 1 ) if $invalid;
     # load params

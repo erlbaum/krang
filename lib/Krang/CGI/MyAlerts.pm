@@ -61,7 +61,7 @@ sub edit {
     my $error = shift || '';
     my $q = $self->query;
     my $user_id = $ENV{REMOTE_USER};
-    my $template = $self->load_tmpl('edit.tmpl', associate => $q);
+    my $template = $self->load_tmpl('edit.tmpl', associate => $q, loop_context_vars => 1);
     $template->param( $error => 1 ) if $error;
                                                                                 
     my %alert_types = ( new => 'New',

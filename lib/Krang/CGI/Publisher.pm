@@ -396,7 +396,7 @@ sub preview_story {
             } else {
                 # something not expected so log the error.  Can't croak()
                 # here because that will trigger bug.pl.
-                print qq|<div class="alertp">An internal server error occurred. Please check the error logs for details.</div>\n|;
+                print qq|<div class="alertp">An Internal Server Error occurred. Please check the error logs for details.</div>\n|;
                 critical($error);
             }
 

@@ -489,7 +489,7 @@ sub edit_categories {
     die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
 
     my $q = $self->query();
-    my $t = $self->load_tmpl('edit_categories.tmpl', associate=>$q);
+    my $t = $self->load_tmpl('edit_categories.tmpl', associate=>$q, loop_context_vars => 1);
 
     my $category_id = $q->param('category_id');
     croak ("No category ID specified") unless ($category_id);
@@ -671,7 +671,7 @@ sub _edit {
     croak("Can't retrieve group object") unless ($g and ref($g));
 
     my $q = $self->query();
-    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
+    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q, loop_context_vars => 1);
     $t->param(add_mode => 1) unless ($g->group_id);
     $t->param(%ui_messages) if (%ui_messages);
 

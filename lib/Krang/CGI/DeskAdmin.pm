@@ -61,7 +61,7 @@ sub edit {
     my $self = shift;
     my $error = shift || '';
     my $q = $self->query;
-    my $template = $self->load_tmpl('edit.tmpl', associate => $q);
+    my $template = $self->load_tmpl('edit.tmpl', associate => $q, loop_context_vars => 1);
     $template->param( $error => 1 ) if $error;
 
     my $total_desks = pkg('Desk')->find('count' => 1);
