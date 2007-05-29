@@ -325,13 +325,14 @@ Krang.ajax_form_submit = function(form, options) {
     }
 
     var target = options.target || Krang.class_suffix(form, 'for_');
+    var to_top = options.to_top || form.hasClassName('to_top');
         
     Krang.ajax_update({
         url       : url,
         params    : Form.serialize(form, true),
         target    : target,
         indicator : Krang.class_suffix(form, 'show_'),
-        to_top    : options.to_top
+        to_top    : to_top
     });
 };
 
