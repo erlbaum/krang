@@ -833,36 +833,11 @@ Object.extend( Krang.Navigation.prototype, {
             // else BlindUp if it is
             label.observe(
                 'click', 
-                this._label_onclick(contents, pos).bind(this)
+                function () { Krang.Widget.BlindUpDown(contents) }
             );
 
             ++pos;
        }.bind(this));
-    },
-    _label_onclick: function(content, pos) {
-        return function () {
-            if( Element.visible(content) && !this.action_panels[pos]) {
-                this.action_panels[pos] = true;
-                new Effect.BlindUp(
-                    content,
-                    {
-                        duration : .3,
-                        afterFinish: function() { this.action_panels[pos] = false }.bind(this)
-                    }
-                );
-                this.remove_opened_panel(pos);
-            } else if( !this.action_panels[pos] ) {
-                this.action_panels[pos] = true;
-                new Effect.BlindDown(
-                    content,
-                    {
-                        duration : .3,
-                        afterFinish: function() { this.action_panels[pos] = false }.bind(this)
-                    }
-                );
-                this.add_opened_panel(pos);
-            }
-        }.bind(this);
     },
     save_opened_panels: function(positions) {
         Krang.set_cookie(this.cookie_name, escape(positions.join(',')));
@@ -1041,6 +1016,58 @@ Krang.Widget.HideIEControls = {
         el = $(el);
         if(! iframe ) iframe = el.next('iframe');
         Position.clone(el, iframe);
+    }
+};
+
+/*
+    Krang.Widget.BlindDown('element', options);
+
+    This wraps Effect.BlindUp and Effect.BlindDown. It takes care
+    of calling BlindUp or BlindDown depending on the visibility of
+    the given element. It also locks the element so that subsequent
+    calls won't be running at the same time (this prevents weirdness
+    for example when the user double-clicks on the trigger)
+
+    'options' can be a hash containing the following name-value pairs:
+    
+    duration    : How long should the effect last in secs. 
+                  The default is 0.3
+    afterFinish : An optional callback to run when we're done
+*/
+Krang.Widget._BlindUpDown_Locked = {};
+Krang.Widget.BlindUpDown = function(element, args) {
+    element = $(element);
+    if( ! args ) args = {};
+
+    // if it's visible and not locked
+    if( element.visible() && ! Krang.Widget._BlindUpDown_Locked[element.id] ) {
+        // lock it
+        Krang.Widget._BlindUpDown_Locked[element.id] = true;
+        new Effect.BlindUp(
+            element,
+            {
+                duration    : (args.duration || .3),
+                afterFinish : function() { 
+                    // unlock the element
+                    Krang.Widget._BlindUpDown_Locked[element.id] = false;
+                    if( args.afterFinish ) args.afterFinish();
+                }.bind(this)
+            }
+        );
+    } else if( ! Krang.Widget._BlindUpDown_Locked[element.id] ) {
+        // lock it
+        Krang.Widget._BlindUpDown_Locked[element.id] = true;
+        new Effect.BlindDown(
+            element,
+            {
+                duration    : (args.duration || .3),
+                afterFinish : function() { 
+                    // unlock the element
+                    Krang.Widget._BlindUpDown_Locked[element.id] = false;
+                    if( args.afterFinish ) args.afterFinish();
+                }.bind(this)
+            }
+        );
     }
 };
 
