@@ -829,15 +829,23 @@ Object.extend( Krang.Navigation.prototype, {
             else
               Element.show( contents );
 
-            // set the onclick handler to BlindDown if it's not visible
-            // else BlindUp if it is
-            label.observe(
-                'click', 
-                function () { Krang.Widget.BlindUpDown(contents) }
-            );
+            // set the onclick handler to record that a panel has been
+            // opened or closed, and to use Krang.Widget.BlindUpDown to
+            // show or hide it.
+            label.observe( 'click', this._label_onclick(contents, pos).bind(this));
 
             ++pos;
        }.bind(this));
+    },
+    _label_onclick : function(el, pos) {
+        return function() {
+            Krang.Widget.BlindUpDown(el);
+            if( this.is_panel_open(pos) ) {
+                this.remove_opened_panel(pos);
+            } else {
+                this.add_opened_panel(pos);
+            }
+        }
     },
     save_opened_panels: function(positions) {
         Krang.set_cookie(this.cookie_name, escape(positions.join(',')));
@@ -871,6 +879,9 @@ Object.extend( Krang.Navigation.prototype, {
             panels = [ 0 ];
         }
         return panels;
+    },
+    is_panel_open : function(pos) {
+        return !(this.opened_panels.indexOf(pos) == -1);
     }
 } );
 
