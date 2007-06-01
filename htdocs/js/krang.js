@@ -325,7 +325,12 @@ Krang.ajax_form_submit = function(form, options) {
     }
 
     var target = options.target || Krang.class_suffix(form, 'for_');
-    var to_top = options.to_top || form.hasClassName('to_top');
+    // to_top defaults to true, but can be overridden by the option
+    // of the if the form has the class 'not_to_top'
+    var to_top = true;
+    if( options.to_top == false || form.hasClassName('not_to_top') ) {
+        to_top = false;
+    }
         
     Krang.ajax_update({
         url       : url,
