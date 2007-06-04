@@ -394,8 +394,10 @@ sub time_chooser {
 
     # pull the time from the query first, then from given hour/minute and
     # finally from localtime
+    my $value;
     if( $query->param($name) ) {
         ($hour, $minute) = decode_time(name => $name, query => $query);
+        $value = $query->param($name);
     } else {
         unless( $nochoice ) {
             my $current_date = localtime();
@@ -413,8 +415,7 @@ sub time_chooser {
 
     $hour = $hour && $hour >= 13 ? $hour - 12 : $hour;
     my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
-
-    my $value = $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
+    $value ||= $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
 
     # setup the onchange
     $onchange ||= '';
@@ -613,10 +614,11 @@ sub decode_datetime {
     my $date = $query->param($name);
     my $time = $query->param($name . '_time');
     if( $date && $time ) {
-        return Time::Piece->strptime("$date $time", '%m/%d/%Y %I:%M %p');
-    } else {
-        return;
+        my $piece;
+        eval { $piece = Time::Piece->strptime("$date $time", '%m/%d/%Y %I:%M %p') };
+        return $piece unless $@;
     }
+    return;
 }
 
 =item $date_obj = decode_date(name => 'cover_date', query => $query)
