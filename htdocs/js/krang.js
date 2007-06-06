@@ -724,15 +724,29 @@ Krang.pager_row_checked = function() {
 Krang.check_all = function( checkbox, prefix ) {
     var form = checkbox.form;
 
+    // recursive local function used to find the first TR
+    // that is one of our ancestors
+    var find_parent_row = function(el) {
+        var p = el.parentNode;
+        if( p.tagName.toUpperCase() == 'TR' ) {
+            return p;
+        } else {
+            return find_parent_row(p);
+        }
+    };
+
     for ( var i = 0; i < form.elements.length; i++ ) {
         var el = form.elements[ i ];
         if ( el.type == 'checkbox' && el.name && el.name.indexOf( prefix ) == 0 ) {
             el.checked = checkbox.checked;
-            var row = el.up('tr');
-            if( checkbox.checked )
-                row.addClassName('hilite');
-            else
-                row.removeClassName('hilite');
+            var row = find_parent_row(el);
+            if( row ) {
+                row = $(row);
+                if( checkbox.checked )
+                    row.addClassName('hilite');
+                else
+                    row.removeClassName('hilite');
+            }
         }
     }
 };
