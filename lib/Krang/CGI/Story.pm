@@ -1646,19 +1646,19 @@ sub find_story_row_handler {
     # pub_status
     $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
 
+    # command column
+    $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| . $story->story_id . qq|')" type="button" class="button">|
+        . ' '
+        . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id . qq|')" type="button" class="button">|
+        . ' '
+        . qq|<input value="Copy" onclick="copy_story('| . $story->story_id . qq|')" type="button" class="button">|;
+
     if (($story->checked_out) and 
         ($story->checked_out_by ne $ENV{REMOTE_USER})
         or not $story->may_edit ) {
-        $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| . $story->story_id . qq|')" type="button" class="button">|
-            . ' '
-            . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id . qq|')" type="button" class="button">|;
         $row->{checkbox_column} = "&nbsp;";
     } else {
-        $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| . $story->story_id . qq|')" type="button" class="button">|
-            . ' '
-            . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id . qq|')" type="button" class="button">|
-            . ' '
-            . qq|<input value="Edit" onclick="edit_story('| . $story->story_id . qq|')" type="button" class="button">|;
+        $row->{commands_column} .= qq| <input value="Edit" onclick="edit_story('| . $story->story_id . qq|')" type="button" class="button">|;
     }
 
     # status 
