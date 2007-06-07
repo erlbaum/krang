@@ -18,39 +18,15 @@ var rules = {
         }.bindAsEventListener(el));
     },
     'form' : function(el) {
-        // skip it if it has a class of 'non_ajax'
-        if( el.hasClassName('non_ajax') ) return;
+        // if we have an on submit handler, then we don't want to
+        // do anything automatically
+        if( el.onsubmit ) return;
 
-        // only continue if we don't have any inputs of type 'file'
-        // since you can't send those vi AJAX
-        // We might fix this in the future if we get adventurous and decide
-        // to use a hidden iframe to old-school async stuff.
-        for(var i=0; i < el.elements.length; i++) {
-            var field = el.elements[i];
-            if( field.type == 'file' ) return;
-        }
-
-        // save the old on submit if there is one so that we can
-        // call it later
-        el.old_onsubmit = el.onsubmit;
-
-        // save a non-ajax version of the submit in case we need it
-        // (like sending the request to a new window via Krang.submit_form_new_window )
-        el.old_submit = el.submit;
-        el.non_ajax_submit = function() {
-            if( !this.old_onsubmit || this.old_onsubmit() ) {
-                this.old_submit();
-            }
-        }.bind(el);
-
-        // put the magic in the onsubmit handler
+        // now change the submission to use Krang.form_submit
         el.observe('submit', function(e) {
-            if( !this.old_onsubmit || this.old_onsubmit() ) {
-                Krang.ajax_form_submit(this);
-                Event.stop(e);
-            }
-            return false;
-        }.bindAsEventListener(el));
+            Krang.form_submit(el);
+            Event.stop(e);
+        });
     },
     // create an autocomplete widget. This involves creating a div
     // in which to place the results and creating an Ajax.Autocompleter

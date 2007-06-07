@@ -236,15 +236,14 @@ Krang.ajax_request = function(args) {
     TODO: handle GET and POST differently
 */
 Krang.ajax_update = function(args) {
-    var url       = args['url'];
-    var params    = args['params'] || {};
-    var target    = args['target'];
-    var indicator = args['indicator'];
-    var complete  = args['onComplete'] || Prototype.emptyFunction;
-    var success   = args['onSuccess']  || Prototype.emptyFunction;
-    var failure   = args['onFailure']  || Prototype.emptyFunction;
-    var to_top    = args['to_top'] == false ? false : true; // defaults to true
-
+    var url       = args.url;
+    var params    = args.params || {};
+    var target    = args.target;
+    var indicator = args.indicator;
+    var complete  = args.onComplete || Prototype.emptyFunction;
+    var success   = args.onSuccess  || Prototype.emptyFunction;
+    var failure   = args.onFailure  || Prototype.emptyFunction;
+    var to_top    = args.to_top == false ? false : true; // defaults to true
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
@@ -308,62 +307,30 @@ Krang.ajax_update = function(args) {
 };
 
 /*
-    Krang.ajax_form_submit(form, options)
-    Submit a form using AJAX.
-
-    TODO: set the method from the form
+    Krang.form_set(form, { input: 'value'})
+    Select a form (can be either the name of the form, or the form object
+    itself) and set the values of it's inputs
 */
-Krang.ajax_form_submit = function(form, options) {
-    if( options == null ) options = {};
-    var url;
-    if( form.action ) {
-        url = form.readAttribute('action');
-    } else {
-        url = document.URL;
-        // remove any possible query bits
-        url = url.replace(/\?.*/, '');
-    }
-
-    var target = options.target || Krang.class_suffix(form, 'for_');
-    // to_top defaults to true, but can be overridden by the option
-    // of the if the form has the class 'not_to_top'
-    var to_top = true;
-    if( options.to_top == false || form.hasClassName('not_to_top') ) {
-        to_top = false;
-    }
-        
-    Krang.ajax_update({
-        url       : url,
-        params    : Form.serialize(form, true),
-        target    : target,
-        indicator : Krang.class_suffix(form, 'show_'),
-        to_top    : to_top
-    });
-};
-
-/*
-    Krang.form_set(formName, { input: 'value'})
-    Select a form and set the values of it's inputs
-*/
-Krang.form_set = function(formName, inputs) {
-    var form = document.forms[formName];
+Krang.form_set = function(form, inputs) {
+    form = typeof form == 'object' ? form : document.forms[form];
     var err = 'Krang.form_set(): ';
 
-    if( !form ) alert(err + 'form "' + formName + '" does not exist!');
+    if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
 
     if( inputs ) {
         $H(inputs).each( function(pair) {
             var el = form.elements[pair.key];
-            if(! el ) alert(err + 'input "' + pair.key + '" does not exist in form "' + formName + '"!');
+            if(! el ) alert(err + 'input "' + pair.key + '" does not exist in form "' + form.name + '"!');
             el.value = pair.value;
         });
     }
 }
 
 /*
-    Krang.form_submit(formName, { input: 'value' }, { new_window: true })
-    Select a form, optionally sets the values of those
-    elements and then submits the form.
+    Krang.form_submit(form, { input: 'value' }, { new_window: true })
+    Select a form (can either be the name of the form, or the form object
+    itself) optionally sets the values of those elements and then submits 
+    the form. 
 
     You can also specify a third parameter which contains other optional
     flags that can be passed to dictact the behaviour.
@@ -386,9 +353,9 @@ Krang.form_set = function(formName, inputs) {
     In the case of inputs of type 'submit', just use Krang.form_set()
     to set the values and let the form take care of the rest.
 */
-Krang.form_submit = function(formName, inputs, options) {
-    Krang.form_set(formName, inputs);
-    var form = document.forms[formName];
+Krang.form_submit = function(form, inputs, options) {
+    form = typeof form == 'object' ? form : document.forms[form];
+    if( inputs ) Krang.form_set(form, inputs);
 
     // take care of our default options
     if(options == null ) options = {};
@@ -398,7 +365,7 @@ Krang.form_submit = function(formName, inputs, options) {
         // submission
         var old_target = form.target;
         form.target = '_blank';
-        form.non_ajax_submit ? form.non_ajax_submit() : form.submit();
+        form.submit();
         form.target = old_target;
     } else {
         Krang.show_indicator();
@@ -406,17 +373,31 @@ Krang.form_submit = function(formName, inputs, options) {
         // we don't use AJAX if the form specifically disallows it
         // or it has a file input
         var use_ajax = !form.hasClassName('non_ajax');
-        var inputs = document.forms[formName].elements;
+        var inputs = form.elements;
         for(var i=0; i < inputs.length; i++) {
             var field = inputs[i];
-            if( field.type == 'file' ) {
+            if( field.type == 'file' && field.value ) {
                 use_ajax = false;
                 break;
             }
         }
         
         if( use_ajax ) {
-            Krang.ajax_form_submit(form, options);
+            var url;
+            if( form.action ) {
+                url = form.readAttribute('action');
+            } else {
+                url = document.URL;
+                // remove any possible query bits
+                url = url.replace(/\?.*/, '');
+            }
+
+            Krang.ajax_update({
+                url    : url,
+                params : Form.serialize(form, true),
+                target : options.target,
+                to_top : options.to_top
+            });
         } else {
             form.submit();
         }
@@ -699,11 +680,11 @@ Krang.to_top = function() {
 };
 
 /* 
-    Krang.row_checked(formName, inputName)
+    Krang.row_checked(form, inputName)
     Krang.pager_row_checked()
 */
-Krang.row_checked = function( formName, inputName ) {
-    var form = document.forms[ formName ];
+Krang.row_checked = function( form, inputName ) {
+    form = typeof form == 'object' ? form : document.forms[form];
 
     for ( var i = 0; i < form.elements.length; i++ ) {
         var el = form.elements[ i ];
