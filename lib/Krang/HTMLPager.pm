@@ -292,22 +292,22 @@ sub make_internal_template {
 EOF
     # Make page jump, next/prev navigation tmpl
     $pager_tmpl .= <<EOF;
-<div class="no-border"><p class="left2">&nbsp;<tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
+<div class="no-border"><p class="left2">&nbsp;<tmpl_if prev_page_number><a href="javascript:Krang.Pager.goto_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
 
 <tmpl_loop page_numbers>
   <tmpl_if is_current_page><b><tmpl_var page_number></b>
-  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number_label></a>
+  <tmpl_else><a href="javascript:Krang.Pager.goto_page('<tmpl_var page_number>')"><tmpl_var page_number_label></a>
   </tmpl_if>
   <tmpl_unless __last__>|</tmpl_unless>
 </tmpl_loop>
 
-<tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
+<tmpl_if next_page_number><a href="javascript:Krang.Pager.goto_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
 
 <tmpl_if show_big_view>
-  <a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a></p></div>
+  <a href="javascript:Krang.Pager.show_big_view('0')">show <tmpl_var user_page_size> per page</a></p></div>
 <tmpl_else>
   <tmpl_if page_numbers>
-    <a href="javascript:show_big_view('1')">show <tmpl_var big_view_page_size> per page</a></p></div>
+    <a href="javascript:Krang.Pager.show_big_view('1')">show <tmpl_var big_view_page_size> per page</a></p></div>
   </tmpl_if>
 </tmpl_if>
 
@@ -706,7 +706,7 @@ number of the previous page, or "0" if we're already on the first page.
 The internal template uses "prev_page_number" in the context of a
 <TMPL_IF> to hide the previous page button on the first page.
 
-(N.b.: A JavaScript function, "go_page()", is provided for navigation
+(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
 between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 
@@ -719,7 +719,7 @@ number of the next page, or "0" if we're already on the last page.
 The internal template uses "next_page_number" in the context of a
 <TMPL_IF> to hide the next page button on the last page.
 
-(N.b.: A JavaScript function, "go_page()", is provided for navigation
+(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
 between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 
@@ -739,7 +739,7 @@ Available in the context of the <TMPL_LOOP> "page_numbers", the
 This is used by the internal template as a link to jump to a 
 particular page of output.
 
-(N.b.: A JavaScript function, "go_page()", is provided for navigation
+(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
 between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 =item page_number_label
@@ -757,7 +757,7 @@ is, in fact, the current page being viewed, "0" if not.  This is used by the
 internal template in the context of a <TMPL_IF>/<TMPL_ELSE> to 
 conditionally disable the link to the current page.
 
-(N.b.: A JavaScript function, "go_page()", is provided for navigation
+(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
 between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 
@@ -769,7 +769,7 @@ size is 100, then this becomes "Show 20 rows").  The
 <TMPL_VAR> "show_big_view" is set to "1" if the user is in the 
 "100 rows" mode, "0" otherwise.
 
-(N.b.: A JavaScript function, "show_big_view()", is provided for 
+(N.b.: A JavaScript function, "Krang.Pager.show_big_view()", is provided for 
 toggling between modes by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 =item user_page_size
@@ -879,7 +879,7 @@ sub make_sortable_column_html {
 
     # Make link to re-sort
     my $new_sort_order_desc = ($is_selected && not($sort_order_desc)) ?  '1' : '0';
-    $col_label = "<a href=\"javascript:do_sort('$col','$new_sort_order_desc')\">$col_label</a>";
+    $col_label = "<a href=\"javascript:Krang.Pager.sort('$col','$new_sort_order_desc')\">$col_label</a>";
 
     return $col_label;
 }

@@ -108,7 +108,7 @@ sub show {
                                                      cover_date  => 'Cover Date' },
                                         -default => $sort,
                                         -override => 1,
-                                        -onchange => "do_sort(this.options[this.selectedIndex].value,0)",
+                                        -onchange => "Krang.Pager.sort(this.options[this.selectedIndex].value,0)",
                                        ));
 
     # setup paging list of objects

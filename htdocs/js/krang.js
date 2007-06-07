@@ -700,6 +700,73 @@ Krang.pager_row_checked = function() {
 };
 
 /*
+    Krang.Pager
+    Collection of methods for dealing with pager tables.
+    
+    // Tell the pager the name of the input that's used to determine
+    // which form is for the pager
+    Krang.Pager.input_key('some input name');
+
+    // Go to the page in question
+    Krang.Pager.goto_page(2);
+
+    // Do a sort on the given field. Also optionally specify if it's going
+    // to be ordered descendingly
+    Krang.Pager.sort('id', 1);
+
+    // Show the 'long' or 'short' view of the pager to show the number of rows 
+    // based on the user's preferences
+    Krang.Pager.long_view();
+
+    // Change where the pager's submission will fill (default to 'C' like all
+    // other Ajax submissions)
+    Krang.Pager.target = 'some_other_div';
+*/
+Krang.Pager = {
+    _form         : null,
+    target        : null,
+    input_key     : function(key) {
+        Krang.Pager._form = Krang.Pager._get_form(key);
+    },
+    goto_page     : function(num) {
+        Krang.form_submit(
+            Krang.Pager._form, 
+            { krang_pager_curr_page_num : num }, 
+            { to_top : false, target: Krang.Pager.target }
+        );
+        // reset the target so it defaults to null
+        Krang.Pager.target = null;
+    },
+    sort          : function(field, desc) {
+        Krang.form_set( 
+            Krang.Pager._form, 
+            { 
+                krang_pager_sort_field      : field, 
+                krang_pager_sort_order_desc : desc 
+            }
+        );
+        Krang.Pager.goto_page(1);
+    },
+    show_big_view : function(big) {
+        Krang.form_set( Krang.Pager._form, { krang_pager_show_big_view : big });
+        Krang.Pager.goto_page(1);
+    },
+    _get_form     : function(key) {
+        var num_forms  = document.forms.length;
+
+        for ( var i = 0; i < num_forms; i++ ) {
+            var form = document.forms[ i ];
+
+            var num_els = form.elements.length;
+            for ( var j = 0; j < num_els; j++ ) {
+                var el = form.elements[ j ];
+                if ( el && ( el.name == key ) ) return form;
+            }
+        }
+    }
+};
+
+/*
     Krang.check_all(checkbox, inputPrefix)
 */
 Krang.check_all = function( checkbox, prefix ) {
