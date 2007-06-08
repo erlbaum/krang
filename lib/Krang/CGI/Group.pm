@@ -682,7 +682,7 @@ sub _edit {
     $t->param($group_tmpl);
     
     # are we using FTP
-    $t->param(enable_ftp => EnableFTP);
+    $t->param(enable_ftp => (EnableFTP || 0));
 
     return $t->output();
 }
