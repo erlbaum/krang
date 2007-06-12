@@ -10,6 +10,8 @@ use Krang::ClassLoader 'NavigationNode';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Carp qw(croak);
 use CGI;
+use Apache;
+use Apache::Cookie;
 
 =head1 NAME
 
@@ -127,12 +129,14 @@ sub render {
 
     # setup blocks as needed
     my ($pre, $post) = ("", "");
+    my $opened_panels = $pkg->_get_opened_panels();
 
     if ($depth == 1) {
+        my $opened_style = $opened_panels->{$index -1} ? '' : ' style="display:none"';
         if ($index == 1) {
-            $pre = qq{<div class="first nav_panel"><h2 class="$class"><span>$name</span></h2><div><dl>\n<dt>};
+            $pre = qq{<div class="first nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
         } else {
-            $pre = qq{<div class="nav_panel"><h2 class="$class"><span>$name</span></h2><div><dl>\n<dt>};
+            $pre = qq{<div class="nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
         }
         $post = qq{</dt>\n</dl></div></div>\n\n};
     } elsif ($depth == 2) {
@@ -316,6 +320,15 @@ sub default_tree {
     
 
     return $root;
+}
+
+sub _get_opened_panels {
+    my $pkg = shift;
+    my %cookies = Apache::Cookie->new(Apache->request)->parse();
+    my $cookie = $cookies{'KRANG_NAV_ACCORDION_OPEN_PANELS'};
+    my $value = $cookie ? $cookie->value : '';
+    my %opened = map { $_ => 1 } split(',', $value);
+    return \%opened;
 }
 
 1;
