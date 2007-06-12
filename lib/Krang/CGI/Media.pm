@@ -1394,7 +1394,7 @@ sub make_media_tmpl_data {
 
         # Display creation_date
         my $creation_date = $m->creation_date();
-        $tmpl_data{creation_date} = $creation_date->strftime('%b %e, %Y %l:%M %p');
+        $tmpl_data{creation_date} = $creation_date->strftime('%m/%d/%Y %I:%M %p');
 
         # Set up versions drop-down
         my $curr_version = $tmpl_data{version};
@@ -1529,7 +1529,7 @@ sub make_media_view_tmpl_data {
 
     # Display creation_date
     my $creation_date = $m->creation_date();
-    $tmpl_data{creation_date} = $creation_date->strftime('%b %e, %Y %l:%M %p');
+    $tmpl_data{creation_date} = $creation_date->strftime('%m/%d/%Y %I:%M %p');
  
     # Handle simple scalar fields
     my @m_fields = qw(

@@ -202,7 +202,7 @@ sub show_row_handler {
     }
 
     # setup date
-    $row->{timestamp}   = $history->timestamp->strftime('%b %e, %Y %l:%M %p'); 
+    $row->{timestamp}   = $history->timestamp->strftime('%m/%d/%Y %I:%M %p'); 
 
     # some events have attributes
     my $attr = "";

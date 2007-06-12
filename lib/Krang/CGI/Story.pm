@@ -543,7 +543,7 @@ sub view {
                          ("Low","Medium","High")[$story->priority - 1],
                         );
 
-        $template->param(cover_date => $story->cover_date->strftime('%b %e, %Y %l:%M %p'))
+        $template->param(cover_date => $story->cover_date->strftime('%m/%d/%Y %I:%M %p'))
           if $story->cover_date;
 
         my @contribs_loop;
