@@ -8,6 +8,7 @@ use File::Spec::Functions qw(catfile);
 
 # Add new krang.conf directive PreviewSSL
 sub per_installation {
+    _update_config();
 }
 
 sub per_instance {
@@ -22,8 +23,6 @@ sub per_instance {
     $dbh->do(qq/
         INSERT INTO pref (id, value) VALUES ("message_timeout", "5");
     /);
-
-    _update_config();
 }
 
 # add new EnableFTP and Secret directives if they aren't already there
