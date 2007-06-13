@@ -124,7 +124,7 @@ Object.extend(PopupTreeSelect.prototype, {
             titleobj.style.width  = (this.width + this.mouseX - this.offsetX) + "px";
             innerobj.style.width  = (this.width + this.mouseX - this.offsetX) + "px";
             bbarobj.style.width   = (this.width + this.mouseX - this.offsetX) + "px";
-            botbarobj.style.width = (this.width + this.mouseX - this.offsetX) + "px";
+            //botbarobj.style.width = (this.width + this.mouseX - this.offsetX) + "px";
             innerobj.style.height = (this.height + this.mouseY - this.offsetY) + "px";
             evt.cancelBubble = true;
             return false;
