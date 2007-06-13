@@ -594,7 +594,6 @@ sub get_user_params {
       {id => $_, name => $user_groups{$_}} for @pgids;
     push @{$user_tmpl{current_group_ids}},
       {id => $_, name => $user_groups{$_}} for @cgids;
-    $user_tmpl{size} = scalar keys %user_groups;
 
     # loop through User fields
     if ($q->param('errors')) {
