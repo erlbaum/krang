@@ -204,7 +204,7 @@ Object.extend(PopupTreeSelect.prototype, {
 
         obj.style.left = x + "px";
         obj.style.top  = y + "px";
-        obj.style.visibility = "visible";
+        obj.style.display = 'block';
 
         if( this.hide_selects ) {
             for(var f = 0; f < document.forms.length; f++) {
@@ -258,7 +258,7 @@ Object.extend(PopupTreeSelect.prototype, {
     close  : function() {
         /* hide window */
         var obj = document.getElementById(this.name + "-outer");
-        obj.style.visibility = "hidden";         
+        obj.style.display = 'none';
 
         /* clear selection */
         var selected_id = this.selected_id;
