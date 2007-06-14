@@ -1487,7 +1487,7 @@ sub make_media_view_tmpl_data {
 
     $tmpl_data{media_id} = $m->media_id();
 
-    my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
+    my $thumbnail_path = $m->thumbnail_path(relative => 1, medium => 1) || '';
     $tmpl_data{thumbnail_path} = $thumbnail_path;
 
     $tmpl_data{url} = format_url( url => $m->url(),
