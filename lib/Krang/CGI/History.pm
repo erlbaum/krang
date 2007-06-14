@@ -104,7 +104,7 @@ might be used:
 sub show {
     my $self = shift;
     my $query = $self->query;
-    my $template = $self->load_tmpl('show.tmpl', associate => $query);
+    my $template = $self->load_tmpl('show.tmpl', associate => $query, loop_context_vars => 1);
 
     # load params
     my $story_id    = $query->param('story_id');
@@ -162,7 +162,7 @@ sub show {
        column_labels => {
                          action    => 'Action',
                          user      => 'Triggered By',
-                         timestamp => 'Timestamp',
+                         timestamp => 'Date',
                          attr      => 'Attributes',
                         },
        columns_sortable => [qw( timestamp action )],
@@ -174,8 +174,7 @@ sub show {
       );
 
     # Set up output
-    $template->param(pager_html => $pager->output());
-    # $template->param(row_count => $pager->row_count());
+    $pager->fill_template($template);
 
     return $template->output;
 
