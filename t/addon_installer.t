@@ -180,13 +180,13 @@ SKIP: {
 
     # hit workspace.pl and look for the new nav entries
     $mech->get_ok('workspace.pl');
-    $mech->content_conains('Log Tools');
+    $mech->content_contains('Log Tools');
     $mech->content_like(qr/<a.*?log_viewer.pl.*>.*?View Log/);
     ## SchedulerAddon entry
-    $mech->content_conains('schedule.pl?advanced_schedule=1&rm=edit_admin');
+    $mech->content_contains('schedule.pl?advanced_schedule=1&rm=edit_admin');
 
     # Clean should be removing spaces
-    $mech->content_contains('<html><head><title>');
+    $mech->content_like(qr/<html[^>]*><head[^>]*><title[^>]*>/);
 
     # try the script
     $mech->get_ok('log_viewer.pl');
