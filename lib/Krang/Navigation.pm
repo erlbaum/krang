@@ -10,8 +10,7 @@ use Krang::ClassLoader 'NavigationNode';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Carp qw(croak);
 use CGI;
-use Apache;
-use Apache::Cookie;
+use CGI::Cookie;
 
 =head1 NAME
 
@@ -324,7 +323,7 @@ sub default_tree {
 
 sub _get_opened_panels {
     my $pkg = shift;
-    my %cookies = Apache::Cookie->new(Apache->request)->parse();
+    my %cookies = CGI::Cookie->fetch();
     my $cookie = $cookies{'KRANG_NAV_ACCORDION_OPEN_PANELS'};
     my $value = $cookie ? $cookie->value : '';
     my %opened = map { $_ => 1 } split(',', $value);
