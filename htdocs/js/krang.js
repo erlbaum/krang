@@ -71,8 +71,8 @@ Krang.onload = function(code) {
 */
 Krang.popup = function(url, options) {
     if( ! options ) options = {};
-    var height = options.height || 800;
-    var width  = options.width  || 600;
+    var height = options.height || 600;
+    var width  = options.width  || 800;
     var win = window.open( url, 'krangpopup', 'width=' + width + ',height=' + height + ',top=25,left=50,resizable,scrollbars,status' );
     if ( win ) win.focus();
 };
