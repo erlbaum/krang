@@ -65,11 +65,15 @@ Krang.onload = function(code) {
 };
 
 /*
-    Krang.popup(url)
-    Open the url into a new popup window consistently
+    Krang.popup(url, { width: 400, height: 600 })
+    Open the url into a new popup window consistently.
+    Width and height default to 800x600
 */
-Krang.popup = function(url) {
-    var win = window.open( url, 'krangpopup', 'width=800,height=600,top=25,left=50,resizable,scrollbars,status' );
+Krang.popup = function(url, options) {
+    if( ! options ) options = {};
+    var height = options.height || 800;
+    var width  = options.width  || 600;
+    var win = window.open( url, 'krangpopup', 'width=' + width + ',height=' + height + ',top=25,left=50,resizable,scrollbars,status' );
     if ( win ) win.focus();
 };
 
@@ -526,13 +530,16 @@ Krang.Help = {
         Krang.Help.current_topic    = topic;
         Krang.Help.current_subtopic = subtopic;
     },
-    go               : function() {
+    go               : function(topic, subtopic) {
         var url = 'help.pl';
-        if( Krang.Help.current_topic )
-            url = url + '?topic=' + Krang.Help.current_topic;
-        if( Krang.Help.current_subtopic )
-            url = url + '#' + Krang.Help.current_subtopic;
-        Krang.popup(url);
+        // use the defaults for this page unless otherwise given
+        if(! topic )    topic       = Krang.Help.current_topic;
+        if(! subtopic ) subtopic = Krang.Help.current_subtopic;
+
+        // if we have something go to it
+        if( topic )    url = url + '?topic=' + topic;
+        if( subtopic ) url = url + '#' + subtopic;
+        Krang.popup(url, { width: 500, height: 600});
     }
 };
 
