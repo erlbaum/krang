@@ -5,6 +5,10 @@ Krang.onload( function() {
   Krang.Help.set( 'media_find' );
 } );
 
+add_media = function() {
+    Krang.form_submit('search_form', { rm: 'add' });
+}
+
 <tmpl_if do_advanced_search>
   simple_search = function()
   {
@@ -79,10 +83,10 @@ Find Media
 
 <div class="tabset finder">
 
-<p class="cram east">
+<p class="tab-option"><label>
 <input name="show_thumbnails" value="1" type="checkbox"<tmpl_if show_thumbnails> checked</tmpl_if>>
 Show Thumbnails
-</p>
+</label></p>
 
 <ul class="tabs"><li>
 <tmpl_if do_advanced_search><a href="javascript:simple_search()"><tmpl_else><b></tmpl_if><span>
@@ -99,13 +103,13 @@ Advanced Search
 <tmpl_unless do_advanced_search>
 
   <div class="faux-p">
-  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
   <input value="Search" type="submit" class="button">
   </div>
 
 <tmpl_else>
 
-  <table summary="">
+  <table class="request" summary="">
 
   <colgroup>
   <col class="c-mini">
@@ -150,10 +154,10 @@ Advanced Search
   </tr>
 
   <tr>
-  <td colspan="4">
+  <td colspan="4"><label>
   <input name="search_no_attributes" value="1" type="checkbox"<tmpl_if search_no_attributes> checked</tmpl_if>>
   Without Attributes
-  </td>
+  </label></td>
   </tr>
 
   </tbody>
@@ -177,11 +181,14 @@ Advanced Search
 Search Results
 </h3>
 
-<tmpl_if row_count><div class="panel"><form>
-  <input value="Publish" onclick="publish_selected()" type="button">
-  <input value="Check Out" onclick="checkout_selected()" type="button">
-  <input value="Delete" onclick="delete_selected()" type="button">
-</form></div></tmpl_if>
+<div class="panel"><form>
+  <input value="Add Media" onclick="add_media()" type="button"<tmpl_if row_count> class="west"</tmpl_if>>
+  <tmpl_if row_count>
+    <input value="Publish" onclick="publish_selected()" type="button">
+    <input value="Check Out" onclick="checkout_selected()" type="button">
+    <input value="Delete" onclick="delete_selected()" type="button">
+  </tmpl_if>
+</form></div>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>

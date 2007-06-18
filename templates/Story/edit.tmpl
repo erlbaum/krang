@@ -42,8 +42,9 @@ save_and_stay = function()
 
   remove_categories = function()
   {
-    if ( confirm( 'Are you SURE you want to delete these Categories?' ) )
+    if ( confirm( 'Are you SURE you want to delete these Categories?' ) ) {
       Krang.form_submit( 'edit', { rm: 'delete_categories' }, { to_top: false } );
+    }
   }
 
   check_in = function()
@@ -56,8 +57,9 @@ save_and_stay = function()
     var f = document.forms[ 'edit' ];
     var v = f.version.options[ f.version.selectedIndex ].value;
 
-    if ( confirm( 'Are you SURE you want to discard changes and revert to version ' + v + '?' ) )
+    if ( confirm( 'Are you SURE you want to discard changes and revert to version ' + v + '?' ) ) {
       Krang.form_submit( 'edit', { rm: 'revert' } );
+    }
   }
 
   save_and_view = function()
@@ -67,8 +69,9 @@ save_and_stay = function()
 
   remove_story = function()
   {
-    if ( confirm( 'Are you SURE you want to delete this Story?' ) )
+    if ( confirm( 'Are you SURE you want to delete this Story?' ) ) {
       Krang.form_submit( 'edit', { rm: 'delete' } );
+    }
   }
 
   db_save = function()
@@ -102,8 +105,9 @@ save_and_stay = function()
     <tmpl_if allow_delete>
       remove_element = function()
       {
-        if ( confirm( 'Are you SURE you want to delete this Element?' ) )
-          Krang.form_submit( 'edit', { rm: 'delete_element' } );
+        if ( confirm( 'Are you SURE you want to delete this Element?' ) ) {
+          Krang.form_submit( 'edit', { rm: 'delete_element' }, { to_top: false } );
+        }
       }
     </tmpl_if>
 
@@ -134,7 +138,7 @@ Edit Story
 Properties
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-label">
@@ -221,7 +225,7 @@ Properties
   <tr>
   <th>All Versions</th>
   <td>
-  <tmpl_var version_selector><!--:markup-->
+  <tmpl_var version_selector>
   <input value="Revert" onclick="revert()" type="button" class="button">
   <input value="View" onclick="save_and_view()" type="button" class="button">
   </td>
@@ -253,7 +257,7 @@ Properties
 
   <tmpl_else>
 
-    <table class="result select_row" summary=""><!--:FIX(db2)-->
+    <table class="request select_row" summary=""><!--:FIX(db2)-->
 
     <colgroup>
     <col class="series">
@@ -264,17 +268,17 @@ Properties
 
     <thead>
     <tr>
-    <th class="series">Primary</th>
+    <th class="f series">Primary</th>
     <th>Site</th>
     <th>Category</th>
-    <th class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input type="checkbox" onclick="Krang.check_all(this,'cat_remove_')"></tmpl_unless></tmpl_if></tmpl_loop></th>  <!--:ick, but should work(db2)-->
+    <th class="l series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input type="checkbox" onclick="Krang.check_all(this,'cat_remove_')"></tmpl_unless></tmpl_if></tmpl_loop></th>  <!--:ick, but should work(db2)-->
     </tr>
     </thead>
 
     <tbody>
 
     <tmpl_loop category_loop>
-      <tr>
+      <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
       <td class="series"><input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>></td>
       <td><tmpl_var escape=html site></td>
       <td><tmpl_var escape=html category></td>

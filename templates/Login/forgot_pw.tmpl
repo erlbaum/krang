@@ -4,28 +4,15 @@
 Forgot Your Login?
 </h2>
 
-<tmpl_if email_sent>
+<tmpl_unless email_sent>
 
-  <tmpl_loop header_message_loop>
-    <p class="err">
-    <tmpl_var escape=html message>
-    </p>
-  </tmpl_loop>
+  <script type="text/javascript">
+  focusFormField( 'form-forgot', 'email' );
+  </script>
 
   <p>
-  <a href="login.pl?rm=show_form">Return to Log-In Screen</a>
+  Enter your email address and we'll send your log-in name and instructions on how to reset your password.
   </p>
-
-<tmpl_else>
-
-  <p>
-  Enter your email address and we'll send your log in name and instructions
-  on how to reset your password.
-  </p>
-
-  <tmpl_loop header_message_loop>
-    <p class="err"><tmpl_var escape=html message></p>
-  </tmpl_loop>
 
   <form id="form-forgot" action="login.pl" method="post">
 
@@ -36,6 +23,12 @@ Forgot Your Login?
   <input id="forgot-email" name="email" value="<tmpl_var escape=html email>">
   </p>
 
+  <tmpl_if header_message_loop><ul class="err"><tmpl_loop header_message_loop>
+    <li>
+    <tmpl_var escape=html message>
+    </li>
+  </tmpl_loop></ul></tmpl_if>
+
   <p class="btn">
   <input value="Submit" type="submit">
   <a href="login.pl?rm=show_form">Return to Log-In Screen</a>
@@ -43,7 +36,19 @@ Forgot Your Login?
 
   </form>
 
-</tmpl_if>
+<tmpl_else>
+
+  <tmpl_loop header_message_loop>
+    <p>
+    <tmpl_var escape=html message>
+    </p>
+  </tmpl_loop>
+
+  <p>
+  <a href="login.pl?rm=show_form">Return to Log-In Screen</a>
+  </p>
+
+</tmpl_unless>
 
 <tmpl_include login_footer.tmpl>
 

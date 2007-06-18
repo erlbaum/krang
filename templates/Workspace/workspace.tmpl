@@ -152,22 +152,24 @@ Workspace
   <col class="c-id">
   <col class="c-type">
   <col>
-  <col style="width:36em"><!--:unreliable hack(db2)-->
+  <col class="c-link" style="width:auto">
+  <col class="c-thumb">
   <col class="tick">
   </colgroup>
 
   <thead>
   <tr>
-  <th>ID</th>
+  <th class="f">ID</th>
   <th>Type</th>
   <th>Title</th>
   <th>URL</th>
-  <th class="tick"><tmpl_var colhead_checkbox_column></th>
+  <th></th>
+  <th class="l tick"><tmpl_var colhead_checkbox_column></th>
   </tr>
   </thead>
 
   <tbody><tmpl_loop krang_pager_rows>
-    <tr>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
     <td><tmpl_if is_story>
       <tmpl_var escape=html story_id>
     <tmpl_else><tmpl_if is_media>
@@ -201,11 +203,7 @@ Workspace
     </tmpl_unless>
     </td>
 
-    <td>
-    <tmpl_if thumbnail>
-      <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')" class="east" style="margin-left:4px"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
-    </tmpl_if>
-
+    <td<tmpl_unless thumbnail> colspan="2"</tmpl_unless>>
     <b>
     <tmpl_unless is_message>
       <tmpl_var url><!--:markup-->
@@ -266,6 +264,12 @@ Workspace
       </span>
     </tmpl_if>
     </td>
+
+    <tmpl_if thumbnail>
+      <td>
+      <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
+      </td>
+    </tmpl_if>
 
     <td class="tick"><tmpl_if may_edit>
       <tmpl_var checkbox_column>

@@ -102,21 +102,21 @@ Desk:
   <colgroup>
   <col class="c-id">
   <col>
-  <col style="width:38em"><!--:unreliable hack(db2)-->
+  <col class="c-link" style="width:auto">
   <col class="tick">
   </colgroup>
 
   <thead>
   <tr>
-  <th>ID</th>
+  <th class="f">ID</th>
   <th>Title</th>
   <th>URL</th>
-  <th class="tick"><tmpl_var colhead_checkbox_column></th>
+  <th class="tick l"><tmpl_var colhead_checkbox_column></th>
   </tr>
   </thead>
 
   <tbody><tmpl_loop krang_pager_rows>
-    <tr>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
     <td><tmpl_var escape=html story_id></td>
 
     <td>
@@ -138,20 +138,20 @@ Desk:
 
     <tmpl_unless may_edit>
 
-      <input value="View Detail" onclick="view('<tmpl_var escape=html id>')" type="button" class="button">
-      <input value="View Log" onclick="log('<tmpl_var escape=html id>')" type="button" class="button">
+      <input value="View Detail" onclick="view('<tmpl_var escape=html story_id>')" type="button" class="button">
+      <input value="View Log" onclick="log('<tmpl_var escape=html story_id>')" type="button" class="button">
 
     <tmpl_else>
 
       <tmpl_var command_column>
 
       <tmpl_if may_publish>
-        <input value="Publish" onclick="publish_story('<tmpl_var escape=html id>')" type="button" class="button">
+        <input value="Publish" onclick="publish_story('<tmpl_var escape=html story_id>')" type="button" class="button">
       </tmpl_if>
 
       <tmpl_if desk_loop><span class="glue">
-        <input value="Move To" onclick="move('<tmpl_var escape=html id>')" type="button" class="button">
-        <select name="move_<tmpl_var escape=html id>" style="width:10em"><tmpl_loop desk_loop>
+        <input value="Move To" onclick="move('<tmpl_var escape=html story_id>')" type="button" class="button">
+        <select name="move_<tmpl_var escape=html story_id>" style="width:10em"><tmpl_loop desk_loop>
           <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
         </tmpl_loop></select>
       </span></tmpl_if>

@@ -44,7 +44,7 @@ Edit Group Category Permissions
 Properties
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-label">
@@ -55,20 +55,16 @@ Properties
 
 <tr>
 <th>Name</th>
-<td>
-<tmpl_if name>
+<td><tmpl_if name>
   <tmpl_var name>
 <tmpl_else>
   [n/a]
-</tmpl_if>
-</td>
+</tmpl_if></td>
 </tr>
 
 <tr>
 <th>Site</th>
-<td>
-<tmpl_var site_url>
-</td>
+<td><tmpl_var site_url></td>
 </tr>
 
 </tbody>
@@ -79,7 +75,7 @@ Properties
 Current Permissions
 </h3>
 
-<table class="result" summary=""><!--:FIX(db2)-->
+<table class="request" summary="">
 
 <colgroup>
 <col>
@@ -91,16 +87,16 @@ Current Permissions
 
 <thead>
 <tr>
-<th>Category</th>
+<th class="f">Category</th>
 <th class="series">Edit</th>
 <th class="series">Read-Only</th>
 <th class="series">Hide</th>
-<th></th>
+<th class="l"></th>
 </tr>
 </thead>
 
 <tbody><tmpl_loop categories>
-  <tr>
+  <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
   <td><tmpl_var category_url></td>
   <tmpl_loop permission_radio>
     <td class="series"><tmpl_var radio_select></td>
@@ -113,7 +109,7 @@ Current Permissions
 
 </table>
 
-<table summary=""><!--:FIX(db2)-->
+<table class="request" summary=""><!--:FIX(db2)-->
 
 <colgroup>
 <col class="c-label">
@@ -134,7 +130,7 @@ Current Permissions
 </table>
 
 <div class="panel lame capped">
-<input value="Return" onclick="do_return()" type="button" class="west">
+<input value="Back" onclick="do_return()" type="button" class="west">
 </div>
 
 </form>

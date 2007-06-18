@@ -10,7 +10,7 @@ Krang.onload( function() {
 
 view_log = function()
 {
-  Krang.form_submit( 'view_log' );
+  Krang.form_submit( 'view_log_form' );
 }
 
 <tmpl_unless old_version><tmpl_if can_edit>
@@ -51,7 +51,7 @@ View Story
 Properties
 </h3>
 
-<table summary="">
+<table class="result" summary="">
 
 <colgroup>
 <col class="c-label">
@@ -139,7 +139,7 @@ Properties
 <!--:/ElementEditor/view.tmpl-->
 
 <div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped">
-<input value="Return" onclick="<tmpl_if parent_path>view_path('<tmpl_var escape=html parent_path>')<tmpl_else>do_return()</tmpl_if>" type="button" class="west">
+<input value="Back" onclick="<tmpl_if parent_path>view_path('<tmpl_var escape=html parent_path>')<tmpl_else>do_return()</tmpl_if>" type="button" class="west">
 <tmpl_unless old_version><tmpl_if can_edit>
   <input value="Edit" onclick="edit_story()" type="button">
 </tmpl_if></tmpl_unless>
@@ -147,7 +147,7 @@ Properties
 
 </form>
 
-<form name="view_log" action="history.pl" method="post">
+<form name="view_log_form" action="history.pl" method="post">
 <input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">
 <input name="history_return_script" value="story.pl" type="hidden">
 <input name="history_return_script" value="return_script" type="hidden">

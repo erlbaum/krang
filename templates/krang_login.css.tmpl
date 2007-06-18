@@ -1,45 +1,107 @@
+/**************
+ * Page Frame *
+ **************/
+
 html { background: #333; color: #FFF; }
 body { background: url("/images/bkg-body.gif") repeat-y; width: 974px; margin: 0 auto; padding: 0; font: 11px/1 "Helvetica Neue",arial,helvetica,sans-serif; }
 #H   { background: #360 url("/images/bkg-header.jpg") no-repeat; position: relative; height: 105px; margin: 0 7px; }
 #M   { background: #FFF url("/images/bkg-midriff.gif") repeat-y; color: #000; min-height: 420px; margin: 0 7px; border: 1px solid #D4D4D4; border-width: 1px 0; }
-#S   { width: 178px; margin: 20px 0; }
+#S   { background: url("/images/bkg-sidebar.jpg") no-repeat; color: #333; position: relative; width: 178px; min-height: 420px; }
 #C   { float: right; width: 740px; margin: 20px; }
 #F   { background: url("/images/bkg-footer.gif") no-repeat; padding: 0 7px 31px; }
 
+
+/******************
+ * Global Effects *
+ ******************/
 
 a                 { background-color: inherit; color: #690; font-weight: bold; text-decoration: none; }
 a:hover, a:active { background-color: #FF9; color: #360; }
 a:focus           { outline: none; }/*:FF borks layout otherwise(db2)*/
 a img             { border: 0; }
 
+.enclose { overflow: hidden; }
+
+
+/*******************
+ * Header + Footer *
+ *******************/
 
 #H h1, #H #instance_logo { position: absolute; top: 10px; }
 #H h1 { left: 20px; margin: 0; font-size: 1em; }
 #H #instance_logo { right: 20px; }
 
-#H ul.nav, #F ul.nav { color: #666; height: 2.28em; list-style: none; margin: 0; padding: 0 20px; text-align: right; }
-#H ul.nav            { background: #DDD url("/images/bkg-header-nav.gif") repeat-x; position: absolute; bottom: 0; left: 180px; right: 0; }
-#F ul.nav            { background: #E1E1E1 url("/images/bkg-footer-nav.gif") 0 100% repeat-x; margin-left: 180px; }
-#H .nav li    , #F .nav li     { display: -moz-inline-box; display: inline-block; border-left: thin solid #CCC; }
-#H .nav li.l  , #F .nav li.l   { border-right: thin solid #CCC; }
-#H .nav a     , #F .nav a      { height: 2.28em; display: block; padding: 0 10px; line-height: 2.28; cursor: default; }
+#H .nav, #F .nav div { color: #666; }
+#H .nav ul, #F .nav ul { list-style: none; margin: 0; }
+#H .nav li, #F .nav li { border-left: 1px solid #CCC; }
+#H .nav li.l, #F .nav li.l { border-right: 1px solid #CCC; }
+#H .nav a, #H .nav b, #F .nav a { display: block; height: 2.28em; padding: 0 10px; line-height: 2.28; white-space: nowrap; cursor: pointer; }
 #H .nav a span, #F .nav a span { color: #666; font-weight: normal; }
 
+#H .nav      { background: #DDD url("/images/bkg-header-nav.gif") repeat-x; position: absolute; height: 2.28em; bottom: 0; left: 180px; right: 0; }
+#H .nav ul   { background: url("/images/bkg-header-corner.gif") no-repeat; height: 100%; width: 100%; padding: 0; }
+#H .nav li   { float: right; }
+#H .nav li.l { margin-right: 20px; }
+#H .nav b    { color: #690; font-weight: bold; }
 
-#F div { background: #360 url("/images/bkg-footer-grass.jpg") no-repeat; height: 65px; max-height: 65px; }
+#H .nav .menu          { position: relative; }
+#H .nav .menu b        { background: url("/images/icon-submenu.gif") 100% 50% no-repeat; padding-right: 20px; }
+#H .nav .menu ul       { background-color: #EEE; background-image: none; position: absolute; height: auto; width: auto; top: 100%; left: -999em; border: 1px solid #CCC; border-width: 1px 1px 0; border-top-color: #D4D4D4; }
+#H .nav .menu:hover ul { left: -1px; z-index: 32767; }
+#H .nav .menu li       { float: none; border: 0; }
+#H .nav .menu li.l     { margin-right: 0; }
+#H .nav .menu li a     { border-bottom: 1px solid #CCC; }
+#H .nav .menu li.xxx   { display: none; }
+
+#F .nav        { background: #360 url("/images/bkg-footer-grass.jpg") no-repeat; height: 65px; max-height: 65px; }
+#F .nav div    { background: #E1E1E1 url("/images/bkg-footer-nav.gif") 0 100% repeat-x; margin: 0 0 0 180px; }
+#F .nav ul     { background: url("/images/bkg-footer-corner.gif") 0 100% no-repeat; height: 2.28em; padding: 0 20px; text-align: right; }
+#F .nav li     { display: -moz-inline-box; display: inline-block; }
 
 
-#C h2 { background-color: inherit; color: #369; margin: 20px 20px 0; border-bottom: thin solid #CEE7FF; font: normal 2.72em Georgia,serif; text-transform: uppercase; letter-spacing: 1px; word-spacing: 3px; }
+/***********
+ * Sidebar *
+ ***********/
 
-#C p.err { background-color: inherit; color: <tmpl_var InvalidColor>; margin: 20px 30px -20px; font-weight: bold; font-size: 1.25em; }
+#S ul { position: absolute; bottom: 0; left: 0; list-style: none; margin: 0; padding: 0 0 15px; }
+#S li { margin: 10px 15px 0 10px; line-height: 1.5; }
 
-#C form   { margin: 40px 30px; padding: 0; }
-#C form p { margin: 0 0 10px; font-size: 1em; }
 
-#C p label       { width: 6em; display: -moz-inline-box; display: inline-block; background-color: inherit; color: #666; font-weight: bold; }
-#C p input       { background-color: #FFF; color: #000; width: 18em; padding: .25em; font-size: 1em; }
+/* !!!!!!!!!!!!!!!!!!!! PAGE "CONTENT" FOLLOWS BELOW !!!!!!!!!!!!!!!!!!!! */
+
+
+/************
+ * Headings *
+ ************/
+
+#C h2 { background-color: inherit; color: #369; margin: 0; border-bottom: 1px solid #CEE7FF; font: normal 2.72em Georgia,serif; text-transform: uppercase; letter-spacing: 1px; word-spacing: 3px; }
+
+
+/**********
+ * Blocks *
+ **********/
+
+#C p { margin: 1.5em 20px 0; line-height: 1.5; }
+
+
+/*********
+ * Forms *
+ *********/
+
+#C form { margin: 0; padding: 2em 20px 0; }
+
+#C form p { margin: 1em 0 0; }
+
+#C p label { background-color: inherit; color: #666; width: 10em; display: -moz-inline-box; display: inline-block; font-weight: bold; }
+#C p input { background-color: #FFF; color: #000; width: 18em; padding: .25em; font-size: 1em; }
 #C p input:focus { background-color: #FF9; color: #000; }
 
-#C .btn       { margin: 20px 0 0; padding: 0 0 0 6em; line-height: 2.16; }
-#C .btn input { background-color: #690; color: #FFF; width: auto; overflow: visible; border: thin solid #360; border-width: 0 thin thin 0; padding: .35em .7em; font-size: 1.27em; line-height: 1; font-weight: bold; }
+#C ul.err  { list-style: none; margin: 0 0 -1em 6em; padding: 0; }
+#C .err li { background: url("/images/icon-alert.gif") 0 50% no-repeat; color: #F50; min-height: 14px; margin: 1em 0 0; padding-left: 20px; font-weight: bold; }
+
+#C p.btn { margin: 2em 0 0 10em; }
+#C p.btn input       { background: #690 url("/images/bkg-button-full.gif") 0 50% repeat-x; color: #FFF; width: auto; overflow: visible; margin: 0 0 0 5px; border: 1px solid #360; border-color: #690 #360 #360 #690; padding: .1em .5em; font-size: 1.27em; line-height: 1; }
+#C p.btn input:hover { background-color: #360; background-image: none; }
+
+#C p.btn a { margin: 0 0 0 1em; }
 

@@ -3,7 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Nav.edit_mode();
-  //Krang.Help.set( '' );
+  Krang.Help.set();
 } );
 
 <tmpl_if advanced>
@@ -72,13 +72,13 @@ Advanced Search
 <tmpl_unless advanced>
 
   <div class="faux-p">
-  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
   <input value="Search" type="submit" class="button">
   </div>
 
 <tmpl_else>
 
-  <table summary="">
+  <table class="request" summary="">
 
   <colgroup>
   <col class="c-mini">

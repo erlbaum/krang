@@ -94,7 +94,7 @@ Properties
 
 <tmpl_unless add_mode>
 
-  <table summary="">
+  <table class="result" summary="">
 
   <colgroup>
   <col class="c-label">
@@ -124,22 +124,42 @@ Properties
   <td><tmpl_unless deployed_version>[n/a]<tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
   </tr>
 
+  <tr><!--:FIXME(db2)-->
+  <th>All Versions</th>
+  <td>
+  <tmpl_var version_chooser>
+  <input value="Revert" onclick="revert_version()" type="button" class="button">
+  <input value="View" onclick="view_version()" type="button" class="button">
+  </td>
+  </tr>
+
+  <tr<tmpl_if error_template_file> class="ERR-ROW"</tmpl_if>>
+  <th>Upload Template File</th>
+  <td colspan="3">
+    Current File
+    <tmpl_var escape=html filename>
+    <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
+    <i>&mdash; or &mdash;</i>
+    <br>
+    <tmpl_var upload_chooser>
+  </td>
+  </tr>
+
   </tbody>
 
   </table>
 
-</tmpl_unless>
+<tmpl_else>
 
-<table summary="">
+  <table class="request" summary="">
 
-<colgroup>
-<col class="c-label">
-<col>
-</colgroup>
+  <colgroup>
+  <col class="c-label">
+  <col>
+  </colgroup>
 
-<tbody>
+  <tbody>
 
-<tmpl_if add_mode>
   <tr<tmpl_if error_no_filename> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_url> class="ERR-ROW"<tmpl_else><tmpl_if error_element> class="ERR-ROW"</tmpl_if></tmpl_if></tmpl_if>>
   <th>Element</th>
   <td><tmpl_var element_chooser></td>
@@ -155,33 +175,15 @@ Properties
   <td><tmpl_var category_chooser></td>
   </tr>
 
-  <tr><!--:FIXME(db2)-->
-  <th>All Versions</th>
-  <td>
-  <tmpl_var version_chooser>
-  <input value="Revert" onclick="revert_version()" type="button" class="button">
-  <input value="View" onclick="view_version()" type="button" class="button">
-  </td>
+  <tr<tmpl_if error_template_file> class="ERR-ROW"</tmpl_if>>
+  <th>Upload Template File</th>
+  <td><tmpl_var upload_chooser></td>
   </tr>
-</tmpl_if>
 
-<tr<tmpl_if error_template_file> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_url> class="ERR-ROW"</tmpl_if></tmpl_if>><!--db2: uncertain abt. duplicate_url here-->
-<th>Upload Template File</th>
-<td>
-<tmpl_if filename>
-  Current File
-  <tmpl_var escape=html filename>
-  <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
-  <i>&mdash; or &mdash;</i>
-  <br>
-</tmpl_if>
-<tmpl_var upload_chooser>
-</td>
-</tr>
+  </tbody>
 
-</tbody>
-
-</table>
+  </table>
+</tmpl_unless>
 
 <h3>
 Content
@@ -191,10 +193,10 @@ Content
 <textarea name="content" rows="30" cols="60"><tmpl_var escape=html content></textarea>
 </p>
 
-<p>
+<p><label>
 <input name="testing" value="1" type="checkbox"<tmpl_if testing> checked</tmpl_if>>
 Test
-</p>
+</label></p>
 
 <div class="panel capped">
 <input value="Save &amp; Stay" onclick="do_save_stay()" type="button">

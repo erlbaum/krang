@@ -1,9 +1,9 @@
 <tmpl_include header.tmpl>
 
 <script type="text/javascript">
-//Krang.onload( function() {
-//  Krang.Help.set( '' );
-//} );
+Krang.onload( function() {
+  Krang.Help.set();
+} );
 
 save_and_view = function()
 {
@@ -45,7 +45,7 @@ Schedule
 Properties
 </h3>
 
-<table summary="">
+<table class="result" summary="">
 
 <colgroup>
 <col class="c-label">
@@ -117,24 +117,22 @@ Current Schedule
 
   <thead>
   <tr>
-  <th>Action</th>
+  <th class="f">Action</th>
   <th>Version</th>
   <th>Trigger</th>
   <th>Next Event</th>
-  <th class="tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'schedule_delete_list')"></th>
+  <th class="l tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'schedule_delete_list')"></th>
   </tr>
   </thead>
 
   <tbody><tmpl_loop existing_schedule_loop>
-    <tr>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
     <td><tmpl_var escape=html action></td>
-    <td>
-    <tmpl_if version>
+    <td><tmpl_if version>
       <tmpl_var escape=html version>
     <tmpl_else>
       [newest]
-    </tmpl_if>
-    </td>
+    </tmpl_if></td>
     <td><tmpl_var escape=html schedule></td>
     <td><tmpl_var escape=html next_run></td>
     <td class="tick"><input name="schedule_delete_list" value="<tmpl_var escape=html schedule_id>" type="checkbox"></td>
@@ -168,7 +166,7 @@ Add Action
 (<tmpl_if simple>Simple<tmpl_else>Advanced</tmpl_if>)
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-label">
@@ -251,7 +249,7 @@ Add Action
 </table>
 
 <div class="panel capped">
-<input value="Return" onclick="do_return()" type="button" class="west">
+<input value="Back" onclick="do_return()" type="button" class="west">
 <input value="Schedule Action" type="submit">
 </div>
 

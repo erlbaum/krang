@@ -1,14 +1,12 @@
 <tmpl_include login_header.tmpl>
 
+<script type="text/javascript">
+focusFormField( 'form-password', 'new_password' );
+</script>
+
 <h2>
 Reset Your Password
 </h2>
-
-<tmpl_loop header_alert_loop>
-  <p class="err">
-  <tmpl_var escape=html alert>
-  </p>
-</tmpl_loop>
 
 <form id="form-password" action="login.pl" method="post">
 
@@ -21,9 +19,15 @@ Reset Your Password
 </p>
 
 <p>
-<label for="password-retype">New Password (Retype)</label>
+<label for="password-retype">Repeat Password</label>
 <input id="password-retype" name="new_password_re" type="password">
 </p>
+
+<tmpl_if header_alert_loop><ul class="err"><tmpl_loop header_alert_loop>
+  <li>
+  <tmpl_var escape=html alert>
+  </li>
+</tmpl_loop></ul></tmpl_if>
 
 <p class="btn">
 <input value="Reset Password" type="submit">

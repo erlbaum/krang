@@ -52,14 +52,14 @@ Current Desks
 
   <thead>
   <tr>
-  <th class="series">Order</th>
+  <th class="series f">Order</th>
   <th>Name</th>
-  <th class="tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'desk_delete_list')"></th>
+  <th class="tick l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'desk_delete_list')"></th>
   </tr>
   </thead>
 
   <tbody><tmpl_loop existing_desk_loop>
-    <tr>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
     <td class="series"><select name="order_<tmpl_var escape=html desk_id>" onchange="Krang.update_order(this,'order_')"><tmpl_loop desk_count_loop>
       <option value="<tmpl_var escape=html count>"<tmpl_if selected> selected</tmpl_if>><tmpl_var escape=html count></option>
     </tmpl_loop></select></td>
@@ -87,7 +87,7 @@ Current Desks
 Create a New Desk
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-mini">
@@ -103,7 +103,7 @@ Create a New Desk
 
 <tr>
 <th>Order</th>
-<td><tmpl_var order_selector><!--:markup--></td>
+<td><tmpl_var order_selector></td>
 </tr>
 
 </tbody>

@@ -13,15 +13,13 @@
 <!--[if lte IE 7]><style type="text/css">
 body { position: relative; font-size: 69%; }
 
-#H .nav li  , #F .nav li   { display: inline; border-left-width: 1px; }
-#H .nav li.l, #F .nav li.l { border-right-width: 1px; }
-#H .nav a   , #F .nav a    { display: inline-block; }
+.enclose { zoom: 1; }
 
-#C h2 { border-bottom-width: 1px; }
+#H .nav .menu a      { min-width: 6.2em; }
+#H .nav #menu-help a { min-width: 9.4em; }
 
-#C .edit textarea { width: 95%; }
-
-#C .full input, #C .full select, #C .full textarea { width: 95%; }
+#F .nav li { display: inline; }
+#F .nav a  { display: inline-block; }
 
 #C .tabs      { cursor: default; }
 #C .tabs li   { display: inline; }
@@ -29,17 +27,22 @@ body { position: relative; font-size: 69%; }
 </style><![endif]-->
 
 <!--[if lt IE 7]><style type="text/css">
-#H ul.nav { width: 740px; }
+#H .nav              { width: 780px; }
+#H .nav li.l         { display: inline; }
+#H .nav a, #H .nav b { float: left; }
+#H .nav .over ul     { left: -1px; z-index: 32767; }
+#H .nav .menu a      { clear: left; width: 6.2em; }
+#H .nav #menu-help a { width: 9.4em; }
 
-#M { height: 420px; }
+#F .nav { overflow-y: hidden; }
+
+#S { height: 420px; }
 
 #C { display: inline; margin-left: 19px; }
 
 #C .tabs { white-space: normal; height: 2.27em; }/*:contain overflow(db2)*/
 
 div.autocomplete { height: expression( ( this.scrollHeight > 154 ) ? '154px' : 'auto' ); }
-
-#F div { overflow-y: hidden; }
 
 #indicator { position: absolute; top: expression( ( ie6_throbber_top = document.documentElement.scrollTop + document.documentElement.clientHeight - this.clientHeight - 2 ) + 'px' ); left: expression( ( ie6_throbber_left = 0 - document.documentElement.clientLeft - document.body.offsetLeft ) + 'px' ); height: auto; padding: 1em; }
 
@@ -56,13 +59,13 @@ div.autocomplete { height: expression( ( this.scrollHeight > 154 ) ? '154px' : '
 <script src="/js/prototype.js" type="text/javascript"></script>
 <script src="/js/scriptaculous/builder.js" type="text/javascript"></script>
 <script src="/js/scriptaculous/effects.js" type="text/javascript"></script>
-<script src="/js/scriptaculous/dragdrop.js" type="text/javascript"></script>
 <script src="/js/scriptaculous/controls.js" type="text/javascript"></script>
 <script src="/js/control.modal.js" type="text/javascript"></script>
 <script src="/js/behaviour.js" type="text/javascript"></script>
 <script src="/js/krang.js" type="text/javascript"></script>
 <script src="/js/krang/behaviours.js" type="text/javascript"></script>
 <script src="/js/popup_tree_select.js" type="text/javascript"></script>
+<!--<script src="/js/firebug/firebug.js" type="text/javascript"></script>-->
 
 <script type="text/javascript">
 Krang.instance = '<tmpl_var escape=js instance_display_name>';
@@ -92,14 +95,14 @@ Looks like a little bug (probably an Internal Server Error).
 </form></div>
 </div>
 
-<div id="messages" class="krang-slider" style="display:none"><div class="wrapper">
+<div id="messages" class="krang-slider" style="display:none; position: fixed"><div class="wrapper">
 <div class="content"></div>
 <form>
 <input value="Close" onclick="Krang.Messages.hide('messages')" type="button" class="button">
 </form>
 </div></div>
 
-<div id="alerts" class="krang-slider" style="display:none"><div class="wrapper">
+<div id="alerts" class="krang-slider" style="display:none; position: fixed"><div class="wrapper">
 <div class="content"></div>
 <form>
 <input value="Close" onclick="Krang.Messages.hide('alerts')" type="button" class="button">
@@ -109,38 +112,50 @@ Looks like a little bug (probably an Internal Server Error).
 <div id="H">
 
 <h1><a title="About <tmpl_var escape=html krang_product_name>" href="about.pl" class="popup"><!--
---><img alt="<tmpl_var escape=html krang_product_name>(sm)" src="/images/logo-cms.jpg" height="90" width="180"><!--
+--><img alt="<tmpl_var escape=html krang_product_name>" src="/images/logo-cms.jpg" height="90" width="180"><!--
 --></a></h1>
 
 <div id="instance_logo"></div>
 
-<ul class="nav">
+<div class="nav"><ul>
 
-<li><a href="javascript:null" onclick="return(false)">
-<tmpl_var escape=html header_user_name>
-</a></li><!--
-...Op(9)+Sf(2)...
---><li><a href="javascript:Krang.Nav.goto_url('workspace.pl')">
-Workspace
-</a></li><!--
-...Op(9)+Sf(2)...
---><li><a href="javascript:Krang.Nav.goto_url('my_pref.pl')">
-Preferences
-</a></li><!--
-...Op(9)+Sf(2)...
---><li><a href="javascript:Krang.Nav.goto_url('my_alerts.pl')">
-Alerts
-</a></li><!--
-...Op(9)+Sf(2)...
---><li><a href="javascript:Krang.Help.go()">
-Help
-</a></li><!--
-...Op(9)+Sf(2)...
---><li class="l"><a href="login.pl?rm=logout" class="logout">
+<li class="l"><a href="login.pl?rm=logout" class="logout">
 Log Out
 </a></li>
 
-</ul>
+<li id="menu-help" class="menu"><b>
+Help
+</b><ul>
+
+<li><a href="javascript:Krang.Help.go('introduction')">
+Getting Started
+</a></li>
+
+<li class="l"><a href="javascript:Krang.Help.go()">
+Help with this Page
+</a></li>
+
+</ul></li>
+
+<li><a href="javascript:Krang.Nav.goto_url('workspace.pl')">
+Workspace
+</a></li>
+
+<li class="menu"><b>
+<tmpl_var escape=html header_user_name>
+</b><ul>
+
+<li><a href="javascript:Krang.Nav.goto_url('my_pref.pl')">
+Preferences
+</a></li>
+
+<li class="l"><a href="javascript:Krang.Nav.goto_url('my_alerts.pl')">
+Alerts
+</a></li>
+
+</ul></li>
+
+</ul></div>
 
 </div>
 

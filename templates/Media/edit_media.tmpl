@@ -100,7 +100,7 @@ Media
   Properties
   </h3>
 
-  <table summary="">
+  <table class="request" summary="">
 
   <colgroup>
   <col class="c-label">
@@ -139,7 +139,7 @@ Media
   </table>
 </tmpl_unless>
 
-<table summary=""><!--:FIX(db2)-->
+<table class="request" summary=""><!--:FIX(db2)-->
 
 <colgroup>
 <col class="c-label">
@@ -224,7 +224,7 @@ Media
 <tmpl_unless add_mode>
   <p><!--:FIXME(db2)-->
   Version
-  <tmpl_var media_version_chooser><!--:markup-->
+  <tmpl_var media_version_chooser>
   <input value="Revert" onclick="revert_version()" type="button" class="button">
   <input value="View" onclick="view_version()" type="button" class="button">
   </p>

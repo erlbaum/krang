@@ -10,6 +10,10 @@ show_advanced_search = function( show_advanced )
   Krang.form_submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
 }
 
+add_story = function() {
+  Krang.form_submit('search_form', { rm: 'new_story' });
+}
+
 <tmpl_if do_advanced_search>
   clear_advanced_search = function()
   {
@@ -31,6 +35,10 @@ show_advanced_search = function( show_advanced )
   view_story_log = function( id )
   {
     Krang.form_submit( 'view_story_log_form', { story_id: id } );
+  }
+
+  copy_story = function(id) {
+    Krang.form_submit('find_story', { rm: 'copy', story_id: id });
   }
 
   delete_selected = function()
@@ -92,13 +100,13 @@ Advanced Search
 <tmpl_unless do_advanced_search>
 
   <div class="faux-p">
-  <input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
   <input value="Search" type="submit" class="button">
   </div>
 
 <tmpl_else>
 
-  <table summary="">
+  <table class="request" summary="">
 
   <colgroup>
   <col class="c-mini">
@@ -180,11 +188,14 @@ Advanced Search
 Search Results
 </h3>
 
-<tmpl_if row_count><div class="panel"><form>
-  <input value="Check Out" onclick="checkout_selected()" type="button">
-  <input value="Publish" onclick="publish_selected()" type="button">
-  <input value="Delete" onclick="delete_selected()" type="button">
-</form></div></tmpl_if>
+<div class="panel"><form>
+  <input value="Add Story" onclick="add_story()" type="button"<tmpl_if row_count> class="west"</tmpl_if>>
+  <tmpl_if row_count>
+    <input value="Check Out" onclick="checkout_selected()" type="button">
+    <input value="Publish" onclick="publish_selected()" type="button">
+    <input value="Delete" onclick="delete_selected()" type="button">
+  </tmpl_if>
+</form></div>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>

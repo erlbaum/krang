@@ -1,18 +1,12 @@
 <tmpl_include login_header.tmpl>
 
 <script type="text/javascript">
-window.onload = function(){ document.forms[ 'form-login' ][ 'username' ].focus(); };
+focusFormField( 'form-login', 'username' );
 </script>
 
 <h2>
 Welcome!
 </h2>
-
-<tmpl_loop header_alert_loop>
-  <p class="err">
-  <tmpl_var escape=html alert>
-  </p>
-</tmpl_loop>
 
 <form id="form-login" name="form-login" action="login.pl" method="post">
 
@@ -28,6 +22,12 @@ Welcome!
 <label for="login-password">Password</label>
 <input id="login-password" name="password" type="password">
 </p>
+
+<tmpl_if header_alert_loop><ul class="err"><tmpl_loop header_alert_loop>
+  <li>
+  <tmpl_var escape=html alert>
+  </li>
+</tmpl_loop></ul></tmpl_if>
 
 <p class="btn">
 <input value="Log In" type="submit">

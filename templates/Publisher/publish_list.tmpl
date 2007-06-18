@@ -1,9 +1,9 @@
 <tmpl_include header.tmpl>
 
 <script type="text/javascript">
-//Krang.onload( function() {
-//  Krang.Help.set( '' );
-//} );
+Krang.onload( function() {
+  Krang.Help.set();
+} );
 </script>
 
 <h2>
@@ -56,17 +56,18 @@ Publication Materials
 
 <thead>
 <tr>
-<th>ID</th>
+<th class="f">ID</th>
 <th>Type</th>
 <th>Title</th>
 <th>URL</th>
 <tmpl_if media>
   <th></th>
 </tmpl_if>
-<th>Status</th>
+<th class="l">Status</th>
 </tr>
 </thead>
 
+<!--FIXME(zebra):-->
 <tbody>
 
 <tmpl_if media>
@@ -117,7 +118,7 @@ Publication Materials
 Publication Time
 </h3>
 
-<table summary=""><!--:FIX(db2)-->
+<table class="request" summary=""><!--:FIX(db2)-->
 
 <colgroup>
 <col class="c-label">

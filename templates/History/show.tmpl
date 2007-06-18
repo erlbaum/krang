@@ -1,9 +1,9 @@
 <tmpl_include header.tmpl>
 
 <script type="text/javascript">
-//Krang.onload( function() {
-//  Krang.Help.set( '' );
-//} );
+Krang.onload( function() {
+  Krang.Help.set();
+} );
 </script>
 
 <h2>
@@ -17,16 +17,65 @@
 Log
 </h2>
 
-<!--Krang::HTMLPager:-->
-<tmpl_var pager_html>
-<!--:Krang::HTMLPager-->
+<tmpl_if krang_pager_rows>
+
+<form name="krang_pager_form" action="history.pl" method="post">
+
+<tmpl_include HTMLPager/pager-internals.tmpl>
+
+<tmpl_include HTMLPager/pager-pagination.tmpl>
+
+<table class="result select_row" summary="">
+
+<colgroup>
+<!-- 'action' column -->
+<col>
+<!-- 'user' column -->
+<col class="c-user">
+<!-- 'timestamp' column - not normal length so that we can fit it all on one line -->
+<col class="c-ldate">
+<!-- 'attr' column -->
+<col class="c-stat">
+</colgroup>
+
+<thead>
+<tr>
+<th class="f"><tmpl_var colhead_action></th>
+<th><tmpl_var colhead_user></th>
+<th><tmpl_var colhead_timestamp></th>
+<th class="l"><tmpl_var colhead_attr></th>
+</tr>
+</thead>
+
+<tbody><tmpl_loop krang_pager_rows>
+<tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+<td><tmpl_var action></td>
+<td><tmpl_var user></td>
+<td><tmpl_var timestamp></td>
+<td><tmpl_var attr></td>
+</tr>
+</tmpl_loop></tbody>
+
+</table>
+
+<tmpl_include HTMLPager/pager-pagination.tmpl>
+
+</form>
+
+<tmpl_else>
+
+<p class="naught">
+None found
+</p>
+
+</tmpl_if>
 
 <form name="return_form" action="<tmpl_var escape=html return_script>" method="post">
 
 <tmpl_var return_hidden>
 
 <div class="panel lame capped">
-<input value="Return" type="submit" class="west">
+<input value="Back" type="submit" class="west">
 </div>
 
 </form>

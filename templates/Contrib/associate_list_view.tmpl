@@ -3,7 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Nav.edit_mode();
-  //Krang.Help.set( '' );
+  Krang.Help.set();
 } );
 
 add_contrib = function()
@@ -76,17 +76,17 @@ Current Contributors
 
   <thead>
   <tr>
-  <th class="series">Order</th>
+  <th class="series f">Order</th>
   <th>Last Name</th>
   <th>First, Middle Name</th>
   <th>Type</th>
-  <th class="tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'contrib_unassociate_list')"></th>
+  <th class="tick l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'contrib_unassociate_list')"></th>
   </tr>
   </thead>
 
   <tbody><tmpl_loop associated_contributors>
-    <tr>
-    <td class="series"><tmpl_var order_contrib_popup_menu><!--:markup--></td>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td class="series"><tmpl_var order_contrib_popup_menu></td>
     <td><tmpl_var escape=html last></td>
     <td><tmpl_var escape=html first><tmpl_if middle>, <tmpl_var escape=html middle></tmpl_if></td>
     <td><tmpl_var escape=html type></td>
@@ -125,7 +125,7 @@ Simple Search
 <div class="tabbed">
 
 <div class="faux-p">
-<input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
 <input value="Search" type="submit" class="button">
 </div>
 
@@ -164,15 +164,15 @@ Choose Contributors
 
   <thead>
   <tr>
-  <th><tmpl_var colhead_last></th>
+  <th class="f"><tmpl_var colhead_last></th>
   <th><tmpl_var colhead_first_middle></th>
   <th><tmpl_var colhead_type></th>
-  <th class="tick"><tmpl_var colhead_checkbox_column></th>
+  <th class="tick l"><tmpl_var colhead_checkbox_column></th>
   </tr>
   </thead>
 
   <tbody><tmpl_loop krang_pager_rows>
-    <tr>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
     <td rowspan="<tmpl_var contrib_type_count>"><tmpl_var escape=html last></td>
     <td rowspan="<tmpl_var contrib_type_count>"><tmpl_var first_middle><!--:markup--></td>
 
@@ -197,7 +197,7 @@ Choose Contributors
 <input name="rm" value="edit" type="hidden">
 
 <div class="panel capped">
-<input value="Return" type="submit" class="west">
+<input value="Back" type="submit" class="west">
 <input value="Add Contributor" onclick="add_contrib()" type="button">
 <tmpl_if row_count>
   <input value="Associate" onclick="associate_selected()" type="button">

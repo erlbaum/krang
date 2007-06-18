@@ -37,7 +37,7 @@ View Media
 Properties
 </h3>
 
-<table summary="">
+<table class="result" summary="">
 
 <colgroup>
 <col class="c-label">
@@ -132,7 +132,7 @@ Properties
 </table>
 
 <div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped"><form>
-<input value="Return" onclick="do_return()" type="button" class="west">
+<input value="Back" onclick="do_return()" type="button" class="west">
 <tmpl_unless is_old_version><tmpl_if can_edit>
   <input value="Edit" onclick="do_edit_media()" type="button">
 </tmpl_if></tmpl_unless>

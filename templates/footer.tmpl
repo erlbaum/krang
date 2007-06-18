@@ -4,21 +4,20 @@
 <tmpl_include /nav.tmpl>
 </div>
 
-<br style="display:block;clear:both"><!--[if lt IE 7]>&nbsp;<![endif]--></div>
+<br style="clear: both">
+</div>
 
-<div id="F"><div>
+<div id="F"><div class="nav"><div>
 
-<ul class="nav">
-
-<!--
-...Op(9)+Sf(2)...
---><tmpl_if cms_contact_email><li class="l"><a href="mailto:<tmpl_var cms_contact_email>">
+<ul>
+<tmpl_if cms_contact_email><li class="l">
+<a href="mailto:<tmpl_var cms_contact_email>">
 Contact Us
-</a></li></tmpl_if>
-
+</a>
+</li></tmpl_if>
 </ul>
 
-</div></div>
+</div></div></div>
 
 <script type="text/javascript">
 Krang.load();

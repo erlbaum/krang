@@ -63,7 +63,7 @@ Group
 Properties
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-label">
@@ -85,7 +85,7 @@ Properties
 Site Permissions
 </h3>
 
-<table class="result" summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col>
@@ -97,15 +97,15 @@ Site Permissions
 
 <thead>
 <tr>
-<th colspan="2">Site</th>
+<th colspan="2" class="f">Site</th>
 <th class="series">Edit</th>
 <th class="series">Read-Only</th>
-<th class="series">Hide</th>
+<th class="series l">Hide</th>
 </tr>
 </thead>
 
 <tbody><tmpl_loop categories>
-  <tr>
+  <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
   <td><tmpl_var escape=html category_url></td>
   <td><input value="Set Category Permissions" onclick="edit_categories('<tmpl_var escape=html category_id>')" type="button" class="button"></td>
   <tmpl_loop permission_radio>
@@ -120,7 +120,7 @@ Site Permissions
 Asset Permissions
 </h3>
 
-<table class="result" summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col>
@@ -131,10 +131,10 @@ Asset Permissions
 
 <thead>
 <tr>
-<th>Asset</th>
+<th class="f">Asset</th>
 <th class="series">Edit</th>
 <th class="series">Read-Only</th>
-<th class="series">Hide</th>
+<th class="series l">Hide</th>
 </tr>
 </thead>
 
@@ -146,7 +146,7 @@ Asset Permissions
 </tmpl_loop>
 </tr>
 
-<tr>
+<tr class="even">
 <td>Media</td>
 <tmpl_loop asset_media>
   <td class="series"><tmpl_var radio_select></td>
@@ -167,7 +167,7 @@ Asset Permissions
 Desk Permissions
 </h3>
 
-<table class="result" summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col>
@@ -178,15 +178,15 @@ Desk Permissions
 
 <thead>
 <tr>
-<th>Desk</th>
+<th class="f">Desk</th>
 <th class="series">Edit</th>
 <th class="series">Read-Only</th>
-<th class="series">Hide</th>
+<th class="l series">Hide</th>
 </tr>
 </thead>
 
 <tbody><tmpl_loop desks>
-  <tr>
+  <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
   <td><tmpl_var desk_name></td>
   <tmpl_loop permission_radio>
     <td class="series"><tmpl_var radio_select></td>
@@ -200,7 +200,7 @@ Desk Permissions
 Report Permissions
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="tick">
@@ -245,7 +245,7 @@ Report Permissions
 Mailing Permissions
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="tick">
@@ -276,7 +276,7 @@ Mailing Permissions
 Membership Permissions
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="tick">
@@ -316,7 +316,7 @@ Membership Permissions
 Administrative Permissions
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="tick">
@@ -360,10 +360,11 @@ Administrative Permissions
 <tr>
 <td></td>
 <td class="tick"><tmpl_var admin_users_limited></td>
-<td colspan="2">Group Limited</td>
+<td<tmpl_unless enable_ftp> colspan="4"</tmpl_unless>>Group Limited</td>
 <tmpl_if enable_ftp>
-<td class="tick"><tmpl_var admin_categories_ftp></td>
-<td>Via FTP</td>
+  <td></td>
+  <td class="tick"><tmpl_var admin_categories_ftp></td>
+  <td>Via FTP</td>
 </tmpl_if>
 </tr>
 

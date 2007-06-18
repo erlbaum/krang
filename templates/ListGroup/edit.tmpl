@@ -3,7 +3,7 @@
 <script type="text/javascript">
 Krang.onload( function() {
   Krang.Nav.edit_mode();
-  //Krang.Help.set( '' );
+  Krang.Help.set();
 } );
 
 <tmpl_var js_list_arrays>
@@ -339,7 +339,7 @@ Edit List Group
 Description
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-label">
@@ -366,14 +366,14 @@ Description
 Lists
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-label">
 <col>
 </colgroup>
 
-<tmpl_loop list_loop><tbody>
+<tbody><tmpl_loop list_loop>
   <tr>
   <th><tmpl_var escape=html list_name></th>
   <td>
@@ -390,7 +390,7 @@ Lists
   <input value="Delete" onclick="do_delete(<tmpl_var escape=html list_count>)" type="button" class="button">
   </td>
   </tr>
-</tbody></tmpl_loop>
+</tmpl_loop></tbody>
 
 </table>
 

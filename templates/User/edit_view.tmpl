@@ -134,7 +134,7 @@ User
 User Information
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-label">
@@ -176,7 +176,7 @@ User Information
 Groups
 </h3>
 
-<table summary=""><!--:FIX(db2)-->
+<table class="request" summary=""><!--:FIX(db2)-->
 
 <colgroup>
 <col class="c-mini">
@@ -190,7 +190,7 @@ Groups
 <tr<tmpl_if error_missing_group> class="ERR-ROW"<tmpl_else><tmpl_if error_null_group> class="ERR-ROW"<tmpl_else><tmpl_if error_invalid_group_id> class="ERR-ROW"</tmpl_if></tmpl_if></tmpl_if>>
 <th>Available</th>
 <td class="full">
-<select name="possible_group_ids" size="<tmpl_var escape=html size>" multiple><tmpl_loop possible_group_ids>
+<select name="possible_group_ids" multiple="multiple" size="10"><tmpl_loop possible_group_ids>
   <option value="<tmpl_var escape=html id>"><tmpl_var escape=html name></option>
 </tmpl_loop></select>
 <br>
@@ -198,7 +198,7 @@ Groups
 </td>
 <th>Current</th>
 <td class="full">
-<select name="current_group_ids" size="<tmpl_var escape=html size>" multiple><tmpl_loop current_group_ids>
+<select name="current_group_ids" multiple="multiple" size="10"><tmpl_loop current_group_ids>
   <option value="<tmpl_var escape=html id>"><tmpl_var escape=html name></option>
 </tmpl_loop></select>
 <br>
@@ -214,7 +214,7 @@ Groups
 Login Information
 </h3>
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-label">

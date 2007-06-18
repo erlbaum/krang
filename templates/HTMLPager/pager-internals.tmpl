@@ -8,47 +8,7 @@
 <tmpl_var pager_persist_data>
 
 <script type="text/javascript">
-get_form_name = function()
-{
-  var magic_name = '<tmpl_var escape=js get_form_obj_magic_name>';
-  var form_set,  form_len,  form_now;
-  var input_set, input_len, input_now;
-  var i, j;
-
-  form_set = document.forms;
-  form_len = form_set.length;
-
-  for ( i = 0; i < form_len; i++ )
-  {
-    form_now  = form_set[ i ];
-    input_set = form_now.elements;
-    input_len = input_set.length;
-
-    for ( j = 0; j < input_len; j++ )
-    {
-      input_now = input_set[ j ];
-
-      if ( input_now && ( input_now.name == magic_name ) ) return form_now.name;
-    }
-  }
-}
-
-go_page = function( page )
-{
-  Krang.form_submit( get_form_name(), { krang_pager_curr_page_num : page }, { to_top : false } );
-}
-
-do_sort = function( sort_field, sort_order_desc )
-{
-  Krang.form_set( get_form_name(), {  krang_pager_sort_field : sort_field, krang_pager_sort_order_desc : sort_order_desc } );
-  go_page( '1' );
-}
-
-show_big_view = function( big_page_state )
-{
-  Krang.form_set( get_form_name(), { krang_pager_show_big_view : big_page_state } );
-  go_page( '1' );
-}
+Krang.Pager.input_key('<tmpl_var escape=js get_form_obj_magic_name>');
 </script>
 
 <!--:HTMLPager/pager-internals.tmpl-->

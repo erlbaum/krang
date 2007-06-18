@@ -21,10 +21,10 @@ Preferences
   <input name="password_only" value="1" type="hidden">
 </tmpl_if>
 
-<table summary="">
+<table class="request" summary=""><!--:FIXME(db2)-->
 
 <colgroup>
-<col style="width:19em">
+<col class="c-label">
 <col>
 </colgroup>
 
@@ -39,7 +39,7 @@ Preferences
   </tr>
 
   <tr>
-  <th>Use Auto-Completion for Searches?</th>
+  <th>Autocomplete Searches?</th>
   <td><tmpl_var use_autocomplete_selector></td>
   </tr>
 

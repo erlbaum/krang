@@ -39,7 +39,7 @@ Current Alerts
   <table class="result select_row" summary="">
 
   <colgroup>
-  <col style="width:6em">
+  <col>
   <col>
   <col>
   <col class="tick">
@@ -47,15 +47,15 @@ Current Alerts
 
   <thead>
   <tr>
-  <th>Action</th>
+  <th class="f">Action</th>
   <th>Site/Category</th>
   <th>Desk</th>
-  <th class="tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
+  <th class="tick l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
   </tr>
   </thead>
 
   <tbody><tmpl_loop alert_loop>
-    <tr>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
     <td><tmpl_var escape=html action></td>
     <td><tmpl_if category><tmpl_var escape=html category><tmpl_else>Any</tmpl_if></td>
     <td><tmpl_if desk><tmpl_var escape=html desk><tmpl_else>Any</tmpl_if></td>
@@ -81,7 +81,7 @@ Create a New Alert
 
 <input name="rm" value="add" type="hidden">
 
-<table summary="">
+<table class="request" summary="">
 
 <colgroup>
 <col class="c-mini">

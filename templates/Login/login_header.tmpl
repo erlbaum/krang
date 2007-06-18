@@ -13,50 +13,71 @@
 <!--[if lte IE 7]><style type="text/css">
 body { position: relative; font-size: 69%; }
 
-#H .nav li  , #F .nav li   { display: inline; border-left-width: 1px; }
-#H .nav li.l, #F .nav li.l { border-right-width: 1px; }
-#H .nav a   , #F .nav a    { display: inline-block; }
+.enclose { zoom: 1; }
 
-#C h2 { border-bottom-width: 1px; }
-
-#C .btn input { border-width: 0 1px 1px 0; }
+#F .nav li { display: inline; }
+#F .nav a  { display: inline-block; }
 </style><![endif]-->
 
 <!--[if lt IE 7]><style type="text/css">
-#H ul.nav { width: 740px; }
+#H .nav              { width: 780px; }
+#H .nav li.l         { display: inline; }
+#H .nav a, #H .nav b { float: left; }
+#H .nav .over ul     { left: -1px; z-index: 32767; }
+#H .nav .menu a      { clear: left; }
 
-#M { height: 420px; }
+#F .nav { overflow-y: hidden; }
+
+#S { height: 420px; }
 
 #C { display: inline; margin-left: 19px; }
 
-#F div { overflow-y: hidden; }
+#C .err li { height: 14px; }
 </style><![endif]-->
 
 <tmpl_if custom_css>
 <tmpl_var custom_css>
 </tmpl_if>
 
+<script type="text/javascript">
+function focusFormField( idForm, idField )
+{
+  var onloadWin = window.onload;
+  var setFocus  = function() { document.forms[ idForm ][ idField ].focus(); };
+
+  window.onload = ( typeof window.onload != 'function' )
+                ? setFocus
+                : function() { if ( onloadWin ) onloadWin(); setFocus(); }
+  ;
+}
+</script>
+
+<!--[if lt IE 7]><script type="text/javascript">
+function setMenuHelp()
+{
+  var R = document.getElementById( 'menu-help' );
+  R.onmouseover = function() { this.className = 'menu l over'; };
+  R.onmouseout  = function() { this.className = 'menu l'; };
+}
+
+window.onload = setMenuHelp;
+</script><![endif]-->
+
 </head><body>
 
 <div id="H">
 
 <h1><!--
---><img alt="<tmpl_var escape=html krang_product_name>(sm)" src="/images/logo-cms.jpg" height="90" width="180"><!--
+--><img alt="<tmpl_var escape=html krang_product_name>" src="/images/logo-cms.jpg" height="90" width="180"><!--
 --></h1>
 
 <div id="instance_logo"></div>
 
-<ul class="nav">
-
-<li class="l"><a href="javascript:null" onclick="return(false)">
-Help
-</a></li>
-
-</ul>
+<div class="nav"><ul><!-- we can put some stuff in here, like a getting-started-help link --></ul></div>
 
 </div>
 
-<div id="M">
+<div id="M" class="enclose">
 
 <div id="C">
 

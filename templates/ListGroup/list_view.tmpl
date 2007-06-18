@@ -1,9 +1,9 @@
 <tmpl_include header.tmpl>
 
 <script type="text/javascript">
-//Krang.onload( function() {
-  //Krang.Help.set( '' );
-//} );
+Krang.onload( function() {
+  Krang.Help.set();
+} );
 
 edit_list_group = function( id )
 {
@@ -33,7 +33,7 @@ Simple Search
 <div class="tabbed">
 
 <div class="faux-p">
-<input name="search_filter" value="<tmpl_var escape=html search_filter>" size="40" class="autocomplete">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
 <input value="Search" type="submit" class="button">
 </div>
 
