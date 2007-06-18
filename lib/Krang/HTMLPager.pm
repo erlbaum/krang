@@ -251,81 +251,88 @@ be saved to a file and customized as needed.
 
 sub make_internal_template {
     my $self = shift;
-
-    # Verify that pager specification is sane before proceeding
     $self->validate_pager();
-
     my $q = $self->cgi_query();
-    my $pager_tmpl = '';
 
-    # Start pager form 'krang_pager_form'
-    # we need to put the action attribute in here since
-    # when using ajax, it might not be the current URL that's supposed to 
-    # receive the submission
-    my $action = $q->url(-relative => 1);
-    $pager_tmpl .= qq|<form name="krang_pager_form" action="$action" method="post">|;
-
-    # Include javascript and hidden data template elements
-    $pager_tmpl .= "\n\n<tmpl_include HTMLPager/pager-internals.tmpl>\n\n";
-
-    # Major TMPL_IF block for results, start
-    $pager_tmpl .= "<tmpl_if krang_pager_rows>\n\n";
-
-    # Result count/page status display
-    $pager_tmpl .= '<div class="no-border">&nbsp;Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row></div>';
-
-    # Build up table and header row
+    my $pager_tmpl = "";
     my @columns = @{$self->columns()};
-    $pager_tmpl .= '<table class="form-cell" border="0" cellspacing="0" cellpadding="0" width="571"><tr class="form-head"><td class="form-head2">'
-      . join("</td>\n<td class=\"form-head2\">", (map { "<tmpl_var colhead_$_><tmpl_unless colhead_$_>&nbsp;</tmpl_unless>" } @columns) ) ."</td></tr>\n\n\n";
 
-    # Build loop for data
-    my $row_tmpl = "<tr>\n<td class=\"form-cell\">"
-      . join("</td>\n    <td class=\"form-cell\">", (map { "<tmpl_var $_>" } @columns)) ."</td>\n</tr>";
+    # don't show a label for thumbnail columns since it gets cut off
+    my $labels = $self->column_labels() || {};
+    $labels->{thumbnail} = "" if exists $labels->{thumbnail};
 
-    $pager_tmpl .= <<EOF;
-  <tmpl_loop krang_pager_rows>
-    $row_tmpl
-  </tmpl_loop>
- 
-  </table>
-EOF
-    # Make page jump, next/prev navigation tmpl
-    $pager_tmpl .= <<EOF;
-<div class="no-border"><p class="left2">&nbsp;<tmpl_if prev_page_number><a href="javascript:Krang.Pager.goto_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
+    # we need to put the action attribute in here since
+    # when using ajax, it might not be the current URL
+    # that's supposed to receive the submission
+    my $script_name = $q->url(-relative => 1);
 
-<tmpl_loop page_numbers>
-  <tmpl_if is_current_page><b><tmpl_var page_number></b>
-  <tmpl_else><a href="javascript:Krang.Pager.goto_page('<tmpl_var page_number>')"><tmpl_var page_number_label></a>
-  </tmpl_if>
-  <tmpl_unless __last__>|</tmpl_unless>
-</tmpl_loop>
+    # build colgroup that sets column layout widths through CSS
+    my $colgroup = $self->create_colgroup();
 
-<tmpl_if next_page_number><a href="javascript:Krang.Pager.goto_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
+    # build column headers
+    my $thead = "<thead>\n<tr>\n";
 
-<tmpl_if show_big_view>
-  <a href="javascript:Krang.Pager.show_big_view('0')">show <tmpl_var user_page_size> per page</a></p></div>
+    foreach (0 .. $#columns) {
+        $thead .= '<th';
+
+        if ( $_ == 0 ) {
+            $thead .= ' class="f"';
+        } elsif ( $_ == $#columns ) {
+            $thead .= ' class="l"';
+        }
+
+        $thead .= "><tmpl_var colhead_$columns[$_]></th>\n";
+    }
+
+    $thead .= "</tr>\n</thead>";
+
+    # setup pager output
+    $pager_tmpl .= <<"END";
+<tmpl_if krang_pager_rows>
+
+<form name="krang_pager_form" action="$script_name" method="post">
+
+<tmpl_include HTMLPager/pager-internals.tmpl>
+
+<tmpl_include HTMLPager/pager-pagination.tmpl>
+
+<table class="result select_row" summary="">
+
+$colgroup
+
+$thead
+
+<tbody><tmpl_loop krang_pager_rows>
+END
+
+    # build loop for data
+    $pager_tmpl .= qq{<tr<tmpl_unless __odd__> class="even"</tmpl_unless>>\n}
+      . join("\n", map { qq{<td><tmpl_var $_></td>} } @columns)
+      . "\n</tr>\n";
+
+    # finish pager output
+    $pager_tmpl .= <<"EOF";
+</tmpl_loop></tbody>
+
+</table>
+
+<tmpl_include HTMLPager/pager-pagination.tmpl>
+
+</form>
+
 <tmpl_else>
-  <tmpl_if page_numbers>
-    <a href="javascript:Krang.Pager.show_big_view('1')">show <tmpl_var big_view_page_size> per page</a></p></div>
-  </tmpl_if>
-</tmpl_if>
 
-<tmpl_else>
-  <div class="no-border"><p class="left2"><b>&nbsp;None Found</b></p></div>
+<p class="naught">
+None found
+</p>
+
 </tmpl_if>
 EOF
-
-    # Close pager form
-    $pager_tmpl .= "\n</form>\n";
 
     return $pager_tmpl;
 }
 
-
-
 =back
-
 
 =head2 Krang::HTMLPager Properties
 
@@ -1215,6 +1222,86 @@ sub validate_pager {
 
     # DONE!
 }
+
+sub create_colgroup {
+    my $self    = shift;
+    my $columns = $self->columns;
+
+    my $html = "<colgroup>\n";
+    foreach my $name (@$columns) {
+        my %attr;
+
+        # assign classes to columns when possible
+        if ($name =~ /_id$/i or $name =~ /^id$/i) {
+            $attr{class} = 'c-id';
+        } elsif (   $name =~ /deployed/i
+                 or $name =~ /published/
+                 or $name =~ /^pub_/)
+        {
+            $attr{class} = 'c-flag';
+        } elsif ($name eq 'checkbox_column') {
+            $attr{class} = 'tick';
+        } elsif ($name =~ /date/ or $name =~ /timestamp/) {
+            $attr{class} = 'c-date';
+        } elsif ($name =~ /thumbnail/) {
+            $attr{class} = 'c-thumb';
+        } elsif ($name =~ /status/ or $name =~ /attr/ or $name =~ /is_hidden/)
+        {
+            $attr{class} = 'c-stat';
+        } elsif (   $name =~ /length/
+                 or $name =~ /_count/
+                 or $name =~ /circulation/)
+        {
+            $attr{class} = 'c-sum';
+        } elsif ($name =~ /dollars/) {
+            $attr{class} = 'c-big-sum';
+        } elsif ($name =~ /user/) {
+            $attr{class} = 'c-user';
+        } elsif ($name =~ /command/) {
+            $attr{class} = 'c-link';
+
+            # make a guess about how wide to make the command-column
+            my $commands = $self->command_column_commands || [];
+            my $labels   = $self->command_column_labels   || {};
+            my $size = 0;
+            foreach my $command (@$commands) {
+                my $label = $labels->{$command} || $command;
+                $size += length($label);
+            }
+
+            # many modules don't declare their columns, or declare
+            # them with values smaller than they actually produce, so
+            # guess if possible (this is worth doing because truncated
+            # command columns are unusable)
+            my $module = $self->use_module;
+            if ($module eq pkg('Story')) {
+                # room for View Detail, View Log, Edit
+                $size = 13;
+            } elsif ( $module eq pkg('Template') or $module eq pkg('Media') ) {
+                # room for View Detail, Edit
+                $size = 9;
+            }
+
+            if ($size) {
+                # scale upwards to account for visual formatting as buttons
+                # (is there a better way to do this?)
+                $size = int($size * 1.5);
+
+                $attr{style} = "width:${size}em";
+            }
+        }
+
+        $html .= "<!-- '$name' column -->\n";
+        $html .= "<col"
+          . (%attr ? " " : "")
+          . join(" ", map { qq{$_="$attr{$_}"} } keys %attr) . ">\n";
+
+    }
+    $html .= "</colgroup>";
+
+    return $html;
+}
+
 
 sub _get_cache_key {
     my $self = shift;
