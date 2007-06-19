@@ -280,7 +280,7 @@ Krang.ajax_update = function(args) {
 
                 // update the navigation if we need to
                 if( json && json.krang_update_nav ) {
-                    Krang.ajax_update({ url: 'nav.pl', target: 'S' });
+                    Krang.ajax_update({ url: 'nav.pl', target: 'S', to_top: false });
                 }
             },
             onComplete  : function(transport, json) {
