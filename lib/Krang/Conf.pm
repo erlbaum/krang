@@ -71,6 +71,30 @@ SSLVerifyDepth
 SSLLogLevel
 );
 
+our @REQUIRED_DIRECTIVES = qw(
+KrangUser 
+KrangGroup 
+ApacheAddr 
+ApachePort
+HostName 
+LogLevel 
+SMTPServer
+FromAddress
+BugzillaEmail
+BugzillaServer
+BugzillaPassword
+BugzillaComponent
+);
+
+our @REQUIRED_INSTANCE_DIRECTIVES = qw(
+InstanceHostName 
+InstanceElementSet
+InstanceDisplayName
+InstanceDBName
+DBPass 
+DBUser
+);
+
 use Krang::Platform;
 use File::Spec::Functions qw(catfile catdir rel2abs);
 use Carp qw(croak);
@@ -281,10 +305,7 @@ sub check {
     my $pkg = shift;
 
     # check required directives
-    foreach my $dir (qw(KrangUser KrangGroup ApacheAddr ApachePort
-                        HostName LogLevel Secret
-                        SMTPServer FromAddress BugzillaEmail BugzillaServer
-                        BugzillaPassword BugzillaComponent)) {
+    foreach my $dir (@REQUIRED_DIRECTIVES) {
         _broked("Missing required $dir directive") 
           unless defined $CONF->get($dir);
     }
@@ -293,8 +314,7 @@ sub check {
     foreach my $instance ($pkg->instances()) {
         my $block = $CONF->block(instance => $instance);
 
-        foreach my $dir (qw(InstanceHostName InstanceElementSet InstanceDisplayName
-                            InstanceDBName DBPass DBUser)) {
+        foreach my $dir (@REQUIRED_INSTANCE_DIRECTIVES) {
             _broked("Instance '$instance' missing required '$dir' directive")
               unless defined $block->get($dir);
         }
