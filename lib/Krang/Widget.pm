@@ -421,7 +421,7 @@ sub time_chooser {
     $onchange ||= '';
     my $onchange_attr = $onchange ? qq/ onchange="$onchange"/ : '';
     return qq|
-        <input id="$name" name="$name" value="$value" size="9"$onchange_attr>
+        <input id="$name" name="$name" value="$value" size="9"$onchange_attr class="time_chooser">
         <img alt="" src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div id="${name}_clock" class="clock_widget" style="display:none">
             <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
@@ -578,7 +578,7 @@ sub date_chooser {
     $onchange = $onchange ? qq/ onchange="$onchange"/ : '';
 
     return qq|
-        <input id="$name" name="$name" value="$date" size="11"$onchange>
+        <input id="$name" name="$name" value="$date" size="11"$onchange class="date_chooser">
         <img alt="" src="images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
         <script type="text/javascript">
         Krang.onload( function() { Krang.Widget.date_chooser( '$name' ); } );
