@@ -72,27 +72,28 @@ SSLLogLevel
 );
 
 our @REQUIRED_DIRECTIVES = qw(
-KrangUser 
-KrangGroup 
 ApacheAddr 
 ApachePort
-HostName 
-LogLevel 
-SMTPServer
-FromAddress
-BugzillaEmail
-BugzillaServer
-BugzillaPassword
 BugzillaComponent
+BugzillaEmail
+BugzillaPassword
+BugzillaServer
+FromAddress
+HostName 
+KrangGroup 
+KrangUser 
+LogLevel 
+Secret
+SMTPServer
 );
 
 our @REQUIRED_INSTANCE_DIRECTIVES = qw(
-InstanceHostName 
-InstanceElementSet
-InstanceDisplayName
-InstanceDBName
 DBPass 
 DBUser
+InstanceDBName
+InstanceDisplayName
+InstanceElementSet
+InstanceHostName 
 );
 
 use Krang::Platform;
