@@ -1355,6 +1355,7 @@ persistant across stories.
 sub publish_context {
 
     my $self = shift;
+    $self->{publish_context} ||= {};
 
     # check to see if there are params.
     if (@_) {
