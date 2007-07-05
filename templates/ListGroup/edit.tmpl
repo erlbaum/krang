@@ -312,12 +312,12 @@ log_entry = function( item_id, action, data )
 
 do_save = function()
 {
-  Krang.form_set('edit_form', { rm', 'save', changes: change_log.join( '%^%' ) });
+  Krang.form_set('edit_form', { rm: 'save', changes: change_log.join( '%^%' ) });
 }
 
 do_save_stay = function()
 {
-  Krang.form_submit('edit_form', { rm', 'save', changes: change_log.join( '%^%' ), stay:  1 }, { to_top: false });
+  Krang.form_submit('edit_form', { rm: 'save', changes: change_log.join( '%^%' ), stay:  1 }, { to_top: false });
 }
 </script>
 
@@ -377,12 +377,12 @@ Lists
   <tr>
   <th><tmpl_var escape=html list_name></th>
   <td>
-  <select name="list_<tmpl_var escape=html list_count>" size="10" onchange="populate_list(<tmpl_var escape=html list_count>)" style="width:100%"><tmpl_loop list_item_loop>
+  <select name="list_<tmpl_var escape=html list_count>" class="non-hilite" size="10" onchange="populate_list(<tmpl_var escape=html list_count>)" style="width:100%"><tmpl_loop list_item_loop>
     <option value="<tmpl_var escape=html order>"><tmpl_var escape=html data></option>
   </tmpl_loop></select>
   <br>
-  <a href="javascript:do_move(<tmpl_var escape=html list_count>,1)"><img alt="" src="images/arrow-asc.gif"></a>
-  <a href="javascript:do_move(<tmpl_var escape=html list_count>)"><img alt="" src="images/arrow-desc.gif"></a>
+  <a href="javascript:do_move(<tmpl_var escape=html list_count>)"><img alt="" src="images/arrow-asc.gif"></a>
+  <a href="javascript:do_move(<tmpl_var escape=html list_count>,1)"><img alt="" src="images/arrow-desc.gif"></a>
   <br>
   <input name="new_item_<tmpl_var escape=html list_count>">
   <input value="Add List Group" onclick="do_add(<tmpl_var escape=html list_count>)" type="button" class="button">
