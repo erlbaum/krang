@@ -42,6 +42,15 @@ Object.extend(PopupTreeSelect.prototype, {
             'mouseup', 
             function(event) { this.release(event) }.bindAsEventListener(this) 
         );
+
+        // preload our images so that they're available right when we need them
+        var preload_imgs = [];
+        $w('minus.png plus.png open_node.png closed_node.png L.png').each(function(file) {
+            var img = new Image();
+            img.src = this.image_path + file;
+            preload_imgs.push(img);
+        }.bind(this));
+
     },
     lock : function(evt) {
         evt = (evt) ? evt : event;
