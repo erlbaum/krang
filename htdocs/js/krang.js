@@ -1069,7 +1069,7 @@ Krang.Widget.HideIEControls = {
 
         // avoid warnings about mismatching prototcols
         if( document.location.protocol == "https:" )
-            iframe.src = "//0";
+            iframe.src = "/stupid_ie.html";
         else if(window.opera != "undefined")
             iframe.src = "";
         else
