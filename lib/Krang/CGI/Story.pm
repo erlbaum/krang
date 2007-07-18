@@ -1460,9 +1460,16 @@ sub find {
                                       id_handler => sub { return $_[0]->story_id },
                                      );
 
+    my $pager_tmpl = $self->load_tmpl( 'find_pager.tmpl', 
+        die_on_bad_params => 0, 
+        loop_context_vars => 1,
+        associate         => $q,
+    );
+    $pager->fill_template($pager_tmpl);
+
     # Set up output
     $template->param(%tmpl_data);
-    $template->param(pager_html => $pager->output());
+    $template->param(pager_html => $pager_tmpl->output());
     $template->param(row_count => $pager->row_count());
 
     return $template->output;
@@ -1625,6 +1632,7 @@ sub checkin_selected {
 sub find_story_row_handler {
     my $self = shift;
     my ($row, $story) = @_;
+    my $show_type_and_status = $self->query->param('show_type_and_status');
 
     # Columns:
     #
@@ -1633,8 +1641,10 @@ sub find_story_row_handler {
     $row->{story_id} = $story->story_id();
 
     # format url to fit on the screen and to link to preview
-    $row->{url} = format_url( url => $story->url(),
-                              linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')" );
+    $row->{url} = format_url(
+        url    => $story->url(),
+        linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')"
+    );
 
     # title
     $row->{title} = $self->query->escapeHTML($story->title);
@@ -1647,33 +1657,44 @@ sub find_story_row_handler {
     $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
 
     # command column
-    $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| . $story->story_id . qq|')" type="button" class="button">|
+    $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| 
+        . $story->story_id 
+        . qq|')" type="button" class="button">|
         . ' '
-        . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id . qq|')" type="button" class="button">|
+        . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id 
+        . qq|')" type="button" class="button">|
         . ' '
-        . qq|<input value="Copy" onclick="copy_story('| . $story->story_id . qq|')" type="button" class="button">|;
+        . qq|<input value="Copy" onclick="copy_story('| . $story->story_id 
+        . qq|')" type="button" class="button">|;
 
     if (($story->checked_out) and 
         ($story->checked_out_by ne $ENV{REMOTE_USER})
         or not $story->may_edit ) {
         $row->{checkbox_column} = "&nbsp;";
     } else {
-        $row->{commands_column} .= qq| <input value="Edit" onclick="edit_story('| . $story->story_id . qq|')" type="button" class="button">|;
+        $row->{commands_column} .= qq| <input value="Edit" onclick="edit_story('| 
+            . $story->story_id 
+            . qq|')" type="button" class="button">|;
     }
 
-    # status 
-    if ($story->checked_out) {
-        $row->{status} = "Checked out by <b>"
-            . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login
-            . '</b>';
-    } elsif ($story->desk_id) {
-        $row->{status} = "On <b>"
-            . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
-            . '</b> Desk';
-    } else {
-        $row->{status} = '&nbsp;';
-    }
+    if( $show_type_and_status ) {
+        # status 
+        if ($story->checked_out) {
+            $row->{status} = "Checked out by <b>"
+                . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login
+                . '</b>';
+        } elsif ($story->desk_id) {
+            $row->{status} = "On <b>"
+                . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
+                . '</b> Desk';
+        } else {
+            $row->{status} = '&nbsp;';
+        }
 
+        # story type
+        $row->{story_type}    = $story->class->display_name;
+        $row->{story_version} = $story->version;
+    }
 }
 
 # Pager row handler for story list active run-mode

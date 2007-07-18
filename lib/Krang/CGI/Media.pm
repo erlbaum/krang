@@ -4,13 +4,9 @@ use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
-
-
-
 =head1 NAME
 
 Krang::CGI::Media - web interface to manage media
-
 
 =head1 SYNOPSIS
 
@@ -18,13 +14,11 @@ Krang::CGI::Media - web interface to manage media
   my $app = pkg('CGI::Media')->new();
   $app->run();
 
-
 =head1 DESCRIPTION
 
 Krang::CGI::Media provides a web-based system
 through which users can add, modify, delete, 
 check out, or publish media.
-
 
 =head1 INTERFACE
 
@@ -171,9 +165,17 @@ sub find {
                         simple_search => $search_filter };
 
     my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails);
+    my $pager_tmpl = $self->load_tmpl(
+        'list_view_pager.tmpl', 
+        associate         => $q,
+        loop_context_vars => 1,
+        global_vars       => 1,
+    );
+    $pager->fill_template($pager_tmpl);
+    $pager_tmpl->param(show_thumbnails => $show_thumbnails);
 
     # Run pager
-    $t->param(pager_html      => $pager->output(),
+    $t->param(pager_html      => $pager_tmpl->output(),
               row_count       => $pager->row_count(),
               show_thumbnails => $show_thumbnails,
               search_filter   => $search_filter);
