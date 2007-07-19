@@ -56,6 +56,13 @@ BEGIN { reload_paths() }
 sub new {
     my ($pkg, %arg) = @_;
     $arg{path} = $arg{path} ? _compute_path($arg{path}) : \@PATH;
+
+    # by default we search the whole path on includes so that addons
+    # (which come first in the paths) can override even included templates.
+    $arg{search_path_on_include} = defined $arg{search_path_on_include} 
+        ? $arg{search_path_on_include}
+        : 1;
+
     return $pkg->SUPER::new(%arg);
 }
 
