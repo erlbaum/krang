@@ -1312,6 +1312,15 @@ sub find {
         delete $session{KRANG_PERSIST}{pkg('Story')};
     }
 
+    my $show_type_and_status = $q->param('show_type_and_status');
+    # if they submitted the search form then either search_filter (simple search)
+    # or search_title (advanced search) will at least be defined
+    if( defined $q->param('search_filter') or defined $q->param('search_title') ) {
+        $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_status} = $show_type_and_status;
+    } else {
+        $show_type_and_status = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_status};
+    }
+
     # Search mode
     my $do_advanced_search = defined($q->param('do_advanced_search')) ?
       $q->param('do_advanced_search') : $session{KRANG_PERSIST}{pkg('Story')}{do_advanced_search};
@@ -1466,11 +1475,15 @@ sub find {
         associate         => $q,
     );
     $pager->fill_template($pager_tmpl);
+    $pager_tmpl->param(show_type_and_status => $show_type_and_status);
 
     # Set up output
-    $template->param(%tmpl_data);
-    $template->param(pager_html => $pager_tmpl->output());
-    $template->param(row_count => $pager->row_count());
+    $template->param(
+        %tmpl_data,
+        pager_html           => $pager_tmpl->output,
+        row_count            => $pager->row_count,
+        show_type_and_status => $show_type_and_status,
+    );
 
     return $template->output;
 }
@@ -1632,11 +1645,10 @@ sub checkin_selected {
 sub find_story_row_handler {
     my $self = shift;
     my ($row, $story) = @_;
-    my $show_type_and_status = $self->query->param('show_type_and_status');
+    my $q = $self->query;
+    my $show_type_and_status = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_status};
 
     # Columns:
-    #
-
     # story_id
     $row->{story_id} = $story->story_id();
 
