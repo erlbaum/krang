@@ -14,6 +14,10 @@ add_story = function() {
   Krang.form_submit('search_form', { rm: 'new_story' });
 }
 
+do_search = function() {
+  Krang.form_submit('search_form');
+}
+
 <tmpl_if do_advanced_search>
   clear_advanced_search = function()
   {
@@ -84,6 +88,11 @@ Find Stories
 <input name="do_advanced_search" value="<tmpl_if do_advanced_search>1<tmpl_else>0</tmpl_if>" type="hidden">
 
 <div class="tabset finder">
+
+<p class="tab-option">
+<input name="show_type_and_status" value="1" type="checkbox"
+  onclick="do_search()" <tmpl_if show_type_and_status> checked="checked"</tmpl_if>>
+<label>Show Story Type and Status.</label></p>
 
 <ul class="tabs"><li>
 <tmpl_if do_advanced_search><a href="javascript:show_advanced_search('0')"><tmpl_else><b></tmpl_if><span>

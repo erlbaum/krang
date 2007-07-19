@@ -325,7 +325,9 @@ sub _get_opened_panels {
     my $pkg = shift;
     my %cookies = CGI::Cookie->fetch();
     my $cookie = $cookies{'KRANG_NAV_ACCORDION_OPEN_PANELS'};
-    my $value = $cookie ? $cookie->value : '';
+    my $value = '';
+    $value = $cookie->value if $cookie;
+
     my %opened = map { $_ => 1 } split(',', $value);
     return \%opened;
 }

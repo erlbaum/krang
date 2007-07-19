@@ -1120,7 +1120,7 @@ sub make_dynamic_columns {
 
     # Build checkbox_column
     if (exists($row_data->{checkbox_column})) {
-        my $html = '<input name="krang_pager_rows_checked" value="'. $row_id .'" type="checkbox">';
+        my $html = '<input name="krang_pager_rows_checked" class="hilite-row" value="'. $row_id .'" type="checkbox">';
         $row_data->{checkbox_column} = $html;
     }
 }
@@ -1274,10 +1274,7 @@ sub create_colgroup {
             # guess if possible (this is worth doing because truncated
             # command columns are unusable)
             my $module = $self->use_module;
-            if ($module eq pkg('Story')) {
-                # room for View Detail, View Log, Edit
-                $size = 13;
-            } elsif ( $module eq pkg('Template') or $module eq pkg('Media') ) {
+            if ( $module eq pkg('Template') or $module eq pkg('Media') ) {
                 # room for View Detail, Edit
                 $size = 9;
             }

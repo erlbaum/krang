@@ -64,7 +64,7 @@ var rules = {
     },
     // if a checkbox is selected in this table, then highlight
     // the row that checkbox belongs to
-    'table.select_row tbody input[type="checkbox"]' : function(el) {
+    'table.select_row tbody input.hilite-row' : function(el) {
         if( el.checked ) el.addClassName('hilite');
         el.observe('click', function(event) {
             var clicked = Event.element(event);

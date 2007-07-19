@@ -119,7 +119,7 @@ form { margin: 0; padding: 0; }
  * Krang.Messages *
  ******************/
 
-.krang-slider          { z-index: 200; width: 974px; }/*:FIX z-index(db2)*/
+.krang-slider          { z-index: 200; width: 974px; position: fixed; }/*:FIX z-index(db2)*/
 .krang-slider .wrapper { background-color: #E0F0FF; filter: alpha(opacity=90); opacity: .9; width: 440px; margin: 0 auto; border: 1px solid #9CF; }
 .krang-slider .content { background: url("/images/slider-info.gif") 20px 10px no-repeat; color: #333; min-height: 60px; max-height: 28.5em; overflow: auto; }
 #alerts .content       { background-image: url("/images/slider-alert.gif"); }
@@ -212,7 +212,7 @@ form { margin: 0; padding: 0; }
 #C col.c-id    { width:    5em; }/*:five digits, at most*/
 #C col.c-link  { width: 11.5em; }/*:per-row actions (FIX?)*/
 #C col.c-stat  { width:  6.5em; }/*:brief message*/
-#C col.c-thumb { width:   55px; }/*:thumbnail width + padding*/
+#C col.c-thumb { width:    6em; }/*:room for the header "Thumbnail"*/
 #C col.c-user  { width:  9.5em; }/*:first + last name*/
 #C col.c-type  { width:    6em; }    #C col.c-type-big  { width:    9em; }
 /*FIX:*/

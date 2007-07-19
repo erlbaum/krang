@@ -392,13 +392,17 @@ sub install_new_krang {
         # make sure we don't over-write existing ssl certs
         if( -e catfile($InstallPath, 'conf', 'ssl.crt', 'server.crt') ) {
             my $src_crt = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt');
-            rename( $src_crt, "$src_crt.sample")
-                or die "Unable to rename $src_crt to $src_crt.sample: $!\n";
+            if( -e $src_crt ) {
+                rename( $src_crt, "$src_crt.sample")
+                    or die "Unable to rename $src_crt to $src_crt.sample: $!\n";
+            }
         }
         if( -e catfile($InstallPath, 'conf', 'ssl.key', 'server.key') ) {
             my $src_key = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key');
-            rename( $src_key, "$src_key.sample" )
-                or die "Unable to rename $src_key to $src_key.sample: $!\n";
+            if( -e $src_key ) {
+                rename( $src_key, "$src_key.sample" )
+                    or die "Unable to rename $src_key to $src_key.sample: $!\n";
+            }
         }
     }
 

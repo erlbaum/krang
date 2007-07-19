@@ -9,6 +9,10 @@ add_media = function() {
     Krang.form_submit('search_form', { rm: 'add' });
 }
 
+do_search = function() {
+    Krang.form_submit('search_form');
+}
+
 <tmpl_if do_advanced_search>
   simple_search = function()
   {
@@ -84,7 +88,7 @@ Find Media
 <div class="tabset finder">
 
 <p class="tab-option"><label>
-<input name="show_thumbnails" value="1" type="checkbox"<tmpl_if show_thumbnails> checked</tmpl_if>>
+<input name="show_thumbnails" value="1" type="checkbox" onclick="do_search()"<tmpl_if show_thumbnails> checked</tmpl_if>>
 Show Thumbnails
 </label></p>
 
