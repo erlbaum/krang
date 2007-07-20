@@ -613,7 +613,7 @@ sub _build_asset_list {
 # _publish_assets_now($story_list_ref, $media_list_ref);
 #
 # Given lists of story & media objects, start the publish process on both.
-# If errors occur, make entires in the message system & return.
+# If errors occur, make entries in the message system & return.
 #
 sub _publish_assets_now {
     my $self = shift;
@@ -729,8 +729,16 @@ sub _publish_assets_now {
     # die if you want to
     die $err if $err;
 
-    # dynamic redirect to workspace
-    print qq|<script type="text/javascript">\nlocation.replace('workspace.pl');\n</script>\n|;
+    # dynamic redirect to workspace, but give the page time to update
+    # itself
+    print qq|
+    <script type="text/javascript">
+        setTimeout(
+            function() { location.replace('workspace.pl') },
+            10
+        )
+    </script>
+    |;
 
     return;
 }

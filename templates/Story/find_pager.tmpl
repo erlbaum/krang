@@ -13,12 +13,12 @@
 <col class="c-flag">
 <!-- 'story_id' column -->
 <col class="c-id">
-<!-- 'title/url' column -->
+<!-- 'title/url/commands_column' column -->
 <col>
 <!-- 'cover_date' column -->
 <col class="c-date">
-<!-- 'commands_column' column -->
-<col style="width:23em" class="c-link">
+<!-- 'status' column -->
+<col class="c-stat">
 <!-- 'checkbox_column' column -->
 <col class="tick">
 </colgroup>
@@ -33,7 +33,7 @@
   <tmpl_var colhead_url>
 </th>
 <th><tmpl_var colhead_cover_date></th>
-<th><tmpl_var colhead_commands_column></th>
+<th><tmpl_var colhead_status></th>
 <th class="l"><tmpl_var colhead_checkbox_column></th>
 </tr>
 </thead>
@@ -43,19 +43,16 @@
 <td><tmpl_var pub_status></td>
 <td><tmpl_var story_id></td>
 <td>
-    <strong><tmpl_var title></strong>
-    <br>
-    <tmpl_var url>
+    <strong><tmpl_var title></strong><br>
+    <tmpl_var url><br>
+    <tmpl_var commands_column>
     <tmpl_if story_type>
       <br><tmpl_var story_type>
       <tmpl_if story_version> (Version <tmpl_var story_version>)</tmpl_if>
     </tmpl_if>
 </td>
 <td><tmpl_var cover_date></td>
-<td>
-    <tmpl_var commands_column>
-    <tmpl_if status><br><tmpl_var status></tmpl_if>
-</td>
+<td><tmpl_var status></td>
 <td><tmpl_var checkbox_column></td>
 </tr>
 </tmpl_loop></tbody>

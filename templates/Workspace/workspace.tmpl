@@ -69,19 +69,6 @@ Krang.onload( function() {
         alert( 'Nothing selected to publish!' );
       else
       {
-        // disallow publish for mailings:
-        var rows = document.forms[ 'krang_pager_form' ].krang_pager_rows_checked;
-
-        for ( var i = 0; i < rows.length; i++ )
-        {
-          if ( rows[ i ].checked && ( rows[ i ].value.substr( 0, 7 ) == 'message' ) )
-          {
-            alert( 'Messages cannot be published.\n\nPlease un-check any Messages and try again.' );
-            return;
-          }
-        }
-        // :disallow publish for mailings
-
         if ( confirm( 'Are you SURE you wish to publish all these items?' ) )
         {
           document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
@@ -152,8 +139,8 @@ Workspace
   <col class="c-id">
   <col class="c-type">
   <col>
-  <col class="c-link" style="width:auto">
   <col class="c-thumb">
+  <col class="c-date">
   <col class="tick">
   </colgroup>
 
@@ -161,9 +148,9 @@ Workspace
   <tr>
   <th class="f">ID</th>
   <th>Type</th>
-  <th>Title</th>
-  <th>URL</th>
+  <th>Title | URL</th>
   <th></th>
+  <th>Date</th>
   <th class="l tick"><tmpl_var colhead_checkbox_column></th>
   </tr>
   </thead>
@@ -176,9 +163,8 @@ Workspace
       <tmpl_var escape=html media_id>
     <tmpl_else><tmpl_if is_template>
       <tmpl_var escape=html template_id>
-    <tmpl_else><tmpl_if is_message>
-      <tmpl_var escape=html message_id>
-    </tmpl_if></tmpl_if></tmpl_if></tmpl_if></td>
+    <tmpl_else>
+    </tmpl_if></tmpl_if></tmpl_if></td>
 
     <td><tmpl_if is_story>
       Story
@@ -186,90 +172,64 @@ Workspace
       Media
     <tmpl_else><tmpl_if is_template>
       Template
-    <tmpl_else><tmpl_if is_message>
-      Message
-    </tmpl_if></tmpl_if></tmpl_if></tmpl_if></td>
-
-    <td>
-    <b><tmpl_var escape=html title></b>
-
-    <tmpl_unless is_message>
-      <tmpl_if is_story>
-        <br>
-        <tmpl_var escape=html story_type>
-      </tmpl_if>
-      <br>
-      Version <tmpl_var escape=html version>
-    </tmpl_unless>
-    </td>
+    <tmpl_else>
+    </tmpl_if></tmpl_if></tmpl_if></td>
 
     <td<tmpl_unless thumbnail> colspan="2"</tmpl_unless>>
-    <b>
-    <tmpl_unless is_message>
-      <tmpl_var url><!--:markup-->
-    <tmpl_else>
-      Segment:
-      <tmpl_var escape=html segment>
-      |
-      Campaign:
-      <tmpl_var escape=html campaign>
-    </tmpl_unless>
-    </b>
+    <b><tmpl_var escape=html title></b>
+    <br><tmpl_var url><!--:markup-->
 
+    <!-- story type and version -->
     <br>
-
-    <tmpl_unless may_edit>
-
-      <tmpl_unless is_message>
-        <input value="View Log" onclick="log('<tmpl_var escape=html id>')" type="button" class="button">
-      </tmpl_unless>
-
+    <tmpl_if is_story>
+      <tmpl_var escape=html story_type>
+      (Version <tmpl_var escape=html version>)
     <tmpl_else>
+      Version <tmpl_var escape=html version>
+    </tmpl_if>
 
-      <tmpl_var command_column><!--:broken for Messages(db2)-->
-
+    <!-- Commands -->
+    <br><tmpl_var command_column>
+    <tmpl_unless may_edit>
+      <input value="View Log" onclick="log('<tmpl_var escape=html id>')" type="button" class="button">
+    <tmpl_else>
       <tmpl_if is_story>
-
         <tmpl_if may_publish>
           <input value="Publish" onclick="publish_story('<tmpl_var escape=html id>')" type="button" class="button">
         </tmpl_if>
-
         <input value="Copy" onclick="copy('<tmpl_var escape=html id>')" type="button" class="button">
-
         <tmpl_if desk_loop><span class="glue">
           <input value="Check In To" onclick="checkin('<tmpl_var escape=html id>')" type="button" class="button">
           <select name="checkin_to_<tmpl_var escape=html id>" style="width:10em"><tmpl_loop desk_loop>
             <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
           </tmpl_loop></select>
         </span></tmpl_if>
-
       <tmpl_else><tmpl_if is_media>
-
         <tmpl_if may_publish>
           <input value="Publish" onclick="publish_media('<tmpl_var escape=html id>')" type="button" class="button">
         </tmpl_if>
-
       <tmpl_else><tmpl_if is_template>
-
         <input value="Deploy" onclick="deploy('<tmpl_var escape=html id>')" type="button" class="button">
-
       </tmpl_if></tmpl_if></tmpl_if>
-
     </tmpl_unless>
-
     <tmpl_if is_template>
       <span class="glue">
       <input name="testing_<tmpl_var escape=html id>" value="1" type="checkbox" onclick="update_testing('<tmpl_var escape=html id>')"<tmpl_if testing> checked</tmpl_if>>
       <a href="javascript:link_toggle_checkbox('krang_pager_form','testing_<tmpl_var escape=html id>','<tmpl_var escape=html id>')">Test</a>
       </span>
     </tmpl_if>
+
     </td>
 
     <tmpl_if thumbnail>
       <td>
       <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
       </td>
+    <tmpl_else>
+      <td>&nbsp;</td>
     </tmpl_if>
+
+    <td><tmpl_var date escape=html></td>
 
     <td class="tick"><tmpl_if may_edit>
       <tmpl_var checkbox_column>

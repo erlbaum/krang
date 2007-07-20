@@ -1312,13 +1312,13 @@ sub find {
         delete $session{KRANG_PERSIST}{pkg('Story')};
     }
 
-    my $show_type_and_status = $q->param('show_type_and_status');
+    my $show_type_and_version = $q->param('show_type_and_version');
     # if they submitted the search form then either search_filter (simple search)
     # or search_title (advanced search) will at least be defined
     if( defined $q->param('search_filter') or defined $q->param('search_title') ) {
-        $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_status} = $show_type_and_status;
+        $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version} = $show_type_and_version;
     } else {
-        $show_type_and_status = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_status};
+        $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
     }
 
     # Search mode
@@ -1472,17 +1472,18 @@ sub find {
     my $pager_tmpl = $self->load_tmpl( 'find_pager.tmpl', 
         die_on_bad_params => 0, 
         loop_context_vars => 1,
+        global_vars       => 1,
         associate         => $q,
     );
     $pager->fill_template($pager_tmpl);
-    $pager_tmpl->param(show_type_and_status => $show_type_and_status);
+    $pager_tmpl->param(show_type_and_version => $show_type_and_version);
 
     # Set up output
     $template->param(
         %tmpl_data,
         pager_html           => $pager_tmpl->output,
         row_count            => $pager->row_count,
-        show_type_and_status => $show_type_and_status,
+        show_type_and_version => $show_type_and_version,
     );
 
     return $template->output;
@@ -1646,7 +1647,7 @@ sub find_story_row_handler {
     my $self = shift;
     my ($row, $story) = @_;
     my $q = $self->query;
-    my $show_type_and_status = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_status};
+    my $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
 
     # Columns:
     # story_id
@@ -1689,20 +1690,20 @@ sub find_story_row_handler {
             . qq|')" type="button" class="button">|;
     }
 
-    if( $show_type_and_status ) {
-        # status 
-        if ($story->checked_out) {
-            $row->{status} = "Checked out by <b>"
-                . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login
-                . '</b>';
-        } elsif ($story->desk_id) {
-            $row->{status} = "On <b>"
-                . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
-                . '</b> Desk';
-        } else {
-            $row->{status} = '&nbsp;';
-        }
+    # status 
+    if ($story->checked_out) {
+        $row->{status} = "Checked out by <b>"
+            . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login
+            . '</b>';
+    } elsif ($story->desk_id) {
+        $row->{status} = "On <b>"
+            . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
+            . '</b> Desk';
+    } else {
+        $row->{status} = '&nbsp;';
+    }
 
+    if( $show_type_and_version ) {
         # story type
         $row->{story_type}    = $story->class->display_name;
         $row->{story_version} = $story->version;

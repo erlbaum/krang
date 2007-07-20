@@ -21,8 +21,6 @@
 <col>
 <!-- 'creation_date' column -->
 <col class="c-date">
-<!-- 'commands_column' column -->
-<col style="width:13em" class="c-link">
 <!-- 'status' column -->
 <col class="c-stat">
 <!-- 'checkbox_column' column -->
@@ -42,7 +40,6 @@
   <tmpl_var colhead_url>
 </th>
 <th><tmpl_var colhead_creation_date></th>
-<th><tmpl_var colhead_commands_column></th>
 <th><tmpl_var colhead_status></th>
 <th class="l"><tmpl_var colhead_checkbox_column></th>
 </tr>
@@ -58,9 +55,9 @@
 <td>
   <strong><tmpl_var title></strong>
   <br><tmpl_var url>
+  <br><tmpl_var commands_column>
 </td>
 <td><tmpl_var creation_date></td>
-<td><tmpl_var commands_column></td>
 <td><tmpl_var status></td>
 <td><tmpl_var checkbox_column></td>
 </tr>

@@ -112,56 +112,73 @@ sub show {
 }
 
 sub _row_handler {
-    my ($self, $row, $obj) = @_;
+    my ( $self, $row, $obj ) = @_;
 
-    if ($obj->isa('Krang::Story')) {
-        $row->{story_id} = $obj->story_id;
-        $row->{id} = $self->_obj2id($obj);
-        $row->{title} = $obj->title;
+    my $date;
+    if ( $obj->isa('Krang::Story') ) {
+        $row->{story_id}   = $obj->story_id;
+        $row->{id}         = $self->_obj2id($obj);
+        $row->{title}      = $obj->title;
         $row->{story_type} = $obj->class->display_name;
-        $row->{is_story} = 1;
-        $row->{url} =format_url(url    => $obj->url,
-                                linkto => 
-                                "javascript:Krang.preview('story'," . $obj->story_id . ")",
-                                length => 50);
+        $row->{is_story}   = 1;
+        $row->{url}        = format_url(
+            url    => $obj->url,
+            linkto => "javascript:Krang.preview('story'," . $obj->story_id . ")",
+            length => 50
+        );
 
-	# setup desk selector
-	my $last_desk;
-	my $last_desk_id = $obj->last_desk_id;
-	($last_desk) = pkg('Desk')->find( desk_id => $last_desk_id )
-	  if $last_desk_id;
+        # setup desk selector
+        my $last_desk;
+        my $last_desk_id = $obj->last_desk_id;
+        ($last_desk) = pkg('Desk')->find( desk_id => $last_desk_id )
+          if $last_desk_id;
 
-	my @found_desks = pkg('Desk')->find();
-	my @desk_loop;
-	my $is_selected = 0;
+        my @found_desks = pkg('Desk')->find();
+        my @desk_loop;
+        my $is_selected = 0;
 
-	foreach my $found_desk (@found_desks) {
-	    if ($last_desk) {
-		$is_selected = ($found_desk->order eq ($last_desk->order + 1)) ? 1 : 0;
-	    }
-	    push (@desk_loop, { choice_desk_id => $found_desk->desk_id, choice_desk_name => $found_desk->name,
-				is_selected => $is_selected});
-	}
-	$row->{desk_loop} = \@desk_loop;
-    } elsif ($obj->isa('Krang::Media')) {
-        $row->{media_id} = $obj->media_id;
-        $row->{id} = $self->_obj2id($obj);
-        $row->{title} = $obj->title;
-        $row->{thumbnail} = $obj->thumbnail_path(relative => 1);
-        $row->{is_media} = 1;
-        $row->{url} =format_url(url    => $obj->url,
-                                linkto => 
-                                "javascript:Krang.preview('media'," . $obj->media_id . ")",
-                                length => 50);
-    } else {
+        foreach my $found_desk (@found_desks) {
+            if ($last_desk) {
+                $is_selected = ( $found_desk->order eq ( $last_desk->order + 1 ) ) ? 1 : 0;
+            }
+            push(
+                @desk_loop,
+                {
+                    choice_desk_id   => $found_desk->desk_id,
+                    choice_desk_name => $found_desk->name,
+                    is_selected      => $is_selected
+                }
+            );
+        }
+        $row->{desk_loop} = \@desk_loop;
+        $date = $obj->cover_date();
+    } elsif ( $obj->isa('Krang::Media') ) {
+        $row->{media_id}  = $obj->media_id;
+        $row->{id}        = $self->_obj2id($obj);
+        $row->{title}     = $obj->title;
+        $row->{thumbnail} = $obj->thumbnail_path( relative => 1 );
+        $row->{is_media}  = 1;
+        $row->{url}       = format_url(
+            url    => $obj->url,
+            linkto => "javascript:Krang.preview('media'," . $obj->media_id . ")",
+            length => 50
+        );
+        $date = $obj->creation_date();
+    } elsif( $obj->isa('Krang::Template') ) {
         $row->{template_id} = $obj->template_id;
-        $row->{id} = $self->_obj2id($obj);
-        $row->{title} = $obj->filename;
+        $row->{id}          = $self->_obj2id($obj);
+        $row->{title}       = $obj->filename;
         $row->{is_template} = 1;
-        $row->{url} = format_url(url    => $obj->url,
-                                 length => 50);
+        $row->{url}         = format_url(
+            url    => $obj->url,
+            length => 50
+        );
         $row->{testing} = $obj->testing;
+        $date = $obj->creation_date();
     }
+
+    # format the date
+    $row->{date} = ref $date ? $date->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 
     # setup version, used by all type
     $row->{version} = $obj->version;

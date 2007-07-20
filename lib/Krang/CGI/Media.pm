@@ -170,6 +170,7 @@ sub find {
         associate         => $q,
         loop_context_vars => 1,
         global_vars       => 1,
+        die_on_bad_params => 0,
     );
     $pager->fill_template($pager_tmpl);
     $pager_tmpl->param(show_thumbnails => $show_thumbnails);
