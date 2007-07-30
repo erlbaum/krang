@@ -4,7 +4,7 @@
 
 html { background: #333; color: #FFF; overflow-y: scroll; }
 body { background: url("/images/bkg-body.gif") repeat-y; width: 974px; margin: 0 auto; padding: 0; font: 11px/1 "Helvetica Neue",arial,helvetica,sans-serif; }
-#H   { background: #360 url("/images/bkg-header.jpg") no-repeat; position: relative; height: 105px; margin: 0 7px; }
+#H   { background: <tmpl_var DarkLinkColor> url("/images/bkg-header.jpg") no-repeat; position: relative; height: 105px; margin: 0 7px; }
 #M   { background: #FFF url("/images/bkg-midriff.gif") repeat-y; color: #000; min-height: 420px; margin: 0 7px; border: 1px solid #D4D4D4; border-width: 1px 0; }
 #S   { width: 178px; margin: 20px 0; }
 #C   { float: right; width: 740px; margin: 20px; }
@@ -14,15 +14,15 @@ body { background: url("/images/bkg-body.gif") repeat-y; width: 974px; margin: 0
  * Global Effects *
  ******************/
 
-a                 { background-color: inherit; color: #690; font-weight: bold; text-decoration: none; }
-a:hover, a:active { background-color: #FF9; color: #360; }
+a                 { background-color: inherit; color: <tmpl_var LinkColor>; font-weight: bold; text-decoration: none; }
+a:hover, a:active { background-color: <tmpl_var HilightColor>; color: <tmpl_var LinkColor>; }
 a:focus           { outline: none; }/*:FF borks layout otherwise(db2)*/
 a img             { border: 0; }
 
 form { margin: 0; padding: 0; }
 
-.button       { background: #EEE url("/images/bkg-button-mini.gif") 0 50% repeat-x !important; color: #690 !important; width: auto !important; overflow: visible; margin: 0 5px 0 0; border: 1px solid #BBB; border-color: #EEE #BBB #BBB #EEE; padding: .1em .5em; font-size: 1em; line-height: 1; }
-.button:hover { background-color: #FF9 !important; background-image: none !important; }
+.button       { background: #EEE url("/images/bkg-button-mini.gif") 0 50% repeat-x !important; color: <tmpl_var LinkColor> !important; width: auto !important; overflow: visible; margin: 0 5px 0 0; border: 1px solid #BBB; border-color: #EEE #BBB #BBB #EEE; padding: .1em .5em; font-size: 1em; line-height: 1; }
+.button:hover { background-color: <tmpl_var HilightColor> !important; background-image: none !important; }
 
 .glue { white-space: nowrap !important; }
 .wrap { white-space: normal !important; }
@@ -50,7 +50,7 @@ form { margin: 0; padding: 0; }
 #H .nav ul   { background: url("/images/bkg-header-corner.gif") no-repeat; height: 100%; width: 100%; padding: 0; }
 #H .nav li   { float: right; }
 #H .nav li.l { margin-right: 20px; }
-#H .nav b    { color: #690; font-weight: bold; }
+#H .nav b    { color: <tmpl_var LinkColor>; font-weight: bold; }
 
 #H .nav .menu          { position: relative; }
 #H .nav .menu b        { background: url("/images/icon-submenu.gif") 100% 50% no-repeat; padding-right: 20px; }
@@ -61,7 +61,7 @@ form { margin: 0; padding: 0; }
 #H .nav .menu li a     { border-bottom: 1px solid #CCC; }
 #H .nav .menu li.xxx   { display: none; }
 
-#F .nav        { background: #360 url("/images/bkg-footer-grass.jpg") no-repeat; height: 65px; max-height: 65px; }
+#F .nav        { background: <tmpl_var DarkLinkColor> url("/images/bkg-footer-grass.jpg") no-repeat; height: 65px; max-height: 65px; }
 #F .nav div    { background: #E1E1E1 url("/images/bkg-footer-nav.gif") 0 100% repeat-x; margin: 0 0 0 180px; }
 #F .nav ul     { background: url("/images/bkg-footer-corner.gif") 0 100% no-repeat; height: 2.28em; padding: 0 20px; text-align: right; }
 #F .nav li     { display: -moz-inline-box; display: inline-block; }
@@ -74,9 +74,9 @@ form { margin: 0; padding: 0; }
 #S div           { border-bottom: 1px solid #CCC; }
 #S div.first     { border-top: 1px solid #CCC; }
 #S div div       { border-bottom: 0; }
-#S h2            { background: #EEE url("/images/bkg-sidebar-nav.gif") 0 50% repeat-x; color: #369; margin: 0; font: normal 1.27em Georgia,serif; text-transform: uppercase; }
+#S h2            { background: #EEE url("/images/bkg-sidebar-nav.gif") 0 50% repeat-x; color: <tmpl_var HeaderColor>; margin: 0; font: normal 1.27em Georgia,serif; text-transform: uppercase; }
 #S h2 span       { background: transparent url("/images/bkg-sidebar-nav-icons.gif") 0 50% no-repeat; display: block; padding: 4px 0 4px 38px; cursor: pointer; }
-#S h2 span:hover { background-color: #FF9; color: #369; }
+#S h2 span:hover { background-color: <tmpl_var HilightColor>; color: <tmpl_var HeaderColor>; }
 #S dl            { background: #EEE; color: #999; margin: 0; padding: 0 0 10px; }
 #S dt a, #S dt b { display: block; border: 1px solid #EEE; border-width: 1px 0; padding: 4px 0 4px 38px; }
 #S dt a:hover    { border-color: #CCC; }
@@ -90,7 +90,7 @@ form { margin: 0; padding: 0; }
  * Throbber *
  ************/
 
-#indicator     { background-color: #CEE7FF; color: #666; filter: alpha(opacity=90); opacity: .9; position: fixed; z-index: 32767; left: 0; bottom: 0; height: 3em; width: auto; border: 1px solid #369; padding: 0 1em; font-size: .91em; line-height: 3; font-weight: bold; white-space: nowrap; }/*:Sf(2)==z-i*/
+#indicator     { background-color: <tmpl_var XLightColor>; color: #666; filter: alpha(opacity=90); opacity: .9; position: fixed; z-index: 32767; left: 0; bottom: 0; height: 3em; width: auto; border: 1px solid <tmpl_var HeaderColor>; padding: 0 1em; font-size: .91em; line-height: 3; font-weight: bold; white-space: nowrap; }/*:Sf(2)==z-i*/
 #indicator img { padding: 0 1em 0 0; vertical-align: middle; }
 
 
@@ -99,7 +99,7 @@ form { margin: 0; padding: 0; }
  ***************/
 
 #modal_overlay   { background-color: #000; }
-#modal_container { background-color: #E0F0FF; width: 500px; border: 1px solid <tmpl_var BorderColor>; }
+#modal_container { background-color: <tmpl_var BrightColor>; width: 500px; border: 1px solid <tmpl_var BorderColor>; }
 
 #modal_container .content {
   background: url("/images/bug.gif") no-repeat;
@@ -111,7 +111,7 @@ form { margin: 0; padding: 0; }
   font-size: 1.27em;
 }
 
-#modal_container .control { background-color: #CEE7FF; padding: 5px 10px 5px 0; text-align: right; }
+#modal_container .control { background-color: <tmpl_var XLightColor>; padding: 5px 10px 5px 0; text-align: right; }
 #modal_container .button  { margin: 0; }
 
 
@@ -120,11 +120,11 @@ form { margin: 0; padding: 0; }
  ******************/
 
 .krang-slider          { z-index: 200; width: 974px; position: fixed; }/*:FIX z-index(db2)*/
-.krang-slider .wrapper { background-color: #E0F0FF; filter: alpha(opacity=90); opacity: .9; width: 440px; margin: 0 auto; border: 1px solid #9CF; }
+.krang-slider .wrapper { background-color: <tmpl_var BrightColor>; filter: alpha(opacity=90); opacity: .9; width: 440px; margin: 0 auto; border: 1px solid <tmpl_var BrightBorderColor>; }
 .krang-slider .content { background: url("/images/slider-info.gif") 20px 10px no-repeat; color: #333; min-height: 60px; max-height: 28.5em; overflow: auto; }
 #alerts .content       { background-image: url("/images/slider-alert.gif"); }
 .krang-slider p        { margin: 1.5em 80px; line-height: 1.5; font-weight: bold; }
-.krang-slider form     { background-color: #CEE7FF; border-top: 1px solid #9CF; padding: 10px; text-align: right; }
+.krang-slider form     { background-color: <tmpl_var XLightColor>; border-top: 1px solid <tmpl_var BrightBorderColor>; padding: 10px; text-align: right; }
 .krang-silder .button  { margin: 0; }
 
 
@@ -144,8 +144,8 @@ form { margin: 0; padding: 0; }
  ************/
 
 #C h2, #C h3, #C h4 { background-color: inherit; margin: 0; }
-#C h2, #C h3 { color: #369; font-weight: normal; font-family: Georgia,serif; text-transform: uppercase; }
-#C h2 { border-bottom: 1px solid #CEE7FF; font-size: 2.72em; letter-spacing: 1px; word-spacing: 3px; }
+#C h2, #C h3 { color: <tmpl_var HeaderColor>; font-weight: normal; font-family: Georgia,serif; text-transform: uppercase; }
+#C h2 { border-bottom: 1px solid <tmpl_var XLightColor>; font-size: 2.72em; letter-spacing: 1px; word-spacing: 3px; }
 #C h3, #C h4 { margin: 0 20px; }
 #C h3 { margin-top: 1.44em; font-size: 1.27em; }
 #C h4 { color: #666; margin-top: 1.82em; font-size: 1em; font-weight: bold; }
@@ -173,26 +173,26 @@ form { margin: 0; padding: 0; }
 
 #C tr             { }
 #C tr.even        { background-color: #EEE; }
-#C tr.hilite      { background-color: #FF9 !important; }
-#C tr.even.hilite { background-color: #EE8 !important; }
+#C tr.hilite      { background-color: <tmpl_var HilightColor> !important; }
+#C tr.even.hilite { background-color: <tmpl_var XHilightColor> !important; }
 
 #C th, #C td { padding: .27em 5px; overflow: hidden; word-wrap: break-word; vertical-align: top; }
 
 #C th       { background-color: inherit; font-weight: bold; text-align: left; white-space: nowrap; }
-#C thead th { color: #369; padding-top: .45em; padding-bottom: .45em; vertical-align: bottom; }
+#C thead th { color: <tmpl_var HeaderColor>; padding-top: .45em; padding-bottom: .45em; vertical-align: bottom; }
 #C tbody th { color: #666; }
 
 #C table.report { }
 #C table.report tbody th, #C table.report td { padding-top: 0; padding-bottom: 0; }
 
 #C table.request { }
-#C table.request thead { background-color: #CEE7FF; }
+#C table.request thead { background-color: <tmpl_var XLightColor>; }
 #C table.request thead th.f, #C table.request thead th.l { background-image: url("/images/bkg-corners-inner.gif"); background-repeat: no-repeat; }
 #C table.request thead th.f { background-position: 0 -2400px; }
 #C table.request thead th.l { background-position: 100% -2700px; }
 
 #C table.result { }
-#C table.result thead { background-color: #CEE7FF; }
+#C table.result thead { background-color: <tmpl_var XLightColor>; }
 #C table.result tbody th, #C table.result td { padding-top: .45em; padding-bottom: .45em; }
 #C div table.result tbody th, #C div table.result td { padding-top: .27em; padding-bottom: .27em; }/*:TESTING*/
 #C table.result thead th.f, #C table.result thead th.l { background-image: url("/images/bkg-corners-inner.gif"); background-repeat: no-repeat; }
@@ -235,7 +235,7 @@ form { margin: 0; padding: 0; }
 
 input, select, textarea { font-size: 1em; }
 textarea { line-height: 1.1; font-family: "Helvetica Neue",arial,helvetica,sans-serif; }
-input:focus, select:focus, textarea:focus { background-color: #FF9; color: #000; }
+input:focus, select:focus, textarea:focus { background-color: <tmpl_var HilightColor>; color: #000; }
 input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { background-color: #FFF; }
 
 #C .edit textarea { width: 95%; }
@@ -254,12 +254,12 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 
 #C .panel  { padding: 20px 0 0; text-align: right; }
 
-#C .panel input       { background: #690 url("/images/bkg-button-full.gif") 0 50% repeat-x; color: #FFF; width: auto; overflow: visible; margin: 0 0 0 5px; border: 1px solid #360; border-color: #690 #360 #360 #690; padding: .1em .5em; font-size: 1.27em; line-height: 1; }
-#C .panel input:hover { background-color: #360; background-image: none; }
+#C .panel input       { background: <tmpl_var LinkColor> url("/images/bkg-button-full.gif") 0 50% repeat-x; color: #FFF; width: auto; overflow: visible; margin: 0 0 0 5px; border: 1px solid <tmpl_var DarkLinkColor>; border-color: <tmpl_var LinkColor> <tmpl_var DarkLinkColor> <tmpl_var DarkLinkColor> <tmpl_var LinkColor>; padding: .1em .5em; font-size: 1.27em; line-height: 1; }
+#C .panel input:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
 
 /*(db2)testing - TOO effective:*/
-#C div .panel input       { background-color: #EEE; background-image: url("/images/bkg-button-mini.gif"); color: #690; border-color: #EEE #BBB #BBB #EEE; font-size: 1em; }
-#C div .panel input:hover { background-color: #FF9; }
+#C div .panel input       { background-color: #EEE; background-image: url("/images/bkg-button-mini.gif"); color: <tmpl_var LinkColor>; border-color: #EEE #BBB #BBB #EEE; font-size: 1em; }
+#C div .panel input:hover { background-color: <tmpl_var HilightColor>; }
 
 #C .panel input.west { margin-right: 10px; margin-left: 0; }
 #C .panel div.west   { text-align: left; }/*:IE(mac) Workspace+Desk(db2)*/
@@ -267,26 +267,26 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 #C .lame { text-align: left; }
 #C .lame input.west { float: none; }
 
-#C .capped { margin-top: 10px; border-top: 5px solid #CEE7FF; }/*:temp(db2)*/
+#C .capped { margin-top: 10px; border-top: 5px solid <tmpl_var XLightColor>; }/*:temp(db2)*/
 
 
 /***********
  * Tabsets *
  ***********/
 
-#C .tabset { margin: 20px 0 0; border: 10px solid #CEE7FF; }
+#C .tabset { margin: 20px 0 0; border: 10px solid <tmpl_var XLightColor>; }
 
-#C .tabs { list-style: none; margin: 0; padding: 0; background-color: #CEE7FF; white-space: nowrap; overflow: hidden; }
+#C .tabs { list-style: none; margin: 0; padding: 0; background-color: <tmpl_var XLightColor>; white-space: nowrap; overflow: hidden; }
 #C .tabs li { display: inline-block; display: -moz-inline-box; height: 2.27em; margin: 0 10px 0 0; }
 #C .tabs li * { display: block; background-image: url("/images/bkg-corners-inner.gif"); background-repeat: no-repeat; }
 #C .tabs a, #C .tabs b { padding: 0 0 0 10px; }
-#C .tabs a { background-color: #E0F0FF; background-position: 0 -600px; cursor: pointer; }
-#C .tabs b { background-color: #FFF; color: #369; background-position: 0 0; cursor: default; }
+#C .tabs a { background-color: <tmpl_var BrightColor>; background-position: 0 -600px; cursor: pointer; }
+#C .tabs b { background-color: #FFF; color: <tmpl_var HeaderColor>; background-position: 0 0; cursor: default; }
 #C .tabs span { padding: 0 10px 0 0; line-height: 2.27em; }
 #C .tabs a span { background-position: 100% -900px; }
 #C .tabs b span { background-position: 100% -300px; }
 
-#C .tab-option { background-color: #CEE7FF; color: #666; float: right; margin: 0; line-height: 2.27; }
+#C .tab-option { background-color: <tmpl_var XLightColor>; color: #666; float: right; margin: 0; line-height: 2.27; }
 
 #C .tabbed { margin: 0 20px 20px; }
 
@@ -307,15 +307,15 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 
 #C p.naught { background-color: #EEE; color: #666; padding: 1.5em 30px; font-weight: bold; }
 
-#C .pages { background-color: inherit; color: #369; margin: 20px 0 0; border-top: 1px solid #CEE7FF; padding: 10px .5em 0 1em; font-weight: bold; }
+#C .pages { background-color: inherit; color: <tmpl_var HeaderColor>; margin: 20px 0 0; border-top: 1px solid <tmpl_var XLightColor>; padding: 10px .5em 0 1em; font-weight: bold; }
 
 #C .pages p   { float: left; margin: 0; line-height: 1; }/*:FIXME(db2)*/
-#C .pages p a { margin: 0 0 0 .5em; border-left: 1px solid #CEE7FF; padding: 0 .5em; }
+#C .pages p a { margin: 0 0 0 .5em; border-left: 1px solid <tmpl_var XLightColor>; padding: 0 .5em; }
 
 #C .pages ul { float: right; list-style: none; margin: 0; padding: 0; white-space: nowrap; }
 #C .pages li { display: inline; }
 
-#C .pages li a, #C .pages li b     { display: -moz-inline-box; display: inline-block; border-right: 1px solid #CEE7FF; padding: 0 .5em; }
+#C .pages li a, #C .pages li b     { display: -moz-inline-box; display: inline-block; border-right: 1px solid <tmpl_var XLightColor>; padding: 0 .5em; }
 #C .pages li a.l, #C .pages li b.l { border-right: 0; }
 
 
@@ -341,8 +341,8 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 .hpts-label-unselected a { }
 .hpts-bbar   { background: #999 url("/images/bottom-right-corner-resize.gif") right no-repeat; color: <tmpl_var TextColor>; margin-top: 10px; padding: 3px 0 0 6px; text-align: left; white-space: nowrap; position: relative; }
 .hpts-botbar { display: inline; width: 20px; position: absolute; right: 0px;}
-.hpts-button       { background: #EEE url("/images/bkg-button-mini.gif") 0 50% repeat-x !important; color: #690 !important; width: auto !important; overflow: visible; margin: 0 5px 0 0; border: 1px solid #BBB; border-color: #EEE #BBB #BBB #EEE; padding: .1em .5em; font-size: 1em; line-height: 1; }
-.hpts-button:hover { background-color: #FF9 !important; background-image: none !important; }
+.hpts-button       { background: #EEE url("/images/bkg-button-mini.gif") 0 50% repeat-x !important; color: <tmpl_var LinkColor> !important; width: auto !important; overflow: visible; margin: 0 5px 0 0; border: 1px solid #BBB; border-color: #EEE #BBB #BBB #EEE; padding: .1em .5em; font-size: 1em; line-height: 1; }
+.hpts-button:hover { background-color: <tmpl_var HilightColor> !important; background-image: none !important; }
 
 
 /*******************************
@@ -355,7 +355,7 @@ div.calendar               { position: relative; width: 204px; }
 
 /* navigation buttons */
 .calendar .button { height: 15px; font-weight: bold; text-align: center; }
-.calendar .nav    { background: #999 url("/images/cal_button_bg.gif") bottom right repeat-x; color: #690; padding: 0 2px; font-size: 15px; }/*:FIX(db2)*/
+.calendar .nav    { background: #999 url("/images/cal_button_bg.gif") bottom right repeat-x; color: <tmpl_var LinkColor>; padding: 0 2px; font-size: 15px; }/*:FIX(db2)*/
 
 /* 'Month Year' labeling */
 .calendar thead .title { background: #999; color: #FFF; font-size: 11px; font-weight: bold; text-align: center; }/*:FIX(db2)*/
@@ -364,10 +364,10 @@ div.calendar               { position: relative; width: 204px; }
 .calendar thead .headrow { background: #778; color: #FFF; }
 
 /* TR containing day names */
-.calendar thead .daynames { background: #BDF; }
+.calendar thead .daynames { background: <tmpl_var XLightColor>; }
 
 /* TDs containing the day names */
-.calendar thead .name { background-color: #DDD; color: #369; font-family: font-size: 14px; Georgia, serif; text-align: center; }
+.calendar thead .name { background-color: #DDD; color: <tmpl_var HeaderColor>; font-family: font-size: 14px; Georgia, serif; text-align: center; }
 
 /* button :hover state */
 .calendar thead .hilite { color: #000; }
@@ -376,21 +376,21 @@ div.calendar               { position: relative; width: 204px; }
 .calendar thead .active { color: #999; }
 
 /* TDs containing particular days */
-.calendar tbody .day { color: #690; width: 2em; padding: 2px 4px 2px 2px; text-align: center; }
+.calendar tbody .day { color: <tmpl_var LinkColor>; width: 2em; padding: 2px 4px 2px 2px; text-align: center; }
 .calendar tbody .day.othermonth { font-weight: normal; }
 .calendar tbody td   { background-color: #FFF; font-weight: bold; }
 
 /* TD :hover state */
-.calendar tbody td.hilite { background-color: #DDD; color: #360; }
+.calendar tbody td.hilite { background-color: #DDD; color: <tmpl_var DarkLinkColor>; }
 
 /* TD :active state */
 .calendar tbody td.active { background: #999; }
 
 /* selected day */
-.calendar tbody td.selected { background-color: #FF9; color: #360; }
+.calendar tbody td.selected { background-color: <tmpl_var HilightColor>; color: <tmpl_var DarkLinkColor>; }
 
 /* weekends */
-.calendar tbody td.weekend, .calendar tbody td.oweekend { background-color: #CEE7FF; }
+.calendar tbody td.weekend, .calendar tbody td.oweekend { background-color: <tmpl_var XLightColor>; }
 
 /* today, etc. */
 .calendar tbody td.today   { color: #000; }
@@ -407,8 +407,8 @@ div.calendar               { position: relative; width: 204px; }
 .calendar .combo { display: none; background: #DDD; color: #000; position: absolute; z-index: 100; top: 0; left: 0; width: 4em; border: 1px solid #999; font-size: .9em; cursor: default; }
 .calendar .combo .label, .calendar .combo .label-IEfix { padding: 1px; text-align: center; }
 .calendar .combo .label-IEfix { width: 4em; }/*:egad(db2)*/
-.calendar .combo .hilite { background: #CEE7FF; }
-.calendar .combo .active { background: #CEE7FF; border-top: 1px solid #999; border-bottom: 1px solid #999; font-weight: bold; }
+.calendar .combo .hilite { background: <tmpl_var XLightColor>; }
+.calendar .combo .active { background: <tmpl_var XLightColor>; border-top: 1px solid #999; border-bottom: 1px solid #999; font-weight: bold; }
 
 
 /*******************************
@@ -416,7 +416,7 @@ div.calendar               { position: relative; width: 204px; }
  *******************************/
 
 img.clock_trigger:hover { cursor: pointer; }
-div.clock_widget        { background-color: #CEE7FF; position: absolute; width: auto; border: 1px solid #999; padding: 3px; white-space: nowrap; z-index: 100}
+div.clock_widget        { background-color: <tmpl_var XLightColor>; position: absolute; width: auto; border: 1px solid #999; padding: 3px; white-space: nowrap; z-index: 100}
 
 
 /**********************
@@ -425,16 +425,16 @@ div.clock_widget        { background-color: #CEE7FF; position: absolute; width: 
 
 input.autocomplete { width: 50% }
 
-div.autocomplete             { background-color: #E0F0FF; position: absolute; z-index: 32767; overflow: auto; max-height: 14em; border: 1px solid <tmpl_var BorderColor>; }/*:Sf(2)==z-i*/
+div.autocomplete             { background-color: <tmpl_var BrightColor>; position: absolute; z-index: 32767; overflow: auto; max-height: 14em; border: 1px solid <tmpl_var BorderColor>; }/*:Sf(2)==z-i*/
 div.autocomplete ul          { list-style: none; margin: 0; padding: 0; }
 div.autocomplete li          { display: block; padding: .2em; cursor: pointer; }
-div.autocomplete li.selected { background-color: #FF9; }
+div.autocomplete li.selected { background-color: <tmpl_var HilightColor>; }
 
 /*(db2)Publisher/progress + ReportDownload/progress ONLY:*/
 #C .publish              { margin: 20px 20px 0; font-weight: bold; }
 #C #progress             { background: #EEE; color: #666; float: left; height: 20px; width: 298px; margin: 0 20px 0 0; border: 1px solid #DDD; }
 #C #progress_bar         { background: transparent url("/images/progress_bg.gif") repeat-x; height: 19px; width: 0; overflow: hidden; border: 1px solid #69C; border-width: 0 1px 1px 0; }
-#C #progress_bar_percent { background: #FFF; color: #369; float: left; font-size: 1.27em; }
+#C #progress_bar_percent { background: #FFF; color: <tmpl_var HeaderColor>; float: left; font-size: 1.27em; }
 #C #progress_bar_label   { clear: both; padding: 20px 0 0; }
 
 /* !!!!!!!!!!!!!!!!!!!!! UNSORTED CSS FOLLOWS BELOW !!!!!!!!!!!!!!!!!!!!! */
@@ -444,7 +444,7 @@ div.autocomplete li.selected { background-color: #FF9; }
 #C .publish              { margin: 20px 20px 0; font-weight: bold; }
 #C #progress             { background: #EEE; color: #666; float: left; height: 20px; width: 298px; margin: 0 20px 0 0; border: 1px solid #DDD; }
 #C #progress_bar         { background: transparent url("/images/progress_bg.gif") repeat-x; height: 19px; width: 0; overflow: hidden; border: 1px solid #69C; border-width: 0 1px 1px 0; }
-#C #progress_bar_percent { background: #FFF; color: #369; float: left; font-size: 1.27em; }
+#C #progress_bar_percent { background: #FFF; color: <tmpl_var HeaderColor>; float: left; font-size: 1.27em; }
 #C #progress_bar_label   { clear: both; padding: 20px 0 0; }
 
 
@@ -452,8 +452,8 @@ div.autocomplete li.selected { background-color: #FF9; }
 #C dl.eg        { background: <tmpl_var BackgroundColor>; margin: 12px 0 0; padding: 0; }
 #C dl.eg dt     { margin: 12px 0 0; font-weight: bold; }
 #C dl.eg .first { margin: 0; }
-#C dl.eg .bad   { color: #F50; }
-#C dl.eg .good  { color: #690; }
+#C dl.eg .bad   { color: <tmpl_var AlertColor>; }
+#C dl.eg .good  { color: <tmpl_var LinkColor>; }
 #C dl.eg dd     { margin: 0 0 0 12px; font-style: italic; }
 
 
@@ -463,20 +463,20 @@ div.autocomplete li.selected { background-color: #FF9; }
 
 
 /*(db2)Krang::ElementClass::mark_form_invalid() ONLY:*/
-.invalid, .invalid textarea, .invalid input, .invalid select { background: #F50; }
+.invalid, .invalid textarea, .invalid input, .invalid select { background: <tmpl_var AlertColor>; }
 
 
 /*(db2)fix these ui warnings:*/
-#C ul.notes  { background: #FFC; color: #F50; border: 1px solid <tmpl_var BorderColor>; margin: 0 0 .25em; padding: .5em .5em .5em 2em; font-size: 1.27em; font-weight: bold; overflow: hidden; word-wrap: break-word; }
+#C ul.notes  { background: <tmpl_var XHilightColor>; color: <tmpl_var AlertColor>; border: 1px solid <tmpl_var BorderColor>; margin: 0 0 .25em; padding: .5em .5em .5em 2em; font-size: 1.27em; font-weight: bold; overflow: hidden; word-wrap: break-word; }
 #C .notes li { margin: .5em 0; }
-.alert       { color: #F50; margin-bottom: 5px; font-weight: bold; }/*:???(db2)*/
-#C .alertp   { background: #FFC; color: #F50; margin: 20px 0 0; border: 1px solid <tmpl_var BorderColor>; padding: 24px; font-size: 1.27em; font-weight: bold; }
+.alert       { color: <tmpl_var AlertColor>; margin-bottom: 5px; font-weight: bold; }/*:???(db2)*/
+#C .alertp   { background: <tmpl_var XHilightColor>; color: <tmpl_var AlertColor>; margin: 20px 0 0; border: 1px solid <tmpl_var BorderColor>; padding: 24px; font-size: 1.27em; font-weight: bold; }
 
 
 /* !!!!!!!!!!!!!! CORRALLED ERROR UI FLAGGING -- TEMPORARY !!!!!!!!!!!!!! */
 
 #C .ERR-ROW th, #C div.ERR-ROW { color: <tmpl_var InvalidColor>; }
-#C .ERR-ROW td *, #C div.ERR-ROW input { background: #FFC; color: <tmpl_var InvalidColor>; }
+#C .ERR-ROW td *, #C div.ERR-ROW input { background: <tmpl_var XHilightColor>; color: <tmpl_var InvalidColor>; }
 /*(db2)Bugzilla/edit ONLY:*/
 #C .ERR-ROW td p, #C .ERR-ROW td dl * { background: <tmpl_var BackgroundColor>; }/*:hack(db2)*/
 /*(db2)HTML::PopupTreeSelect:*/

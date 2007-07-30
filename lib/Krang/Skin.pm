@@ -67,7 +67,10 @@ sub new {
     croak("Unable to find skin named $self->{name}!") unless $skin_dir;
 
     # read in conf file
-    my $conf = Config::ApacheFormat->new(valid_blocks => [qw(CSS Images File)]);
+    my $conf = Config::ApacheFormat->new(
+        expand_vars   => 1,
+        valid_blocks  => [qw(CSS Images File)]
+    );
     eval { $conf->read(catfile($skin_dir, 'skin.conf')) };
     die "Unable to read $skin_dir/skin.conf: $@\n" if $@;
 
@@ -78,6 +81,13 @@ sub new {
 
 sub install {
     my $self = shift;
+
+    # does our skin use another skin as it's base?
+    my $conf = $self->{conf};
+    my $base = $self->{conf}->get('Base');
+    if( $base ) {
+        pkg('Skin')->new(name => $base)->install();
+    }
 
     $self->_install_css;
     $self->_install_images;
@@ -135,10 +145,13 @@ sub _install_images {
     my $skin_dir = pkg('File')->find(catfile('skins', $self->{name}));
 
     # copy anything in images/ to htdocs/images/
-    my $img_dir = catdir($skin_dir, 'images', '*');
+    my $img_dir = catdir($skin_dir, 'images');
     my $dest_dir = catdir(KrangRoot, 'htdocs', 'images');
-    system("cp -R $img_dir $dest_dir") == 0
-        or croak "Could not copy images from $img_dir to $dest_dir";
+    if( -d $img_dir ) {
+        $img_dir = catdir($img_dir, '*');
+        system("cp -R $img_dir $dest_dir") == 0
+            or croak "Could not copy images from $img_dir to $dest_dir";
+    }
 
     # if we have <Images> then process them too
     my $img_block;
@@ -151,7 +164,7 @@ sub _install_images {
             my $file_block = $img_block->block(File => $file);
 
             # open up the image and color it with Image::BioChrome
-            my $template = pkg('File')->find(catfile('templates', 'images', $file));
+            my $template = pkg('File')->find(catfile('htdocs', 'images', $file));
             if( -e $template ) {
                 $Image::BioChrome::VERBOSE = 0;
                 $Image::BioChrome::DEBUG = 0;
