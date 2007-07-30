@@ -1650,8 +1650,9 @@ sub find_story_row_handler {
     my $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
 
     # Columns:
-    # story_id
-    $row->{story_id} = $story->story_id();
+    $row->{story_id}   = $story->story_id();
+    $row->{title}      = $story->title;
+    $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
@@ -1659,15 +1660,9 @@ sub find_story_row_handler {
         linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')"
     );
 
-    # title
-    $row->{title} = $self->query->escapeHTML($story->title);
-
     # cover_date
     my $tp = $story->cover_date();
     $row->{cover_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
-
-    # pub_status
-    $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
 
     # command column
     $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| 

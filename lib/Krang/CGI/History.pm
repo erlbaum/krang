@@ -201,14 +201,14 @@ sub show_row_handler {
     }
 
     # setup date
-    $row->{timestamp}   = $history->timestamp->strftime('%m/%d/%Y %I:%M %p'); 
+    $row->{timestamp} = $history->timestamp->strftime('%m/%d/%Y %I:%M %p');
 
     # some events have attributes
     my $attr = "";
     $attr .= "Version: " . $history->version
       if $history->version;
     $attr .= "Desk: " . (pkg('Desk')->find( desk_id => $history->desk_id))[0]->name if $history->desk_id;
-    $row->{attr} = $attr;
+    $row->{attr} = $q->escapeHTML($attr);
 }
 
 

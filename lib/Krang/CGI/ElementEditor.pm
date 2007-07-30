@@ -541,6 +541,7 @@ sub find_story_link {
 # Pager row handler for story find run-mode
 sub find_story_link_row_handler {
     my $self = shift;
+    my $q = $self->query;
     my ($row, $story) = @_;
 
     # Columns:
@@ -564,11 +565,11 @@ sub find_story_link_row_handler {
 
 
     # title
-    $row->{title} = $self->query->escapeHTML($story->title);
+    $row->{title} = $q->escapeHTML($story->title);
 
     # cover_date
     my $tp = $story->cover_date();
-    $row->{cover_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
+    $row->{cover_date} = $q->escapeHTML((ref($tp)) ? $tp->mdy('/') : '[n/a]');
 
     # pub_status
     $row->{pub_status} = $story->published_version() ? '<b>P</b>' : '&nbsp;';

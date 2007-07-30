@@ -1244,6 +1244,7 @@ sub _save {
 # Pager row handler for template list active run-mode
 sub list_active_row_handler {
     my $self = shift;
+    my $q    = $self->query;
     my ($row, $template) = @_;
 
     # Columns:
@@ -1256,14 +1257,14 @@ sub list_active_row_handler {
     $row->{url} = format_url( url => $template->url() );
 
     # filename
-    $row->{filename} = $template->filename();
+    $row->{filename} = $q->escapeHTML($template->filename);
 
     # commands column
     $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $template->checked_out_by);
-    $row->{user} = $self->query->escapeHTML($user->first_name . " " . $user->last_name);
+    $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
 }
 
 sub autocomplete {
