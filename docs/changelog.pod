@@ -16,6 +16,32 @@ New AJAX interface and Javascript re-write. [Michael Peters]
 
 =item *
 
+Added a new forgot-password functionality to the login screen. 
+[Michael Peters]
+
+=item *
+
+Added the C<EnableFTP> config directive which is true after an
+upgrade. [Michael Peters]
+
+=item *
+
+Added the C<Secret> config directive to be used for encryption and
+encoding. [Michael Peters]
+
+=item *
+
+Added the C<ContactEmail> and C<ContactURL> config directives to be used in
+links in the footer. [Michael Peters]
+
+=item *
+
+Added the C<CustomCSS> config directive which allows each instance to change
+the CSS for the CMS. Most commonly this can be used to add specific logo
+images per-instance. [Michael Peters]
+
+=item *
+
 Fixed bug #10. Extended Skins configuration by allowing an arbitrary list
 of CSS colors that will be put into an arbitrary number of F<.css.tmpl>
 files.  [Michael Peters]
