@@ -2,6 +2,30 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 3.00 - IN DEVELOPMENT
+
+=over
+
+=item *
+
+Completely new skin. [Don Brodale and Michael Peters]
+
+=item *
+
+New AJAX interface and Javascript re-write. [Michael Peters]
+
+=item *
+
+Fixed bug #10. Extended Skins configuration by allowing an arbitrary list
+of CSS colors that will be put into an arbitrary number of F<.css.tmpl>
+files.  [Michael Peters]
+
+=item *
+
+Fixed bug #3. C<< $publisher->publish_context >> now does not die if called without data
+
+=back
+
 =head2 2.XXX - IN DEVELOPMENT
 
 =over
