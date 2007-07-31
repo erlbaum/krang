@@ -6,6 +6,18 @@ in it
 var Krang = {};
 
 /*
+    Krang.preload_img('/path/to/image')
+
+    This function simply preloads images into the browser
+    so that when they are requested later they won't cause
+    any "jitteriness" as the browser fetches them and loads them
+*/
+Krang.preload_img = function(path) {
+    var img = new Image();
+    img.src = path;
+};
+
+/*
     Krang.load([target])
     Applies all the loaded behaviours to the current document.
     Called at the end of each page. We avoid putting this into
@@ -513,6 +525,7 @@ Krang.Nav = {
                     params : matches[2].toQueryParams()
                 });
             } else {
+                Krang.show_indicator();
                 window.location = url;
             }
             Krang.Nav.edit_mode_flag = false;
@@ -1155,4 +1168,5 @@ Krang.Widget.BlindUpDown = function(element, args) {
         );
     }
 };
+
 
