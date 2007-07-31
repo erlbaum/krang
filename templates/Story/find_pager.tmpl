@@ -45,11 +45,12 @@
 <td>
     <strong><tmpl_var title escape=html></strong><br>
     <tmpl_var url><br>
-    <tmpl_var commands_column>
     <tmpl_if story_type>
-      <br><tmpl_var story_type escape=html>
+      <tmpl_var story_type escape=html>
       <tmpl_if story_version> (Version <tmpl_var story_version escape=html>)</tmpl_if>
+      <br>
     </tmpl_if>
+    <tmpl_var commands_column>
 </td>
 <td><tmpl_var cover_date escape=html></td>
 <td><tmpl_var status></td>
