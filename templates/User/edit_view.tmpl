@@ -143,17 +143,17 @@ User Information
 
 <tbody class="demi">
 
-<tr<tmpl_if error_invalid_first_name> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_first_name> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if error_invalid_first_name> class="err"<tmpl_else><tmpl_if duplicate_first_name> class="err"</tmpl_if></tmpl_if>>
 <th>First Name</th>
 <td><input name="first_name" value="<tmpl_var escape=html first_name>"></td>
 </tr>
 
-<tr<tmpl_if error_invalid_last_name> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_last_name> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if error_invalid_last_name> class="err"<tmpl_else><tmpl_if duplicate_last_name> class="err"</tmpl_if></tmpl_if>>
 <th>Last Name</th>
 <td><input name="last_name" value="<tmpl_var escape=html last_name>"></td>
 </tr>
 
-<tr<tmpl_if error_invalid_email> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if error_invalid_email> class="err"</tmpl_if>>
 <th>Email</th>
 <td><input name="email" value="<tmpl_var escape=html email>"></td>
 </tr>
@@ -187,7 +187,7 @@ Groups
 
 <tbody>
 
-<tr<tmpl_if error_missing_group> class="ERR-ROW"<tmpl_else><tmpl_if error_null_group> class="ERR-ROW"<tmpl_else><tmpl_if error_invalid_group_id> class="ERR-ROW"</tmpl_if></tmpl_if></tmpl_if>>
+<tr<tmpl_if error_missing_group> class="err"<tmpl_else><tmpl_if error_null_group> class="err"<tmpl_else><tmpl_if error_invalid_group_id> class="err"</tmpl_if></tmpl_if></tmpl_if>>
 <th>Available</th>
 <td class="full">
 <select name="possible_group_ids" multiple="multiple" size="10"><tmpl_loop possible_group_ids>
@@ -223,17 +223,17 @@ Login Information
 
 <tbody class="demi">
 
-<tr<tmpl_if error_login_length> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_login> class="ERR-ROW"<tmpl_else><tmpl_if error_invalid_login> class="ERR-ROW"</tmpl_if></tmpl_if></tmpl_if>>
+<tr<tmpl_if error_login_length> class="err"<tmpl_else><tmpl_if duplicate_login> class="err"<tmpl_else><tmpl_if error_invalid_login> class="err"</tmpl_if></tmpl_if></tmpl_if>>
 <th>Username</th>
 <td><input name="login" value="<tmpl_var escape=html login>"></td>
 </tr>
 
-<tr<tmpl_if error_password_length> class="ERR-ROW"<tmpl_else><tmpl_if error_null_password> class="ERR-ROW"<tmpl_else><tmpl_if error_password_mismatch> class="ERR-ROW"</tmpl_if></tmpl_if></tmpl_if>>
+<tr<tmpl_if error_password_length> class="err"<tmpl_else><tmpl_if error_null_password> class="err"<tmpl_else><tmpl_if error_password_mismatch> class="err"</tmpl_if></tmpl_if></tmpl_if>>
 <th>Password</th>
 <td><input name="new_password" value="<tmpl_var escape=html new_password>" type="password"></td>
 </tr>
 
-<tr<tmpl_if error_password_length> class="ERR-ROW"<tmpl_else><tmpl_if error_null_password> class="ERR-ROW"<tmpl_else><tmpl_if error_password_mismatch> class="ERR-ROW"</tmpl_if></tmpl_if></tmpl_if>>
+<tr<tmpl_if error_password_length> class="err"<tmpl_else><tmpl_if error_null_password> class="err"<tmpl_else><tmpl_if error_password_mismatch> class="err"</tmpl_if></tmpl_if></tmpl_if>>
 <th>Repeat Password</th>
 <td><input name="confirm_password" value="<tmpl_var escape=html confirm_password>" type="password"></td>
 </tr>

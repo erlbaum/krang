@@ -133,7 +133,7 @@ Properties
   </td>
   </tr>
 
-  <tr<tmpl_if error_template_file> class="ERR-ROW"</tmpl_if>>
+  <tr<tmpl_if error_template_file> class="err"</tmpl_if>>
   <th>Upload Template File</th>
   <td colspan="3">
     Current File
@@ -160,22 +160,22 @@ Properties
 
   <tbody>
 
-  <tr<tmpl_if error_no_filename> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_url> class="ERR-ROW"<tmpl_else><tmpl_if error_element> class="ERR-ROW"</tmpl_if></tmpl_if></tmpl_if>>
+  <tr<tmpl_if error_no_filename> class="err"<tmpl_else><tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_element> class="err"</tmpl_if></tmpl_if></tmpl_if>>
   <th>Element</th>
   <td><tmpl_var element_chooser></td>
   </tr>
 
-  <tr<tmpl_if error_invalid_filename> class="ERR-ROW"<tmpl_else><tmpl_if error_no_filename> class="ERR-ROW"</tmpl_if></tmpl_if>>
+  <tr<tmpl_if error_invalid_filename> class="err"<tmpl_else><tmpl_if error_no_filename> class="err"</tmpl_if></tmpl_if>>
   <th>File Name</th>
   <td class="demi"><input name="filename" value="<tmpl_var escape=html filename>"<tmpl_if duplicate_url> readonly</tmpl_if>></td>
   </tr>
 
-  <tr<tmpl_if duplicate_url> class="ERR-ROW"<tmpl_else><tmpl_if error_category_id> class="ERR-ROW"</tmpl_if></tmpl_if>>
+  <tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_category_id> class="err"</tmpl_if></tmpl_if>>
   <th>Site/Category</th>
   <td><tmpl_var category_chooser></td>
   </tr>
 
-  <tr<tmpl_if error_template_file> class="ERR-ROW"</tmpl_if>>
+  <tr<tmpl_if error_template_file> class="err"</tmpl_if>>
   <th>Upload Template File</th>
   <td><tmpl_var upload_chooser></td>
   </tr>

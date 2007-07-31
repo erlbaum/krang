@@ -196,14 +196,14 @@ Add Action
 
 <tmpl_if simple>
 
-  <tr<tmpl_if invalid_datetime> class="ERR-ROW"</tmpl_if>>
+  <tr<tmpl_if invalid_datetime> class="err"</tmpl_if>>
   <th>Trigger Once</th>
   <td><tmpl_var publish_selector></td>
   </tr>
 
 <tmpl_else>
 
-  <tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if invalid_datetime> class="ERR-ROW"</tmpl_if></tmpl_if>">
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if invalid_datetime> class="err"</tmpl_if></tmpl_if>">
   <th>
   <input name="repeat" value="never" type="radio"<tmpl_if repeat_never> checked</tmpl_if>>
   Trigger Once
@@ -211,7 +211,7 @@ Add Action
   <td><tmpl_var full_date_selector></td>
   </tr>
 
-  <tr<tmpl_if no_date_type> class="ERR-ROW"</tmpl_if>>
+  <tr<tmpl_if no_date_type> class="err"</tmpl_if>>
   <th>
   <input name="repeat" value="hourly" type="radio"<tmpl_if repeat_hourly> checked</tmpl_if>>
   Trigger Hourly
@@ -222,7 +222,7 @@ Add Action
   </td>
   </tr>
 
-  <tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if no_hour> class="ERR-ROW"</tmpl_if></tmpl_if>>
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_hour> class="err"</tmpl_if></tmpl_if>>
   <th>
   <input name="repeat" value="daily" type="radio"<tmpl_if repeat_daily> checked</tmpl_if>>
   Trigger Daily
@@ -230,7 +230,7 @@ Add Action
   <td><tmpl_var daily_time_selector></td>
   </tr>
 
-  <tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if no_weekly_hour> class="ERR-ROW"</tmpl_if></tmpl_if>>
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_weekly_hour> class="err"</tmpl_if></tmpl_if>>
   <th>
   <input name="repeat" value="weekly" type="radio"<tmpl_if repeat_weekly> checked</tmpl_if>>
   Trigger Weekly

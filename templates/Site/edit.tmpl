@@ -60,22 +60,22 @@ Site
 
 <tbody class="demi">
 
-<tr<tmpl_if error_invalid_url> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_url> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if error_invalid_url> class="err"<tmpl_else><tmpl_if duplicate_url> class="err"</tmpl_if></tmpl_if>>
 <th>URL</th>
 <td><input name="url" value="<tmpl_var escape=html url>"></td>
 </tr>
 
-<tr<tmpl_if error_invalid_preview_url> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_preview_url> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if error_invalid_preview_url> class="err"<tmpl_else><tmpl_if duplicate_preview_url> class="err"</tmpl_if></tmpl_if>>
 <th>Preview URL</th>
 <td><input name="preview_url" value="<tmpl_var escape=html preview_url>"></td>
 </tr>
 
-<tr<tmpl_if error_invalid_publish_path> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_publish_path> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if error_invalid_publish_path> class="err"<tmpl_else><tmpl_if duplicate_publish_path> class="err"</tmpl_if></tmpl_if>>
 <th>Publish Path</th>
 <td><input name="publish_path" value="<tmpl_var escape=html publish_path>"></td>
 </tr>
 
-<tr<tmpl_if error_invalid_preview_path> class="ERR-ROW"<tmpl_else><tmpl_if duplicate_preview_path> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if error_invalid_preview_path> class="err"<tmpl_else><tmpl_if duplicate_preview_path> class="err"</tmpl_if></tmpl_if>>
 <th>Preview Path</th>
 <td><input name="preview_path" value="<tmpl_var escape=html preview_path>"></td>
 </tr>

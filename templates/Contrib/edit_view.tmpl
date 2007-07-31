@@ -63,21 +63,21 @@ Contributor
 <td><input name="prefix" value="<tmpl_var escape=html prefix>"></td>
 </tr>
 
-<tr<tmpl_if duplicate_name> class="ERR-ROW"<tmpl_else><tmpl_if error_invalid_first> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if duplicate_name> class="err"<tmpl_else><tmpl_if error_invalid_first> class="err"</tmpl_if></tmpl_if>>
 <th>First</th>
 <td>
 <input name="first" value="<tmpl_var escape=html first>">
 </td>
 </tr>
 
-<tr<tmpl_if duplicate_name> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if duplicate_name> class="err"</tmpl_if>>
 <th>Middle</th>
 <td>
 <input name="middle" value="<tmpl_var escape=html middle>">
 </td>
 </tr>
 
-<tr<tmpl_if duplicate_name> class="ERR-ROW"<tmpl_else><tmpl_if error_invalid_last> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if duplicate_name> class="err"<tmpl_else><tmpl_if error_invalid_last> class="err"</tmpl_if></tmpl_if>>
 <th>Last</th>
 <td>
 <input name="last" value="<tmpl_var escape=html last>">
@@ -89,7 +89,7 @@ Contributor
 <td><input name="suffix" value="<tmpl_var escape=html suffix>"></td>
 </tr>
 
-<tr<tmpl_if error_invalid_type> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if error_invalid_type> class="err"</tmpl_if>>
 <th>Contributor Type</th>
 <td>
 <select name="contrib_type_ids" size="3" multiple><tmpl_loop contrib_type_ids>
@@ -98,7 +98,7 @@ Contributor
 </td>
 </tr>
 
-<tr<tmpl_if error_invalid_email> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if error_invalid_email> class="err"</tmpl_if>>
 <th>Email</th>
 <td>
 <input name="email" value="<tmpl_var escape=html email>">
@@ -115,7 +115,7 @@ Contributor
 <td><textarea name="bio" rows="9" cols="50"><tmpl_var escape=html bio></textarea></td>
 </tr>
 
-<tr<tmpl_if error_invalid_url> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if error_invalid_url> class="err"</tmpl_if>>
 <th>URL</th>
 <td>
 <input name="url" value="<tmpl_var escape=html url>">

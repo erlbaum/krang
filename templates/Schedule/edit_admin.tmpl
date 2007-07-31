@@ -44,7 +44,7 @@ Add Action
 <td><tmpl_var action_selector></td>
 </tr>
 
-<tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if invalid_datetime> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if invalid_datetime> class="err"</tmpl_if></tmpl_if>>
 <th>
 <input name="repeat" value="never" type="radio"<tmpl_if repeat_never> checked</tmpl_if>>
 Trigger Once
@@ -52,7 +52,7 @@ Trigger Once
 <td><tmpl_var full_date_selector></td>
 </tr>
 
-<tr<tmpl_if no_date_type> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if no_date_type> class="err"</tmpl_if>>
 <th>
 <input name="repeat" value="hourly" type="radio"<tmpl_if repeat_hourly> checked</tmpl_if>>
 Trigger Hourly
@@ -63,7 +63,7 @@ minutes after the hour
 </td>
 </tr>
 
-<tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if no_hour> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_hour> class="err"</tmpl_if></tmpl_if>>
 <th>
 <input name="repeat" value="daily" type="radio"<tmpl_if repeat_daily> checked</tmpl_if>>
 Trigger Daily
@@ -73,7 +73,7 @@ Trigger Daily
 </td>
 </tr>
 
-<tr<tmpl_if no_date_type> class="ERR-ROW"<tmpl_else><tmpl_if no_weekly_hour> class="ERR-ROW"</tmpl_if></tmpl_if>>
+<tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_weekly_hour> class="err"</tmpl_if></tmpl_if>>
 <th>
 <input name="repeat" value="weekly" type="radio"<tmpl_if repeat_weekly> checked</tmpl_if>>
 Trigger Weekly

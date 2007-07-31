@@ -167,12 +167,12 @@ Properties
 <tmpl_if is_root>
   <tbody class="demi">
 
-  <tr<tmpl_if bad_title> class="ERR-ROW"</tmpl_if>>
+  <tr<tmpl_if bad_title> class="err"</tmpl_if>>
   <th>*Title</th>
   <td><input name="title" value="<tmpl_var escape=html title>"></td>
   </tr>
 
-  <tr<tmpl_if bad_slug> class="ERR-ROW"</tmpl_if>>
+  <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
   <th>Slug</th>
   <td><input name="slug" value="<tmpl_var escape=html slug>"></td>
   </tr>
@@ -181,7 +181,7 @@ Properties
 
   <tbody>
 
-  <tr<tmpl_if bad_cover_date> class="ERR-ROW"</tmpl_if>>
+  <tr<tmpl_if bad_cover_date> class="err"</tmpl_if>>
   <th>*Cover Date</th>
   <td><tmpl_var cover_date_selector></td>
   </tr>

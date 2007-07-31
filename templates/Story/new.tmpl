@@ -34,17 +34,17 @@ New Story
 
 <tbody class="demi">
 
-<tr<tmpl_if bad_type> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if bad_type> class="err"</tmpl_if>>
 <th>*Type</th>
 <td><tmpl_var type_selector></td>
 </tr>
 
-<tr<tmpl_if bad_title> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if bad_title> class="err"</tmpl_if>>
 <th>*Title</th>
 <td><input name="title" value="<tmpl_var escape=html title>"></td>
 </tr>
 
-<tr<tmpl_if bad_slug> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if bad_slug> class="err"</tmpl_if>>
 <th>Slug</th>
 <td><input name="slug" value="<tmpl_var escape=html slug>"></td>
 </tr>
@@ -53,12 +53,12 @@ New Story
 
 <tbody>
 
-<tr<tmpl_if bad_cover_date> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if bad_cover_date> class="err"</tmpl_if>>
 <th>*Cover Date</th>
 <td><tmpl_var cover_date_selector></td>
 </tr>
 
-<tr<tmpl_if bad_category_id> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if bad_category_id> class="err"</tmpl_if>>
 <th>*Site/Category</th>
 <td><tmpl_var category_chooser></td>
 </tr>

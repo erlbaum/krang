@@ -34,14 +34,14 @@ Properties
 
 <tbody class="demi">
 
-<tr<tmpl_if bad_parent_id> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if bad_parent_id> class="err"</tmpl_if>>
 <th>Parent</th>
 <td>
 <tmpl_var parent_chooser>
 </td>
 </tr>
 
-<tr<tmpl_if bad_dir> class="ERR-ROW"</tmpl_if>>
+<tr<tmpl_if bad_dir> class="err"</tmpl_if>>
 <th>Directory</th>
 <td><input name="dir" value="<tmpl_var escape=html dir>"></td>
 </tr>
