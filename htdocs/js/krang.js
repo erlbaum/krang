@@ -110,7 +110,7 @@ Krang.get_cookie = function(name) {
 
           if ( end == -1 ) end = cookie.length;
 
-          value = encodeURI( cookie.substring( start, end ) );
+          value = decodeURIComponent( cookie.substring( start, end ) );
         }
     }
     return value;
