@@ -110,7 +110,7 @@ Krang.get_cookie = function(name) {
 
           if ( end == -1 ) end = cookie.length;
 
-          value = unescape( cookie.substring( start, end ) );
+          value = encodeURI( cookie.substring( start, end ) );
         }
     }
     return value;
@@ -121,7 +121,7 @@ Krang.get_cookie = function(name) {
     Sets a cookie to a particular value.
 */
 Krang.set_cookie = function(name, value) {
-    document.cookie = name + '=' + value;
+    document.cookie = name + '=' + encodeURI(value);
 };
 
 /*
@@ -935,7 +935,7 @@ Object.extend( Krang.Navigation.prototype, {
         }
     },
     save_opened_panels: function(positions) {
-        Krang.set_cookie(this.cookie_name, escape(positions.join(',')));
+        Krang.set_cookie(this.cookie_name, positions.join(','));
         this.opened_panels = positions;
     },
     remove_opened_panel: function(pos) {
