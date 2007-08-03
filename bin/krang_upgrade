@@ -448,9 +448,9 @@ sub install_new_krang {
            sub { 
                return if -l $_ and !-e $_; # skip bad links
                # handle files with double quotes in the name
-               $_ =~ s/"/\\"/g
+               $_ =~ s/"/\\"/g;
                system($chown . qq| "$_"|)
-                 and warn("   Warning: unable to chown "$_".\n");
+                 and warn(qq/   Warning: unable to chown "$_".\n/);
            }
          }, $InstallPath);
 
