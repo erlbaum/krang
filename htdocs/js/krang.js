@@ -98,19 +98,19 @@ Krang.get_cookie = function(name) {
     var cookie = document.cookie;
     var start, end;
 
-    if ( cookie.length > 0 ) {
-        start = cookie.indexOf( name + '=' );
+    if (cookie.length > 0) {
+        start = cookie.indexOf(name + '=');
 
         // if the cookie exists
-        if ( start != -1 )  {
-          start += name.length + 1; // need to account for the '='
+        if (start != -1)  {
+            start += name.length + 1; // need to account for the '='
 
-          // set index of beginning of value
-          end = cookie.indexOf( ';', start );
+            // set index of beginning of value
+            end = cookie.indexOf(';', start);
 
-          if ( end == -1 ) end = cookie.length;
+            if (end == -1) end = cookie.length;
 
-          value = decodeURIComponent( cookie.substring( start, end ) );
+            value = decodeURIComponent(cookie.substring(start, end));
         }
     }
     return value;
@@ -121,7 +121,7 @@ Krang.get_cookie = function(name) {
     Sets a cookie to a particular value.
 */
 Krang.set_cookie = function(name, value) {
-    document.cookie = name + '=' + encodeURI(value);
+    document.cookie = name + '=' + encodeURIComponent(value);
 };
 
 /*
