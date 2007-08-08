@@ -134,6 +134,24 @@ Krang.my_prefs = function() {
     return eval('(' + json + ')');
 };
 
+Krang.Ajax = {
+    _encode_params : function(params) {
+        for(var n in params) {
+            // if it's an object/array (happens with same named elements)
+            // then we need to encode each element
+            if( typeof params[n] == 'object' ) {
+                var list = params[n];
+                for(var i=0; i<list.length; i++) {
+                    list[i] = Krang.Base64.encode(list[i]);
+                }
+                params[n] = list;
+            } else {
+                params[n] = Krang.Base64.encode(params[n]);
+            }
+        }
+        params.base64 = 1;
+    }
+};
 /*
     Krang.Ajax.request({ url: 'story.pl' })
     Creates an Ajax.Updater object with Krang's specific needs
@@ -176,6 +194,9 @@ Krang.Ajax.request = function(args) {
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
+
+    // encode the params so that we can remain encoding-neutral
+    Krang.Ajax._encode_params(params);
 
     // add the ajax=1 flag to the existing query params
     params['ajax'] = 1;
@@ -263,6 +284,9 @@ Krang.Ajax.update = function(args) {
 
     // tell the user that we're doing something
     Krang.show_indicator(indicator);
+
+    // encode the params so that we can remain encoding-neutral
+    Krang.Ajax._encode_params(params);
 
     // add the ajax=1 flag to the existing query params
     params['ajax'] = 1;
@@ -1168,5 +1192,71 @@ Krang.Widget.BlindUpDown = function(element, args) {
         );
     }
 };
+
+Krang.Base64 = {  
+    chars  : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",  
+  
+    // public method for encoding  
+    encode : function (input) {  
+        var output = "";  
+        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;  
+        var i = 0;  
+  
+        while (i < input.length) {  
+            chr1 = input.charCodeAt(i++);  
+            chr2 = input.charCodeAt(i++);  
+            chr3 = input.charCodeAt(i++);  
+  
+            enc1 = chr1 >> 2;  
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);  
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);  
+            enc4 = chr3 & 63;  
+  
+            if (isNaN(chr2)) {  
+                enc3 = enc4 = 64;  
+            } else if (isNaN(chr3)) {  
+                enc4 = 64;  
+            }  
+  
+            output = output 
+                + this.chars.charAt(enc1) + this.chars.charAt(enc2) 
+                + this.chars.charAt(enc3) + this.chars.charAt(enc4);  
+        }  
+  
+        return output;  
+    },  
+  
+    // public method for decoding  
+    decode : function (input) {  
+        var output = "";  
+        var chr1, chr2, chr3;  
+        var enc1, enc2, enc3, enc4;  
+        var i = 0;  
+  
+        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");  
+  
+        while (i < input.length) {  
+            enc1 = this.chars.indexOf(input.charAt(i++));  
+            enc2 = this.chars.indexOf(input.charAt(i++));  
+            enc3 = this.chars.indexOf(input.charAt(i++));  
+            enc4 = this.chars.indexOf(input.charAt(i++));  
+  
+            chr1 = (enc1 << 2) | (enc2 >> 4);  
+            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);  
+            chr3 = ((enc3 & 3) << 6) | enc4;  
+  
+            output = output + String.fromCharCode(chr1);  
+  
+            if (enc3 != 64) {  
+                output = output + String.fromCharCode(chr2);  
+            }  
+            if (enc4 != 64) {  
+                output = output + String.fromCharCode(chr3);  
+            }  
+  
+        }  
+        return output;  
+    }
+}  
 
 

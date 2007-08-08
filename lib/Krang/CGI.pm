@@ -6,6 +6,7 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Widget  => qw(category_chooser_object);
+use MIME::Base64 qw(decode_base64);
 
 # pull in Krang::lib when not running in mod_perl
 BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
@@ -182,11 +183,14 @@ BEGIN {
 
     # register the auth_forbidden runmode
     # and prevent aggressive caching from some browsers (looking at you IE)
+    # it also does Base64 decoding if the parameters were encoded as Base64
     __PACKAGE__->add_callback(
         init => sub {
             my $self = shift;
+            # add auth_forbidden rm
             $self->run_modes(access_forbidden => 'access_forbidden');
 
+            # send the no-cache headers
             if( $ENV{MOD_PERL} ) {
                 require Apache;
                 my $r = Apache->request();
@@ -196,6 +200,21 @@ BEGIN {
                     -cache_Control => 'no-cache',
                     -pragma        => 'no-cache',
                 );
+            }
+
+            # decode CGI params as Base64 if they were encoded as such
+            my $q = $self->query;
+            if( $q->param('base64') ) {
+                my @names = $q->param();
+                foreach my $name (@names) {
+                    next if $name eq 'base64' or $name eq 'ajax';
+                    my @values = $q->param($name);
+                    foreach my $i (0..$#values) {
+                        $values[$i] = decode_base64($values[$i]);
+                    }
+
+                    $q->param($name => @values);
+                }
             }
         }
     );
