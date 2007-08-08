@@ -8,7 +8,7 @@ var rules = {
     'a.ajax' : function(el) {
         el.observe('click', function(event) {
             var matches = this.href.match(/(.*)\?(.*)/);
-            Krang.ajax_update({
+            Krang.Ajax.update({
                 url       : matches[1],
                 params    : matches[2].toQueryParams(),
                 div       : Krang.class_suffix(el, 'for_'),

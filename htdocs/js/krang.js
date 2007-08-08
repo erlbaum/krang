@@ -135,7 +135,7 @@ Krang.my_prefs = function() {
 };
 
 /*
-    Krang.ajax_request({ url: 'story.pl' })
+    Krang.Ajax.request({ url: 'story.pl' })
     Creates an Ajax.Updater object with Krang's specific needs
     in mind.
     Takes the following args in it's hash:
@@ -144,13 +144,13 @@ Krang.my_prefs = function() {
     params    : a hash of params for the request
     indicator : the id of the image to use as an indicator (optional defaults to 'indicator')
     onComplete: a callback function to be executed after the normal processing (optional)
-                Receives as arguments, the same args passed into ajax_update the AJAX transport
+                Receives as arguments, the same args passed into Ajax.update() the AJAX transport
                 object, and any JSON object returned in the X-JSON HTTP header.
     onFailure : a callback function to be executed in case of an error. Receives as arguments
                 the AJAX transport object and the exception thrown. This is in addition to the
                 normal error message the Krang will show to in the UI.
 
-    Krang.ajax_request({
+    Krang.Ajax.request({
         url        : '/app/some_mod/something',
         params     : {
             rm  : 'foo',
@@ -167,7 +167,7 @@ Krang.my_prefs = function() {
 
     TODO: handle GET and POST differently
 */
-Krang.ajax_request = function(args) {
+Krang.Ajax.request = function(args) {
     var url       = args['url'];
     var params    = args['params'] || {};
     var indicator = args['indicator'];
@@ -212,7 +212,7 @@ Krang.ajax_request = function(args) {
 };
 
 /*
-    Krang.ajax_update({ url: 'story.pl' })
+    Krang.Ajax.update({ url: 'story.pl' })
     Creates an Ajax.Updater object with Krang's specific needs
     in mind.
     Takes the following args in it's hash:
@@ -224,13 +224,13 @@ Krang.ajax_request = function(args) {
     to_top    : whether or not the page should scroll back up to the top after the update.
                 Defaults to true.
     onComplete: a callback function to be executed after the normal processing (optional)
-                Receives as arguments, the same args passed into ajax_update the AJAX transport
+                Receives as arguments, the same args passed into Ajax.update() the AJAX transport
                 object, and any JSON object returned in the X-JSON HTTP header.
     onFailure : a callback function to be executed in case of an error. Receives as arguments
                 the AJAX transport object and the exception thrown. This is in addition to the
                 normal error message the Krang will show to in the UI.
 
-    Krang.ajax_update({
+    Krang.Ajax.update({
         url        : '/app/some_mod/something',
         params     : {
             rm  : 'foo',
@@ -251,7 +251,7 @@ Krang.ajax_request = function(args) {
 
     TODO: handle GET and POST differently
 */
-Krang.ajax_update = function(args) {
+Krang.Ajax.update = function(args) {
     var url       = args.url;
     var params    = args.params || {};
     var target    = args.target;
@@ -292,7 +292,7 @@ Krang.ajax_update = function(args) {
 
                 // update the navigation if we need to
                 if( json && json.krang_update_nav ) {
-                    Krang.ajax_update({ url: 'nav.pl', target: 'S', to_top: false });
+                    Krang.Ajax.update({ url: 'nav.pl', target: 'S', to_top: false });
                 }
             },
             onComplete  : function(transport, json) {
@@ -408,7 +408,7 @@ Krang.form_submit = function(form, inputs, options) {
                 url = url.replace(/\?.*/, '');
             }
 
-            Krang.ajax_update({
+            Krang.Ajax.update({
                 url    : url,
                 params : Form.serialize(form, true),
                 target : options.target,
@@ -520,8 +520,8 @@ Krang.Nav = {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);
-                Krang.ajax_update({
-                    url : matches[1],
+                Krang.Ajax.update({
+                    url    : matches[1],
                     params : matches[2].toQueryParams()
                 });
             } else {
