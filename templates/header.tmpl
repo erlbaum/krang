@@ -111,6 +111,16 @@ Looks like a little bug (probably an Internal Server Error).
 </form>
 </div></div>
 
+<script type="text/javascript">
+// Safari needs the position:fixed to inline on the element
+// but IE6 won't function properly if it is. Firefox behaves
+// like it should
+if( Prototype.Browser.WebKit ) {
+    $('messages').style.position = 'fixed';
+    $('alerts').style.position = 'fixed';
+}
+</script>
+
 <div id="H">
 
 <h1><a title="About <tmpl_var escape=html krang_product_name>" href="about.pl" class="popup"><!--
