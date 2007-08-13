@@ -105,6 +105,7 @@ use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw/critical debug info/;
 use Krang::ClassLoader Conf => qw/PasswordChangeTime PasswordChangeCount/;
 use Krang::ClassLoader 'UUID';
+use Krang::ClassLoader 'Schedule';
 use Krang::Cache;
 
 #
@@ -334,6 +335,18 @@ sub delete {
     $dbh->do("DELETE FROM user_category_permission_cache WHERE user_id = ?",
              undef, $id);
     $dbh->do("DELETE FROM alert WHERE user_id = ?", undef, $id);
+
+    # we also need to delete all send schedule entries that might refer to this
+    # user in it's context
+    my @scheduled = pkg('Schedule')->find(action => 'send');
+    foreach my $schedule (@scheduled) {
+        if( $schedule->context ) {
+            my %context = @{$schedule->context};
+            if( exists $context{user_id} and $context{user_id} == $id ) {
+                $schedule->delete();
+            }
+        }
+    }
 
     return 1;
 }
