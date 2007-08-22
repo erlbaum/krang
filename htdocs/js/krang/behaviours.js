@@ -1,7 +1,12 @@
 var rules = {
     'a.popup' : function(el) {
         el.observe('click', function(event) {
-            Krang.popup(this.readAttribute('href'));
+            var sizes = { width: 400, height: 600 };
+            if( el.hasClassName('small') ) {
+                sizes.width  = 300;
+                sizes.height = 300;
+            }
+            Krang.popup(this.readAttribute('href'), sizes);
             Event.stop(event);
         }.bindAsEventListener(el));
     },
