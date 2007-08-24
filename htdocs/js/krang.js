@@ -1193,6 +1193,14 @@ Krang.Widget.BlindUpDown = function(element, args) {
     }
 };
 
+/*
+    Krang.Base64
+
+    Contains 2 public methods for encoding and decoding Base64 data.
+
+    base64      = Krang.Base64.encode(some_string);
+    some_string = Krang.Base64.decode(base64);
+*/
 Krang.Base64 = {  
     chars  : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",  
   
