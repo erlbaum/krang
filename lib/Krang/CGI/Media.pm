@@ -1413,7 +1413,7 @@ sub make_media_tmpl_data {
 
     # Build type drop-down
     my %media_types = pkg('Pref')->get('media_type');
-    my @media_type_ids = ( "", keys(%media_types) );
+    my @media_type_ids = ( "", sort { $media_types{$a} cmp $media_types{$b} } keys(%media_types) );
     my $media_types_popup_menu = $q->popup_menu(
                                                 -name => 'media_type_id',
                                                 -values => \@media_type_ids,

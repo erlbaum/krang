@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fix ordering of media types on media UI to be in alphabetical
+order. [Eric Folley]
+
+=item *
+
 Completely new skin. [Don Brodale and Michael Peters]
 
 =item *
