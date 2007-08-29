@@ -105,7 +105,6 @@ use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw/critical debug info/;
 use Krang::ClassLoader Conf => qw/PasswordChangeTime PasswordChangeCount/;
 use Krang::ClassLoader 'UUID';
-use Krang::ClassLoader 'Schedule';
 use Krang::Cache;
 
 #
@@ -338,6 +337,10 @@ sub delete {
 
     # we also need to delete all send schedule entries that might refer to this
     # user in it's context
+    my $schedule_class = pkg('Schedule');
+    eval "require $schedule_class";
+    croak "Could not load $schedule_class: $@" if $@;
+    
     my @scheduled = pkg('Schedule')->find(action => 'send');
     foreach my $schedule (@scheduled) {
         if( $schedule->context ) {
