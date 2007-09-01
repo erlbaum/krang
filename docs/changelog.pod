@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added platform files for Fedora Core 7.  [Jesse Erlbaum]
+
+=item *
+
 Fix ordering of media types on media UI to be in alphabetical
 order. [Eric Folley]
 
