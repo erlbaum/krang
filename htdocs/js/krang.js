@@ -134,8 +134,22 @@ Krang.my_prefs = function() {
     return eval('(' + json + ')');
 };
 
+/*
+    Krang.config()
+    Returns a hash of config information values from the server
+    (passed to use via a JSON cookie)
+*/
+Krang.config = function() {
+    var json = Krang.get_cookie('KRANG_CONFIG');
+    return eval('(' + json + ')');
+};
+
 Krang.Ajax = {
     _encode_params : function(params) {
+        // only encode to Base64 if our character set is not utf-8
+        var config = Krang.config();
+        if(config.charset == 'utf-8' || config.charset == 'UTF-8') return;
+        
         for(var n in params) {
             // if it's an object/array (happens with same named elements)
             // then we need to encode each element

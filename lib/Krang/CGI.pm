@@ -7,6 +7,7 @@ use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Widget  => qw(category_chooser_object);
 use MIME::Base64 qw(decode_base64);
+use Encode;
 
 # pull in Krang::lib when not running in mod_perl
 BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
@@ -202,12 +203,19 @@ BEGIN {
                 );
             }
 
-            # decode CGI params as Base64 if they were encoded as such
             my $q = $self->query;
+
+            # Decode the data
+            # If the 'base64' flag is set data could be Base64 encoded (we 
+            # Base64 encode in the client-side JavaScript since JavaScript 
+            # would natively encode to UTF-8 (done # by encodeURIComponent()).
+            # So by encoding in Base64 first we preserve the orginal 
+            # characters.
             if( $q->param('base64') ) {
                 my @names = $q->param();
                 foreach my $name (@names) {
-                    next if $name eq 'base64' or $name eq 'ajax';
+                    # 'ajax' and 'base64' are not encoded
+                    next if $name eq 'ajax' or $name eq 'base64';
                     my @values = $q->param($name);
                     foreach my $i (0..$#values) {
                         $values[$i] = decode_base64($values[$i]);
@@ -215,6 +223,21 @@ BEGIN {
 
                     $q->param($name => @values);
                 }
+# Not sure why, but setting the _utf8_on() flag for the Perl internals
+# leads to some cases where data does not get output correctly to the
+# browser.
+#            } elsif( $q->param('ajax') or lc Charset eq 'utf-8' ) {
+#                # else we mark the strings as UTF8 so other stuff doesn't
+#                # have to worry about it
+#                my @names = $q->param();
+#                foreach my $name (@names) {
+#                    my @values = $q->param($name);
+#                    foreach my $i (0..$#values) {
+#                        Encode::_utf8_on($values[$i]);
+#                    }
+#
+#                    $q->param($name => @values);
+#                }
             }
         }
     );
