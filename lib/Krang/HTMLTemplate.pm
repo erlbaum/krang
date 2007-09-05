@@ -26,7 +26,7 @@ See L<HTML::Template>.
 
 use base 'HTML::Template';
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS EnableBugzilla ContactEmail);
+use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS EnableBugzilla ContactEmail Charset);
 use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clear_alerts);
 use Krang::ClassLoader 'Navigation';
 use Krang::ClassLoader Log => qw(debug);
@@ -94,6 +94,9 @@ sub output {
         $template->param(header_user_name => $user->first_name . " " . 
                                              $user->last_name) if $user;
     }
+
+    $template->param(charset => Charset)
+      if $template->query(name => 'charset') && Charset;
 
     $template->param(instance_display_name => InstanceDisplayName)
       if $template->query(name => 'instance_display_name');
