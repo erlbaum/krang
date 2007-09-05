@@ -216,7 +216,7 @@ sub _do_login {
     # put some meta information about this installation/instance of Krang
     # into a cookie that the front-end JS can use
     my %conf_info = (
-        charset => Charset(),
+        charset => ( Charset() || '' ),
     );
     my $conf_cookie = $q->cookie(
         -name  => 'KRANG_CONFIG',
