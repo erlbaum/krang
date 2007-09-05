@@ -36,6 +36,7 @@ use Krang::ClassLoader Conf => qw(
     BadLoginCount
     BadLoginNotify
     BadLoginWait
+    Charset
     FromAddress
     InstanceApachePort
     InstanceDisplayName
@@ -211,11 +212,23 @@ sub _do_login {
         -name  => 'KRANG_PREFS',
         -value => objToJson(\%prefs),
     );
+
+    # put some meta information about this installation/instance of Krang
+    # into a cookie that the front-end JS can use
+    my %conf_info = (
+        charset => Charset(),
+    );
+    my $conf_cookie = $q->cookie(
+        -name  => 'KRANG_CONFIG',
+        -value => objToJson(\%conf_info),
+    );
     
-    # redirect and set the cookie
+    # redirect and set the cookies
     my $target = './';
-    $self->header_add(-uri    => $target,
-                      -cookie => [$session_cookie->as_string, $pref_cookie->as_string]);
+    $self->header_add(
+        -uri    => $target,
+        -cookie => [$session_cookie->as_string, $pref_cookie->as_string, $conf_cookie->as_string],
+    );
 
     $self->header_type('redirect');
     my $output = "Redirect: <a href=\"$target\">$target</a>";
