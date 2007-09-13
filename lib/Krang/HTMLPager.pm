@@ -264,7 +264,7 @@ sub make_internal_template {
     # we need to put the action attribute in here since
     # when using ajax, it might not be the current URL
     # that's supposed to receive the submission
-    my $script_name = $q->url(-relative => 1);
+    my $script_name = $q->url(-relative => 1) || '';
 
     # build colgroup that sets column layout widths through CSS
     my $colgroup = $self->create_colgroup();
