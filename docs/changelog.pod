@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added Secret directive to t/ssl_conf.t config to make tests run
+smoothly. [Bodo Schulze]
+
+=item *
+
 Added platform files for Fedora Core 7.  [Jesse Erlbaum]
 
 =item *
