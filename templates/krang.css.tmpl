@@ -56,7 +56,7 @@ form { margin: 0; padding: 0; }
 #H .nav .menu b        { background: url("/images/icon-submenu.gif") 100% 50% no-repeat; padding-right: 20px; }
 #H .nav .menu ul       { background-color: #EEE; background-image: none; position: absolute; height: auto; width: auto; top: 100%; left: -999em; border: 1px solid #CCC; border-width: 1px 1px 0; border-top-color: #D4D4D4; }
 #H .nav .menu:hover ul { left: -1px; z-index: 32767; }
-#H .nav .menu li       { float: none; border: 0; }
+#H .nav .menu li       { float: none; border: 0; width: 11.5em; }
 #H .nav .menu li.l     { margin-right: 0; }
 #H .nav .menu li a     { border-bottom: 1px solid #CCC; }
 #H .nav .menu li.xxx   { display: none; }
@@ -310,6 +310,7 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 #C p.naught { background-color: #EEE; color: #666; padding: 1.5em 30px; font-weight: bold; }
 
 #C .pages { background-color: inherit; color: <tmpl_var HeaderColor>; margin: 20px 0 0; border-top: 1px solid <tmpl_var XLightColor>; padding: 10px .5em 0 1em; font-weight: bold; }
+#C .killborder .pages { border: none; }
 
 #C .pages p   { float: left; margin: 0; line-height: 1; }/*:FIXME(db2)*/
 #C .pages p a { margin: 0 0 0 .5em; border-left: 1px solid <tmpl_var XLightColor>; padding: 0 .5em; }
