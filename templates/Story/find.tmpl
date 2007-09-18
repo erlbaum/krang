@@ -197,8 +197,8 @@ Advanced Search
 Search Results
 </h3>
 
-<div class="panel"><form>
-  <input value="Add Story" onclick="add_story()" type="button"<tmpl_if row_count> class="west"</tmpl_if>>
+<div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
+  <input value="Add Story" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
     <input value="Check Out" onclick="checkout_selected()" type="button">
     <input value="Publish" onclick="publish_selected()" type="button">
@@ -210,12 +210,14 @@ Search Results
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-<tmpl_if row_count><div class="panel capped"><form>
+<div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="Add Story" onclick="add_story()" type="button" class="west">
-  <input value="Check Out" onclick="checkout_selected()" type="button">
-  <input value="Publish" onclick="publish_selected()" type="button">
-  <input value="Delete" onclick="delete_selected()" type="button">
-</form></div></tmpl_if>
+  <tmpl_if row_count>
+    <input value="Check Out" onclick="checkout_selected()" type="button">
+    <input value="Publish" onclick="publish_selected()" type="button">
+    <input value="Delete" onclick="delete_selected()" type="button">
+  </tmpl_if>
+</form></div>
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" method="post" action="story.pl">

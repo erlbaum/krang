@@ -68,8 +68,8 @@ Simple Search
 Search Results
 </h3>
 
-<div class="panel"><form>
-<input value="Add Site" onclick="add_site()" type="button"<tmpl_if row_count> class="west"</tmpl_if>>
+<div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
+<input value="Add Site" onclick="add_site()" type="button" class="west">
 <tmpl_if row_count>
   <input value="Delete" onclick="delete_selected()" type="button">
 </tmpl_if>
@@ -79,8 +79,8 @@ Search Results
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-<div class="panel capped"><form>
-<input value="Add Site" onclick="add_site()" type="button"<tmpl_if row_count> class="west"</tmpl_if>>
+<div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
+<input value="Add Site" onclick="add_site()" type="button" class="west">
 <tmpl_if row_count>
   <input value="Delete" onclick="delete_selected()" type="button">
 </tmpl_if>
