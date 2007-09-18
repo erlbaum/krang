@@ -18,17 +18,21 @@ delete_selected = function()
 Scheduled Jobs
 </h2>
 
-<div class="panel"><form>
-<input value="Delete" onclick="delete_selected()" type="button">
-</form></div>
+<tmpl_if row_count>
+  <div class="panel"><form>
+  <input value="Delete" onclick="delete_selected()" type="button">
+  </form></div>
+</tmpl_if>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-<div class="panel capped"><form>
-<input value="Delete" onclick="delete_selected()" type="button">
-</form></div>
+<tmpl_if row_count>
+  <div class="panel capped"><form>
+  <input value="Delete" onclick="delete_selected()" type="button">
+  </form></div>
+</tmpl_if>
 
 <tmpl_include footer.tmpl>
 
