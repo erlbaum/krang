@@ -22,7 +22,7 @@ order. [Eric Folley]
 
 =item *
 
-Completely new skin. [Don Brodale and Michael Peters]
+Completely new skin. [Don Brodale, Michael Peters and Eric Folley]
 
 =item *
 
@@ -62,7 +62,8 @@ files.  [Michael Peters]
 
 =item *
 
-Fixed bug #3. C<< $publisher->publish_context >> now does not die if called without data
+Fixed bug #3. C<< $publisher->publish_context >> now does not die if called without data.
+[Michael Peters]
 
 =back
 
