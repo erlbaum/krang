@@ -6,6 +6,7 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Widget  => qw(category_chooser_object);
+use Krang::ClassLoader 'Charset';
 use MIME::Base64 qw(decode_base64);
 use Encode;
 
@@ -223,21 +224,18 @@ BEGIN {
 
                     $q->param($name => @values);
                 }
-# Not sure why, but setting the _utf8_on() flag for the Perl internals
-# leads to some cases where data does not get output correctly to the
-# browser.
-#            } elsif( $q->param('ajax') or lc Charset eq 'utf-8' ) {
-#                # else we mark the strings as UTF8 so other stuff doesn't
-#                # have to worry about it
-#                my @names = $q->param();
-#                foreach my $name (@names) {
-#                    my @values = $q->param($name);
-#                    foreach my $i (0..$#values) {
-#                        Encode::_utf8_on($values[$i]);
-#                    }
-#
-#                    $q->param($name => @values);
-#                }
+            } elsif( $q->param('ajax') or pkg('Charset')->is_utf8 ) {
+                # else we mark the strings as UTF8 so other stuff doesn't
+                # have to worry about it
+                my @names = $q->param();
+                foreach my $name (@names) {
+                    my @values = $q->param($name);
+                    foreach my $i (0..$#values) {
+                        Encode::_utf8_on($values[$i]);
+                    }
+
+                    $q->param($name => @values);
+                }
             }
         }
     );
