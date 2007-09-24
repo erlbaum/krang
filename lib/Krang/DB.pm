@@ -90,6 +90,11 @@ sub dbh {
 
     $connect_options{mysql_socket}=DBSock if DBSock;
     
+    my $is_utf8 = pkg('Charset')->is_utf8;
+    $connect_options{mysql_enable_utf8} = 1 if $is_utf8;
+use Data::Dumper;
+warn Dumper \%connect_options;
+    
     # connect to the defined database
     $DBH{$name} = DBI->connect($dsn, DBUser, DBPass, \%connect_options);
 
@@ -102,9 +107,7 @@ sub dbh {
     }
 
     # if we're using UTF-8, we need to tell mysql this
-    if( pkg('Charset')->is_utf8 ) {
-        $DBH{$name}->do('Set names utf8');
-    }
+    $DBH{$name}->do('Set names utf8') if $is_utf8;
 
     return $DBH{$name};
 }
