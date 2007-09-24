@@ -92,8 +92,6 @@ sub dbh {
     
     my $is_utf8 = pkg('Charset')->is_utf8;
     $connect_options{mysql_enable_utf8} = 1 if $is_utf8;
-use Data::Dumper;
-warn Dumper \%connect_options;
     
     # connect to the defined database
     $DBH{$name} = DBI->connect($dsn, DBUser, DBPass, \%connect_options);
