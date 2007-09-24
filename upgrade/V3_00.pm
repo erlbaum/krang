@@ -1,4 +1,4 @@
-package V3_000;
+package V3_00;
 use strict;
 use warnings;
 use Krang::ClassLoader base => 'Upgrade';
