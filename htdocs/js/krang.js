@@ -77,6 +77,26 @@ Krang.onload = function(code) {
 };
 
 /*
+    Krang.onunload()
+    Add some code that will get executed after the page is unloaded,
+    or a new AJAX request happens to replace the current '#C' content.
+    Multiple calls will not overwrite previous calls and all code
+    given will be executed in the order give.
+*/
+Krang.onunload_code = [];
+Krang.onunload = function(code) {
+    Krang.onunload_code.push(code);
+};
+Krang.unload = function() {
+    // run any code from Krang.onunload()
+    var size = Krang.onunload_code.length;
+    for(var i=0; i< size; i++) {
+        var code = Krang.onunload_code.pop();
+        if( code ) code();
+    }
+}
+
+/*
     Krang.popup(url, { width: 400, height: 600 })
     Open the url into a new popup window consistently.
     Width and height default to 800x600
@@ -214,6 +234,8 @@ Krang.Ajax.request = function(args) {
 
     // add the ajax=1 flag to the existing query params
     params['ajax'] = 1;
+
+    Krang.unload();
 
     new Ajax.Request(
         url,
