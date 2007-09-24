@@ -8,7 +8,7 @@ use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Widget  => qw(category_chooser_object);
 use Krang::ClassLoader 'Charset';
 use MIME::Base64 qw(decode_base64);
-use Encode;
+use Encode qw(decode_utf8);
 
 # pull in Krang::lib when not running in mod_perl
 BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
@@ -231,7 +231,7 @@ BEGIN {
                 foreach my $name (@names) {
                     my @values = $q->param($name);
                     foreach my $i (0..$#values) {
-                        Encode::_utf8_on($values[$i]);
+                        $values[$i] = decode_utf8($values[$i]);
                     }
 
                     $q->param($name => @values);
