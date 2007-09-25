@@ -1,0 +1,330 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_apachectl
+
+=head1 SYNOPSIS
+
+   krang_apachectl start
+
+   krang_apachectl stop
+
+   krang_apachectl restart
+
+=head1 DESCRIPTION
+
+This script controls the Krang Apache server. The usage of the script
+is the same as the normal apache "apachectl" script but only "start",
+"stop" and "restart" are supported. Also, "restart" performs a hard
+stop and start since a SIGHUP isn't enough for mod_perl.
+
+Usage information can be obtained by running the script with no arguments.
+
+=head2 FOR DEVELOPERS
+
+The environment variable B<CGI_MODE> may be set to a true value
+(e.g., '1'), which will cause all CGI applications to be run as true
+CGIs, via mod_cgi.  If this environment variable is not present,
+or is false, then all CGI applications will run via Apache::Registry.
+
+CGI_MODE is only useful for debugging during development.  In production
+is it inadvisable to invoke this mode.
+
+=cut
+
+# how long to wait for stop on restart (in seconds)
+use constant MAX_RESTART_WAIT => 10;
+
+# location of ApacheRoot, relative to $KRANG_ROOT
+use constant APACHE_ROOT => 'apache/';
+
+# location of ApacheBin, relative to ApacheRoot
+use constant APACHE_BIN => 'bin/httpd';
+
+$|++;
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Conf =>
+  qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup EnableSSL 
+     InstanceApacheAddr InstanceApachePort InstanceSSLCertificateFile 
+     InstanceSSLCertificateKeyFile InstanceSSLCertificateChainFile
+     InstanceSSLCACertificateFile InstanceSSLCARevocationFile InstanceSSLPort);
+use Krang::ClassLoader 'File';
+
+# SSL directives
+my @ssl_directives = qw(
+SSLApachePort
+SSLPassPhraseDialog
+SSLRandomSeedStartup
+SSLRandomSeedConnect
+SSLSessionCacheTimeout
+SSLProtocol
+SSLCipherSuite
+SSLVerifyClient
+SSLVerifyDepth
+SSLLogLevel
+);
+
+# the httpd command
+my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
+my $httpd = $apache_bin . ' -f ' . 
+  rel2abs(catfile(KrangRoot, "tmp", "httpd.conf"));
+
+# get status from the pid file
+my $pid_file = catfile(KrangRoot, "tmp", "httpd.pid");
+my $running = 0;
+my $pid;
+if (-e $pid_file) {
+    $pid = `cat $pid_file`;
+    chomp $pid;
+    if ($pid and kill(0, $pid)) {
+        $running = 1;
+    }
+}
+
+# check for args
+usage() unless @ARGV;
+
+my $command = shift @ARGV;
+
+if ($command eq 'start') {
+    if ($running) {
+        die "krang_apachectl $command: httpd (pid $pid) already running\n";
+    }
+
+    setup_logs();
+    write_conf();
+    make_links();
+    apply_skin();
+
+    print "krang_apachectl $command: starting httpd\n";
+    unless (system($httpd)) {
+        print "krang_apachectl $command: httpd started";
+	print " (SSL enabled)" if EnableSSL;
+	print "\n";
+        exit;
+    } else {
+        die "krang_apachectl $command: httpd could not be started\n";
+    }
+}
+
+if ($command eq 'stop') {
+    unless ($running) {
+        die "krang_apachectl $command: httpd not running\n";
+    }
+    if (kill 15, $pid) {
+        print "krang_apachectl $command: httpd stopped\n";
+        exit;
+    } else {
+        die "krang_apachectl $command: httpd could not be stopped\n";
+    }
+}
+
+if ($command eq 'restart') {
+    # stop
+    if ($running) {
+        if (kill 15, $pid) {
+            print "krang_apachectl $command: waiting for httpd to stop";
+        } else {
+            die "krang_apachectl $command: httpd could not be stopped\n";
+        }
+
+        # wait for stop - check pid file for removal
+        my $stopped = 0;
+        for my $wait (0 .. MAX_RESTART_WAIT) {
+            if (not -e $pid_file) {
+                $stopped = 1;
+                last;
+            }
+            print ".";
+            sleep 1;
+        }
+
+        if ($stopped) {
+            print "\nkrang_apachectl $command: httpd stopped\n";
+        } else {
+            die "\nkrang_apachectl $command: httpd not stopped in time\n";
+        }
+
+    }
+
+    # start
+    setup_logs();
+    write_conf();
+    make_links();
+    apply_skin();
+    print "krang_apachectl $command: starting httpd\n";
+    unless (system($httpd)) {
+        print "krang_apachectl $command: httpd started";
+	print " (SSL enabled)" if EnableSSL;
+	print "\n";
+        exit;
+    } else {
+        die "krang_apachectl $command: httpd could not be started\n";
+    }
+}
+
+usage();
+
+sub usage {
+  print <<END;
+usage: krang_apachectl (start|stop|restart|debug)
+
+start      - start httpd
+stop       - stop httpd
+restart    - restart httpd if running
+
+END
+
+  exit;
+}
+
+sub write_conf {
+    require HTML::Template;
+
+    # find template file, looking addons first then in the root
+    my $file = pkg('File')->find("conf/httpd.conf.tmpl");
+
+    # create the httpd.conf by processing it as a template, using conf
+    # directives as params
+    my $template = HTML::Template->new(filename => $file,
+                                       global_vars => 1,
+                                       die_on_bad_params => 0,
+                                      );
+
+    my $apache_root = rel2abs(catdir(KrangRoot, APACHE_ROOT));
+    $template->param(ApacheRoot => $apache_root);
+
+    # Set "CGI MODE" (i.e., non-Apache::Registry) if env var "CGI_MODE is set to a true value"
+    my $cgi_mode = (defined($ENV{CGI_MODE}) ? $ENV{CGI_MODE} : '0');
+    print STDERR ($cgi_mode ? "CGI Mode activated" : "Apache::Registry Mode activated") . "\n";
+    $template->param(CGI_MODE => $cgi_mode);
+
+    $template->param((map { ($_, pkg('Conf')->get($_)) }
+                      (qw(KrangUser KrangGroup 
+                          ApacheAddr ApachePort
+                          HostName
+                         ))),
+                     KrangRoot => rel2abs(pkg('Conf')->get("KrangRoot")));
+
+    # SSL
+    if ( pkg('Conf')->EnableSSL ) {
+        my %tmpl_params = ( EnableSSL => 1);
+        foreach my $dir (@ssl_directives) {
+            $tmpl_params{$dir} = pkg('Conf')->get($dir) || undef;
+        }
+
+        my $verify_client = pkg('Conf')->SSLVerifyClient;
+        # we need to verify the client cert unless it's not set or set to 'none'
+        if( $verify_client && $verify_client ne 'none' ) {
+            $tmpl_params{SSL_VERIFY_CLIENT} = 1;
+        }
+        $template->param(%tmpl_params);
+    }
+
+    # setup the instance loop
+    my @loop;
+    foreach my $instance (pkg('Conf')->instances()) {
+        pkg('Conf')->instance($instance);
+        push(@loop,
+             {InstanceName       => $instance,
+              InstanceHostName   => InstanceHostName(),
+              InstanceApacheAddr => scalar InstanceApacheAddr(),
+              InstanceApachePort => scalar InstanceApachePort(),
+              InstanceSSLCertificateFile =>
+                scalar InstanceSSLCertificateFile(),
+              InstanceSSLCertificateKeyFile =>
+                scalar InstanceSSLCertificateKeyFile(),
+              InstanceSSLCertificateChainFile =>
+                scalar InstanceSSLCertificateChainFile(),
+              InstanceSSLCACertificateFile =>
+                scalar InstanceSSLCACertificateFile(),
+              InstanceSSLCARevocationFile =>
+                scalar InstanceSSLCARevocationFile(),
+              InstanceSSLPort => scalar InstanceSSLPort(),
+             });
+    }
+    $template->param(InstanceLoop => \@loop);
+
+    # write out the config
+    open(CONF, '>' . catfile(KrangRoot, "tmp", "httpd.conf")) 
+      or die "Unable to open " . catfile(KrangRoot, "tmp", "httpd.conf") . ": $!";
+    print CONF $template->output();
+    close CONF;
+}
+
+# setup symlinks - remove the old ones first if they exist.
+# (FIX: when Apache::Handler supports aliases this can go away)
+
+sub make_links {
+
+    if (-l catfile(KrangRoot, 'htdocs', 'data')) {
+        unlink(catfile(KrangRoot, 'htdocs', 'data'));
+    }
+    system("ln -s " . catfile(KrangRoot, 'data') . " " . catfile(KrangRoot, 'htdocs', 'data'));
+
+    if (-l catfile(KrangRoot, 'htdocs', 'tmp')) {
+        unlink(catfile(KrangRoot, 'htdocs', 'tmp'));
+    }
+    system("ln -s " . catfile(KrangRoot, 'tmp') . " " . catfile(KrangRoot, 'htdocs', 'tmp'));
+
+}
+
+
+# setup the configured skin
+sub apply_skin {
+    print "Loading configured skin: " . Skin . "\n";
+    system(catfile(KrangRoot, 'bin', 'krang_load_skin'), Skin);
+}
+
+# make sure logs get created with the right ownership when running as root
+sub setup_logs {
+    # only worry if we're root
+    return if $< != 0 or $> != 0;
+    
+    foreach my $log (qw(apache_access_log apache_error_log krang.log)) {
+        my $file = catfile(KrangRoot, 'logs', $log);
+        next if -e $file;
+
+        # create the file and chown it to KrangUser:KrangGroup
+        system("touch", $file);
+        system("chown",  KrangUser . ":" . KrangGroup, $file);
+    }
+}
+

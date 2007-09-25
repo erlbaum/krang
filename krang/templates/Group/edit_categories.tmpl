@@ -1,0 +1,139 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'group' );
+} );
+
+delete_category = function( id )
+{
+  if ( confirm( 'Are you SURE you want to remove this Category?' ) )
+    Krang.form_submit('edit_categories_form', { rm: 'delete_category', delete_category_id: id }, { to_top: false });
+}
+
+add_category = function()
+{
+  Krang.form_submit('edit_categories_form', { rm: 'add_category' }, { to_top: false });
+}
+
+do_return = function()
+{
+  Krang.form_submit('edit_categories_form', { rm: 'edit_categories_return' });
+}
+</script>
+
+<h2>
+Edit Group Category Permissions
+</h2>
+
+<form name="edit_categories_form" action="group.pl" method="post">
+
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+<input name="category_id" value="<tmpl_var escape=html category_id>" type="hidden">
+<input name="rm" value="save" type="hidden">
+<input name="delete_category_id" value="" type="hidden">
+<input name="group_id" value="<tmpl_var escape=html group_id>" type="hidden">
+<input name="name" value="<tmpl_var escape=html name>" type="hidden">
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+
+<h3>
+Properties
+</h3>
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th>Name</th>
+<td><tmpl_if name>
+  <tmpl_var name>
+<tmpl_else>
+  [n/a]
+</tmpl_if></td>
+</tr>
+
+<tr>
+<th>Site</th>
+<td><tmpl_var site_url></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<h3>
+Current Permissions
+</h3>
+
+<table class="request" summary="">
+
+<colgroup>
+<col>
+<col class="series">
+<col class="series">
+<col class="series">
+<col>
+</colgroup>
+
+<thead>
+<tr>
+<th class="f">Category</th>
+<th class="series">Edit</th>
+<th class="series">Read-Only</th>
+<th class="series">Hide</th>
+<th class="l"></th>
+</tr>
+</thead>
+
+<tbody><tmpl_loop categories>
+  <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+  <td><tmpl_var category_url></td>
+  <tmpl_loop permission_radio>
+    <td class="series"><tmpl_var radio_select></td>
+  </tmpl_loop>
+  <td><tmpl_unless is_root>
+    <input value="Delete" onclick="delete_category('<tmpl_var escape=html category_id>')" type="button" class="button">
+  </tmpl_unless></td>
+  </tr>
+</tmpl_loop></tbody>
+
+</table>
+
+<table class="request" summary=""><!--:FIX(db2)-->
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th>Add Category</th>
+<td>
+<tmpl_var category_chooser>
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel lame capped">
+<input value="Back" onclick="do_return()" type="button" class="west">
+</div>
+
+</form>
+
+<tmpl_include footer.tmpl>
+

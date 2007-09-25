@@ -1,0 +1,115 @@
+#!/usr/bin/perl 
+#
+# krang_ctl     Start Krang CMS
+#
+# chkconfig: 345 99 01
+# description: Starts and stops Krang CMS installation
+#
+#
+use warnings;
+use strict;
+
+=head1 NAME
+
+krang_ctl
+
+=head1 SYNOPSIS
+
+  krang_ctl start
+
+  krang_ctl stop
+
+  krang_ctl restart
+
+=head1 DESCRIPTION
+
+This is the control script for Krang.  You can use this script to
+start, stop and restart all the services offered by Krang.  If you
+have services set to run on privileged ports (i.e. below 1024), and
+you run this script as a user other than root, it will try to run
+the individual commands with 'sudo' where necessary.
+
+This script calls krang_apachectl, krang_ftpctl and krang_schedulectl
+to do its work.  See their respective manpages for details concerning
+environment variables that may be used to control their functioning.
+
+=cut
+
+# how long to wait for stop on restart (in seconds)
+use constant MAX_RESTART_WAIT => 10;
+
+$|++;
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Conf => qw(KrangRoot EnableSiteServer);
+
+# check for args
+usage() unless @ARGV;
+my $command = shift @ARGV;
+usage() unless $command eq 'start' or
+               $command eq 'stop' or
+               $command eq 'restart';
+
+my @ctl = (
+           { name => 'krang_apachectl',   port => 'ApachePort' },
+           { name => 'krang_ftpctl',      port => 'FTPPort'    },
+           { name => 'krang_schedulectl', port => 'ApachePort' },
+          );
+push(@ctl, { name => 'krang_siteserverctl', port => 'SiteServerPort' })
+    if EnableSiteServer;
+
+# call ctl scripts
+foreach my $service (@ctl) {
+    my $script = catfile(KrangRoot, 'bin', $service->{'name'});
+    # will need sudo?
+    if (($< != 0 or $> != 0) and 
+        pkg('Conf')->get($service->{'port'}) <= 1024) {
+        $script = "sudo $script";
+    }
+    print STDERR "=> krang_ctl calling '$script $command'...\n";
+    system("$script $command");
+    print STDERR "\n";
+}
+
+sub usage {
+  print <<END;
+usage: krang_ctl (start|stop|restart)
+
+  start      - start krang services
+  stop       - stop krang services
+  restart    - restart krang services
+
+END
+
+  exit;
+}

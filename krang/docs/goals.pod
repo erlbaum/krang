@@ -1,0 +1,41 @@
+=head1 Krang Goals
+
+This document states the goals of the Krang project.
+
+=over
+
+=item *
+
+Krang will manage the publication of magazine websites.  A magazine
+website is a site primarily consisting of static pages (stories)
+linked from index pages (covers), created by users known as editors.
+
+=item *
+
+Krang will provide a similar interface and feature-set to Bricolage.
+
+=item *
+
+Krang will exclude features and interfaces found in Bricolage which do
+not serve our goals.
+
+=item * 
+
+Krang will have the lowest possible system management overhead.  It
+should be easy to install and require little effort to configure and
+upgrade.
+
+=item *
+
+Krang will be a maintainable system easily understood by programmers.
+
+=item *
+
+Krang will be an efficient system, reducing hardware costs and
+improving the user experience.
+
+=item *
+
+Krang will be a stable system, with a complete automated test suite.
+
+=back

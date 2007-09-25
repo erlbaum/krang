@@ -1,0 +1,15 @@
+<!--HTMLPager/pager-internals.tmpl:-->
+
+<input name="<tmpl_var escape=html get_form_obj_magic_name>" value="" type="hidden">
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html curr_page_num>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html sort_order_desc>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html show_big_view>" type="hidden">
+<tmpl_var pager_persist_data>
+
+<script type="text/javascript">
+Krang.Pager.input_key('<tmpl_var escape=js get_form_obj_magic_name>');
+</script>
+
+<!--:HTMLPager/pager-internals.tmpl-->
+

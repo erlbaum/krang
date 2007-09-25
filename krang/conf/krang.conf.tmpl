@@ -1,0 +1,233 @@
+###########################################################################
+#
+# Global Krang Setup
+#
+###########################################################################
+
+#
+# KrangUser and KrangGroup: the UNIX user and group for Krang.  All
+# Krang processes run as this user/group and all files must be owned by
+# this user.
+#
+KrangUser <tmpl_var KrangUser>
+KrangGroup <tmpl_var KrangGroup>
+
+#
+# MySQL user and password for Krang
+#
+DBUser <tmpl_var DBUser>
+DBPass "<tmpl_var DBPass>"
+<tmpl_if DBHost>
+DBHost "<tmpl_var DBHost>"
+</tmpl_if>
+
+# the socket file used to connect to a local MySQL server (this is needed only 
+# if you get "socket file not found" connection errors from DBI.pm)
+<tmpl_if DBSock>
+DBSock "<tmpl_var DBSock>"
+</tmpl_if>
+
+# 
+# ApacheAddr and ApachePort: the IP and port for the Apache server
+# ApacheMaxSize: the maximum process size (in KB) for apache children. Default is 64000
+#
+ApacheAddr <tmpl_var IPAddress>
+ApachePort <tmpl_var ApachePort>
+
+#
+# ApacheMaxSize and ApacheMaxUnsharedSize are used to control the memory
+# usage of individual Apache children. Adding more addons may increase your
+# memory usage. 0 means there is no limit.
+#
+ApacheMaxSize 64000
+ApacheMaxUnsharedSize 0
+
+#
+# HostName: the virtual host for the root server, which
+# displays a list of available instances.
+#
+HostName <tmpl_var HostName>
+
+#
+# LogLevel: how much logging detail to include in krang.log.  Valid setting are
+# 1 (critical only), 2 (critical and info) and 3 (critical, info and
+# debug).  A setting of 2 is standard for production use.
+#
+LogLevel 2
+
+#
+# FTPAddress and FTPPort: set this to the address and port of the
+# Krang internal FTP server.
+#
+EnableFTP 1
+FTPAddress <tmpl_var IPAddress>
+FTPPort <tmpl_var FTPPort>
+FTPHostName <tmpl_var FTPHostName>
+
+#
+# SMTPServer: Krang needs to be able to mail alerts to users.  Set
+# this to a working SMTP server.
+#
+SMTPServer <tmpl_var SMTPServer>
+
+#
+# FromAddress: set this to the From: address Krang should use when
+# sending mail.
+#
+FromAddress krangmailer@<tmpl_var HostName>
+
+#
+# Configure Bugzilla settings here.  Unless EnableBugzilla is 1, none
+# of the rest will be used.
+#
+EnableBugzilla 0
+BugzillaServer krang-services.ops.about.com/bugzilla
+BugzillaEmail krang_test@yahoo.com
+BugzillaPassword whale
+BugzillaComponent 'Auto-submitted Bugs'
+
+#
+# Select a skin which will determine the look of the UI.  Available
+# skins are stored in the skins/ directory.
+#
+Skin Default
+
+#
+# Set the number of child processes the scheduler daemon
+# can spawn when handling tasks.
+# Current wisdom suggests a 3:1 ratio of children to available CPUs.
+#
+SchedulerMaxChildren 3
+
+#
+# Set the number of bad login attempts that can be attempted for
+# the same username before that username is locked out and also
+# set for how long (BadLoginWait is in minutes). A BadLoginCount 
+# of 0 means there is no lock-out. BadLoginNotify is an email
+# address the receives an email notification when someone crosses
+# the BadLoginCount limit. If blank, no email will be sent.
+BadLoginCount 0
+BadLoginWait  15
+BadLoginNotify ''
+
+#
+# Force the users to change their password every few days
+# (PasswordChangeTime is in days) and don't let them use
+# old passwords (we remember the last PasswordChangeCount
+# passwords). A PasswordChangeTime value of '0' means it
+# doesn't have to change, and a PasswordChangeCount value
+# of '0' means they can use the same password over and over
+PasswordChangeTime 0
+PasswordChangeCount 0
+
+#
+# Secret is a shared secret used for encryption and checksumming
+Secret '<tmpl_var Secret>'
+
+# ContactEmail provides an optional way for you to specify how
+# users are to contact you in case of problems or compliments (heh).
+# It will place into the UI templates to fill the 'cms_contact_email'
+# template variable.
+# ContactEmail cms@company.org
+
+<tmpl_if EnableSSL>
+##
+##  SSL Global Context
+##
+##  Each directive directly corresponds to the same named
+##  directive for mod_ssl (except 'EnableSSL'). Please see
+##  http://www.modssl.org/docs/2.8/ssl_reference.html for
+##  more details on their usage
+##
+
+#
+# SSL Enable Switch:
+#
+EnableSSL  1
+SSLApachePort <tmpl_var SSLApachePort default="443">
+
+#
+# If your certificate key file (located at KrangRoot/conf/ssl.key/server.key
+# is encrypted, apache will retrieve the password in this manner
+#
+#SSLPassPhraseDialog  "builtin"
+
+#
+# Configure the SSL Session Cache timeout (in seconds).
+#
+#SSLSessionCacheTimeout  3600
+
+#
+# Pseudo Random Number Generator (PRNG):
+#
+#SSLRandomSeedStartup "builtin"
+#SSLRandomSeedConnect "builtin"
+
+#
+# Usable SSL protocol flavours
+#
+#SSLProtocol  "all -SSLv2"
+
+#
+# list the ciphers that client client is permitted to negotiate
+#
+#SSLCipherSuite  "ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL"
+
+#
+# Client Authentication (Type):
+#
+#SSLVerifyClient  "none"
+#SSLVerifyDepth   1
+
+#
+# Logging:
+#
+#SSLLogLevel  "none"
+
+</tmpl_if>
+
+###########################################################################
+#
+# Instance Configuration
+#
+# Each instance needs its own Instance block below containing
+# instance-specific configuration.
+#
+###########################################################################
+
+#
+# Instance: each instance has its own block named for the instance.
+#
+<Instance <tmpl_var InstanceHostName>>
+
+   # the UI display name for this instance
+   InstanceDisplayName '<tmpl_var InstanceDisplayName>'
+
+   # the virtual host users will use to access this instance
+   InstanceHostName <tmpl_var InstanceHostName>
+
+   # MySQL database name for this instance
+   InstanceDBName <tmpl_var InstanceDBName>
+
+   # the element set to be used in this instance.  Instances may share
+   # element sets.
+   InstanceElementSet <tmpl_var InstanceElementSet>
+
+<tmpl_if EnableSSL>
+
+   # optionally run this instance on a different IP and port than
+   # other Krang instances
+
+   # InstanceApacheAddr 10.0.1.86
+   # InstanceApachePort 8090
+   # InstanceSSLPort 4430
+
+   # optionally use a different SSL config for this instance, use with EnableSSL
+
+   # InstanceSSLCertificateFile /path/to/krang/conf/rabbit.crt
+   # InstanceSSLCertificateKeyFile /path/to/krang/conf/rabbit.key
+   # InstanceSSLCertificateChainFile /path/to/krang/conf/rabbit-ca.crt
+   # InstanceSSLCACertificateFile /path/to/krang/conf/rabbit-ca_client.crt
+   # InstanceSSLCARevocationFile  /path/to/krang/conf/rabbit-ca_client.crl
+</tmpl_if>
+</Instance>

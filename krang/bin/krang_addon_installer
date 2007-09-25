@@ -1,0 +1,150 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_addon_installer - installs extra functionality into Krang
+
+=head1 SYNOPSIS
+
+To install an addon into this Krang installation:
+
+  bin/krang_addon_installer AddOnName-1.23.tar.gz
+
+=head1 DESCRIPTION
+
+This script installs addon packages into Krang.  For instructions on
+creating Krang addons, read the documentation:
+
+  perldoc docs/add_on.pod
+
+=head1 OPTIONS
+
+The following options are available:
+
+=over
+
+=item --force
+
+Force reinstallation even if already installed.
+
+=item --clean
+
+Removes the older version of the addon before installing
+the new one
+
+=item --verbose
+
+Print information about what's happening.
+
+=item --help
+
+Show usage information.
+
+=item --man
+
+Show full manpage. 
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# process command options
+use Krang::ClassFactory qw(pkg);
+use Pod::Usage;
+use Getopt::Long;
+our ($help, $man, $force, $clean, $source);
+our $verbose;
+BEGIN {
+    $verbose = 0;
+    pod2usage(2) unless
+      GetOptions(help       => \$help,
+                 man        => \$man,
+                 'verbose+' => \$verbose,
+                 force      => \$force,
+                 clean      => \$clean,
+                );
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+    
+    # get source arg
+    if (@ARGV == 1) {
+        $source = $ARGV[0];
+    } else {
+        pod2usage("Bad arguments to krang_addon_installer: '" . 
+                  join(' ', @ARGV) . "'\n");
+    }
+}
+
+# must open the input file before loading Krang::Script which will su
+# to KrangUser, who may not have permission to read the file.
+# parse options
+BEGIN {
+    if (-f $source) {
+        open(SOURCE, '<', $source) or die "Unable to open '$source': $!";
+    } else {
+        pod2usage("Unable to open source '$source', file does not exist.");
+    }
+}        
+
+
+# use first instance if one isn't set.  Addons are installation wide
+# anyway.
+use Krang::ClassLoader Conf => qw(KrangRoot);
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
+use Krang::ClassLoader 'Script';
+use File::Copy qw(copy);
+use File::Temp qw(tempdir tempfile);
+use Krang::ClassLoader 'AddOn';
+
+# copy source file into someplace it can be read
+my (undef, $tempfile) = tempfile(DIR => catdir(KrangRoot, 'tmp'),
+                               SUFFIX => 
+                               ($source =~ /\.gz$/ ? '.tar.gz' : '.tar'),
+                               CLEANUP => 1);
+copy(\*SOURCE, $tempfile)
+  or die "Unable to copy '$source' to '$tempfile': $!";
+print STDERR "Copied '$source' to '$tempfile'.\n" if $verbose > 1;
+$source = $tempfile;
+
+# install the addon
+pkg('AddOn')->install(src     => $source, 
+                      verbose => $verbose, 
+                      force   => $force,
+                      clean   => $clean);
+
+print "Installation complete.\n";

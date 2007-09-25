@@ -1,0 +1,78 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'story_new' );
+} );
+
+create = function()
+{
+  Krang.form_submit( 'new_story', { rm: 'create' } );
+}
+
+cancel = function()
+{
+  Krang.form_submit( 'new_story', { rm: 'cancel' } );
+}
+</script>
+
+<h2>
+New Story
+</h2>
+
+<form name="new_story" method="post" action="story.pl">
+
+<input name="rm" type="hidden">
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody class="demi">
+
+<tr<tmpl_if bad_type> class="err"</tmpl_if>>
+<th>*Type</th>
+<td><tmpl_var type_selector></td>
+</tr>
+
+<tr<tmpl_if bad_title> class="err"</tmpl_if>>
+<th>*Title</th>
+<td><input name="title" value="<tmpl_var escape=html title>"></td>
+</tr>
+
+<tr<tmpl_if bad_slug> class="err"</tmpl_if>>
+<th>Slug</th>
+<td><input name="slug" value="<tmpl_var escape=html slug>"></td>
+</tr>
+
+</tbody>
+
+<tbody>
+
+<tr<tmpl_if bad_cover_date> class="err"</tmpl_if>>
+<th>*Cover Date</th>
+<td><tmpl_var cover_date_selector></td>
+</tr>
+
+<tr<tmpl_if bad_category_id> class="err"</tmpl_if>>
+<th>*Site/Category</th>
+<td><tmpl_var category_chooser></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel capped">
+<input value="Cancel" onclick="cancel()" type="button" class="west">
+<input value="Create" onclick="create()" type="button">
+</div>
+
+</form>
+
+<tmpl_include footer.tmpl>
+

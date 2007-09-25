@@ -1,0 +1,394 @@
+=head1 CPAN Distributions Used in Krang
+
+This document lists each CPAN distribution included in Krang.  Every
+distribution mentioned is available with complete source and
+documentation in the F<src/> directory of the Krang source
+distribution.
+
+To the authors of these fine modules, thank you.  Krang would not
+exist without your hard work.
+
+=over
+
+=item Apache-DBI
+
+ Version: 0.91
+ License: Perl License
+
+=item Apache-Session
+
+ Version: 1.54
+ License: Perl License
+
+=item Archive-Tar
+
+ Version: 1.08 
+ License: Perl License
+
+=item Bit-Vector
+
+ Version: 6.3
+ License: Perl License
+
+=item BSD-Resource
+
+ Version: 1.24
+ License: Perl License
+
+=item CGI-Application
+
+ Version: 3.1
+ License: Perl License
+
+=item CGI-Application-Generator
+
+ Version: 1.0
+ License: Perl License
+
+=item CGI.pm
+
+ Version: 2.89
+ License: Perl License
+
+=item Carp-Assert
+
+ Version: 0.17
+ License: None
+
+=item Class-ISA
+
+ Version: 0.33
+ License: Perl License
+
+=item Class-MethodMaker
+
+ Version: 1.08
+ License: Perl License
+
+=item Class-Data-Inheritable
+
+ Version: 0.02
+ License: Perl License
+
+=item Class-XPath
+
+ Version: 1.4
+ License: Perl License
+
+=item Compress-Zlib
+
+ Version: 1.31
+ License: Perl License, zlib License
+
+=item Config-ApacheFormat
+
+ Version: 1.2
+ License: Perl License
+
+=item DBD-mysql
+
+ Version: 2.9004
+ License: Perl License
+
+=item DBI
+
+ Version: 1.32
+ License: Perl License
+
+=item Devel-StackTrace
+
+ Version: 1.11
+ License: Perl License
+
+=item Digest-MD5
+
+ Version: 2.23
+ License: Perl License
+
+=item Exception-Class
+
+ Version: 1.19
+ License: Perl License
+
+=item Expect
+
+ Version: 1.15
+ License: Perl License
+
+=item File-MMagic
+
+ Verison: 1.21
+ License: Apache License, Custom Open-Source License
+
+=item HTML-Lint
+
+ Version: 1.22
+ License: Perl License
+
+=item HTML-Parser
+
+ Version: 3.36
+ License: Perl License
+
+=item HTML-PopupTreeSelect
+
+ Version: 1.5
+ License: Perl License
+
+=item HTML-Tagset
+
+ Version: 3.03
+ License: Perl License
+
+=item HTML-Template
+
+ Version: 2.7
+ License: Perl License
+
+=item HTML-Template-Expr
+
+ Version: 0.04
+ License: Perl License
+
+=item HTTP-BrowserDetect
+
+ Version: 0.98
+ License: Perl License
+
+=item Image-BioChrome
+
+ Version: 1.16
+ License: Perl License
+
+=item IO-String
+
+ Version: 1.03
+ License: Perl License
+
+=item IO-stringy
+
+ Version: 2.108
+ License: Perl License
+
+=item IPC-Run
+
+ Version: 0.78
+ License: Perl License
+
+=item Image-Info
+
+ Version: 1.15
+ License: Perl License
+
+=item Imager
+
+ Version: 0.43
+ License: Perl License
+
+=item IO-Tty
+
+ Version: 1.02
+ License: Perl License
+
+=item IO-Zlib
+
+ Version: 1.01
+ License: Perl License
+
+=item Mail-Sender
+
+ Version: 0.8.10
+ License: Perl License
+
+=item MIME-Base64
+
+ Version: 2.16
+ License: Perl License
+
+=item Module-Build
+
+ Version: 0.2610
+ License: Perl License
+
+=item Net-FTPServer
+
+ Version: 1.115
+ License: GNU General Public License
+
+=item Parse-RecDescent
+
+ Version: 1.94
+ License: Perl License
+
+=item Pod-Escapes
+
+ Version: 1.03
+ License: Perl License
+
+=item Pod-Simple
+
+ Version: 0.96
+ License: Perl License
+
+=item Proc-Daemon
+
+ Version: 0.03
+ License: Perl License
+
+=item Scalar-List-Utils
+
+ Version: 1.14
+ License: Perl License
+
+=item Set-IntRange
+
+ Version: 5.1
+ License: Perl License
+
+=item Storable
+
+ Version: 2.06
+ License: Perl License
+
+=item Term-Prompt
+
+ Version: 0.11
+ License: None
+
+=item TermReadKey
+
+ Version: 2.21
+ License: Custom Open-Source License
+
+=item Test-Builder-Tester
+
+ Version: 0.09
+ License: Perl License
+
+=item Test-Harness
+
+ Version: 2.40
+ License: Perl License
+
+=item Test-Manifest
+
+ Version: 0.91
+ License: Perl License
+
+=item Test-Pod
+
+ Version: 0.95
+ License: Perl License
+
+=item Test-Simple
+
+ Version: 0.47
+ License: Perl License
+
+=item Text-Balanced
+
+ Version: 1.89
+ License: Perl License
+
+=item Text-Tabs+Wrap
+
+ Version: 2001.0929
+ License: None
+
+=item Time-HiRes
+
+ Version: 1.42
+ License: Perl License
+
+=item Time-Piece
+
+ Version: 1.08
+ License: Perl License
+
+=item Time-Piece-MySQL
+
+ Version: 0.02
+ License: Perl License
+
+=item Tree-DAG_Node
+
+ Version: 1.04
+ License: Perl License
+
+=item URI
+
+ Version: 1.23
+ License: Perl License
+
+=item WWW-Bugzilla
+
+ Version: 0.2
+ License: Perl License
+
+=item WWW-Mechanize
+
+ Version: 0.72
+ License:
+
+=item XML-Filter-BufferText
+
+ Version: 1.01
+ License: Perl License
+
+=item XML-NamespaceSupport
+
+ Version: 1.08
+ License: Perl License
+
+=item XML-Parser
+
+ Version: 2.31
+ License: Perl License
+
+=item XML-SAX
+
+ Version: 0.12
+ License: Perl License
+
+=item XML-SAX-Expat
+
+ Version: 0.37
+ License: Perl License
+
+=item XML-Simple
+
+ Version: 2.11
+ License: Perl License
+
+=item XML-Validator-Schema
+
+ Version: 1.06
+ License: Perl License
+
+=item XML-Writer
+
+ Version: 0.4
+ License: Perl License
+
+=item libapreq
+
+ Version: 1.3
+ License: Apache License
+
+=item libnet
+
+ Version: 1.12
+ License: Perl License
+
+=item libwww-perl
+
+ Version: 5.68
+ License: Perl License
+
+=item mod_perl
+
+ Version: 1.3.29
+ License: Apache License
+
+=back
+

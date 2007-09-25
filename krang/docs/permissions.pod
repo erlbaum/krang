@@ -1,0 +1,631 @@
+=head1 Krang Permissions System
+
+Krang implements an authentication and authorization system which
+controls the users' ability to access different aspects of the
+system.  This system works by affiliating named "groups" with sets of
+privileges.  Users are then affiliated with these groups, through
+which they are granted authority.
+
+The purpose of this document is two-fold:
+
+=over 4
+
+=item 1. Functionality
+
+To describe the functionality of the Krang permissions system.
+
+
+=item 2. Implementation
+
+To describe how the Krang permissions system is implemented, and why.
+
+
+=back
+
+
+
+=head1 Functionality
+
+Krang's security is based on "groups".  Groups are logical containers
+which are affiliated with permission settings and users.  Permissions
+for a group are assigned in three major "security realms":
+
+
+=head2 Security Realms
+
+=over 4
+
+=item 1. Sites/Categories
+
+Sites, and the categories (e.g., directories) within each site.
+
+
+=item 2. Assets
+
+Includes three classes of assets: Story, Media, and Templates
+
+
+=item 3. Desks
+
+Logical desks, such as "Edit" or "Publish"
+
+
+=back
+
+
+
+=head2 Security Levels
+
+Within these three security realms, authority is granted to one of
+three levels:
+
+
+=over 4
+
+=item A. Edit
+
+User may add, modify or delete.
+
+
+=item B. Read-Only
+
+User can view items but not make changes.
+
+
+=item C. Hide
+
+User may neither see nor change items.
+
+
+=back
+
+
+
+=head2 Administration permissions
+
+In addition to the realms and levels described above, there are a handful
+of security items affiliated with a group which are global to the whole
+system.
+
+=over 4
+
+=item * May publish (may_publish)
+
+Publish stories and media to the live server.
+
+
+=item * May check-in all (may_checkin_all)
+
+Check in objects checked out by any other user.
+
+
+=item * Manage users (admin_users)
+
+Add, edit, or delete users.
+
+
+=item * Group limited user manage (admin_users_limited)
+
+When editing users, may only grant access to groups to which user personally has access.
+
+
+=item * Manage groups (admin_groups)
+
+Add, edit, or delete permission groups.
+
+
+=item * Manage contributors (admin_contribs)
+
+Add, edit or delete contributors.
+
+
+=item * Manage sites (admin_sites)
+
+Add, edit or delete sites.
+
+
+=item * Manage categories (admin_categories)
+
+Add, edit or delete categories.
+
+
+=item * Manage jobs (admin_jobs)
+
+Add, edit or delete jobs.
+
+
+=item * Manage Scheduler Addons (admin_scheduler)
+
+Add, edit or delete scheduled admin jobs.
+
+
+=item * Manage desks (admin_desks)
+
+Add, edit or delete desks.
+
+
+=item * Manage lists (admin_lists)
+
+Edit list groups
+
+=back
+
+
+
+=head2 Use Cases
+
+These permissions are applied intuitively based on their context.  For
+example:
+
+=over 4
+
+
+=item *
+
+A user is granted "Read-Only" access to a particular category.  As a
+result, they can see the contents of the category and its
+sub-categories, but may not add, modify or delete categories in the
+affected hierarchy.  Furthermore, the user may see but not edit media
+and story objects which are within the affected hierarchy.
+
+
+=item *
+
+A user is granted "Edit" access to desk "A", but "Read-Only" access to
+desk "B".  as a result, they can manipulate content on desk "A", and
+they may move it to desk "B" -- but once on desk "B" they cannot
+make any changes.
+
+
+=item *
+
+A user is granted "Edit" access to "Story" and "Media" assets
+but "Read-Only" to "Templates".  As a result, they can manage
+content, but may not make changes to the templates which control the
+appearance of content.
+
+
+=item * 
+
+User is NOT granted "may publish" access.  As a result, the publish 
+buttons are hidden from all screens on which they normally appear.
+
+
+=item * 
+
+User is NOT granted "manage contributors" access.  As a result, the
+"Contributors" link is hidden from the left navigation in Krang.
+The user may still associate contributors with stories or media, but
+they cannot access the edit screen for existing contributors or delete 
+contributors.
+
+=back
+
+
+=head2 How Permissions Combine
+
+Generally speaking, permissions combine in two ways:  Group-wise and
+realm-wise.
+
+A user may be a member of more than one group.  When evaluating
+permissions, multiple group permissions are combined according to the
+principles of "most priviledge".  This is the nature of group-wise
+combination of permissions.  If one of a user's groups allows them to
+perform an action, then they are deemed to be allowed to perform that
+action.
+
+Different security realms have intersecting functions.  For example,
+category permission affects access to stories, as does asset
+permissions.  When evaluating permission intersection between security
+realms, the principle of "least priviledge" should be used.  This is
+the nature of realm-wise permission combination.
+
+For example, if category permissions allow a user to edit a particular
+story, but that user is prohibited because of asset security
+(asset_story == "read-only"), then they are deemed to be prohibited
+from editing that story.  Similarly, if category permissions prohibit
+a user from seeing a particular piece of media, but asset permissions
+allow the user to edit media, the user may not see that media.
+
+Realm-wise permission mostly affects the intersection of category
+permissions and asset permissions.
+
+
+=head1 Implementation
+
+There are two primary tasks for which the Krang permissions system is
+responsible:
+
+
+=over 4
+
+=item 1. API security
+
+Limit access to Krang objects.
+
+
+=item 2. UI security
+
+Influence UI based on access to functionality.
+
+
+=back
+
+
+The purpose of API security is to limit access to Krang objects.  This
+mechanism is implemented by modifying the Krang object modules (e.g.,
+Krang::Media, Krang::Story, etc.).
+
+Typically, this means modifying the find() method to hide objects
+which the current user is not allowed to see and throwing exceptions
+when the user tries to perform an operation they are not allowed to
+perform, such as calling save() on an object to which they have
+"Read-Only" access.
+
+The purpose of UI security is to prevent the web interface from
+displaying options to which the user does not have access.  The
+permissions system provides access to security settings so that user
+interface elements may hide functions as necessary.
+
+You can also restrict access to a module or it's run modes by setting
+the C<PACKAGE_PERMISSIONS> and C<RUNMODE_PERMISSIONS> params. See
+L<Krang::CGI> for more details.
+
+Following describes how API and UI security are to be implemented for
+the four major permissions systems in Krang:  Sites/Categories,
+Assets, Desks, and Administration permissions.
+
+=head2 Sites/Categories
+
+Site/categories are the most complex aspect of the Krang
+permissions system.  Because categories touch so many different parts
+of the Krang system, and because they are so voluminous (possibly
+numbering around 10,000 per Krang instance) a special mechanism has
+been devised to handle category-based permissions.
+
+Primarily, a table called "category_group_permission" has been
+created.  This table stores the category permission configuration
+designated by the users.  For example, imagine the following was
+configured for the "Car Editors" group:
+
+  site1.com/, "Read-Only"
+  site1.com/departments/cars/, "Edit"
+
+The intention of the user who configured these permissions would be to
+grant "Car Editors" the ability to manage content within their
+section, but not anywhere else.  For example, if they wanted to add a
+story to the system they would be granted access as follows to the
+following categories:
+
+  Not allowed:  site1.com/
+  Allowed:      site1.com/departments/cars/
+  Allowed:      site1.com/departments/cars/toyota/prius/
+  Not allowed:  site1.com/departments/unicycles/
+
+In order to make a permissions decision about the category
+"site1.com/departments/cars/" there is an exact match in the
+"category_group_permission" table.  Unfortunately, in order to find
+permissions for "site1.com/departments/cars/toyota/prius/" it is
+necessary to ascend the hierarchy until we get to
+"site1.com/departments/cars/".
+
+The "category_group_permission" table is expected to be a very sparse
+matrix of categories and groups.  If we were to rely on this table for
+making all category permission decisions we would spend a considerable
+amount of time negotiating the category hierarchy, and performance
+would greatly suffer as a result.
+
+In order to avoid this problem, another table called
+"category_group_permission_cache" has been created.  Unlike
+"category_group_permission", this table stores every possible
+combination of group and category.  As a result, any look up for
+category/group permissions is certain to be resolved in a single
+query.
+
+Furthermore, in order to streamline the ability to integrate category
+permission checking into SQL, the permission levels "Edit",
+"Read-Only", and "Hide" have been implemented as two columns in
+"category_group_permission_cache": "may_see" and "may_edit".
+
+Finally, it is important to recognize that a user may be a member of
+more than one group.  The result of this is that the database may
+return more than one row per user/category.  In order to compensate
+for the possible 1:N nature of users to qualifying groups, a group-by
+SQL mechanism should be employed when retrieving permissions, and a
+"select distinct" when doing a count.
+
+Put together with the rest of the system, here is how a count of media
+records to which a user has access to see might be implemented in SQL:
+
+  select
+    count(distinct media_id)
+
+  from
+    media
+      left join category_group_permission_cache as cgpc
+        ON cgpc.category_id = media.category_id
+      left join user_group_permission
+        ON cgpc.group_id = user_group_permission.group_id
+
+  where
+    user_group_permission.user_id = 1 AND
+    cgpc.may_see = 1 
+
+
+Here is how you would retrieve media records to which the user has
+access to see.  Note the use of sum() and "group by":
+
+  select
+    media.media_id,
+    media.title,
+    media.category_id,
+    (sum(cgpc.may_see) > 0) as may_see,
+    (sum(cgpc.may_edit) > 0) as may_edit
+
+  from
+    media
+      left join category_group_permission_cache as cgpc
+        ON cgpc.category_id = media.category_id
+      left join user_group_permission
+        ON cgpc.group_id = user_group_permission.group_id
+
+  where
+    user_group_permission.user_id = 1 AND
+    cgpc.may_see = 1 
+
+  group by
+    media.media_id
+
+Because the may_edit column will contain "1" if true and "0"
+if not, sum() will effectively be greater than zero if the user is
+allowed to edit a particular object via at least one group.
+
+The above SQL will hide records to which the user has no
+authority to see.  This is not always the desired behavior.  For
+example, if a story is in a category to which the user has read
+access, but that story uses media which is in a category to which the
+user does NOT have access, it is expected that the media will appear
+in the context of the story, nonetheless.  This requires that the API
+only hide hidden records when specifically requested to do so.  To
+this end, the parameters "may_see" and "may_edit" have been added to
+the find() methods of effected object types:
+
+  my @visible_media = Krang::Media->find( may_see=>1 );
+
+If "may_see" is not specified, all records will be shown.  It is
+expected that objects will only be hidden when viewed by applications
+which are specifically for managing that object type. For example,
+story objects will only be hidden when accessed via the story manager
+application.  When non hidden, the "may_see" property will be
+propagated to the object, and may be used as needed.
+
+The same interface is used for "may_edit":
+
+  my @editable_stories = Krang::Story->find( may_edit=>1 );
+
+The following modules implement "may_see" and "may_edit" in their
+find() method:
+
+  Krang::Story
+  Krang::Media
+  Krang::Templates
+  Krang::Category
+
+This handles the "Hide" case, but does not handle
+the "Edit" verses "Read-Only" case.  To support this case, the
+"may_edit" property should be used.  When records are instantiated
+from the database the "may_edit" property (as well as the "may_see"
+property) should be stored with the object.
+
+This object property should be considered whenever the user attempts
+to trigger a write operation on the object, in which case the
+operation should croak().  Examples of methods which should implement
+this behavior are:
+
+  save()
+  delete()
+  checkout()
+  checkin()
+
+This will ensure that even if the calling code erroneously issues
+write operations, those operations will not be permitted thus
+corrupting the database.
+
+
+Maintenance of the category_group_permission_cache table is managed by
+the Krang::Group module which is called when categories or groups are
+changed.  If it is necessary to rebuild the cache from the ground up, 
+the class function rebuild_category_cache() is provided.  This can be 
+invoked from the command-line as follows:
+
+  perl -MKrang::Script -MKrang::Group -e 'Krang::Group->rebuild_category_cache()'
+
+This method may take some time to complete during which a running system will 
+not function properly.  Rebuilding the cache table requires iterating through 
+possibly thousands of SQL statements.  Precisely speaking, the cache table 
+contains one row for every group/category combination.  When designing the
+permissions system, the following quantities were considered possible per 
+Krang instance:
+
+    Number of groups: 20
+    Number of sites: 20
+    Categories per site: 500
+    Total cache table rows:    20 (groups)
+                             * 20 (sites)
+                            * 500 (site/categories)
+                        -----------------------------
+                          200,000 (cache entries)
+
+Rebuilding the entire category permissions cache is not usually necessary.
+As a result, it is not optimized for run-time performance.  If it is necessary 
+to rebuild the cache table it is recommended that the Krang instance be shut 
+down first.
+
+
+=head2 Assets
+
+In Krang, "assets" refer to stories, media, or templates.  Permissions
+are assigned independently to these three different asset types, for
+each group.
+
+Access to the permission settings are provided via a function in
+Krang::Group --
+
+  my %asset_perms = Krang::Group->user_asset_permissions();
+
+This method will combine the permissions for all the groups to which
+the currently logged in user is assigned and return a hash of net permissions.
+
+Alternatively, you may ask for a specific asset:
+
+  my $story_access = Krang::Group->user_asset_permissions('story');
+
+For each asset type, a group may be granted "edit", "read-only", or
+"hide" access.  A user may be a member of more than one group.  The
+asset permissions work on a basis of "most permissive", meaning that
+if a user is allowed to "edit" an asset because of their membership in
+one group, they are then allowed to edit that asset, regardless of
+whether another group of which they are a member does not have "edit"
+access.
+
+Functionally, there are two significant differences between asset
+permissions and category permissions.  The first difference is that
+asset permissions affect the whole class, where category permissions
+are particular to an individual object.
+
+For example, if a user has "read-only" access to media, the
+Krang::Media methods which require "edit" access will croak() when
+called.  These methods include:
+
+  save()
+  delete()
+  checkout()
+  checkin()
+
+The second difference between category and asset permissions is that
+"hide" permissions for a particular asset class have no effect on
+the behavior of the find() method.  Unlike category permissions which
+will automatically hide results if a user has "hide" access to a
+category which contains a particular object, all objects will be
+returned by find() even if a user has "hide" for the asset type.
+
+The reason for this is because quite a lot of functionality in Krang
+requires access to find().  For example, a user with access to see or
+edit stories must be able to see the media associated with the
+stories.  If the behavior of find() were modified to hide all media,
+the story interface would break.
+
+Instead, the sole function of "hide" asset security is to remove
+the link to the web interfaces to managing the hidden assets will be 
+removed from view.  It is the respnsibility of the UI to read asset
+permissions for the current user and show or hide links to
+functionality according to these permissions.
+
+
+=head2 Desks
+
+Desks, in Krang, are used to implement CMS work flow.  Stories may be
+moved from one desk to another where different sets of users may
+interact with them.  For example, consider the following desks:
+
+  1. Edit
+  2. Publish
+
+New stories might be created and manipulated on the "Edit" desk.  When
+the staff who work on the Edit desk believe that a story is ready to
+be published they may move the story to the "Publish" desk.  Once on
+the Publish desk, the story might be reviewed by a more specialized
+staffer for fact-checking or final editing.  From that desk, stories
+(once approved) would be published to the live site.
+
+Desk permissions are implemented via the "desk_group_permission"
+table, which joins to the "permission_group" table.  For each
+desk/group one of the following security levels may be assigned:
+"edit", "read-only", or "hide".
+
+Because users may be members of more than one group, permissions must
+be combined.  This is done in accordance to the principle of "most
+privilege".  In other words, if a user is assigned to the following
+groups:
+
+   Group A =>  Desk 1 => "edit"
+               Desk 2 => "read-only"
+               Desk 3 => "read-only"
+
+   Group B =>  Desk 1 => "read-only"
+               Desk 2 => "hide"
+               Desk 3 => "edit"
+
+In this case, the resultant permissions for this user will be:
+
+   Desk 1 => "edit"
+   Desk 2 => "read-only"
+   Desk 3 => "edit"
+
+For convenience, a class method is provided:
+
+  my %desk_perms = Krang::Group->user_desk_permissions();
+
+The hash which is returned will contain a map of desks to security
+levels for the user who is currently logged in.  This method is
+expected to be called wherever security decisions regarding desks must
+be made.
+
+You can retrieve permissions for a particular desk by specifying it by
+ID:
+
+  my $desk1_access = Krang::Group->user_desk_permissions($desk_id);
+
+In the Krang::Story API, the move_to_desk() is expected to respect
+desk permissions.  If a user attempts to move a story FROM a desk to
+which they do NOT have "edit" access, move_to_desk() should croak().
+If a user attempts to move a story TO a desk to which they have "hide"
+access, they move_to_desk() should croak().  For example, consider the
+user who has the following permissions:
+
+  Desk    => Security Level
+ ---------------------------------
+  Edit    => "edit"
+  Publish => "read-only"
+
+This user can move stories to the Edit or Publish desk.  However, they
+CANNOT move stories FROM the Publish desk.  It is the responsibility
+of the UI to hide links to desk functionality which is prohibited by
+the desk permissions system.
+
+
+
+=head2 Administration permissions
+
+Administration permissions affect access to functionality throughout
+Krang.  These permissions are stored as Boolean (0 or 1) values within
+the "permission_group" table.
+
+As with desks and assets, the multiple group affiliations by a user
+must be reconciled assorting to the principle of "most privilege".  To
+simplify and encapculate this function, the following method is provided:
+
+  my %admin_perms = Krang::Group->user_admin_permissions();
+
+This method will combine admin permissions for the current user and
+return a hash containing permission types as keys and Boolean values
+allowing (1) or disallowing (0) that function.  The admin permission
+keys are specified elsewhere in this document.
+
+You can also request permissions for a particular function:
+
+  my $may_publish = Krang::Group->user_admin_permissions('may_publish');
+
+It is the function of the API to croak() if a call is made to an admin
+function to which the user does not have access.  For example, if a
+user has access to manage users but does not have access to create
+users who are in permission groups other than those affiliated with
+the current user (admin_users_limited == 1), save() will croak().
+
+It is the responsibility of the UI to use the admin permissions to
+hide links to functionality to which the user does not have access.
+For example, users who do not have access to manage users (admin_users
+== 0) should not see the link to the User manager application.  Users
+who do not have access to publish (may_publish == 0) should not see
+"Publish" buttons anywhere in the UI.
+

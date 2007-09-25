@@ -1,0 +1,48 @@
+<script type="text/javascript">
+view_path = function( p )
+{
+  Krang.form_submit( 'view', { path : p } );
+}
+</script>
+
+<input name="path" value="<tmpl_var escape=html path>" type="hidden">
+
+<tmpl_if crumbs><div class="east"><tmpl_loop crumbs>
+  <tmpl_unless __last__><a href="javascript:view_path('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
+</tmpl_loop></div></tmpl_if>
+
+<h3>
+Content
+</h3>
+
+<tmpl_unless child_loop>
+
+  <p class="naught">
+  No sub-elements defined.
+  </p>
+
+<tmpl_else>
+
+  <table class="result" summary="">
+
+  <colgroup>
+  <col class="c-label">
+  <col>
+  </colgroup>
+
+  <tbody><tmpl_loop child_loop>
+    <tr>
+    <th><tmpl_var escape=html name></th>
+    <td>
+    <tmpl_if is_container>
+      <input value="View Detail" onclick="view_path('<tmpl_var escape=html path>')" type="button" class="button">
+    </tmpl_if>
+    <tmpl_var data><!--:markup, maybe; CHILDREN MUST HANDLE ESCAPE AS NEEDED(db2)-->
+    </td>
+    </tr>
+  </tmpl_loop></tbody>
+
+  </table>
+
+</tmpl_unless>
+

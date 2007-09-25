@@ -1,0 +1,244 @@
+=head1 Krang Element System
+
+This document describes the Krang Element System at a technical level.
+The information given here is neither exhaustive nor authoritative but
+should provide a good introduction.  For more detail, see the
+documentation in the modules referenced in this text.
+
+=head2 Element Library
+
+The element library is a directory in CVS containing all existing
+element sets available for use with Krang.  The intent is to support
+the maximum possible degree of reusability in Krang elements.
+
+The element library will be developed and versioned separately from
+Krang.  One element set can use elements from another set, either by
+directly referencing element classes in foreign sets or by declaring
+another set as a parent set.
+
+For example, the root directory of the element library might contain:
+
+  /Default
+  /Flex
+  /LA
+  /Anaheim
+
+Each Krang instance will declare the element sets they wish to use
+with the ElementSet configuration option in krang.conf.  For example,
+a site using the Flex element set would declare:
+
+  ElementSet Flex
+
+=head2 Element Set
+
+An element set contains element classes that power the elements for an
+instance.  Elements provide the building blocks for stories.
+
+Each element set contains a configuration file, F<set.conf>, which
+contains a list of top-level element classes in the set.  Each element
+set can be configured to inherit elements from other element sets.
+For example, Flex might inherit from the Default set.
+
+An element set may also contain a file with default templates, called
+F<templates.kds>.  This file must be a valid
+HREF[Krang::Dataset|xml.html] file containing only L<Krang::Template>
+objects.  If present, it will be loaded into the database by
+C<krang_createdb>.
+
+Finally, elements sets may include a F<lists.conf> file describing
+lists available for use by the element set and in the user interface.
+The F<lists.conf> file is an XML file containing a description of each
+list group.  For example:
+
+  <list_groups>
+    <list_group list_group_name="Cars">
+      <list list_name="Make" />
+      <list list_name="Model" />
+      <list list_name="Year" />
+    </list_group>
+
+    <list_group list_group_name="Segments" description="This list group just contains one list">
+      <list list_name="Segments" />
+     </list_group>
+  </list_groups>
+
+This configuration file describes two list groups.
+A list group is a group of linked lists.
+The first list group on the example describes a three-level tree of
+make/model/year values- meaning each 'Make' can be associated with a 
+list of 'Model's, and each 'Model' can be associated with a list of
+'Year's.   The second list group in the example contains just a single
+flat list.  Note that a default description for the list group can 
+be set within the list_group tag.
+
+You may also specify initial list items via F<lists.conf> by using the 
+optional element, "list_item", which expects two attributes,
+"item_name" and (optional) "parent_item_name":
+
+  <list_group list_group_name="Make/Model/Year" description="blah blah blah">
+    <list list_name="Make">
+      <list_item item_name="Ford" />
+      <list_item item_name="Honda" />
+      <list_item item_name="GMAC" />
+    </list>
+    <list list_name="Model">
+      <list_item parent_item_name="Ford" item_name="Explorer" />
+      <list_item parent_item_name="Ford" item_name="Escort" />
+      <list_item parent_item_name="Ford" item_name="Focus" />
+      <list_item parent_item_name="Honda" item_name="Element" />
+      <list_item parent_item_name="Honda" item_name="Civic" />
+      <list_item parent_item_name="Honda" item_name="Accord" />
+      <list_item parent_item_name="GMAC" item_name="Hummer" />
+      <list_item parent_item_name="GMAC" item_name="Pontiac" />
+      <list_item parent_item_name="GMAC" item_name="Humongulous" />
+    </list>
+    <list list_name="Year">
+      <list_item parent_item_name="Explorer" item_name="1998" />
+      <list_item parent_item_name="Explorer" item_name="1999" />
+      <list_item parent_item_name="Explorer" item_name="2000" />
+      <list_item parent_item_name="Explorer" item_name="2001" />
+      <list_item parent_item_name="Civic" item_name="1999" />
+      <list_item parent_item_name="Civic" item_name="2000" />
+      <list_item parent_item_name="Civic" item_name="2001" />
+      <list_item parent_item_name="Civic" item_name="2002" />
+    </list>
+  </list_group>
+
+This allows you to intuitively set up lists when you run a "make db".
+
+Below is an example of how a ListGroup would be added to an element in 
+your element library:
+
+  Krang::ElementClass::ListGroup->new(  name => 'auto_segments',
+                                        list_group => 'Segments',
+                                        multiple => 1 )
+
+'multiple' allows for multiple selections from a flat list.
+
+See L<Krang::ElementClass::ListGroup>, L<Krang::ListGroup>, L<Krang::List>
+and L<Krang::ListItem> for further details.
+
+=head2 Element Classes
+
+An element class is a Perl module that controls how the element data
+will be edited, stored and published.  Element class modules inherits
+from L<Krang::ElementClass> or one of L<Krang::ElementClass>'s
+sub-classes like L<Krang::ElementClass::Textarea>. 
+
+Here's an example container element, Flex::page:
+
+  package Flex::page;
+  use base qw(Krang::ElementClass);
+
+  sub new {
+      my $pkg = shift;
+      my %opt = (
+         name         => "page",  # unique name for the element
+         display_name => "Page",  # display name for the UI
+         min          => 1,       # always have one page
+         max          => undef,   # allow any number of pages
+
+         # list of potential child elements, specified as
+         # names or with Krang::ElementClass objects
+         children     => [
+             # looks for a paragraph element across defined element
+             # sets
+             "paragraph",
+             
+             # instantiate using a direct reference to an
+             # element class, with parameters for the constructor
+             Flex::keywords->new(fields => 6),
+             
+             # create sub-elements dynamically without
+             # requiring new module
+             Krang::ElementClass::MediaLink->new(name => "inline_image"),
+            ],
+
+          # allow code that creates new pages to override any of the
+          # available parameters
+          @_,
+      );
+ 
+      return $pkg->SUPER::new(%opt); 
+  }
+
+  1;
+
+Flex::page is considered a 'container element' because its purpose is
+to contain other elements - paragraphs, images and keywords in this
+case.
+
+As you can see above, data elements are also classes in the element
+set.  A data element allows users to enter data, and usually does not
+contain sub-elements.  Here's an example data element,
+Flex::paragraph, which inherits from Krang::ElementClass::TextBox:
+
+  package Flex::paragraph;
+  use base qw(Krang::ElementClass::TextBox);
+
+  sub new {
+      my $pkg = shift;
+      my %opt = (
+                 name           => "paragraph",
+                 rows           => 4,
+                 cols           => 40,
+                 bulk_edit      => 1,
+                 
+                 @_,
+                );
+      return $pkg->SUPER::new(%opt);
+  }
+
+  1;
+
+Most usages of Krang will not require more code in the element classes
+than is shown above.  In most cases it will be enough to inherit from
+one of the provided element classes.  However, overriding methods
+inside the element class can give you control over every operation
+involving the element.  See L<Krang::ElementClass> for more details.
+
+=head1 Element
+
+An element is a piece of a story.  Every element is a
+L<Krang::Element> object and belongs to a particular element class.
+The element class of an object is accessible through the C<class()>
+method.
+
+When you create a new story you define the class of its root element
+with the class parameter.  For example, to create a new story based on
+the Article element class:
+
+  $story = Krang::Story->new(class      => 'article',
+                             title      => "Title",
+                             slug       => "slug",
+                             categories => [1]);
+
+This prints "Article" because $story->element is an element assigned
+to the "Article" class:
+
+  print $story->element->class->display_name;
+
+Elements proxy element class methods to their element classes,
+mimicking inheritance.  So this also prints "Article":
+
+  print $story->element->display_name;
+
+Given an element, you can access a list of children with the
+C<children()> method.  These children are also elements with their own
+class assignments.  For example, if the Article has three paragraph
+elements as children then this will print "Paragraph" three times:
+
+  print $_->display_name . "\n" for $story->element->children;
+
+You can add child elements to add data to the story.  For example, to
+add another paragraph with the content "foo":
+
+  $story->element->add_child(class => "paragraph",
+                             data  => "foo");
+
+See L<Krang::Element> for more information about how to work with
+elements.
+
+=head2 List Groups and Lists
+
+

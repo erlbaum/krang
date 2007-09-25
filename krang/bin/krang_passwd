@@ -1,0 +1,243 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+krang_passwd - change Krang user passwords
+
+=head1 SYNOPSIS
+
+krang_password [options] login
+
+Change the password for userX:
+
+  $ krang_passwd userX
+  New password:
+  Re-type password:
+
+Options:
+
+ --help			- Displays this menu.
+
+ --man			- Displays POD for entire script as manpage.
+
+N.B.: passwords must be at least 6 characters in length.
+
+=head1 DESCRIPTION
+
+This script changes the password for a Krang user.  Note: passwords must be at
+least 6 characters in length.
+
+=cut
+
+#
+# Pragmas/Module Dependencies
+##############################
+# Pragmas
+##########
+use strict;
+use warnings;
+
+# External Modules
+###################
+use Config;
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use POSIX;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+
+# Krang-Dependent External Modules
+###################################
+use Getopt::Long;
+use Pod::Usage;
+
+# Internal Modules
+###################
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'PasswordHandler';
+use Krang::ClassLoader Message => qw(get_messages get_alerts);
+# use first instance if one isn't set.  Addons are installation wide
+# anyway.
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Conf';
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
+
+#
+# Package Variables
+####################
+# Constants
+############
+
+# Globals
+##########
+
+# Lexicals
+###########
+my $help = my $man = 0;
+
+# termial I/O vars
+my ($c_lflag, $fd, $termios);
+
+
+# Input Validation
+###################
+pod2usage(2) unless GetOptions(help	=> \$help,
+                               man	=> \$man);
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+
+# get login
+my $login = shift @ARGV;
+pod2usage("No user 'login' specified") unless defined $login;
+
+# Program Body :-)
+main();
+
+
+=head1 METHODS
+
+=over 4
+
+=item * main()
+
+A user object corresponding to 'login' is obtained, a new password is obtained
+and saved to the user object.  'Password changed.' is printed if the process
+is a success.
+
+=cut
+
+sub main {
+    # lookup user
+    my ($user) = pkg('User')->find(login => $login);
+    die("Login '$login' not found.") unless defined $user;
+
+    # setup terminal I/O
+    $fd = fileno(STDIN);
+    $termios = POSIX::Termios->new;
+    $termios->getattr($fd);
+    $c_lflag = $termios->getlflag;
+
+    # get password
+    my $pass = ask_pass($user);
+
+    # set new password
+    $user->password($pass);
+
+    # save changes to user
+    eval {$user->save};
+    if (my $err = $@) {
+        print STDERR "\nAttempt to set password failed: $err\n";
+        exit 1;
+    } else {
+        print "\nPassword changed.\n";
+    }
+}
+
+
+=item * $new_password = ask_pass()
+
+Attempts to obtain a valid new password.  Returns new password on success
+exits otherwise.
+
+=cut
+
+sub ask_pass {
+    my ($user) = shift;
+
+    print "Changing password for login '$login'\n";
+
+    # Get new pass
+    ###################
+    set_echo();
+
+    print "New password: ";
+    my $npass = <STDIN> || '';
+
+    set_echo(1);
+
+    chomp $npass;
+
+    my $ok = pkg('PasswordHandler')->check_pw(
+        $npass,
+        $user->login,
+        $user->email,
+        $user->first_name,
+        $user->last_name,
+    );
+    if( $ok ) {
+        # Confirm new pass
+        ###################
+        set_echo();
+
+        print "Re-type password: ";
+        my $dpass = <STDIN> || '';
+
+        set_echo(1);
+
+        chomp $dpass;
+
+        unless ($npass eq $dpass) {
+            print STDERR "\nPasswords do not match.";
+            exit 1;
+        }
+    } else {
+        # get any messages added to the stack and print them
+        my @msgs = get_messages();
+        print STDERR "\n$_" foreach( @msgs );
+        my @alerts = get_alerts();
+        print STDERR "\n! $_" foreach( @alerts );
+        print STDERR "\nInvalid password!\n";
+        exit 1;
+    }
+
+    return $npass;
+}
+
+
+=item * set_echo()
+
+Turns Termios echoing on if supplied an arg, off otherwise
+
+=cut
+
+sub set_echo {
+    if (@_) {
+        $termios->setlflag($c_lflag);
+    } else {
+        $termios->setlflag($c_lflag & ~ECHO);
+    }
+
+    # activate changes to terminal now
+    $termios->setattr($fd, TCSANOW);
+}
+
+
+=back
+
+=cut

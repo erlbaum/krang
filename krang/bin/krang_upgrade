@@ -1,0 +1,641 @@
+#!/usr/bin/perl -w
+use warnings;
+use strict;
+
+
+# Path to pre-req binaries
+our $COPY_BIN;
+our $CHOWN_BIN;
+our $ECHO_BIN;
+our $PERL_BIN = $^X;
+our $MYSQL_BIN;
+
+=head1 NAME
+
+krang_upgrade - upgrade Krang from a dist file
+
+=head1 SYNOPSIS
+
+  # bin/krang_upgrade
+
+=head1 DESCRIPTION
+
+This script will upgrade Krang on a RedHat 7.3 (i686-linux) 
+system from a dist file created by krang_makedist.
+
+=head2 What C<krang_upgrade> does
+
+Following is a list of the tasks the upgrade script will perform.
+
+
+=over 4
+
+=item *
+
+Check pre-requisites
+
+=over 4
+
+=item * 
+
+Validate path to KRANG_ROOT.
+
+=item *
+
+Ensure KRANG_ROOT isnt set before invoking bin/krang_upgrade
+
+=item * 
+
+Locate and parse existing krang.conf file.
+
+=item * 
+
+Verify that Krang has been shut down.
+
+=back
+
+=item * 
+
+Make a backup of the existing Krang system using 'krang_backup'.
+
+=item * 
+
+Install new Krang system over the existing files in KRANG_ROOT with the following exceptions:
+
+=over
+
+=item F<lib/Krang.pm> which holds the Krang version number.
+
+=item F<conf/ssl.crt/server.crt> and F<conf/ssl.key/server.key> files are not overwritten
+if they curent exist, to prevent loosing existing SSL certificates.
+
+=back
+
+=item * 
+
+Apply upgrade scripts.
+
+=item *
+
+Copy lib/Krang.pm into place, updating Krang's version number.
+
+=item * 
+
+Update db_version for each instance
+
+=item * 
+
+Clear out sessions from database.
+
+=item * 
+
+Start Krang
+
+=item * 
+
+Output results of upgrade to console.
+
+=back
+
+=head1 OPTIONS
+
+ --KrangRoot         - Directory where Krang is installed, defaults to 
+                       /usr/local/krang.
+
+ --MySQLRootPassword - Password for the MySQL user "root".  Defaults to
+                       "".
+
+ --MySQLHost         - Host that MySQL server is running on. Defaults to
+                       "" - which connects to the local host.
+
+ --no-backup         - Skip making a backup before running the upgrade.
+
+ --help              - Show usage
+
+ --man               - Show full man page
+
+=head1 SEE ALSO
+
+Refer to F<docs/ops_upgrade.pod>.
+
+=cut
+
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+use Cwd qw(getcwd chdir);
+
+our $orig_krang_root;
+
+# Set up KRANG_ROOT and PERL5LIB
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $orig_krang_root = $ENV{KRANG_ROOT};
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+}
+
+# fix results of killing an upgrade in the middle of copying files
+BEGIN {
+    if (-e "$ENV{KRANG_ROOT}/lib/Krang.new") {
+        rename("$ENV{KRANG_ROOT}/lib/Krang.new", 
+               "$ENV{KRANG_ROOT}/lib/Krang.pm") 
+          or die "Unable to rename lib/Krang.new to lib/Krang.pm\n";
+    }
+}
+
+use Krang;
+use Getopt::Long;
+use Pod::Usage;
+use Config::ApacheFormat;
+use File::Find qw(find);
+
+my @original_args = ();
+my $uniqueness = time();
+my %instance_dbs = ();
+my $mysql_datadir;
+my $OLD_CONF;
+my $BACKUP_FILENAME = "";
+my $OLD_VERSION;
+
+my ($help, $man);
+
+my @opt_params = qw( KrangRoot MySQLRootPassword MySQLHost );
+
+my %options = ( map { $_ => "" } @opt_params);
+my %build_params;
+
+do_upgrade();
+exit(0);
+
+
+################################
+####  MAKE UPGRADE METHODS  ####
+################################
+
+sub do_upgrade {
+    setup_getopts();
+
+    # load the platform file
+    load_platform();
+
+    # Check all pre-requisites for upgrade
+    check_prereqs();
+
+    # Do upgrade
+    make_backups() unless $options{'no-backup'};
+    install_new_krang();
+    apply_upgrades();
+    update_version();
+    update_db_version();
+    clear_sessions();
+
+    start_krang();
+    output_report();
+}
+
+
+sub check_prereqs {
+    print "Checking prerequisites\n";
+
+    # Must be running as root.
+    exit_error("Must be run as root.") unless ($> eq "0");
+
+    # make sure the platform is happy
+    our $PLATFORM;
+    $PLATFORM->verify_dependencies(mode => 'install');
+
+    # Validate path to KRANG_ROOT.
+    my $KrangRoot = $options{KrangRoot};
+    unless (-e $KrangRoot) {
+        exit_error("KrangRoot '$KrangRoot' does not exists.  Cannot continue.");
+    }
+
+    # Make sure KRANG_ROOT wasn't set before calling script.
+    if ($orig_krang_root) {
+        exit_error("KrangRoot \$ENV{KRANG_ROOT} [$orig_krang_root] must be unset before continuing.  Cannot continue.");
+    }
+
+    # Does krang.conf exist at that location?
+    my $krang_conf = $KrangRoot ."/conf/krang.conf";
+    unless (-r $krang_conf) {
+        exit_error("'$krang_conf' does not exists.  Cannot continue.");
+    }
+
+    # LOAD OLD KRANG_CONF
+    # Start by getting old conf valid directives
+    my $get_directives_perl = qq( print join("\\t", \@Krang::Conf::VALID_DIRECTIVES). "\\n"; );
+    my $get_directives_cmd = "KRANK_CONF_NOCHECK=1 KRANG_CONF=$krang_conf $PERL_BIN";
+    $get_directives_cmd .= " -MKrang::Conf -e '$get_directives_perl' && echo \"Success $uniqueness\"";
+
+    my $get_directives_output = `$get_directives_cmd`;
+
+    unless ($get_directives_output =~ /Success\ $uniqueness/) {
+        print STDERR $get_directives_output;
+        exit_error("Error getting valid directives.  Cannot continue.");
+    }
+
+    # Trim off the last line
+    my ($get_directives_output_line1) = split(/\n/, $get_directives_output);
+
+    my @old_valid_directives = ();
+    foreach my $dir (split(/\t/, $get_directives_output_line1)) {
+        push(@old_valid_directives, $dir);
+    }
+
+
+    eval {
+        $OLD_CONF = Config::ApacheFormat->new( valid_directives => \@old_valid_directives,
+                                               valid_blocks => ['instance'] );
+        $OLD_CONF->read($krang_conf);
+    };
+    exit_error("Unable to read config file '$krang_conf'.  Error was: $@")
+      if $@;
+    exit_error("Unable to read config file '$krang_conf'.")
+      unless $OLD_CONF;
+
+    # get Krang version
+    $OLD_VERSION = get_krang_version($KrangRoot);
+
+    # Verify that this Krang has been shut down.
+    # get status from the pid file
+    my $pid_file = catfile($KrangRoot, "tmp", "httpd.pid");
+    my $running = 0;
+    my $pid;
+    if (-e $pid_file) {
+        $pid = `cat $pid_file`;
+        chomp $pid;
+        if ($pid and kill(0, $pid)) {
+            $running = 1;
+        }
+    }
+    exit_error ("Krang is still running.  You must shut down Krang before upgrading.  Do this by running:\n\n\t" . catfile($KrangRoot, "bin", "krang_ctl") . " stop\n")
+      if ($running);
+
+    # MySQLRootPassword must be valid, and MySQL should be running
+    my $mysql_bin = $MYSQL_BIN;
+    my $MySQLRootPassword = $options{'MySQLRootPassword'};
+    my $MySQLHost = $options{'MySQLHost'};
+    my $test_mysql = "$ECHO_BIN 'select \"world\" as hello' | $mysql_bin -uroot";
+    $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+    $test_mysql .= " -h$MySQLHost" if (length($MySQLHost));
+    $test_mysql .= " 2>&1";
+    my $mysql_test_output = `$test_mysql`;
+
+    unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
+        print STDERR "$mysql_test_output";
+        if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
+            exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
+        } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
+            exit_error("Can't connect to MySQL. Do you need to use the MySQLHost option? Start MySQL and try again.");
+        } else {
+            exit_error("Unable to verify connection to MySQL.");
+        }
+    }
+
+    foreach my $instpair ($OLD_CONF->get("instance")) {
+        my $instance = $instpair->[1];
+        my $conf_block = $OLD_CONF->block(instance => $instance);
+        my $db = $conf_block->get("InstanceDBName");
+        $instance_dbs{$instance} = $db;
+    }
+
+    # No Instances?
+    exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
+
+    print "  Found instances: ". 
+      join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
+    
+    ## End of prereq check
+}
+
+
+# load the platform module for this dist
+sub load_platform {
+    our $PLATFORM;
+
+    exit_error("Can't find data/build.db.  Do you need to run 'make build'?")
+      unless -e catfile($ENV{KRANG_ROOT}, 'data', 'build.db');
+    require Krang::Platform;
+    %build_params = Krang::Platform->build_params;
+
+    # add in $KRANG_ROOT/platform for platform build modules
+    my $plib    = catdir($ENV{KRANG_ROOT}, "platform");
+    $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
+    unshift @INC, $plib;
+
+    print "Loading platform module for '$build_params{Platform}...\n";
+    $PLATFORM = "$build_params{Platform}::Platform";
+    eval "use $PLATFORM;";
+    die "Unable to load $PLATFORM: $@"
+      if $@;
+
+    # find binaries
+    $COPY_BIN  = $PLATFORM->find_bin(bin => 'cp');
+    $CHOWN_BIN = $PLATFORM->find_bin(bin => 'chown');
+    $ECHO_BIN  = $PLATFORM->find_bin(bin => 'echo');
+    $MYSQL_BIN = $PLATFORM->find_bin(bin => 'mysql');
+}
+
+
+sub make_backups {
+    # compute a backup filename
+    my ($y, $m, $d) = (localtime)[5,4,3];
+    $BACKUP_FILENAME = 
+      sprintf('krang-upgrade-%04d%02d%02d.kba', ($y+1900), $m, $d);
+
+    # find another name if this one exists
+    if(-e $BACKUP_FILENAME) {
+        my $x = 1;
+        $BACKUP_FILENAME =~ s!\.kba$!.$x.kba!;
+        while (-e $BACKUP_FILENAME and $x < 1024) {
+            $x++;
+            $BACKUP_FILENAME =~ s!\.\d+\.kba$!.$x.kba!;
+        }
+    }
+
+    print "Creating backup in '$BACKUP_FILENAME'.\n";
+
+    # run krang_backup
+    my $backup = catfile($options{KrangRoot}, 'bin', 'krang_backup') . 
+      " /tmp/$BACKUP_FILENAME" . " 2>&1";
+    my $out = `KRANG_ROOT='' $backup`;
+    exit_error("Problem creating krang_backup.  To suppress backup creation, run krang_upgrade with --no-backup.  Error was:\n\n$out\n")
+      unless $out =~ /Backup complete/;
+
+    system("mv /tmp/$BACKUP_FILENAME ./$BACKUP_FILENAME") &&
+      exit_error("Unable to move backup from /tmp/$BACKUP_FILENAME to ./$BACKUP_FILENAME");
+}
+
+sub install_new_krang {
+    my $new_krang   = $ENV{KRANG_ROOT};
+    my $InstallPath = $options{KrangRoot};
+
+    print "Installing new Krang files into '$InstallPath'\n";
+    chdir($ENV{KRANG_ROOT});
+
+    # change Krang.pm's name so it doesn't stomp the installed version
+    # before the upgrade is really finished
+    rename('./lib/Krang.pm', './lib/Krang.new') 
+      or die "Unable to rename ./lib/Krang.pm to ./lib/Krang.new: $!\n";
+
+    # if we were built with SSL
+    if( $build_params{SSL} ) {
+        # make sure we don't over-write existing ssl certs
+        if( -e catfile($InstallPath, 'conf', 'ssl.crt', 'server.crt') ) {
+            my $src_crt = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt');
+            if( -e $src_crt ) {
+                rename( $src_crt, "$src_crt.sample")
+                    or die "Unable to rename $src_crt to $src_crt.sample: $!\n";
+            }
+        }
+        if( -e catfile($InstallPath, 'conf', 'ssl.key', 'server.key') ) {
+            my $src_key = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key');
+            if( -e $src_key ) {
+                rename( $src_key, "$src_key.sample" )
+                    or die "Unable to rename $src_key to $src_key.sample: $!\n";
+            }
+        }
+    }
+
+    eval {
+        my $copy = "$COPY_BIN -a  --no-dereference * $InstallPath\/";
+        system($copy) && die("Can't copy files, cp died with error code $?\n");
+    };
+    my $err = $@;    
+    rename('./lib/Krang.new', './lib/Krang.pm');
+    die $err if $err;
+
+    # if we were built with SSL
+    if( $build_params{SSL} ) {
+        # redo the symlinks for SSL conf
+        print "  Fixing SSL symlinks\n";
+        my $cwd = getcwd();
+
+        # go into the conf/ssl.* dirs
+        foreach my $ext qw(crl crt csr key prm) {
+            my $dir = catdir($InstallPath, 'conf', "ssl.$ext");
+            chdir($dir)
+                or die "Could not change into directory $dir : $!";
+            if( -e catfile($dir, 'Makefile') ) {
+                system("make") == 0
+                    or die "Could not run 'make' in directory $dir : $!";
+            }
+        }
+        chdir($cwd) or die "Could not return to directory '$cwd': $!";
+    }
+
+    print "  Fixing ownership\n";
+    my $KrangUser  = $OLD_CONF->get("KrangUser");
+    my $KrangGroup = $OLD_CONF->get("KrangGroup");
+    # skip sym-links to files that don't exist, which will choke
+    # chown.  This can happen as a result of installing an older SSL
+    # Krang which had links to install directory.  It'd be nice to
+    # write an upgrade module to weed them out but upgrade modules
+    # don't run until after the chown...
+    my $chown = $CHOWN_BIN ." -R  --no-dereference $KrangUser\:$KrangGroup ";
+    find({ no_chdir => 1,
+           follow   => 0,
+           wanted   => 
+           sub { 
+               return if -l $_ and !-e $_; # skip bad links
+               # handle files with double quotes in the name
+               $_ =~ s/"/\\"/g;
+               system($chown . qq| "$_"|)
+                 and warn(qq/   Warning: unable to chown "$_".\n/);
+           }
+         }, $InstallPath);
+
+    print "  Krang files installed.\n";
+}
+
+# Run through upgrade module per_installation() and per_instance() methods.
+sub apply_upgrades {
+    print "Applying upgrades\n";
+
+    my $KrangRoot = $options{KrangRoot};
+
+    my $old_krang_version = $OLD_VERSION;
+    my $new_krang_version = get_krang_version($ENV{KRANG_ROOT});
+    print "  Upgrading v$old_krang_version to v$new_krang_version\n";
+
+    # Find upgrade modules
+    my $upmod_path = $KrangRoot ."/upgrade/";
+    print "  Upgrade path: $upmod_path\n";
+    opendir(DIR, $upmod_path) || die ("Unable to open upgrade directory '$upmod_path': $!\n");
+    my @upmodules = (grep {
+        (-f $upmod_path.$_) && (/^V(\d+)\_(\d+)\.pm$/) && ( "$1.$2" > $old_krang_version )
+      } sort readdir(DIR));
+    closedir(DIR);
+
+    print "  Found ".scalar(@upmodules)." applicable upgrade modules.\n";
+    print "    ". join("\n    ", @upmodules) ."\n" if (@upmodules);
+
+    # Run upgrade modules
+    my $perl5lib = $KrangRoot ."/upgrade:" . $KrangRoot ."/lib";
+    foreach my $module (@upmodules) {
+        print "  Running $module...\n";
+        # Get package name by trimming off ".pm"
+        my $package = $module;
+        $package =~ s/\.pm$//;
+
+        my $upgrade_cmd = "KRANK_CONF_NOCHECK=1 KRANG_ROOT=$KrangRoot PERL5LIB=$perl5lib $PERL_BIN";
+        $upgrade_cmd .= " -M$package -e 'my \$ug = $package->new(); \$ug->upgrade()'";
+        system($upgrade_cmd) && die("Error using upgrade module '$module'");
+    }
+    
+}
+
+# copy lib/Krang.pm into place, effectively updating Krang's version
+sub update_version {
+    my $new_krang = $ENV{KRANG_ROOT};
+    my $InstallPath = $options{KrangRoot};    
+
+    print "Updating Krang version.\n";
+    my $copy = "$COPY_BIN -a $InstallPath/lib/Krang.new $InstallPath/lib/Krang.pm";
+    system($copy)
+      && die("Can't copy lib/Krang.pm: copy exited with error code: $?\n");
+    unlink("$InstallPath/lib/Krang.new") or die "Unable to unlink: $!\n";
+    
+
+    print "  Fixing ownership of lib/Krang.pm\n";
+    my $KrangUser = $OLD_CONF->get("KrangUser");
+    my $KrangGroup = $OLD_CONF->get("KrangGroup");
+    my $chown = "$CHOWN_BIN $KrangUser\.$KrangGroup $InstallPath/lib/Krang.pm";
+    system($chown) && die("Can't update ownership of lib/Krang.pm: chown exited with error code: $?\n");
+}
+
+sub update_db_version {
+    my $KrangRoot = $options{KrangRoot};
+    my $new_krang_version = get_krang_version($KrangRoot);
+    print "Updating db_version to $new_krang_version\n";
+
+    # Iterate through instances, making .backup files
+    while (my ($instance, $db) = each(%instance_dbs)) {
+        print "  Updating $instance ($db)\n";
+        my $mysql_bin = $MYSQL_BIN;
+        my $MySQLRootPassword = $options{'MySQLRootPassword'};
+        my $MySQLHost = $options{'MySQLHost'};
+        my $update_db_version_cmd = "$mysql_bin -uroot";
+        $update_db_version_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+        $update_db_version_cmd .= " -h$MySQLHost" if (length($MySQLHost));
+        $update_db_version_cmd .= qq{ -e 'update db_version set db_version="$new_krang_version"' $db};
+        system($update_db_version_cmd) && exit_error("Error updating db_version");
+    }
+}
+
+
+sub clear_sessions {
+    print "Clearing out sessions tables\n";
+
+    # Iterate through instances, making .backup files
+    while (my ($instance, $db) = each(%instance_dbs)) {
+        print "  Deleting sessions for $instance ($db)\n";
+        my $mysql_bin = $MYSQL_BIN;
+        my $MySQLRootPassword = $options{'MySQLRootPassword'};
+        my $MySQLHost = $options{'MySQLHost'};
+        my $update_db_version_cmd = "$mysql_bin -uroot";
+        $update_db_version_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+        $update_db_version_cmd .= " -h$MySQLHost" if (length($MySQLHost));
+        $update_db_version_cmd .= " -e 'delete from sessions' $db";
+        system($update_db_version_cmd) && exit_error("Error updating db_version");
+    }
+}
+
+
+sub start_krang {
+    my $KrangRoot = $options{KrangRoot};
+    print "Starting Krang using $KrangRoot/bin/krang_ctl\n";
+    my $start = "KRANG_ROOT='' PERL5LIB='' $KrangRoot/bin/krang_ctl start";
+    system($start) && die("Can't start Krang.\n");
+}
+
+
+sub output_report {
+    our $PLATFORM;
+    $PLATFORM->post_upgrade_message(options => {
+                            InstallPath => $options{KrangRoot},
+                            HostName    => $OLD_CONF->get("HostName"),
+                            IPAddress   => $OLD_CONF->get("ApacheAddr"),
+                            ApachePort  => $OLD_CONF->get("ApachePort"),
+                            FTPPort     => $OLD_CONF->get("FTPPort"),
+                                               });
+}
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+sub exit_error {
+    my $cmd = $0;
+    $cmd =~ s/.*\/(.+)$/$1/;
+
+    my $message = shift;
+    print STDERR "\nError: $cmd:  $message\n\n";
+    exit(1);
+}
+
+
+sub setup_getopts {
+    # Copy the original args for re-invoking later
+    @original_args = @ARGV;
+
+    pod2usage(2) unless
+        GetOptions( 'help'          => \$help,
+                    'man'           => \$man,
+                    'no-backup'     => \$options{'no-backup'},
+                    (map { $_."=s"  => \$options{$_} } @opt_params) );
+
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+
+    # Set opt defaults
+    set_param_defaults();
+}
+
+
+sub set_param_defaults {
+    my %defaults = (
+                    KrangRoot => '/usr/local/krang',
+                    MySQLRootPassword => '',
+                    MySQLHost => '',
+                   );
+
+    # Set up defaults if value is not otherwise set
+    while (my ($k, $dv) = each(%defaults)) {
+        # Skip if value already defined
+        next if (length($options{$k}));
+
+        # Set default
+        $options{$k} = $dv;
+    }
+
+}
+
+
+# Get the version of Krang installed in a particular KRANG_ROOT
+sub get_krang_version {
+    my $KrangRoot = shift;
+    open(KRANG_PM, '<', $KrangRoot . '/lib/Krang.pm') 
+      or die "Unable to open Krang.pm: $!\n";
+    my $text = do { local $/; <KRANG_PM> };
+    close KRANG_PM;
+
+    my ($version) = $text =~ /^our\s+\$VERSION.*?(\d+\.\d+)/m;
+    die "Unable to extract version from Krang.pm in $KrangRoot/lib.\n"
+      unless $version;
+    return $version;
+}
+
+
+###############
+####  EOF  ####
+###############

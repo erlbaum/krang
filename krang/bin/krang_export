@@ -1,0 +1,325 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_export - export Krang data sets (.kds files)
+
+=head1 SYNOPSIS
+
+Export everything in the system into F<export.kds>:
+
+  $ krang_export --everything
+
+Export just templates and their dependencies into F<export.kds>:
+
+  $ krang_export --templates
+
+Export just a single story (ID: 10) and all it's dependecies to a file
+called F<cool_stories.kds>:
+
+  $ krang_export --story_id 10 --output cool_stories.kds
+
+For more options see the OPTIONS section below.
+
+=head1 DESCRIPTION
+
+This script creates a Krang Data Set (.kds) file containing Krang
+objects.  This file can then be used with krang_import to load data
+into another system.
+
+=head1 OPTIONS
+
+=over 4
+
+=item --output filename.kds
+
+Choose the name of the output file.  Defaults to 'export.kds'.
+
+=item --compress
+
+Turn on kds compression.  If you set this your filename must end in
+.kds.gz.
+
+=item --overwrite
+
+Allow --output to overwrite files.  Normally if --output exists the
+command fails.
+
+=item --everything
+
+Select all available objects for export.  This includes stories,
+media, templates, categories, sites, contribs, users and groups.
+
+=item --stories
+
+=item --media
+
+=item --templates
+
+=item --contribs
+
+=item --categories
+
+=item --sites
+
+=item --users
+
+=item --groups
+
+=item --alerts
+
+=item --list_items
+
+These select all available objects, and their dependencies, for
+export.  May not be combined with --everything.
+
+=item --all
+
+You can use --all=story to mean --stories, --all=category to mean
+--categories, etc.  This also works with objects from addons which are
+available for datasets, so if your addon provides "widgets" you can
+export them all with --all=widget.
+
+=item --story_id 10
+
+=item --media_id 10 
+
+=item --template_id 10 
+
+=item --contrib_id 10 
+
+=item --category_id 10 
+
+=item --site_id 10
+
+=item --user_id 10
+
+=item --group_id 10
+
+=item --alert_id 10
+
+=item --list_item_id 10
+
+These select a single object by ID, and its dependecies.  May be
+repeated multiple times to select multiple objects.
+
+=item --widget_id 10
+
+You can also specify IDs for addon objects here.  So if you have an
+addon which provides widgets you can get widget 10 with '--widget_id
+10'.
+
+=item --verbose
+
+Prints a running dialog of what's happening.  Repeat (--verbose
+--verbose) and you'll be treated to a directory listing of the created
+.kds at the end.
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Getopt::Long;
+use Pod::Usage;
+use Krang::ClassLoader Script => 'no_su';
+use Krang::ClassLoader 'DataSet';
+
+# process args and open the output file before dropping privs
+# process args and open the output file before dropping privs
+our ($help, $man, $compress, $overwrite, $output, $verbose, 
+     %all, %all_shortcut, %id, %classes, $file, $set);
+BEGIN { 
+    eval {
+        %classes = map { ($_, 0) } pkg('DataSet')->classes;
+
+        $output = 'export.kds';
+        $verbose = 0;
+        %all_shortcut = (stories    => pkg('Story')->id_meth,
+                         media      => pkg('Media')->id_meth,
+                         templates  => pkg('Template')->id_meth,
+                         contribs   => pkg('Contrib')->id_meth,
+                         categories => pkg('Category')->id_meth,
+                         sites      => pkg('Site')->id_meth,
+                         users      => pkg('User')->id_meth,
+                         groups     => pkg('Group')->id_meth,
+                         alerts     => pkg('Alert')->id_meth,
+                         list_items => pkg('ListItem')->id_meth);
+        %all =
+          map { ($_, pkg('DataSet')->id_meth_to_class($_)) }
+          pkg('DataSet')->id_meths;
+        %id = map { ($_, []) } pkg('DataSet')->id_meths;
+
+        # setup complex options
+        my %get_opts = (
+            everything => sub { $classes{$_} = 1 for keys %classes },
+
+            (map { ($_, sub { $classes{$all{$all_shortcut{$_[0]}}} = 1 }) }
+               keys %all_shortcut
+            ),
+            'all=s' => sub {
+                die "Unknown type $_[1].\n" unless exists $all{"$_[1]_id"};
+                $classes{$all{"$_[1]_id"}} = 1;
+            },
+            (map {
+                 ("$_=i", $id{$_})
+               } keys %id
+            ));
+
+        pod2usage(2) unless
+          GetOptions(help       => \$help,
+                     man        => \$man,
+                     
+                     'verbose+' => \$verbose,
+                     'compress' => \$compress,
+                     'overwrite'=> \$overwrite,
+                     
+                     'output=s' => \$output,                     
+                     
+                     %get_opts
+                    );
+        pod2usage(1)             if $help;
+        pod2usage(-verbose => 2) if $man;
+        pod2usage("Unrecognized options to krang_export: '" . 
+                  join(' ', @ARGV) . "'\n")
+          if @ARGV;
+        
+        # figure out target filename
+        $file = $output;
+        
+        # validate filename
+        die "Output filename must end in .kds\n"
+          if not $compress and $file !~ /\.kds$/;
+        die "Output filename must end in .kds.gz\n"
+          if $compress and $file !~ /\.kds.gz$/;
+        die "File '$file' exists!  ".
+          "Use --overwrite if you want to replace it.\n"
+            if -e $file and not $overwrite;
+        
+        # open up an output filehandle before using Krang::Script and switching
+        # privs
+        open(OUTPUT, '>', $file) 
+          or die "Unable to open '$file' for output: $!\n";
+    };
+
+    # output errors without the BEGIN compilation failed message
+    if ($@) { 
+        warn $@;
+        exit(1);
+    }
+}
+
+use Krang::ClassLoader 'Script'; # load again to su if needed
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use File::Temp qw(tempfile);
+
+# open up the data set
+$set = pkg('DataSet')->new($verbose ? 
+                           (add_callback => \&add_callback) : ());
+
+# keep a count of things added
+my $added = 0;
+
+# add all objects for a type?
+foreach my $class (grep { $classes{$_} } keys %classes) {
+    my $id_meth = $class->id_meth;
+    
+    # loop through all objects, 10 at a time
+    my $count = $class->find(count => 1);
+    for(my $x = 0; $x < $count; $x += 10) {
+        my @objects = $class->find(limit => 10, offset => $x);
+        for my $object (@objects) {
+            $set->add(object => $object);
+            $added++;
+        }
+    }
+}
+
+# add by id?
+foreach my $id_meth (grep { @{$id{$_}} } keys %id) {
+    my ($class) = grep { $_->id_meth eq $id_meth } keys %classes;
+    foreach my $id (@{$id{$id_meth}}) {
+        my ($object) = $class->find($id_meth => $id);
+        die "Unable to find $class $id in database!\n" unless $object;
+        $set->add(object => $object);
+        $added++;
+    }
+}
+
+# did we add anything?
+die "Nothing selected for export!  Did you mean to use --everything?\n"
+  unless $added;
+
+
+print STDERR "Packing $file...\n" if $verbose;
+
+# write file to a temp location and copy down the OUTPUT pipe.  This
+# is necessary if $file can't be written to by KrangUser
+my (undef, $temp) = tempfile(DIR    => catdir(KrangRoot, 'tmp'),
+                             SUFFIX => '.kds' . ($compress ? '.gz' : ''), 
+                            );
+$set->write(path => $temp, compress => $compress);
+
+# do a buffered copy from TEMP to OUTPUT
+open(TEMP, '<', $temp) or die "Unable to open '$temp': $!\n";
+my $buffer = "";
+while(read(TEMP, $buffer, 10240)) {
+    print OUTPUT $buffer;
+}
+close TEMP;
+close OUTPUT;
+unlink $temp or die $!;
+
+print "Export completed.  Output is in $file.\n";
+
+# extra verbose, print a tar directory
+system("tar " . ($compress ? 'z' : '') . "tvf $file")
+  if $verbose > 1;
+
+exit(0);
+
+sub add_callback {
+    my $object = $_[1];
+    my $class = ref $object;
+    my $id_meth = $class->id_meth;
+    my ($type) = $id_meth =~ /(.*)_id$/;
+    $type =~ s!_! !g;
+    
+    print STDERR "Adding $type " . $object->$id_meth . " to $file...\n";
+    warn $@ if $@
+}
