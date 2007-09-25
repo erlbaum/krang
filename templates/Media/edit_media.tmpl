@@ -65,6 +65,11 @@ save_and_view_log = function()
   {
     Krang.form_submit('edit_media_form', { rm: 'view_version' });
   }
+<tmpl_else>
+  do_cancel = function()
+  {
+    Krang.form_submit( 'edit_media_form', { rm: 'find' });
+  }
 </tmpl_unless>
 </script>
 
@@ -230,7 +235,10 @@ Media
   </p>
 </tmpl_unless>
 
-<div class="panel capped">
+<div class="panel capped<tmpl_if add_mode> clearfix</tmpl_if>">
+<tmpl_if add_mode>
+  <input value="Cancel" onclick="do_cancel()" type="button" class="west">
+</tmpl_if>
 <input value="Save &amp; Stay" onclick="do_save_stay()" type="button">
 <input value="Save" onclick="do_save()" type="button">
 <tmpl_if may_publish>
