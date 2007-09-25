@@ -13,10 +13,6 @@ C<--everything>. [Michael Peters]
 
 =item *
 
-Added platform files for Fedora Core 7.  [Jesse Erlbaum]
-
-=item *
-
 Fix ordering of media types on media UI to be in alphabetical
 order. [Eric Folley]
 
@@ -67,40 +63,118 @@ Fixed bug #3. C<< $publisher->publish_context >> now does not die if called with
 
 =back
 
-=head2 2.XXX - IN DEVELOPMENT
+=head2 2.20 - Sept 25th, 2007
 
 =over
+
+=item * 
+
+Fixed bug in F<bin/krang_upgrade> when trying to C<chown> files
+that had a single quote in them. [Mark Pearson, Michael Peters]
+
+=item *
+
+Make sure a copied story won't receive a duplicate URL. [Bodo Schulze]
+
+=item *
+
+Implemented desk security as specified in docs/permissions.pod and
+discussed with Jesse Erlbaum. Also added tests to verify the API part
+of this patch. [Bodo Schulze]
+
+=item *
+
+In C<Krang::Story->checkout()> and C<Krang::Story->move_to_desk()>,
+fixed bugs related to story's desk_id and last_desk_id. Added tests
+for it in F<t/story.t>. [Bodo Schulze]
+
+=item *
+
+In C<Krang::CGI::Desk> and C<Krang::CGI::Workspace>, include desk name
+in message when moving a story to another desk. [Bodo Schulze]
+
+=item *
+
+Show the 'text' cursor all over Xinha's edit area. [Bodo Schulze]
+
+=item *
+
+In C<Krang::HTMLPager>, make krang_pager_sort_field persistent on
+initial call to a C<Krang::CGI::*> module's C<find()> method.
+[Bodo Schulze]
+
+=item *
+
+Added C<--below_category_id> option and implemented
+C<--limited_to_category> option for C<bin/krang_publish>. [Bodo
+Schulze]
+
+=item *
+
+Add Fedora 7 as a platform for building. [Michael Peters, Jesse Erlbaum]
+
+=item *
+
+Upgraded L<DBI> and L<DBD::mysql> to be able to build Krang against
+newer versions of MySQL. [Michael Peters]
+
+=item *
+
+In C<Krang::CGI::Story::copy()>, preserve charset when copying a
+story. [Bodo Schulze]
+
+=item *
+
+In C<Krang::Publisher::publish_context()>, return an empty list to avoid
+warnings when trying to get an empty publish context. [Bodo Schulze]
+
+=item *
+
+Added C<test_categorylink()> to F<t/publish.t> (implicitely tests
+C<Krang::URL::real_url()>). [Bodo Schulze]
+
+=item *
+
+Make use of C<Krang::URL::real_url()> in the C<template_data()> method of
+L<Krang::ElementClass::CategoryLink>, L<Krang::ElementClass::MediaLink> and
+L<Krang::ElementClass::StoryLink>. [Bodo Schulze]
+
+=item *
+
+Added new module L<Krang::URL>.  It provides one method -- C<real_url()> --
+which adjusts the URL of story, media and category objects according
+to their publishing context. [Bodo Schulze]
 
 =item *
 
 Added F<krang_src_dependency_check> script to check Perl source module
 dependencies. [Michael Peters]
 
-=item * 
+=item *
 
-In Krang::ElementClass::CategoryLink, Krang::ElementClass::MediaLink
-and Krang::ElementClass::StoryLink fixed addon v2 compat bugs.
+In L<Krang::ElementClass::CategoryLink>, L<Krang::ElementClass::MediaLink>
+and L<Krang::ElementClass::StoryLink> fixed addon v2 compat bugs.
 [Bodo Schulze]
 
 =item *
 
-After you've already built Krang C<--with--ssl>, if you do a C<krang_build
---rebuild> it will do the rebuild C<--with-ssl> too. [Michael Peters]
+After you've already built Krang C<--with--ssl>, if you do a 
+C<krang_build --rebuild> it will do the rebuild C<--with-ssl> too.
 
 =item *
 
-In Krang::CGI::Media::list_active_row_handler(), fixed building of
+In C<Krang::CGI::Media::list_active_row_handler()>, fixed building of
 thumbnail preview link. [Bodo Schulze]
 
 =item *
 
-In Krang::CGI::Story's create() method, fixed building of message
+In L<Krang::CGI::Story>'s create() method, fixed building of message
 string after a Krang::Story::DuplicateURL error has been thrown.
 [Bodo Schulze]
 
 =item *
 
-In bin/krang_build, got rid of hard coded versions of Apache
+In F<bin/krang_build>, got rid of hard coded versions of Apache
 tarballs. [Bodo Schulze]
 
 =item *
@@ -133,61 +207,61 @@ Schulze]
 
 =item *
 
-In docs/permissions.pod, describe admin bits 'admin_scheduler' and
+In F<docs/permissions.pod>, describe admin bits 'admin_scheduler' and
 'admin_lists'. [Bodo Schulze]
 
 =item *
 
-In templates/Desk/desk.tmpl, removed 'Check out' Button and JavaScript
-goto_edit() function, since they double the 'Edit' link. [Bodo Schulze]
+In F<templates/Desk/desk.tmpl>, removed 'Check out' Button and JavaScript
+C<goto_edit()> function, since they double the 'Edit' link. [Bodo Schulze]
 
 =item *
 
-Since first and middle name are concatenated with &nbsp;, we can't
+Since first and middle name are concatenated with C<&nbsp;>, we can't
 html-escape the tmpl_var first_middle.  So we'll do it one by one in
-Krang::CGI::Contrib. [Bodo Schulze]
+L<Krang::CGI::Contrib>. [Bodo Schulze]
 
 =item *
 
-In check_categories() of Krang::CGI::Media::BulkUpload, fixed bug
+In C<check_categories()> of L<Krang::CGI::Media::BulkUpload>, fixed bug
 where creation of non existing categories would fail if no parent
 category is chosen. [Bodo Schulze]
 
 =item *
 
-In templates/story/view.tmpl, changed static template string 'Version'
+In F<templates/story/view.tmpl>, changed static template string 'Version'
 to 'Current Version'. [Bodo Schulze]
 
 =item *
 
 Backport to trunk of Michael Peters' Ajax branch revision 3699,
-removing warning in view() of Krang::CGI::Story occuring when story
-version is undef. [Bodo Schulze]
+removing warning in C<view()> of L<Krang::CGI::Story> occuring when story
+version is C<undef>. [Bodo Schulze]
 
 =item *
 
 Backport to trunk of Michael Peters' Ajax branch revision 3705,
-implementing password match check in Krang::CGI::MyPref. [Bodo
+implementing password match check in L<Krang::CGI::MyPref>. [Bodo
 Schulze]
 
 =item *
 
-In list_active() in Krang::CGI::Media, Krang::CGI::Story and
-Krang::CGI::Template, made admin permission may_checkin_all
+In C<list_active()> in L<Krang::CGI::Media>, L<Krang::CGI::Story> and
+L<Krang::CGI::Template>, made admin permission may_checkin_all
 consistently control whether checkin checkboxes and button should be
 displayed in "Active Media", "Active Stories" and "Active Templates".
 [Bodo Schulze]
 
 =item *
 
-In F<krang.conf>, allow multiple word InstanceDisplayName.
+In F<krang.conf>, allow multiple word C<InstanceDisplayName>.
 [Bodo Schulze]
 
 =item *
 
-Fixed addon v2 bugs in deserialize_xml() of Krang::Alert,
-Krang::Category, Krang::Contrib, Krang::Group, Krang::List,
-Krang::ListItem, Krang::Media, Krang::Story and Krang::Template.
+Fixed addon v2 bugs in C<deserialize_xml()> of L<Krang::Alert>,
+L<Krang::Category>, L<Krang::Contrib>, L<Krang::Group>, L<Krang::List>,
+L<Krang::ListItem>, L<Krang::Media>, L<Krang::Story> and L<Krang::Template>.
 [Bodo Schulze]
 
 =item *

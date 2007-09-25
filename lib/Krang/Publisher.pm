@@ -1370,7 +1370,9 @@ sub publish_context {
         return;
     }
 
-    return %{$self->{publish_context}};
+    return $self->{publish_context}
+      ? %{$self->{publish_context}}
+      : ();
 }
 
 

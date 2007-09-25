@@ -1440,6 +1440,9 @@ sub find {
     my $sth = $dbh->prepare($query);
     $sth->execute(@param);
 
+    # we'll fold in user desk permissions after constructing story objects
+    my %desk_permissions = pkg('Group')->user_desk_permissions;
+
     # construct objects from results
     my ($row, @stories, $result);
     while ($row = $sth->fetchrow_arrayref()) {
@@ -1478,6 +1481,11 @@ sub find {
                   } } @$result ] :
           [];
 
+	# fold in user desk permissions
+	if (my $desk_id = $obj->desk_id) {
+	    $desk_permissions{$desk_id} eq 'edit' or $obj->{may_edit} = 0;
+	}
+
         push @stories, $obj;
     }
 
@@ -1514,8 +1522,13 @@ sub _load_version {
 
 =item C<< $story->move_to_desk($desk_id) >>
 
-Move story to selected desk.  Cannot move it if checked out. 
-Will return 1 if successful, else 0.
+Move story to selected desk.  Cannot move it if checked out.
+
+If the story is checked out and thus can't be moved to the desired
+desk, throws a C<Krang::Story::CheckedOut> exception.
+
+If the desk has been deleted in the meantime, throws a
+C<Krang::Story::NoDesk> exception.
 
 =cut
 
@@ -1538,9 +1551,15 @@ sub move_to_desk {
     Krang::Story::NoDesk->throw( message => "Story can't be moved to non existing desk", desk_id => $desk_id)
 	unless scalar(pkg('Desk')->find( desk_id => $desk_id ));
 
-    $dbh->do('UPDATE story SET desk_id = ? where story_id = ?', undef, $desk_id, $story_id);
+    $dbh->do('UPDATE story
+              SET desk_id = ?, last_desk_id = ?
+              WHERE story_id = ?',
+              undef, $desk_id, $self->desk_id, $story_id);
 
-    $self->{desk_id} = $desk_id;
+    # update desk id in our story object
+    $self->{last_desk_id} = $self->{desk_id};
+    $self->{desk_id}      = $desk_id;
+
     add_history( action  => 'move',
                  object  => $self,
                  desk_id => $desk_id );
@@ -1603,9 +1622,11 @@ sub checkout {
         croak($eval_error);
     }
 
-    # update checkout fields
-    $self->{checked_out} = 1;
+    # update some fields
+    $self->{checked_out}    = 1;
     $self->{checked_out_by} = $user_id;
+    $self->{last_desk_id}   = $self->{desk_id};
+    $self->{desk_id}        = undef;
 
     add_history(    object => $self,
                     action => 'checkout',

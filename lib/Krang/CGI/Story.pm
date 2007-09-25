@@ -14,6 +14,7 @@ use Carp qw(croak);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Group';
+use Krang::ClassLoader Conf => qw(Charset);
 
 use Krang::ClassLoader base => 'CGI::ElementEditor';
 
@@ -240,9 +241,14 @@ Save, Check-In story to a particular desk and redirects to that desk.
 =cut
 
 sub check_in_and_save {
-    my $self = shift;
-    my $query = $self->query;
-        
+    my $self    = shift;
+    my $query   = $self->query;
+    my $desk_id = $query->param('checkin_to');
+
+    # check if they may move object to desired desk
+    return $self->access_forbidden()
+      unless pkg('Group')->may_move_story_to_desk($desk_id);
+
     # call internal _save and return output from it on error
     my $output = $self->_save();
     return $output if length $output;
@@ -293,22 +299,25 @@ sub check_in_and_save {
     $story->checkin();
 
     # move story to desk
-    my $desk_id = $query->param('checkin_to');
     eval { $story->move_to_desk($desk_id); };
 
-    if ($@ and ref($@) and $@->isa('Krang::Story::CheckedOut')) {
-        add_alert(
-            'story_cant_move_checked_out',
-            id   => $story->story_id,
-            desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name
-        );
-    } elsif ($@ and ref($@) and $@->isa('Krang::Story::NoDesk')) {
-        add_alert( 
-            'story_cant_move_no_desk',
-            story_id   => $story->story_id,
-            desk_id    => $desk_id 
-        );
-	    return $self->edit;
+    if($@ and ref($@)) {
+        if($@->isa('Krang::Story::CheckedOut')) {
+            add_alert(
+                'story_cant_move_checked_out',
+                id   => $story->story_id,
+                desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name
+            );
+        } elsif($@->isa('Krang::Story::NoDesk')) {
+            add_alert(
+                'story_cant_move_no_desk',
+                story_id => $story->story_id,
+                desk_id  => $desk_id
+            );
+        } else {
+            $@->rethrow;
+        }
+        return $self->edit;
     }
 
     # remove story from session
@@ -462,21 +471,23 @@ sub edit {
     }
 
     # get desks for checkin selector
-    my $last_desk;
     my $last_desk_id = $story->last_desk_id;
-    ($last_desk) = pkg('Desk')->find( desk_id => $last_desk_id )
-      if $last_desk_id;
+    my ($last_desk) = $last_desk_id ? pkg('Desk')->find( desk_id => $last_desk_id ) : ();
 
     my @found_desks = pkg('Desk')->find();
     my @desk_loop;
     my $is_selected;
 
     foreach my $found_desk (@found_desks) {
+	next unless pkg('Group')->may_move_story_to_desk($found_desk->desk_id);
+
 	if ($last_desk) {
 	    $is_selected = ($found_desk->order eq ($last_desk->order + 1)) ? 1 : 0;
 	}
-        push (@desk_loop, { choice_desk_id => $found_desk->desk_id, choice_desk_name => $found_desk->name,
-			    is_selected => $is_selected});
+
+        push (@desk_loop, { choice_desk_id   => $found_desk->desk_id,
+                            choice_desk_name => $found_desk->name,
+                            is_selected      => $is_selected });
     }
 
     $template->param( desk_loop => \@desk_loop);
@@ -637,8 +648,14 @@ sub copy {
                     title => $clone->title);
     }                    
 
-    # go edit the copy
+
+    # delete query...
     $query->delete_all;
+
+    # ... but preserve charset
+    $query->charset(Charset) if Charset;
+
+    # go edit the copy
     return $self->edit();
 }
 
@@ -1166,7 +1183,7 @@ sub add_category {
 
         # remove added category
         pop(@categories);
-        $story->categories(@categories);
+        $story->categories(\@categories);
 
         return $self->edit;
     } elsif ($@) {

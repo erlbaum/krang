@@ -810,6 +810,7 @@ sub calculate_order_by {
         $order_by = $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"};
     } elsif( ref $self ) {
         $order_by = $self->columns_sortable()->[0];  # First sort column
+	$q->param(-name => 'krang_pager_sort_field', -value => $order_by);
     }
 
     return $order_by;
@@ -870,9 +871,6 @@ sub make_sortable_column_html {
 
     my $q = $self->cgi_query();
 
-    my $use_module = $self->use_module() || ''; # use_data doesn't have a use_module
-    $use_module =~ s/Krang:://;
-    
     # Is column currently selected? If not, attempt to find in cache, or set default
     my $sort_field = $self->calculate_order_by($q);
     my $sort_order_desc = $self->calculate_order_desc($q);

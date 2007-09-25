@@ -91,8 +91,10 @@ Desk:
   <tmpl_if may_publish>
     <input value="Publish" onclick="publish_checked()" type="button">
   </tmpl_if>
-  <input value="Check Out" onclick="checkout_checked()" type="button">
-  <input value="Move" onclick="move_checked()" type="button">
+  <tmpl_if may_move>
+    <input value="Check Out" onclick="checkout_checked()" type="button">
+    <input value="Move" onclick="move_checked()" type="button">
+  </tmpl_if>
   </div>
 
   <tmpl_include HTMLPager/pager-pagination.tmpl>
@@ -111,7 +113,7 @@ Desk:
   <th class="f">ID</th>
   <th>Title</th>
   <th>URL</th>
-  <th class="tick l"><tmpl_var colhead_checkbox_column></th>
+  <th class="tick l"><tmpl_if may_move><tmpl_var colhead_checkbox_column></tmpl_if></th>
   </tr>
   </thead>
 
@@ -179,8 +181,10 @@ Desk:
   <tmpl_if may_publish>
     <input value="Publish" onclick="publish_checked()" type="button">
   </tmpl_if>
-  <input value="Check Out" onclick="checkout_checked()" type="button">
-  <input value="Move" onclick="move_checked()" type="button">
+  <tmpl_if may_move>
+    <input value="Check Out" onclick="checkout_checked()" type="button">
+    <input value="Move" onclick="move_checked()" type="button">
+  </tmpl_if>
   </div>
 
   </form>
@@ -189,7 +193,6 @@ Desk:
   <input name="rm" value="publish_story" type="hidden">
   <input name="story_id" value="" type="hidden">
   </form>
-
 </tmpl_unless>
 
 <tmpl_include footer.tmpl>

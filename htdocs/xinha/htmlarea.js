@@ -1532,6 +1532,11 @@ HTMLArea.prototype.generate = function ()
       editor.updateToolbar();
       editor._timerToolbar = null;
     }, 250);
+
+    if (HTMLArea.is_gecko) {
+	editor._iframe.contentDocument.documentElement.style.cursor='text';
+	editor._iframe.contentDocument.documentElement.style.height='100%';
+    }
   }
 
 // Switches editor mode; parameter can be "textmode" or "wysiwyg".  If no

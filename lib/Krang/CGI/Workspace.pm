@@ -115,7 +115,7 @@ sub _row_handler {
     my ( $self, $row, $obj ) = @_;
 
     my $date;
-    if ( $obj->isa('Krang::Story') ) {
+    if($obj->isa('Krang::Story')) {
         $row->{story_id}   = $obj->story_id;
         $row->{id}         = $self->_obj2id($obj);
         $row->{title}      = $obj->title;
@@ -128,43 +128,40 @@ sub _row_handler {
         );
 
         # setup desk selector
-        my $last_desk;
         my $last_desk_id = $obj->last_desk_id;
-        ($last_desk) = pkg('Desk')->find( desk_id => $last_desk_id )
-          if $last_desk_id;
+        my ($last_desk) = $last_desk_id ? pkg('Desk')->find(desk_id => $last_desk_id) : ();
 
         my @found_desks = pkg('Desk')->find();
         my @desk_loop;
         my $is_selected = 0;
 
         foreach my $found_desk (@found_desks) {
-            if ($last_desk) {
-                $is_selected = ( $found_desk->order eq ( $last_desk->order + 1 ) ) ? 1 : 0;
+            next unless pkg('Group')->may_move_story_to_desk($found_desk->desk_id);
+
+            if($last_desk) {
+                $is_selected = ($found_desk->order eq ($last_desk->order + 1)) ? 1 : 0;
             }
-            push(
-                @desk_loop,
-                {
-                    choice_desk_id   => $found_desk->desk_id,
-                    choice_desk_name => $found_desk->name,
-                    is_selected      => $is_selected
-                }
-            );
+
+            push @desk_loop,
+              {
+                choice_desk_id   => $found_desk->desk_id,
+                choice_desk_name => $found_desk->name,
+                is_selected      => $is_selected
+              };
         }
         $row->{desk_loop} = \@desk_loop;
-        $date = $obj->cover_date();
-    } elsif ( $obj->isa('Krang::Media') ) {
+    } elsif($obj->isa('Krang::Media')) {
         $row->{media_id}  = $obj->media_id;
         $row->{id}        = $self->_obj2id($obj);
         $row->{title}     = $obj->title;
-        $row->{thumbnail} = $obj->thumbnail_path( relative => 1 );
+        $row->{thumbnail} = $obj->thumbnail_path(relative => 1);
         $row->{is_media}  = 1;
         $row->{url}       = format_url(
             url    => $obj->url,
-            linkto => "javascript:Krang.preview('media'," . $obj->media_id . ")",
+            linkto => "javascript:preview_media(" . $obj->media_id . ")",
             length => 50
         );
-        $date = $obj->creation_date();
-    } elsif( $obj->isa('Krang::Template') ) {
+    } else {
         $row->{template_id} = $obj->template_id;
         $row->{id}          = $self->_obj2id($obj);
         $row->{title}       = $obj->filename;
@@ -281,6 +278,12 @@ sub checkin {
     my $query = $self->query;
     my $obj = $self->_id2obj($query->param('id'));
 
+    # check if they may move story to desired desk
+    if ($obj->isa('Krang::Story')) {
+	return $self->access_forbidden()
+	  unless pkg('Group')->may_move_story_to_desk($self->query->param('move_'.$obj->story_id));
+    }
+
     $self->_do_checkin($obj);
 
     $self->show;
@@ -319,8 +322,15 @@ Checks in checked objects (to specified desk for stories).
 sub checkin_checked {
     my $self  = shift;
     my $query = $self->query;
-    foreach my $obj (map { $self->_id2obj($_) }
-                     $query->param('krang_pager_rows_checked')) {
+    foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
+
+        # check if they may move story to desired desk
+        if($obj->isa('Krang::Story')) {
+            return $self->access_forbidden()
+              unless pkg('Group')
+              ->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
+        }
+
         $self->_do_checkin($obj);
     }
     return $self->show;
@@ -427,26 +437,35 @@ sub _id2obj {
 sub _do_checkin {
     my ($self, $obj) = @_;
 
-    if ($obj->isa('Krang::Story')) {
+    if($obj->isa('Krang::Story')) {
         my $story_id = $obj->story_id;
-        my $desk_id = $self->query->param('checkin_to_story_'.$story_id);
-            $obj->checkin();
+        my $desk_id  = $self->query->param('checkin_to_story_' . $story_id);
+        my ($desk) = pkg('Desk')->find(desk_id => $desk_id);
+        my $desk_name = $desk ? $desk->name : '';
 
-            eval {$obj->move_to_desk($desk_id); };
+        $obj->checkin();
 
-        if ($@ and ref($@) and $@->isa('Krang::Story::CheckedOut')) {
-            add_alert( 'story_cant_move_checked_out',
-                 id   => $story_id,
-                 desk => (pkg('Desk')->find(desk_id => $desk_id))[0]->name);
-        } elsif ($@ and ref($@) and $@->isa('Krang::Story::NoDesk')) {
-            add_alert( 'story_cant_move_no_desk',
-                 story_id   => $story_id,
-                 desk_id    => $desk_id );
-            $obj->checkout();
+        eval { $obj->move_to_desk($desk_id); };
+
+        if($@ and ref($@)) {
+            if($@->isa('Krang::Story::CheckedOut')) {
+                add_alert(
+                    'story_cant_move_checked_out',
+                    id   => $story_id,
+                    desk => $desk_name
+                );
+            } elsif($@->isa('Krang::Story::NoDesk')) {
+                add_alert(
+                    'story_cant_move_no_desk',
+                    story_id => $story_id,
+                    desk_id  => $desk_id
+                );
+                $obj->checkout();
+            }
         } else {
-            add_message("moved_story", id => $story_id);
+            add_message("moved_story", id => $story_id, desk => $desk_name);
         }
-    } elsif ($obj->isa('Krang::Media')) {
+    } elsif($obj->isa('Krang::Media')) {
         add_message("checkin_media", id => $obj->media_id);
         $obj->checkin();
     } else {
