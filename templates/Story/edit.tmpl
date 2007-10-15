@@ -92,6 +92,13 @@ save_and_stay = function() {
 
 <tmpl_else>
 
+  db_save = function() {
+    if ( confirm('Save this Story and return to your Workspace?') ) {
+      Krang.ElementEditor.run_save_hooks();
+      Krang.Form.submit('edit', { rm: 'db_save' });
+    }
+  }
+
   <tmpl_if bulk_edit>
 
     save_and_leave_bulk_edit = function() {
@@ -302,10 +309,14 @@ Properties
 
 </tmpl_if>
 
+
+
 <div class="panel capped">
-<input value="Save &amp; Stay" onclick="<tmpl_if is_root>db_save_and_stay<tmpl_else>save_and_stay</tmpl_if>()" type="button">
-<input value="Save" onclick="<tmpl_if is_root>db_save<tmpl_else><tmpl_if bulk_edit>save_and_leave_bulk_edit<tmpl_else>save_and_go_up</tmpl_if></tmpl_if>()" type="button">
+
 <tmpl_if is_root>
+
+  <input value="Save &amp; Stay" onclick="db_save_and_stay()" type="button">
+  <input value="Save" onclick="db_save()" type="button">
   <input value="Check In To" onclick="check_in()" type="button">
   <select name="checkin_to"><tmpl_loop desk_loop>
     <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
@@ -314,10 +325,22 @@ Properties
     <input value="Publish" onclick="save_and_publish()" type="button">
   </tmpl_if>
   <input value="Delete" onclick="remove_story()" type="button">
-<tmpl_else><tmpl_unless bulk_edit><tmpl_if allow_delete>
-  <input value="Delete" onclick="remove_element()" type="button">
-</tmpl_if></tmpl_unless></tmpl_if>
+
+<tmpl_else>
+
+   <input value="Done Editing <tmpl_var name_of_this_element>" onclick="save_and_<tmpl_if bulk_edit>leave_bulk_edit<tmpl_else>go_up</tmpl_if>()" type="button" class="west">
+   <tmpl_unless bulk_edit>
+     <tmpl_if allow_delete>
+     <input value="Delete <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
+     </tmpl_if>
+   </tmpl_unless>
+   <input value="Save Story &amp; Stay" onclick="db_save_and_stay()" type="button">
+   <input value="Save Story" onclick="db_save()" type="button">
+
+</tmpl_if>
+
 </div>
+
 
 </form>
 
