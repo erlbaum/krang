@@ -133,6 +133,7 @@ sub new_story {
                      category_chooser(name => 'category_id',
                                       query => $query,
                                       may_edit => 1,
+				      persistkey => 'LAST_CATEGORY'
                                      ));
 
     # setup date selector
@@ -175,6 +176,8 @@ sub create {
     my $title = $query->param('title');
     my $slug = $query->param('slug');
     my $category_id = $query->param('category_id');
+    $session{KRANG_PERSIST}{LAST_CATEGORY}{ cat_chooser_id_new_story_category_id } = $category_id;
+
     my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
 
     # determine whether slug is required or not
