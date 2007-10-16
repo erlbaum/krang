@@ -165,6 +165,7 @@ sub new_category {
                                       title => 'Choose Parent Category',
                                       query => $query,
                                       may_edit => 1,
+				      persistkey => 'NEW_CATEGORY_DIALOGUE'
                                      ));
 
     return $template->output();
@@ -184,6 +185,9 @@ sub create {
 
     my $parent_id = $query->param('parent_id');
     my $dir       = $query->param('dir');
+    
+    # remember parent for duration of session
+    $session{KRANG_PERSIST}{NEW_CATEGORY_DIALOGUE}{ cat_chooser_id_new_category_category_id } = $category_id;
 
     # detect bad fields
     my @bad;
