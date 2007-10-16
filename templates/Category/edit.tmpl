@@ -94,7 +94,7 @@ Properties
   <tmpl_if is_root>
     <input value="Delete Category" onclick="remove_category()" type="button">
   <tmpl_else><tmpl_unless bulk_edit><tmpl_if allow_delete>
-    <input value="Remove <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
+    <input value="Delete <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
   </tmpl_if></tmpl_unless>
   </tmpl_if>
 
