@@ -62,7 +62,6 @@ sub setup {
                      db_save_and_stay => 'db_save_and_stay',
                      save_and_jump    => 'save_and_jump',
                      save_and_add     => 'save_and_add',
-                     save_and_stay    => 'save_and_stay',
                      save_and_go_up   => 'save_and_go_up',
                      save_and_bulk_edit => 'save_and_bulk_edit',
                      save_and_leave_bulk_edit => 'save_and_leave_bulk_edit',
@@ -378,23 +377,6 @@ sub save_and_add {
     return $output if length $output;
 
     return $self->add();
-}
-
-=item save_and_stay
-
-This mode saves the current element data to the session and returns to
-edit.
-
-=cut
-
-sub save_and_stay {
-    my $self = shift;
-
-    # call internal _save and return output from it on error
-    my $output = $self->_save();
-    return $output if length $output;
-
-    return $self->edit();
 }
 
 =item save_and_bulk_edit

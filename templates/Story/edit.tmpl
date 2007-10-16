@@ -313,29 +313,33 @@ Properties
 
 <div class="panel capped">
 
-<tmpl_if is_root>
+<tmpl_if bulk_edit>
+  <input value="Done Bulk Editing <tmpl_var name_of_this_element>" onclick="save_and_leave_bulk_edit()" type="button" class="west">
 
-  <input value="Save &amp; Stay" onclick="db_save_and_stay()" type="button">
-  <input value="Save" onclick="db_save()" type="button">
-  <input value="Check In To" onclick="check_in()" type="button">
-  <select name="checkin_to"><tmpl_loop desk_loop>
-    <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
-  </tmpl_loop></select>
-  <tmpl_if may_publish>
-    <input value="Publish" onclick="save_and_publish()" type="button">
-  </tmpl_if>
-  <input value="Delete" onclick="remove_story()" type="button">
+<tmpl_else>  
 
-<tmpl_else>
+  <tmpl_if is_root>
 
-   <input value="Done Editing <tmpl_var name_of_this_element>" onclick="save_and_<tmpl_if bulk_edit>leave_bulk_edit<tmpl_else>go_up</tmpl_if>()" type="button" class="west">
-   <tmpl_unless bulk_edit>
+    <tmpl_if may_publish>
+      <input value="Publish" onclick="save_and_publish()" type="button">
+    </tmpl_if>
+    <input value="Check In To" onclick="check_in()" type="button">
+    <select name="checkin_to"><tmpl_loop desk_loop>
+      <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
+    </tmpl_loop></select>
+    <input value="Delete" onclick="remove_story()" type="button">
+
+  <tmpl_else>
+
+     <input value="Done Editing <tmpl_var name_of_this_element>" onclick="save_and_go_up()" type="button" class="west">
      <tmpl_if allow_delete>
-     <input value="Delete <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
+       <input value="Delete <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
      </tmpl_if>
-   </tmpl_unless>
-   <input value="Save Story &amp; Stay" onclick="db_save_and_stay()" type="button">
-   <input value="Save Story" onclick="db_save()" type="button">
+
+  </tmpl_if>
+
+  <input value="Save Story &amp; Stay" onclick="db_save_and_stay()" type="button">
+  <input value="Save Story" onclick="db_save()" type="button">
 
 </tmpl_if>
 

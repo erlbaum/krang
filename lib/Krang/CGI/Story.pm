@@ -77,7 +77,6 @@ sub setup {
                      save_and_publish => 'save_and_publish',
                      save_and_view    => 'save_and_view',
                      save_and_view_log => 'save_and_view_log',
-                     save_and_stay    => 'save_and_stay',
                      save_and_edit_contribs => 'save_and_edit_contribs',
                      save_and_edit_schedule => 'save_and_edit_schedule',
                      save_and_go_up   => 'save_and_go_up',
@@ -929,23 +928,6 @@ sub save_and_edit_contribs {
     $self->header_props(-uri => 'contributor.pl?rm=associate_story');
     $self->header_type('redirect');
     return "";
-}
-
-=item save_and_stay
-
-This mode saves the current element data to the session and returns to
-edit.
-
-=cut
-
-sub save_and_stay {
-    my $self = shift;
-
-    # call internal _save and return output from it on error
-    my $output = $self->_save();
-    return $output if length $output;
-
-    return $self->edit();
 }
 
 =item save_and_bulk_edit
