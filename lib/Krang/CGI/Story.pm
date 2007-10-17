@@ -127,7 +127,8 @@ sub new_story {
                      $query->popup_menu(-name      => 'type',
                                         -default   => '',
                                         -values    => [ ('', @types) ],
-                                        -labels    => \%type_labels));    
+                                        -labels    => \%type_labels,
+					-onchange  => 'javascript:story_type_changed()'));
 
     $template->param(category_chooser => 
                      category_chooser(name => 'category_id',

@@ -1,6 +1,7 @@
 <tmpl_include header.tmpl>
 
 <script type="text/javascript">
+
 Krang.onload( function() {
   Krang.Nav.edit_mode();
   Krang.Help.set( 'story_new' );
@@ -15,6 +16,52 @@ cancel = function()
 {
   Krang.Form.submit( 'new_story', { rm: 'cancel' } );
 }
+
+var auto_build_slug = 1;
+build_slug = function(title)
+{ 
+ if (auto_build_slug) {
+   slug = title;
+   slug = slug.replace(/[^\w\s]/g,'');
+   slug = slug.replace(/^\s+/,'');
+   slug = slug.replace(/\s+$/,'');
+   slug = slug.replace(/\s+/g,'_');
+   slug = slug.toLowerCase(slug);
+   document.new_story.slug.value = slug;	
+ }
+}
+
+var cover_mode = 0;
+toggle_cover_mode = function() {
+  cover_mode = !cover_mode;
+  if (cover_mode) {
+    document.new_story.is_cover.checked = true;
+    document.new_story.slug.disabled = true;
+    document.new_story.slug.value = "index.html";
+    auto_build_slug = 0;
+  } else {
+    document.new_story.is_cover.checked = false;
+    document.new_story.slug.disabled = false;
+    auto_build_slug = 1;
+    build_slug(document.new_story.title.value);    
+  }
+}
+
+story_type_changed = function() {
+  if (document.new_story.type.value == 'cover') {
+    if (cover_mode == 0) {
+	toggle_cover_mode();
+    }
+  } else {
+    if (cover_mode == 1) {
+	toggle_cover_mode();
+    }	
+  }
+}
+
+
+
+
 </script>
 
 <h2>
@@ -37,16 +84,17 @@ New Story
 <tr<tmpl_if bad_type> class="err"</tmpl_if>>
 <th>*Type</th>
 <td><tmpl_var type_selector></td>
+<td class="tiny">Cover? <input name="is_cover" type="checkbox" onchange="toggle_cover_mode()"></td>
 </tr>
 
 <tr<tmpl_if bad_title> class="err"</tmpl_if>>
 <th>*Title</th>
-<td><input name="title" value="<tmpl_var escape=html title>"></td>
+<td><input name="title" value="<tmpl_var escape=html title>" onkeyup="build_slug(this.value)"></td>
 </tr>
 
 <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
 <th>Slug</th>
-<td><input name="slug" value="<tmpl_var escape=html slug>"></td>
+<td><input name="slug" value="<tmpl_var escape=html slug>" onkeyup="auto_build_slug=0"></td>
 </tr>
 
 </tbody>
