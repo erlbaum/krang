@@ -162,6 +162,7 @@ sub new_category {
     # setup parent selector
     $template->param(parent_chooser =>
                      category_chooser(name => 'parent_id',
+				      formname => 'new_category',
                                       title => 'Choose Parent Category',
                                       query => $query,
                                       may_edit => 1,
@@ -187,7 +188,7 @@ sub create {
     my $dir       = $query->param('dir');
     
     # remember parent for duration of session
-    $session{KRANG_PERSIST}{NEW_CATEGORY_DIALOGUE}{ cat_chooser_id_new_category_category_id } = $parent_id;
+    $session{KRANG_PERSIST}{NEW_CATEGORY_DIALOGUE}{ cat_chooser_id_new_category_parent_id } = $parent_id;
 
     # detect bad fields
     my @bad;

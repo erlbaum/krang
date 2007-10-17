@@ -17,52 +17,59 @@ cancel = function()
   Krang.Form.submit( 'new_story', { rm: 'cancel' } );
 }
 
+
+// begin slug-generation javascript
+
+<tmpl_loop title_to_slug_function_loop>
+<tmpl_var type>_title_to_slug = <tmpl_var function>
+</tmpl_loop>
+
 var auto_build_slug = 1;
 build_slug = function(title)
 { 
- if (auto_build_slug) {
-   slug = title;
-   slug = slug.replace(/[^\w\s]/g,'');
-   slug = slug.replace(/^\s+/,'');
-   slug = slug.replace(/\s+$/,'');
-   slug = slug.replace(/\s+/g,'_');
-   slug = slug.toLowerCase(slug);
-   document.new_story.slug.value = slug;	
+ if (title && auto_build_slug) {	
+   var slug_function = document.new_story.type.value + '_title_to_slug';
+   if (eval('typeof ' + slug_function) == 'function') {
+     // this story type has a class-overridden conversion function
+     document.new_story.slug.value = eval(slug_function + "('" + title + "')"); 
+   } else {
+     // this story type needs the default conversion function
+     document.new_story.slug.value = Krang.Slug.title_to_slug(title); 
+   }
  }
 }
 
-var cover_mode = 0;
-toggle_cover_mode = function() {
-  cover_mode = !cover_mode;
-  if (cover_mode) {
-    document.new_story.is_cover.checked = true;
-    document.new_story.slug.disabled = true;
-    document.new_story.slug.value = "index.html";
+hide_or_show_slug = function() {
+
+  // figure out if the current story type is a cover type
+  var is_cover_type = 0;
+  <tmpl_loop cover_types_loop>
+  if (document.new_story.type.value == '<tmpl_var cover_type>') { is_cover_type = 1; }	
+  </tmpl_loop>
+
+  // if it is and we're not yet hiding the slug...
+  var hiding_slug = (document.getElementById("slug_row").style.display == 'none');
+  if (is_cover_type && !hiding_slug) {
+    document.new_story.slug.value = '';
+    document.getElementById("slug_row").style.display = 'none';
     auto_build_slug = 0;
-  } else {
-    document.new_story.is_cover.checked = false;
-    document.new_story.slug.disabled = false;
-    auto_build_slug = 1;
+
+  // if it isn't...
+  } else if (!is_cover_type) {
+    if (hiding_slug) { 
+       auto_build_slug = 1; // default to auto-build if slug was previously hidden
+    };
     build_slug(document.new_story.title.value);    
+    document.getElementById("slug_row").style.display = '';
   }
 }
 
-story_type_changed = function() {
-  if (document.new_story.type.value == 'cover') {
-    if (cover_mode == 0) {
-	toggle_cover_mode();
-    }
-  } else {
-    if (cover_mode == 1) {
-	toggle_cover_mode();
-    }	
-  }
-}
-
-
-
+// end slug-generation javascript
 
 </script>
+
+
+
 
 <h2>
 New Story
@@ -84,7 +91,6 @@ New Story
 <tr<tmpl_if bad_type> class="err"</tmpl_if>>
 <th>*Type</th>
 <td><tmpl_var type_selector></td>
-<td class="tiny">Cover? <input name="is_cover" type="checkbox" onchange="toggle_cover_mode()"></td>
 </tr>
 
 <tr<tmpl_if bad_title> class="err"</tmpl_if>>
@@ -92,7 +98,7 @@ New Story
 <td><input name="title" value="<tmpl_var escape=html title>" onkeyup="build_slug(this.value)"></td>
 </tr>
 
-<tr<tmpl_if bad_slug> class="err"</tmpl_if>>
+<tr id="slug_row"<tmpl_if bad_slug> class="err"</tmpl_if>>
 <th>Slug</th>
 <td><input name="slug" value="<tmpl_var escape=html slug>" onkeyup="auto_build_slug=0"></td>
 </tr>

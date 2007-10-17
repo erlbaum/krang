@@ -221,6 +221,20 @@ content on category templates varies for each page in a story.
 
 sub publish_category_per_page { 0 }
 
+=item C<< $title_to_slug = $class->title_to_slug() >>
+
+Returns the javascript necessary to dynamically convert a title to a slug 
+in the New Story form. The default implementation returns nothing, causing
+the hard-coded Javascript to execute (which replaces whitespace
+with an underscore, removes invalid characters, and makes the result 
+lowercase). If a particular story type requires a different approach,
+this method can be overridden in the story class.
+
+=cut
+
+sub title_to_slug {
+    return '';
+}
 
 =item C<< $bool = $class->hidden() >>
 

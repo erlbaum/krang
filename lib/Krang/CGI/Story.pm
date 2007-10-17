@@ -128,10 +128,11 @@ sub new_story {
                                         -default   => '',
                                         -values    => [ ('', @types) ],
                                         -labels    => \%type_labels,
-					-onchange  => 'javascript:story_type_changed()'));
+					-onchange  => 'javascript:hide_or_show_slug()'));
 
     $template->param(category_chooser => 
                      category_chooser(name => 'category_id',
+				      formname => 'new_story',
                                       query => $query,
                                       may_edit => 1,
 				      persistkey => 'NEW_STORY_DIALOGUE'
@@ -140,6 +141,21 @@ sub new_story {
     # setup date selector
     $template->param(cover_date_selector => datetime_chooser(name=>'cover_date', query=>$query));
 
+    # pass a list of cover types (for which no 'slug' field should be shown)
+    my @cover_loop = (map { {cover_type => $_} }
+		      grep { pkg('ElementLibrary')->top_level(name => $_)->isa('Krang::ElementClass::Cover') 
+			     } @types);
+    $template->param(cover_types_loop => \@cover_loop);
+
+    # pass in any class-specific slug-to-title javascript functions
+    my @title_to_slug_loop;
+    for my $type (@types) {
+	if (my $js = pkg('ElementLibrary')->top_level(name => $type)->title_to_slug) {
+	    push @title_to_slug_loop, { type => $type, function => $js };
+	}
+    }
+    $template->param("title_to_slug_function_loop" => \@title_to_slug_loop);
+    
     return $template->output();
 }
 

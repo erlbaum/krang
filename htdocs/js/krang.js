@@ -1037,6 +1037,26 @@ Object.extend( Krang.Navigation.prototype, {
     }
 } );
 
+
+Krang.Slug = {};
+
+/*
+    Krang.Slug.title_to_slug = function(title) 
+    Default auto-slug-building method. Can be overridden by ElementClass::title_to_slug
+*/
+
+Krang.Slug.title_to_slug = function(title) {
+    var slug = title;
+    slug = slug.replace(/[^\s\w\-]/g,''); // remove illegal chars
+    slug = slug.replace(/^\s+/,'');       // remove leading whitespace
+    slug = slug.replace(/\s+$/,'');       // remove trailing whitespace
+    slug = slug.replace(/\s+/g,'_');      // replace whitespace with underscores
+    slug = slug.toLowerCase(slug);        // make the whole thing lowercase
+    return slug;
+}
+
+
+
 Krang.Widget = {};
 /* 
     Krang.Widget.date_chooser(inputName)
