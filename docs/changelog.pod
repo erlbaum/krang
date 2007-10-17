@@ -11,6 +11,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in ListGroup.pm where re-editing from GUI lost all 
+but first value selected when multiple => 1. [Noam Weinstein]
+
+=item *
+
 Implemented first version of auto-slug-generation based on title
 and story type. [Noam Weinstein]
 
