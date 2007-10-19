@@ -11,6 +11,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added title/slug mapping for high CP1252 and latin-1 chars to
+Krang.Slug.title_to_slug(). [Bodo Schulze]
+
+=item *
+
 Fixed bug in ListGroup.pm where re-editing from GUI lost all 
 but first value selected when multiple => 1. [Noam Weinstein]
 
