@@ -128,7 +128,8 @@ sub new_story {
                                         -default   => '',
                                         -values    => [ ('', @types) ],
                                         -labels    => \%type_labels,
-					-onchange  => 'javascript:hide_or_show_slug()'));
+					-onkeyup   => 'javascript:disable_slug_by_type()',
+					-onchange  => 'javascript:disable_slug_by_type()'));
 
     $template->param(category_chooser => 
                      category_chooser(name => 'category_id',
@@ -141,11 +142,11 @@ sub new_story {
     # setup date selector
     $template->param(cover_date_selector => datetime_chooser(name=>'cover_date', query=>$query));
 
-    # pass a list of cover types (for which no 'slug' field should be shown)
-    my @cover_loop = (map { {cover_type => $_} }
-		      grep { pkg('ElementLibrary')->top_level(name => $_)->isa('Krang::ElementClass::Cover') 
-			     } @types);
-    $template->param(cover_types_loop => \@cover_loop);
+    # pass a list of index types (for which the 'slug' field should be inactive by default)
+    my @assume_index_loop = (map { {index_type => $_} }
+			     grep { pkg('ElementLibrary')->top_level(name => $_)->assume_index_page() }
+			     @types);
+    $template->param(assume_index_type_loop => \@assume_index_loop);
 
     # pass in any class-specific slug-to-title javascript functions
     my @title_to_slug_loop;
@@ -191,24 +192,16 @@ sub create {
 
     my $type = $query->param('type');
     my $title = $query->param('title');
-    my $slug = $query->param('slug');
+    my $slug = $query->param('slug') || '';
     my $category_id = $query->param('category_id');
     $session{KRANG_PERSIST}{NEW_STORY_DIALOGUE}{ cat_chooser_id_new_story_category_id } = $category_id;
 
     my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
 
-    # determine whether slug is required or not
-    my $slug_req = 0;
-    if ($type) {
-        my $class = pkg('ElementLibrary')->top_level(name => $type);
-        $slug_req = 1 if (grep { $_ eq 'slug' } $class->url_attributes);
-    }
-
     # detect bad fields
     my @bad;
     push(@bad, 'type'),        add_alert('missing_type') unless $type;
     push(@bad, 'title'),       add_alert('missing_title') unless $title;
-    push(@bad, 'slug'),        add_alert('missing_slug') unless not($slug_req) or $slug;
     push(@bad, 'slug'),        add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
     push(@bad, 'category_id'), add_alert('missing_category') unless $category_id;
     push(@bad, 'cover_date'),  add_alert('missing_cover_date') unless $cover_date;
@@ -1109,8 +1102,6 @@ sub _save {
         my @bad;
         push(@bad, 'title'),       add_alert('missing_title')
           unless $title;
-        push(@bad, 'slug'),        add_alert('missing_slug')
-          unless not($slug_req) or $slug;
         push(@bad, 'slug'),        add_alert('bad_slug')
           if length $slug and $slug !~ /^[-\w]+$/;
         push(@bad, 'cover_date'),  add_alert('missing_cover_date')

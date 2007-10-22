@@ -1,3 +1,6 @@
+# NOTE - AS OF KRANG V3.01 THIS IS A DEPRECATED CLASS,
+# SINCE SLUGS ARE OPTIONAL FOR ALL TOPLEVEL ELEMENTS.
+
 package Krang::ElementClass::Cover;
 use Krang::ClassFactory qw(pkg);
 use strict;
@@ -16,6 +19,10 @@ sub build_preview_url {
 }
 
 sub url_attributes { () }
+
+sub assume_index_page {
+    return 1;
+}
 
 
 =head1 NAME

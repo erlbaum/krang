@@ -24,43 +24,88 @@ cancel = function()
 <tmpl_var type>_title_to_slug = <tmpl_var function>
 </tmpl_loop>
 
-var auto_build_slug = 1;
-build_slug = function(title)
+auto_build_slug = function() // builds slug from title
 { 
- if (title && auto_build_slug) {	
+   var title = document.new_story.title.value;
+   if (!title) { return }
+
    var slug_function = document.new_story.type.value + '_title_to_slug';
    if (eval('typeof ' + slug_function) == 'function') {
-     // this story type has a class-overridden conversion function
+
+     // this story-type has a class-overridden conversion function
      document.new_story.slug.value = eval(slug_function + "('" + title + "')"); 
-   } else {
-     // this story type needs the default conversion function
+
+   } else { 
+
+     // this story-type needs the default conversion function
      document.new_story.slug.value = Krang.Slug.title_to_slug(title); 
    }
- }
 }
 
-hide_or_show_slug = function() {
+var manual_slug = ''; 
+use_manual_slug = function() // displays user-modified slug
+{
+   document.new_story.slug.value = manual_slug;
+}
 
-  // figure out if the current story type is a cover type
-  var is_cover_type = 0;
-  <tmpl_loop cover_types_loop>
-  if (document.new_story.type.value == '<tmpl_var cover_type>') { is_cover_type = 1; }	
+enable_slug_input = function() {
+    manual_slug ? use_manual_slug() : auto_build_slug();
+    document.new_story.slug.disabled      = false;
+    document.new_story.index_page.checked = false;
+}
+
+disable_slug_input = function() {
+    document.new_story.slug.value         = 'index.html';
+    document.new_story.slug.disabled      = true;
+    document.new_story.index_page.checked = true;
+}    	
+	
+disable_slug_by_type = function() {
+
+  // only display slug row if a type has been selected
+  if (document.new_story.type.value == '') {
+	document.getElementById('slug_row').style.display = 'none';
+        return;
+  } else {
+	document.getElementById('slug_row').style.display = '';
+  }
+
+  // if a type HAS been selected, check whether by default it's an index-page
+  <tmpl_loop assume_index_type_loop>
+  if (document.new_story.type.value == '<tmpl_var index_type>') 
+  { 
+ 	disable_slug_input(); 
+	return; 
+  }	
   </tmpl_loop>
 
-  // if it is and we're not yet hiding the slug...
-  var hiding_slug = (document.getElementById("slug_row").style.display == 'none');
-  if (is_cover_type && !hiding_slug) {
-    document.new_story.slug.value = '';
-    document.getElementById("slug_row").style.display = 'none';
-    auto_build_slug = 0;
+  // this story type by default is NOT an index page (i.e. has a slug)
+  enable_slug_input();
+}
 
-  // if it isn't...
-  } else if (!is_cover_type) {
-    if (hiding_slug) { 
-       auto_build_slug = 1; // default to auto-build if slug was previously hidden
-    };
-    build_slug(document.new_story.title.value);    
-    document.getElementById("slug_row").style.display = '';
+user_changed_checkbox = function() {
+  document.new_story.index_page.checked ? disable_slug_input() : enable_slug_input();
+}
+
+user_changed_title = function() {
+  if (!manual_slug && !document.new_story.index_page.checked) {
+	auto_build_slug();
+  }
+}
+
+user_changed_slug = function(new_value) {
+  if (manual_slug && (document.new_story.slug.value == '')) {
+	auto_build_slug();  // this aims to re-build slug from title
+        manual_slug = '';   // when a manually-changed slug is deleted
+  } else {
+        manual_slug = document.new_story.slug.value;
+  }
+}
+
+wipe_slug_if_saving_index_page = function() {
+  if (document.new_story.index_page.checked) {
+	// actual slug should be empty, not index.html
+	document.new_story.slug.value = ''; 
   }
 }
 
@@ -75,7 +120,7 @@ hide_or_show_slug = function() {
 New Story
 </h2>
 
-<form name="new_story" method="post" action="story.pl">
+<form name="new_story" method="post" action="story.pl" onsubmit="wipe_slug_if_saving_index_page()">
 
 <input name="rm" type="hidden">
 
@@ -95,12 +140,15 @@ New Story
 
 <tr<tmpl_if bad_title> class="err"</tmpl_if>>
 <th>*Title</th>
-<td><input name="title" value="<tmpl_var escape=html title>" onkeyup="build_slug(this.value)"></td>
+<td><input name="title" value="<tmpl_var escape=html title>" onkeyup="user_changed_title()"></td>
 </tr>
 
-<tr id="slug_row"<tmpl_if bad_slug> class="err"</tmpl_if>>
+<tr id="slug_row"<tmpl_if bad_slug> class="err"</tmpl_if><tmpl_unless type> style="display:none"</tmpl_unless>>
 <th>Slug</th>
-<td><input name="slug" value="<tmpl_var escape=html slug>" onkeyup="auto_build_slug=0"></td>
+<td>
+<input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug><tmpl_else><tmpl_if title>index.html<tmpl_else><tmpl_if bad_title>index.html</tmpl_if></tmpl_if></tmpl_if>" onkeyup="user_changed_slug()" style="width:45%" <tmpl_unless slug><tmpl_if title>disabled<tmpl_else><tmpl_if bad_title>disabled</tmpl_if></tmpl_if></tmpl_unless>>
+<input name="index_page" type="checkbox" onchange="user_changed_checkbox()" style="width:5%" <tmpl_unless slug>checked</tmpl_unless>>Index Page (Cover)
+</td>
 </tr>
 
 </tbody>
