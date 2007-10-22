@@ -1484,7 +1484,7 @@ Krang.ElementEditor = {
     },
     run_save_hooks : function() {
         Krang.run_code(Krang.ElementEditor.save_hooks);
-    },
+    }
 };
 
 Krang.Tooltip = {
