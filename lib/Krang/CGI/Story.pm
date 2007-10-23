@@ -1096,9 +1096,6 @@ sub _save {
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
-        # determine whether slug is required or not
-        my $slug_req = (grep { $_ eq 'slug' } $story->element->class->url_attributes) ? 1 : 0;
-
         my @bad;
         push(@bad, 'title'),       add_alert('missing_title')
           unless $title;
