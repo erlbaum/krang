@@ -67,6 +67,7 @@ sub setup {
                      checkin_selected  => 'checkin_selected',
                      delete_categories    => 'delete_categories',
                      add_category         => 'add_category',
+		     replace_category     => 'replace_category',
                      set_primary_category => 'set_primary_category',
                      copy                 => 'copy',
 
@@ -448,24 +449,40 @@ sub edit {
         }
         $template->param(contribs_loop => \@contribs_loop);
 
+        # figure out where to position 'replace' radio-button (use primary cat unless user selected something else)
+        my @categories = $story->categories;
+        my $selected_for_replace_id = ($query->param('category_to_replace_id') || $categories[0]->category_id);
+
         my @category_loop;
-        foreach my $cat ($story->categories) {
+        foreach my $cat (@categories) {
             my $url = $cat->url;
             my ($site, $dir) = split('/', $url, 2);
             $dir = "/" . $dir;
 
             push(@category_loop, {
-                                  site        => $site,
-                                  category    => $dir,
-                                  category_id => $cat->category_id });
+                                  site                 => $site,
+                                  category             => $dir,
+                                  category_id          => $cat->category_id,
+                                  selected_for_replace => ($cat->category_id == $selected_for_replace_id)});
+            
+
         }
         $template->param(category_loop => \@category_loop);
-        $template->param(category_chooser => 
-                         category_chooser(name        => 'new_category_id',
+        $template->param(add_category_chooser => 
+                         category_chooser(name        => 'add_category_id',
                                           query       => $query,
                                           label       => 'Add Site/Category',
                                           display     => 0,
                                           onchange    => 'add_category',
+                                          may_edit    => 1,
+                                          allow_clear => 0,
+                                         ));
+        $template->param(replace_category_chooser => 
+                         category_chooser(name        => 'category_replacement_id',
+                                          query       => $query,
+                                          label       => 'Replace',
+                                          display     => 0,
+                                          onchange    => 'replace_category',
                                           may_edit    => 1,
                                           allow_clear => 0,
                                          ));
@@ -1120,7 +1137,7 @@ sub _save {
 =item add_category
 
 Adds a category to the story.  Expects a category ID in
-new_category_id, which is filled in by the category chooser on the
+add_category_id, which is filled in by the category chooser on the
 edit screen.  Returns to edit mode on success and on failure with an
 error message.
 
@@ -1134,7 +1151,7 @@ sub add_category {
     croak("Unable to load story from session!")
       unless $story;
 
-    my $category_id = $query->param('new_category_id');
+    my $category_id = $query->param('add_category_id');
     unless ($category_id) {
         add_alert("added_no_category");
         return $self->edit();
@@ -1221,6 +1238,86 @@ sub set_primary_category {
 
     return $self->edit();
 }
+
+=item replace_category
+
+Replaces one category with another. Expects one category ID in
+category_to_replace_id, and another in category_replacement_id.
+Returns to edit mode on success and on failure with an error message.
+
+=cut
+
+sub replace_category {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $story = $session{story};
+    croak("Unable to load story from session!")
+      unless $story;
+
+    my $old_category_id = $query->param('category_to_replace_id');
+    my $new_category_id = $query->param('category_replacement_id');
+    unless ($old_category_id && $new_category_id) {
+        add_alert("replaced_no_category");
+        return $self->edit();
+    }
+
+    # make sure this isn't a dup
+    my @existing_categories = $story->categories();
+    if (grep { $_->category_id == $new_category_id } @existing_categories) {
+        add_alert("duplicate_category");
+        return $self->edit();
+    }
+
+    # load both categories
+    my ($old_category) = pkg('Category')->find(category_id => $old_category_id);
+    croak("Unable to load category '$old_category_id'!")
+      unless $old_category;
+
+    my ($new_category) = pkg('Category')->find(category_id => $new_category_id);
+    croak("Unable to load category '$new_category_id'!")
+      unless $new_category;
+
+    # perform the replacement
+    my @new_categories;
+    foreach my $existing_category ($story->categories) {
+	if ($existing_category->category_id == $old_category_id) {
+	    push @new_categories, $new_category;
+	} else {
+	    push @new_categories, $existing_category;
+	}
+    }
+    
+    # this might fail if a duplicate URL is created
+    eval { $story->categories(@new_categories); };
+
+    # is it a dup?
+    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+        # load duplicate story
+        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
+        add_alert('duplicate_url_on_category_add', 
+                    story_id => $dup->story_id,
+                    url      => $dup->url,                    
+                    category => $new_category->url,
+                   );
+
+        # restore previous state
+        $story->categories(\@existing_categories);
+
+        return $self->edit;
+    } elsif ($@) {
+        # rethrow
+        die($@);
+    }
+
+    # success
+    add_message('replaced_category', old_url => $old_category->url, new_url => $new_category->url);
+    $query->param('category_to_replace_id' => $new_category->category_id); # so radio-button doesn't disappear!
+
+    return $self->edit();
+}
+
+
 
 
 =item delete_categories

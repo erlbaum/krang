@@ -35,6 +35,10 @@ save_and_stay = function() {
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'add_category' }, { to_top: false });
   }
+  replace_category = function() {
+    Krang.ElementEditor.run_save_hooks();
+    Krang.Form.submit('edit', { rm: 'replace_category' }, { to_top: false });
+  }
 
   set_primary_category = function() {
     Krang.ElementEditor.run_save_hooks();
@@ -260,7 +264,7 @@ Properties
     No Categories assigned.
     </p>
 
-    <tmpl_var category_chooser><!--:FIXME(db2)-->
+    <tmpl_var add_category_chooser><!--:FIXME(db2)-->
 
   <tmpl_else>
 
@@ -270,6 +274,7 @@ Properties
     <col class="series">
     <col>
     <col>
+    <col>
     <col class="series">
     </colgroup>
 
@@ -277,7 +282,8 @@ Properties
     <tr>
     <th class="f series">Primary</th>
     <th>Site</th>
-    <th>Category</th>
+    <th colspan="2">Category</th>
+    <th></th>
     <th class="l series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input type="checkbox" onclick="Krang.check_all(this,'cat_remove_')"></tmpl_unless></tmpl_if></tmpl_loop></th>  <!--:ick, but should work(db2)-->
     </tr>
     </thead>
@@ -288,7 +294,8 @@ Properties
       <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
       <td class="series"><input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>></td>
       <td><tmpl_var escape=html site></td>
-      <td><tmpl_var escape=html category></td>
+      <td colspan="2"><tmpl_var escape=html category></td>
+      <td><input name="category_to_replace_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if selected_for_replace> checked</tmpl_if>></td>
       <td class="series"><tmpl_unless __first__>
         <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox">
       </tmpl_unless></td>
@@ -297,7 +304,8 @@ Properties
 
     <tr>
     <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Set" onclick="set_primary_category()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
-    <td colspan="2"><tmpl_var category_chooser></td>
+    <td colspan="3"><tmpl_var add_category_chooser></td>
+    <td><tmpl_var replace_category_chooser></td>
     <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Delete" onclick="remove_categories()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
     </tr>
 
@@ -321,13 +329,13 @@ Properties
   <tmpl_if is_root>
 
     <tmpl_if may_publish>
-      <input value="Publish" onclick="save_and_publish()" type="button">
+      <input value="Publish" onclick="save_and_publish()" type="button" class="west">
     </tmpl_if>
-    <input value="Check In To" onclick="check_in()" type="button">
-    <select name="checkin_to"><tmpl_loop desk_loop>
+    <input value="Check In To" onclick="check_in()" type="button" class="west">
+    <select name="checkin_to" class="west"><tmpl_loop desk_loop>
       <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
     </tmpl_loop></select>
-    <input value="Delete" onclick="remove_story()" type="button">
+    <input value="Delete" onclick="remove_story()" type="button" class="west">
 
   <tmpl_else>
 
