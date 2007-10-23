@@ -27,7 +27,7 @@ cancel = function()
 auto_build_slug = function() // builds slug from title
 { 
    var title = document.new_story.title.value;
-   if (!title) { return }
+   if (title == '') { document.new_story.slug.value = ''; return '' }
 
    var slug_function = document.new_story.type.value + '_title_to_slug';
    if (eval('typeof ' + slug_function) == 'function') {
@@ -69,8 +69,15 @@ disable_slug_by_type = function() {
   } else {
 	document.getElementById('slug_row').style.display = '';
   }
+  
 
-  // if a type HAS been selected, check whether by default it's an index-page
+  // don't change index-page state if user explicitly clicked the index checkbox
+  if (checkbox_changed) {
+	return;
+  } 
+
+  // if a type HAS been selected, and the user hasn't specified index-page state
+  // directly via the checkbox, look to see whether type defaults to index-page
   <tmpl_loop assume_index_type_loop>
   if (document.new_story.type.value == '<tmpl_var index_type>') 
   { 
@@ -83,7 +90,9 @@ disable_slug_by_type = function() {
   enable_slug_input();
 }
 
+var checkbox_changed = 0;
 user_changed_checkbox = function() {
+  checkbox_changed = 1;
   document.new_story.index_page.checked ? disable_slug_input() : enable_slug_input();
 }
 
