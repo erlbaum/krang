@@ -1,5 +1,5 @@
-# NOTE - AS OF KRANG V3.01 THIS IS A DEPRECATED CLASS,
-# SINCE SLUGS ARE OPTIONAL FOR ALL TOPLEVEL ELEMENTS.
+# NOTE - THIS IS NOW A DEPRECATED CLASS:
+# SLUGS ARE OPTIONAL FOR ALL TOPLEVEL ELEMENTS.
 
 package Krang::ElementClass::Cover;
 use Krang::ClassFactory qw(pkg);
@@ -7,18 +7,6 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass::TopLevel';
-
-sub build_url {
-    my ($self, %arg) = @_;
-    return $arg{category} ? $arg{category}->url : "";
-}
-
-sub build_preview_url {
-    my ($self, %arg) = @_;
-    return $arg{category} ? $arg{category}->preview_url : "";
-}
-
-sub url_attributes { () }
 
 sub assume_index_page {
     return 1;
@@ -36,11 +24,13 @@ Krang::ElementClass::Cover - cover element base class
 
 =head1 DESCRIPTION
 
-Provides a base class for cover element classes.  Overrides
-C<build_url()> to provide a URL that just uses site URL and category
-path data, without taking into account the story slug.  Also overrides
-C<url_attributes()> to correctly report that no story attributes are
-used in the URL.
+This is now a deprecated class: Previous to version 3 of Krang,
+types that subclassed Cover always ignored their slug value;
+now slugs are available and optional for all story types.
+
+As a result, the only remaining behavior is a default assume_index_page()
+value of 1: When a new Cover-based story is created in the CGI, 
+it will by default have no slug.
 
 =head1 INTERFACE
 

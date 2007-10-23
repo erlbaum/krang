@@ -22,7 +22,32 @@ sub per_instance {
     # change sessions and story_version tables to handle UTF-8
     $dbh->do('ALTER TABLE sessions CHANGE COLUMN a_session a_session BLOB');
     $dbh->do('ALTER TABLE story_version CHANGE COLUMN data data BLOB');
+
+    $self->_wipe_slugs_from_cover_stories();
 }
+
+# remove slugs from stories that subclass Cover 
+# (since slugs will now be optional for all types)
+sub _wipe_slugs_from_cover_stories {
+
+    my ($self) = @_;
+
+    my @types_that_subclass_cover =
+	grep { pkg('ElementLibrary')->top_level(name => $_)->isa('Krang::ElementClass::Cover') }
+            pkg('ElementLibrary')->top_levels;
+
+    my $dbh = dbh();
+    my $sql = qq/update story set slug="" where story.class=?/;
+    my $sth = $dbh->prepare($sql);
+    
+    foreach my $type (@types_that_subclass_cover) {
+	print "Cleaning slugs from stories of type '$type'... ";
+	$sth->execute($type);
+	print "DONE\n";
+    }
+}
+
+
 
 # add new EnableFTP and Secret directives if they aren't already there
 sub _update_config {
