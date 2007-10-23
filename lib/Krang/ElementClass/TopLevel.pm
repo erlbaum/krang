@@ -219,7 +219,9 @@ sub publish_category_per_page { 0 }
 
 =item C<< $show_slug = $class->assume_index_page() >>
 
-Returns TRUE for types that by default have no slugs.
+Returns TRUE for types that by default have no slugs. (This determines
+whether or not the slug field is initially active or disabled when the
+user creates a new story of this type in the CGI.)
 
 =cut
     
