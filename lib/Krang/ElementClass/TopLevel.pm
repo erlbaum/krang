@@ -230,12 +230,12 @@ sub assume_index_page {
 
 =item C<< $title_to_slug = $class->title_to_slug() >>
 
-Returns the javascript necessary to dynamically convert a title to a slug 
+Returns the Javascript necessary to dynamically convert a title to a slug 
 in the New Story form. The default implementation returns nothing, causing
-the hard-coded Javascript to execute (which replaces whitespace
-with an underscore, removes invalid characters, and makes the result 
-lowercase). If a particular story type requires a different approach,
-this method can be overridden in the story class.
+the hard-coded Javascript to execute. If a particular story type requires 
+a different approach, this method can be overridden in the story class. The 
+Javascript returned should consist of an unnamed function, for example 
+"function(title) { return title.toLowerCase }"
 
 =cut
 
