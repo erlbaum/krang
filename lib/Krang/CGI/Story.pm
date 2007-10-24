@@ -193,7 +193,7 @@ sub create {
 
     my $type = $query->param('type');
     my $title = $query->param('title');
-    my $slug = $query->param('slug');
+    my $slug = $query->param('slug') || '';
     my $category_id = $query->param('category_id');
     $session{KRANG_PERSIST}{NEW_STORY_DIALOGUE}{ cat_chooser_id_new_story_category_id } = $category_id;
 
@@ -1109,7 +1109,7 @@ sub _save {
     if ($path eq '/' 
         and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
-        my $slug = $query->param('slug');
+        my $slug = $query->param('slug') || '';
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
