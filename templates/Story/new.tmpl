@@ -73,6 +73,7 @@ disable_slug_by_type = function() {
 
   // don't change index-page state if user explicitly clicked the index checkbox
   if (checkbox_changed) {
+	if (!manual_slug) { auto_build_slug() }; // but use new type's conversion method
 	return;
   } 
 
