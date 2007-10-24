@@ -5,6 +5,7 @@
 Krang.onload( function() {
   Krang.Nav.edit_mode();
   Krang.Help.set( 'story_new' );
+  slug_entry_by_type();
 } );
 
 create = function()
@@ -18,95 +19,105 @@ cancel = function()
 }
 
 
-// begin slug-generation javascript
+// begin slug-related javascript
 
 <tmpl_loop title_to_slug_function_loop>
 <tmpl_var type>_title_to_slug = <tmpl_var function>
 </tmpl_loop>
 
-auto_build_slug = function() // builds slug from title
+var manual_slug = '';  // stores manually-modified slug
+auto_slug = function() // returns slug built from title
 { 
    var title = document.new_story.title.value;
-   if (title == '') { document.new_story.slug.value = ''; return '' }
+   if (title == '') { return '' }
 
    var slug_function = document.new_story.type.value + '_title_to_slug';
    if (eval('typeof ' + slug_function) == 'function') {
 
      // this story-type has a class-overridden conversion function
-     document.new_story.slug.value = eval(slug_function + "('" + title + "')"); 
+     return (eval(slug_function + "('" + title + "')"));
 
    } else { 
 
      // this story-type needs the default conversion function
-     document.new_story.slug.value = Krang.Slug.title_to_slug(title); 
+     return (Krang.Slug.title_to_slug(title));
    }
 }
 
-var manual_slug = ''; 
-use_manual_slug = function() // displays user-modified slug
+enable_slug_input = function() 
 {
-   document.new_story.slug.value = manual_slug;
+  document.new_story.slug.value         = manual_slug || auto_slug();
+  document.new_story.slug.disabled      = false;
+  document.new_story.index_page.checked = false;	
 }
 
-enable_slug_input = function() {
-    manual_slug ? use_manual_slug() : auto_build_slug();
-    document.new_story.slug.disabled      = false;
-    document.new_story.index_page.checked = false;
+grey_out_slug_input = function() 
+{
+  document.new_story.slug.value         = 'index.html';
+  document.new_story.slug.disabled      = true;
+  document.new_story.index_page.checked = true;	
 }
 
-disable_slug_input = function() {
-    document.new_story.slug.value         = 'index.html';
-    document.new_story.slug.disabled      = true;
-    document.new_story.index_page.checked = true;
-}    	
-	
-disable_slug_by_type = function() {
+slug_entry_by_type = function() {
 
-  // only display slug row if a type has been selected
-  if (document.new_story.type.value == '') {
-	document.getElementById('slug_row').style.display = 'none';
-        return;
-  } else {
-	document.getElementById('slug_row').style.display = '';
+  // prohibit slug-entry if no type has been selected
+  if (!document.new_story.type.value) {
+	slug_entry_for_this_type = 'prohibit';
   }
-  
 
-  // don't change index-page state if user explicitly clicked the index checkbox
-  if (checkbox_changed) {
-	if (!manual_slug) { auto_build_slug() }; // but use new type's conversion method
-	return;
-  } 
-
-  // if a type HAS been selected, and the user hasn't specified index-page state
-  // directly via the checkbox, look to see whether type defaults to index-page
-  <tmpl_loop assume_index_type_loop>
-  if (document.new_story.type.value == '<tmpl_var index_type>') 
+  // otherwise determine slug-entry mode by type
+  <tmpl_loop slug_entry_by_type_loop>
+  if (document.new_story.type.value == '<tmpl_var story_type>') 
   { 
- 	disable_slug_input(); 
-	return; 
+        slug_entry_for_this_type = '<tmpl_var slug_entry_mode>';
   }	
   </tmpl_loop>
+  
+  if (slug_entry_for_this_type == 'prohibit') {
+     document.getElementById('slug_row').style.display = 'none';
+     document.new_story.slug.value = '';
+  } else {
+     if (slug_entry_for_this_type == 'require') {
+	    document.new_story.index_page.style.display = 'none';
+	    document.getElementById('index_label').style.display = 'none';
+	    document.getElementById('slug_required_asterisk').style.display='';
+	    enable_slug_input();
+     } else {
+	    document.new_story.index_page.style.display = '';
+	    document.getElementById('index_label').style.display = '';
+	    document.getElementById('slug_required_asterisk').style.display='none';
+            if (user_selected_index_page) {
+	       grey_out_slug_input(); 			 // when switching to a type
+	    } else if (user_unselected_index_page) {     // that has optional slugs,
+	       enable_slug_input();			 // remember user's selection
+	    } else {
+	       (slug_entry_for_this_type == 'default') ? enable_slug_input() : grey_out_slug_input();
+	    }	
+     }
+     document.getElementById('slug_row').style.display = '';
+  }
 
-  // this story type by default is NOT an index page (i.e. has a slug)
-  enable_slug_input();
 }
 
-var checkbox_changed = 0;
-user_changed_checkbox = function() {
-  checkbox_changed = 1;
-  document.new_story.index_page.checked ? disable_slug_input() : enable_slug_input();
+var user_selected_index_page = 0;
+var user_unselected_index_page = 0;
+
+user_toggled_index_page = function() {
+  user_selected_index_page   = document.new_story.index_page.checked;
+  user_unselected_index_page = !user_selected_index_page;
+  user_selected_index_page ? grey_out_slug_input() : enable_slug_input();
 }
 
 user_changed_title = function() {
   if (!manual_slug && !document.new_story.index_page.checked) {
-	auto_build_slug();
+	document.new_story.slug.value = auto_slug();
   }
 }
 
 user_changed_slug = function(new_value) {
   if (manual_slug && (document.new_story.slug.value == '')) {
-	auto_build_slug();  // this aims to re-build slug from title
-        manual_slug = '';   // when a manually-changed slug is deleted
+	document.new_story.slug.value = auto_slug(); // this aims to re-build slug from title
+        manual_slug = '';                            // when a manually-changed slug is deleted
   } else {
         manual_slug = document.new_story.slug.value;
   }
@@ -153,13 +164,15 @@ New Story
 <td><input name="title" value="<tmpl_var escape=html title>" onkeyup="user_changed_title()"></td>
 </tr>
 
-<tr id="slug_row"<tmpl_if bad_slug> class="err"</tmpl_if><tmpl_unless type> style="display:none"</tmpl_unless>>
-<th>Slug</th>
+<tr id="slug_row" <tmpl_if bad_slug>class="err"<tmpl_else>style="display:none"</tmpl_if>>
+<th><label id="slug_required_asterisk">*</label>Slug</th>
 <td>
-<input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug><tmpl_else><tmpl_if title>index.html<tmpl_else><tmpl_if bad_title>index.html</tmpl_if></tmpl_if></tmpl_if>" onkeyup="user_changed_slug()" style="width:45%" <tmpl_unless slug><tmpl_if title>disabled<tmpl_else><tmpl_if bad_title>disabled</tmpl_if></tmpl_if></tmpl_unless>>
-<input name="index_page" type="checkbox" onchange="user_changed_checkbox()" style="width:5%" <tmpl_unless slug>checked</tmpl_unless>>Index Page (Cover)
+<input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="user_changed_slug()" style="width:45%" disabled>
+<input name="index_page" type="checkbox" onchange="user_toggled_index_page()" style="width:5%"><label id="index_label">Index Page (Cover)</label>
 </td>
 </tr>
+
+
 
 </tbody>
 

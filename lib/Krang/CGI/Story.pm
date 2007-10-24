@@ -129,8 +129,8 @@ sub new_story {
                                         -default   => '',
                                         -values    => [ ('', @types) ],
                                         -labels    => \%type_labels,
-					-onkeyup   => 'javascript:disable_slug_by_type()',
-					-onchange  => 'javascript:disable_slug_by_type()'));
+					-onkeyup   => 'javascript:slug_entry_by_type()',
+					-onchange  => 'javascript:slug_entry_by_type()'));
 
     $template->param(category_chooser => 
                      category_chooser(name => 'category_id',
@@ -144,10 +144,17 @@ sub new_story {
     $template->param(cover_date_selector => datetime_chooser(name=>'cover_date', query=>$query));
 
     # pass a list of index types (for which the 'slug' field should be inactive by default)
-    my @assume_index_loop = (map { {index_type => $_} }
-			     grep { pkg('ElementLibrary')->top_level(name => $_)->assume_index_page() }
-			     @types);
-    $template->param(assume_index_type_loop => \@assume_index_loop);
+    my @slug_entry_by_type;
+    foreach my $story_type (@types) {
+	my $slug_use = pkg('ElementLibrary')->top_level(name => $story_type)->slug_use();
+	if (($slug_use eq 'require') || ($slug_use eq 'default') || ($slug_use eq 'allow') || ($slug_use eq 'prohibit')) {
+	    push @slug_entry_by_type, { story_type      => $story_type,
+					slug_entry_mode => $slug_use };
+	} else {
+	    die ("Invalid slug_use() returned by class '$story_type': must be 'require', 'default', 'allow', or 'prohibit'");
+	}
+    }
+    $template->param(slug_entry_by_type_loop => \@slug_entry_by_type);
 
     # pass in any class-specific slug-to-title javascript functions
     my @title_to_slug_loop;
@@ -199,13 +206,17 @@ sub create {
 
     my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
 
+    # figure out whether class requires slugs
+    my $slug_required = ($type && (pkg('ElementLibrary')->top_level(name => $type)->slug_use() eq 'require'));
+
     # detect bad fields
     my @bad;
-    push(@bad, 'type'),        add_alert('missing_type') unless $type;
-    push(@bad, 'title'),       add_alert('missing_title') unless $title;
-    push(@bad, 'slug'),        add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
-    push(@bad, 'category_id'), add_alert('missing_category') unless $category_id;
-    push(@bad, 'cover_date'),  add_alert('missing_cover_date') unless $cover_date;
+    push(@bad, 'type'),         add_alert('missing_type') unless $type;
+    push(@bad, 'title'),        add_alert('missing_title') unless $title;
+    push(@bad, 'slug'),         add_alert('missing_slug') if ($slug_required && !$slug);
+    push(@bad, 'slug'),         add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
+    push(@bad, 'category_id'),  add_alert('missing_category') unless $category_id;
+    push(@bad, 'cover_date'),   add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
 
     # create the object
@@ -425,6 +436,8 @@ sub edit {
     if ($path eq '/' and not $query->param('bulk_edit')) {
         $template->param(is_root           => 1,
                          title             => ($query->param('title') || $story->title),
+                         show_slug         => ($story->class->slug_use ne 'prohibit'),
+                         require_slug      => ($story->class->slug_use eq 'require'),
                          slug              => ($query->param('slug')  || $story->slug),
                          version           => $story->version,
                          published_version => $story->published_version,
@@ -480,7 +493,7 @@ sub edit {
         $template->param(replace_category_chooser => 
                          category_chooser(name        => 'category_replacement_id',
                                           query       => $query,
-                                          label       => 'Replace',
+                                          label       => 'Replace This Category',
                                           display     => 0,
                                           onchange    => 'replace_category',
                                           may_edit    => 1,
@@ -1110,12 +1123,15 @@ sub _save {
         and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug') || '';
+        my $slug_required = ($story->class->slug_use() eq 'require');
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
         my @bad;
         push(@bad, 'title'),       add_alert('missing_title')
           unless $title;
+        push(@bad, 'slug'),        add_alert('missing_slug')
+          if (!$slug && $slug_required);
         push(@bad, 'slug'),        add_alert('bad_slug')
           if length $slug and $slug !~ /^[-\w]+$/;
         push(@bad, 'cover_date'),  add_alert('missing_cover_date')

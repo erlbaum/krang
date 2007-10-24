@@ -11,6 +11,18 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Implemented 'Replace Category' button in Edit Story CGI
+to simplify process of moving stories.
+
+=item *
+
+Made slugs optional (but not required) for all story types,
+added slug_use() method to TopLevel allowing class-based
+defaults/requirements, and enhanced New Story and Edit
+Story CGI to show slug fields only when appropriate.
+
+=item *
+
 Added title/slug mapping for high CP1252 and latin-1 chars to
 Krang.Slug.title_to_slug(). [Bodo Schulze]
 

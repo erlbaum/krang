@@ -73,7 +73,8 @@ implement alternative URL schemes.
 sub build_url {
     my ($self, %arg) = @_;
     my ($story, $category) = @arg{qw(story category)};
-    return ($category ? $category->url : '') . CGI::Util::escape($story->slug || '');
+    my $use_slug = ($story->slug && ($story->class->slug_use ne 'prohibit'));
+    return ($category ? $category->url : '') . ($use_slug ? CGI::Util::escape($story->slug) : '');
 }
 
 
@@ -90,7 +91,8 @@ L<Krang::ElementClass::Cover> for an example.
 sub build_preview_url {
     my ($self, %arg) = @_;
     my ($story, $category) = @arg{qw(story category)};
-    return ($category ? $category->preview_url : '') . CGI::Util::escape($story->slug || '');
+    my $use_slug = ($story->slug && ($story->class->slug_use ne 'prohibit'));
+    return ($category ? $category->preview_url : '') . ($use_slug ? CGI::Util::escape($story->slug) : '');
 }
 
 
@@ -98,11 +100,14 @@ sub build_preview_url {
 
 Returns a list of Story attributes that are being used to compute the
 url in build_url().  For example, the default implementation returns
-('slug') because slug is the only story attribute used in the URL.
+('slug') unless slug_use() is set to 'prohibit'.
 
 =cut
 
-sub url_attributes { ('slug') }
+sub url_attributes { 
+    my $self = shift;
+    ($self->slug_use ne 'prohibit') ? ('slug') : ();
+}
 
 =item C<< @schedules = $class->default_schedules(element => $element, story_id ==> $story_id) >>
 
@@ -217,16 +222,18 @@ content on category templates varies for each page in a story.
 sub publish_category_per_page { 0 }
 
 
-=item C<< $show_slug = $class->assume_index_page() >>
+=item C<< $show_slug = $class->slug_use() >>
 
-Returns TRUE for types that by default have no slugs. (This determines
-whether or not the slug field is initially active or disabled when the
-user creates a new story of this type in the CGI.)
+Returns 1 of 4 values:
+'require'  - slug is required
+'default'  - slug field is present in New Story CGI, but can be left empty
+'allow'    - slug field is initially greyed-out in New Story CGI
+'prohibit' - slug is prohibited 
 
 =cut
     
-sub assume_index_page {
-    return 0;
+sub slug_use {
+    return 'default';
 }
 
 

@@ -8,8 +8,8 @@ use warnings;
 
 use Krang::ClassLoader base => 'ElementClass::TopLevel';
 
-sub assume_index_page {
-    return 1;
+sub slug_use {
+    return 'allow';
 }
 
 
@@ -28,9 +28,9 @@ This is now a deprecated class: Previous to version 3 of Krang,
 types that subclassed Cover always ignored their slug value;
 now slugs are available and optional for all story types.
 
-As a result, the only remaining behavior is a default assume_index_page()
-value of 1: When a new Cover-based story is created in the CGI, 
-it will by default have no slug.
+As a result, the only remaining behavior is a slug_use()
+value of 'allow': When a new Cover-based story is created in the CGI, 
+it will by default have no slug, but the user can override this.
 
 =head1 INTERFACE
 

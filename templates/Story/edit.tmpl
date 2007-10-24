@@ -183,10 +183,12 @@ Properties
   <td><input name="title" value="<tmpl_var escape=html title>"></td>
   </tr>
 
-  <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
-  <th>Slug</th>
-  <td><input name="slug" value="<tmpl_var escape=html slug>"></td>
-  </tr>
+  <tmpl_if show_slug>
+    <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
+    <th><tmpl_if require_slug>*</tmpl_if>Slug</th>
+    <td><input name="slug" value="<tmpl_var escape=html slug>"></td>
+    </tr>
+  </tmpl_if>
 
   </tbody>
 
@@ -275,7 +277,7 @@ Properties
     <col>
     <col>
     <col>
-    <col class="series">
+    <col>
     <col class="series">
     </colgroup>
 
@@ -306,7 +308,7 @@ Properties
     <tr>
     <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Set" onclick="set_primary_category()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
     <td colspan="3"><tmpl_var add_category_chooser></td>
-    <td class="series"><tmpl_var replace_category_chooser></td>
+    <td><tmpl_var replace_category_chooser></td>
     <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Delete" onclick="remove_categories()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
     </tr>
 
