@@ -193,7 +193,7 @@ sub create {
 
     my $type = $query->param('type');
     my $title = $query->param('title');
-    my $slug = $query->param('slug') || '';
+    my $slug = $query->param('slug');
     my $category_id = $query->param('category_id');
     $session{KRANG_PERSIST}{NEW_STORY_DIALOGUE}{ cat_chooser_id_new_story_category_id } = $category_id;
 
