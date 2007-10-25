@@ -5,7 +5,7 @@
 Krang.onload( function() {
   Krang.Nav.edit_mode();
   Krang.Help.set( 'story_new' );
-  slug_entry_by_type();
+  set_slug_entry_by_type();
 } );
 
 create = function()
@@ -25,7 +25,11 @@ cancel = function()
 <tmpl_var type>_title_to_slug = <tmpl_var function>
 </tmpl_loop>
 
-var manual_slug = '';  // stores manually-modified slug
+manual_slug = function() // returns user-modified slug
+{
+   return document.new_story.manual_slug.value;
+}
+
 auto_slug = function() // returns slug built from title
 { 
    var title = document.new_story.title.value;
@@ -46,19 +50,19 @@ auto_slug = function() // returns slug built from title
 
 enable_slug_input = function() 
 {
-  document.new_story.slug.value         = manual_slug || auto_slug();
-  document.new_story.slug.disabled      = false;
-  document.new_story.index_page.checked = false;	
+  document.new_story.slug.value       = manual_slug() || auto_slug();
+  document.new_story.slug.disabled    = false;
+  document.new_story.idx_page.checked = false;	
 }
 
 grey_out_slug_input = function() 
 {
-  document.new_story.slug.value         = 'index.html';
-  document.new_story.slug.disabled      = true;
-  document.new_story.index_page.checked = true;	
+  document.new_story.slug.value       = 'index.html';
+  document.new_story.slug.disabled    = true;
+  document.new_story.idx_page.checked = true;	
 }
 
-slug_entry_by_type = function() {
+set_slug_entry_by_type = function() {
 
   // prohibit slug-entry if no type has been selected
   if (!document.new_story.type.value) {
@@ -78,18 +82,18 @@ slug_entry_by_type = function() {
      document.new_story.slug.value = '';
   } else {
      if (slug_entry_for_this_type == 'require') {
-	    document.new_story.index_page.style.display = 'none';
-	    document.getElementById('index_label').style.display = 'none';
+	    document.new_story.idx_page.style.display = 'none';
+	    document.getElementById('idx_label').style.display = 'none';
 	    document.getElementById('slug_required_asterisk').style.display='';
 	    enable_slug_input();
      } else {
-	    document.new_story.index_page.style.display = '';
-	    document.getElementById('index_label').style.display = '';
+	    document.new_story.idx_page.style.display = '';
+	    document.getElementById('idx_label').style.display = '';
 	    document.getElementById('slug_required_asterisk').style.display='none';
-            if (user_selected_index_page) {
-	       grey_out_slug_input(); 			 // when switching to a type
-	    } else if (user_unselected_index_page) {     // that has optional slugs,
-	       enable_slug_input();			 // remember user's selection
+            if (document.new_story.usr_checked_idx_page.value) {          
+	       grey_out_slug_input(); 			                  // when switching to a type with
+	    } else if (document.new_story.usr_unchecked_idx_page.value) { // optional slugs, check if user
+	       enable_slug_input();			                  // manually checked/unchecked box
 	    } else {
 	       (slug_entry_for_this_type == 'default') ? enable_slug_input() : grey_out_slug_input();
 	    }	
@@ -99,32 +103,29 @@ slug_entry_by_type = function() {
 
 }
 
-var user_selected_index_page = 0;
-var user_unselected_index_page = 0;
-
-user_toggled_index_page = function() {
-  user_selected_index_page   = document.new_story.index_page.checked;
-  user_unselected_index_page = !user_selected_index_page;
-  user_selected_index_page ? grey_out_slug_input() : enable_slug_input();
+usr_toggled_idx_page = function() {
+  document.new_story.usr_checked_idx_page.value   = document.new_story.idx_page.checked ? 1 : 0;
+  document.new_story.usr_unchecked_idx_page.value = document.new_story.idx_page.checked ? 0 : 1;
+  document.new_story.idx_page.checked ? grey_out_slug_input() : enable_slug_input();
 }
 
-user_changed_title = function() {
-  if (!manual_slug && !document.new_story.index_page.checked) {
+usr_changed_title = function() {
+  if (!manual_slug() && !document.new_story.idx_page.checked) {
 	document.new_story.slug.value = auto_slug();
   }
 }
 
-user_changed_slug = function(new_value) {
-  if (manual_slug && (document.new_story.slug.value == '')) {
+usr_changed_slug = function(new_value) {
+  if (manual_slug() && (document.new_story.slug.value == '')) {
 	document.new_story.slug.value = auto_slug(); // this aims to re-build slug from title
-        manual_slug = '';                            // when a manually-changed slug is deleted
+        document.new_story.manual_slug.value = '';   // when a manually-changed slug is deleted
   } else {
-        manual_slug = document.new_story.slug.value;
+        document.new_story.manual_slug.value = document.new_story.slug.value;
   }
 }
 
-wipe_slug_if_saving_index_page = function() {
-  if (document.new_story.index_page.checked) {
+wipe_slug_if_saving_idx_page = function() {
+  if (document.new_story.idx_page.checked) {
 	// actual slug should be empty, not index.html
 	document.new_story.slug.value = ''; 
   }
@@ -141,9 +142,12 @@ wipe_slug_if_saving_index_page = function() {
 New Story
 </h2>
 
-<form name="new_story" method="post" action="story.pl" onsubmit="wipe_slug_if_saving_index_page()">
+<form name="new_story" method="post" action="story.pl" onsubmit="wipe_slug_if_saving_idx_page()">
 
-<input name="rm" type="hidden">
+<input name="rm"                     type="hidden">
+<input name="manual_slug"            type="hidden" value="<tmpl_var manual_slug>">  
+<input name="usr_checked_idx_page"   type="hidden" value="<tmpl_var usr_checked_idx_page>">  
+<input name="usr_unchecked_idx_page" type="hidden" value="<tmpl_var usr_unchecked_idx_page>">
 
 <table class="request" summary="">
 
@@ -161,14 +165,14 @@ New Story
 
 <tr<tmpl_if bad_title> class="err"</tmpl_if>>
 <th>*Title</th>
-<td><input name="title" value="<tmpl_var escape=html title>" onkeyup="user_changed_title()"></td>
+<td><input name="title" value="<tmpl_var escape=html title>" onkeyup="usr_changed_title()"></td>
 </tr>
 
 <tr id="slug_row" <tmpl_if bad_slug>class="err"<tmpl_else>style="display:none"</tmpl_if>>
 <th><label id="slug_required_asterisk">*</label>Slug</th>
 <td>
-<input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="user_changed_slug()" style="width:45%" disabled>
-<input name="index_page" type="checkbox" onchange="user_toggled_index_page()" style="width:5%"><label id="index_label">Index Page (Cover)</label>
+<input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()" style="width:45%" disabled>
+<input name="idx_page" type="checkbox" onchange="usr_toggled_idx_page()" style="width:5%"><label id="idx_label">Index Page (Cover)</label>
 </td>
 </tr>
 

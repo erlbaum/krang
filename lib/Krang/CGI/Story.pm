@@ -129,8 +129,8 @@ sub new_story {
                                         -default   => '',
                                         -values    => [ ('', @types) ],
                                         -labels    => \%type_labels,
-					-onkeyup   => 'javascript:slug_entry_by_type()',
-					-onchange  => 'javascript:slug_entry_by_type()'));
+					-onkeyup   => 'javascript:set_slug_entry_by_type()',
+					-onchange  => 'javascript:set_slug_entry_by_type()'));
 
     $template->param(category_chooser => 
                      category_chooser(name => 'category_id',
@@ -164,7 +164,12 @@ sub new_story {
 	}
     }
     $template->param("title_to_slug_function_loop" => \@title_to_slug_loop);
-    
+
+    # remember user's manual selections in case we're returning to screen with an error
+    for ('manual_slug', 'usr_checked_idx_page', 'usr_unchecked_idx_page') {
+	$template->param($_ => $query->param($_) || ''); 
+    }
+
     return $template->output();
 }
 
