@@ -225,15 +225,15 @@ sub publish_category_per_page { 0 }
 =item C<< $show_slug = $class->slug_use() >>
 
 Returns 1 of 4 values:
-'require'  - slug is required
-'default'  - slug field is present in New Story CGI, but can be left empty
-'allow'    - slug field is initially greyed-out in New Story CGI
-'prohibit' - slug is prohibited 
-
+'require'    - slug is required
+'suggest'    - slug field is present in New Story CGI, but can be left empty
+'discourage' - slug field is initially greyed-out in New Story CGI
+'prohibit'   - slug is prohibited 
+ 
 =cut
     
 sub slug_use {
-    return 'default';
+    return 'suggest';
 }
 
 

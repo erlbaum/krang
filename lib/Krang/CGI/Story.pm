@@ -142,16 +142,19 @@ sub new_story {
 
     # setup date selector
     $template->param(cover_date_selector => datetime_chooser(name=>'cover_date', query=>$query));
-
+    
     # pass a list of index types (for which the 'slug' field should be inactive by default)
+    my $selected_type = $query->param('type') || ''; 
     my @slug_entry_by_type;
+    my $slug_entry_for_selected_type;
     foreach my $story_type (@types) {
 	my $slug_use = pkg('ElementLibrary')->top_level(name => $story_type)->slug_use();
-	if (($slug_use eq 'require') || ($slug_use eq 'default') || ($slug_use eq 'allow') || ($slug_use eq 'prohibit')) {
+	if (($slug_use eq 'require') || ($slug_use eq 'suggest') || ($slug_use eq 'discourage') || ($slug_use eq 'prohibit')) {
 	    push @slug_entry_by_type, { story_type      => $story_type,
 					slug_entry_mode => $slug_use };
+	    $slug_entry_for_selected_type = $slug_use if ($story_type eq $selected_type);
 	} else {
-	    die ("Invalid slug_use() returned by class '$story_type': must be 'require', 'default', 'allow', or 'prohibit'");
+	    die ("Invalid slug_use() returned by class '$story_type': must be 'require', 'suggest', 'discourage', or 'prohibit'");
 	}
     }
     $template->param(slug_entry_by_type_loop => \@slug_entry_by_type);
@@ -165,9 +168,15 @@ sub new_story {
     }
     $template->param("title_to_slug_function_loop" => \@title_to_slug_loop);
 
-    # remember user's manual selections in case we're returning to screen with an error
+    # remember user's manual selections (in case we're returning to screen with an error)
     for ('manual_slug', 'usr_checked_idx_page', 'usr_unchecked_idx_page') {
 	$template->param($_ => $query->param($_) || ''); 
+    }
+    # set initial slug-display information (in case a type has already been selected)
+    if ($selected_type) {
+	$template->param('slug' => 'index.html') if ($query->param('idx_page'));
+	$template->param('show_slug' => 1) unless ($slug_entry_for_selected_type eq 'prohibit');
+	$template->param('slug_required' => 1) if ($slug_entry_for_selected_type eq 'require');
     }
 
     return $template->output();
@@ -206,6 +215,7 @@ sub create {
     my $type = $query->param('type');
     my $title = $query->param('title');
     my $slug = $query->param('slug') || '';
+    my $idx_page = $query->param('idx_page');
     my $category_id = $query->param('category_id');
     $session{KRANG_PERSIST}{NEW_STORY_DIALOGUE}{ cat_chooser_id_new_story_category_id } = $category_id;
 
@@ -220,6 +230,7 @@ sub create {
     push(@bad, 'title'),        add_alert('missing_title') unless $title;
     push(@bad, 'slug'),         add_alert('missing_slug') if ($slug_required && !$slug);
     push(@bad, 'slug'),         add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
+    push(@bad, 'slug'),         add_alert('no_slug_no_idx_page') if (!$slug_required && !$slug && !$idx_page);
     push(@bad, 'category_id'),  add_alert('missing_category') unless $category_id;
     push(@bad, 'cover_date'),   add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;

@@ -9,7 +9,7 @@ use warnings;
 use Krang::ClassLoader base => 'ElementClass::TopLevel';
 
 sub slug_use {
-    return 'allow';
+    return 'discourage';
 }
 
 
@@ -29,7 +29,7 @@ types that subclassed Cover always ignored their slug value;
 now slugs are available and optional for all story types.
 
 As a result, the only remaining behavior is a slug_use()
-value of 'allow': When a new Cover-based story is created in the CGI, 
+value of 'discourage': When a new Cover-based story is created in the CGI, 
 it will by default have no slug, but the user can override this.
 
 =head1 INTERFACE

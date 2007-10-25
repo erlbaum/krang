@@ -5,7 +5,6 @@
 Krang.onload( function() {
   Krang.Nav.edit_mode();
   Krang.Help.set( 'story_new' );
-  set_slug_entry_by_type();
 } );
 
 create = function()
@@ -90,12 +89,12 @@ set_slug_entry_by_type = function() {
 	    document.new_story.idx_page.style.display = '';
 	    document.getElementById('idx_label').style.display = '';
 	    document.getElementById('slug_required_asterisk').style.display='none';
-            if (document.new_story.usr_checked_idx_page.value) {          
-	       grey_out_slug_input(); 			                  // when switching to a type with
-	    } else if (document.new_story.usr_unchecked_idx_page.value) { // optional slugs, check if user
-	       enable_slug_input();			                  // manually checked/unchecked box
+            if (document.new_story.usr_checked_idx_page.value == 1) {          
+	       grey_out_slug_input(); 			                       // when switching to a type with
+	    } else if (document.new_story.usr_unchecked_idx_page.value == 1) { // optional slugs, check if user
+	       enable_slug_input();			                       // manually checked/unchecked box
 	    } else {
-	       (slug_entry_for_this_type == 'default') ? enable_slug_input() : grey_out_slug_input();
+	       (slug_entry_for_this_type == 'suggest') ? enable_slug_input() : grey_out_slug_input();
 	    }	
      }
      document.getElementById('slug_row').style.display = '';
@@ -168,11 +167,14 @@ New Story
 <td><input name="title" value="<tmpl_var escape=html title>" onkeyup="usr_changed_title()"></td>
 </tr>
 
-<tr id="slug_row" <tmpl_if bad_slug>class="err"<tmpl_else>style="display:none"</tmpl_if>>
-<th><label id="slug_required_asterisk">*</label>Slug</th>
+<tr id="slug_row"<tmpl_if bad_slug> class="err"<tmpl_else><tmpl_unless show_slug> style="display:none"</tmpl_unless></tmpl_if>>
+<th><label id="slug_required_asterisk" <tmpl_unless slug_required>style="display:none"</tmpl_unless>>*</label>Slug</th>
 <td>
-<input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()" style="width:45%" disabled>
-<input name="idx_page" type="checkbox" onchange="usr_toggled_idx_page()" style="width:5%"><label id="idx_label">Index Page (Cover)</label>
+<input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()" style="width:45%" 
+   <tmpl_if idx_page>disabled</tmpl_if>>
+<input name="idx_page" type="checkbox" onchange="usr_toggled_idx_page()"<tmpl_if idx_page> checked </tmpl_if>
+   <tmpl_if slug_required>style="width: 3%; display:none"<tmpl_else>style="width: 3%;"</tmpl_if>>
+<label id="idx_label" <tmpl_if slug_required>style="display: none"</tmpl_if>>Category Index</label>
 </td>
 </tr>
 
