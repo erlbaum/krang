@@ -4,7 +4,6 @@ This document contains a list of changes for each release of Krang.
 
 
 
-
 =head2 3.01? - KRANG_TEG BRANCH
 
 =over
