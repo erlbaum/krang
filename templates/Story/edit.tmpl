@@ -87,6 +87,15 @@ save_and_stay = function() {
     Krang.Form.submit('edit', { rm: 'db_save_and_stay' }, { to_top: false });
   }
 
+  usr_toggled_idx_page = function() {
+    document.edit.slug.disabled = document.edit.idx_page.checked;
+    if (document.edit.slug.disabled) {	
+	document.edit.slug.value = '';
+    } else {
+	document.edit.slug.value = document.edit.edited_slug.value;
+    }
+  }
+
   <tmpl_if may_publish>
     save_and_publish = function() {
         Krang.ElementEditor.run_save_hooks();
@@ -136,6 +145,8 @@ save_and_stay = function() {
 
 <input name="rm" value="edit" type="hidden">
 
+<input name="edited_slug" value="<tmpl_var edited_slug>" type="hidden">
+
 <tmpl_if is_root><tmpl_if story_id><p class="cram east">
   <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
   <input value="View Schedule" onclick="save_and_edit_schedule()" type="button" class="button">
@@ -176,7 +187,7 @@ Properties
 </tbody>
 
 <tmpl_if is_root>
-  <tbody class="demi">
+  <tbody class="half">
 
   <tr<tmpl_if bad_title> class="err"</tmpl_if>>
   <th>*Title</th>
@@ -186,7 +197,12 @@ Properties
   <tmpl_if show_slug>
     <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
     <th><tmpl_if require_slug>*</tmpl_if>Slug</th>
-    <td><input name="slug" value="<tmpl_var escape=html slug>"></td>
+    <td><input name="slug" value="<tmpl_var escape=html slug>" onkeyup="document.edit.edited_slug.value=this.value"<tmpl_if idx_page> disabled</tmpl_if>>
+    <tmpl_unless require_slug>
+      <input name="idx_page" type="checkbox" onchange="usr_toggled_idx_page()" class="pushright small hcenter"<tmpl_if idx_page> checked</tmpl_if>>
+      Category Index
+    </tmpl_unless>
+    </td>
     </tr>
   </tmpl_if>
 

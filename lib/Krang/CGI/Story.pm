@@ -172,11 +172,11 @@ sub new_story {
     for ('manual_slug', 'usr_checked_idx_page', 'usr_unchecked_idx_page') {
 	$template->param($_ => $query->param($_) || ''); 
     }
+
     # set initial slug-display information (in case a type has already been selected)
     if ($selected_type) {
-	$template->param('slug' => 'index.html') if ($query->param('idx_page'));
 	$template->param('show_slug' => 1) unless ($slug_entry_for_selected_type eq 'prohibit');
-	$template->param('slug_required' => 1) if ($slug_entry_for_selected_type eq 'require');
+	$template->param('require_slug' => 1) if ($slug_entry_for_selected_type eq 'require');
     }
 
     return $template->output();
@@ -221,8 +221,10 @@ sub create {
 
     my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
 
-    # figure out whether class requires slugs
-    my $slug_required = ($type && (pkg('ElementLibrary')->top_level(name => $type)->slug_use() eq 'require'));
+    # figure out whether slugs are required/optional
+    my $slug_entry_for_type = ($type ? pkg('ElementLibrary')->top_level(name => $type)->slug_use() : 'prohibit');
+    my $slug_required       = ($slug_entry_for_type eq 'require');
+    my $slug_optional       = (($slug_entry_for_type eq 'suggest') || ($slug_entry_for_type eq 'discourage'));
 
     # detect bad fields
     my @bad;
@@ -230,7 +232,7 @@ sub create {
     push(@bad, 'title'),        add_alert('missing_title') unless $title;
     push(@bad, 'slug'),         add_alert('missing_slug') if ($slug_required && !$slug);
     push(@bad, 'slug'),         add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
-    push(@bad, 'slug'),         add_alert('no_slug_no_idx_page') if (!$slug_required && !$slug && !$idx_page);
+    push(@bad, 'slug'),         add_alert('no_slug_no_idx_page') if ($slug_optional && !$slug && !$idx_page);
     push(@bad, 'category_id'),  add_alert('missing_category') unless $category_id;
     push(@bad, 'cover_date'),   add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
@@ -454,7 +456,8 @@ sub edit {
                          title             => ($query->param('title') || $story->title),
                          show_slug         => ($story->class->slug_use ne 'prohibit'),
                          require_slug      => ($story->class->slug_use eq 'require'),
-                         slug              => ($query->param('slug')  || $story->slug),
+                         slug              => ($query->param('slug')  || $story->slug),       # (emptied when user checks "index")
+                         edited_slug       => ($query->param('edited_slug') || $story->slug), # (in case user unchecks "index"!)
                          version           => $story->version,
                          published_version => $story->published_version,
                         );
@@ -1139,7 +1142,10 @@ sub _save {
         and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug') || '';
-        my $slug_required = ($story->class->slug_use() eq 'require');
+        my $idx_page = $query->param('idx_page');
+	my $slug_entry_for_type = pkg('ElementLibrary')->top_level(name => $story->element->name)->slug_use();
+	my $slug_required       = ($slug_entry_for_type eq 'require');
+	my $slug_optional       = (($slug_entry_for_type eq 'suggest') || ($slug_entry_for_type eq 'discourage'));
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
@@ -1147,7 +1153,9 @@ sub _save {
         push(@bad, 'title'),       add_alert('missing_title')
           unless $title;
         push(@bad, 'slug'),        add_alert('missing_slug')
-          if (!$slug && $slug_required);
+          if ($slug_required && !$slug);
+        push(@bad, 'slug'),        add_alert('no_slug_no_idx_page') 
+          if ($slug_optional && !$slug && !$idx_page);
         push(@bad, 'slug'),        add_alert('bad_slug')
           if length $slug and $slug !~ /^[-\w]+$/;
         push(@bad, 'cover_date'),  add_alert('missing_cover_date')

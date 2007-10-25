@@ -1,5 +1,4 @@
 <tmpl_include header.tmpl>
-
 <script type="text/javascript">
 
 Krang.onload( function() {
@@ -56,7 +55,7 @@ enable_slug_input = function()
 
 grey_out_slug_input = function() 
 {
-  document.new_story.slug.value       = 'index.html';
+  document.new_story.slug.value       = '';
   document.new_story.slug.disabled    = true;
   document.new_story.idx_page.checked = true;	
 }
@@ -83,12 +82,12 @@ set_slug_entry_by_type = function() {
      if (slug_entry_for_this_type == 'require') {
 	    document.new_story.idx_page.style.display = 'none';
 	    document.getElementById('idx_label').style.display = 'none';
-	    document.getElementById('slug_required_asterisk').style.display='';
+	    document.getElementById('require_slug_asterisk').style.display='';
 	    enable_slug_input();
      } else {
 	    document.new_story.idx_page.style.display = '';
 	    document.getElementById('idx_label').style.display = '';
-	    document.getElementById('slug_required_asterisk').style.display='none';
+	    document.getElementById('require_slug_asterisk').style.display='none';
             if (document.new_story.usr_checked_idx_page.value == 1) {          
 	       grey_out_slug_input(); 			                       // when switching to a type with
 	    } else if (document.new_story.usr_unchecked_idx_page.value == 1) { // optional slugs, check if user
@@ -123,13 +122,6 @@ usr_changed_slug = function(new_value) {
   }
 }
 
-wipe_slug_if_saving_idx_page = function() {
-  if (document.new_story.idx_page.checked) {
-	// actual slug should be empty, not index.html
-	document.new_story.slug.value = ''; 
-  }
-}
-
 // end slug-generation javascript
 
 </script>
@@ -141,7 +133,7 @@ wipe_slug_if_saving_idx_page = function() {
 New Story
 </h2>
 
-<form name="new_story" method="post" action="story.pl" onsubmit="wipe_slug_if_saving_idx_page()">
+<form name="new_story" method="post" action="story.pl">
 
 <input name="rm"                     type="hidden">
 <input name="manual_slug"            type="hidden" value="<tmpl_var manual_slug>">  
@@ -151,11 +143,11 @@ New Story
 <table class="request" summary="">
 
 <colgroup>
-<col class="c-label">
+<col class="c-type-big">
 <col>
 </colgroup>
 
-<tbody class="demi">
+<tbody class="half">
 
 <tr<tmpl_if bad_type> class="err"</tmpl_if>>
 <th>*Type</th>
@@ -168,17 +160,12 @@ New Story
 </tr>
 
 <tr id="slug_row"<tmpl_if bad_slug> class="err"<tmpl_else><tmpl_unless show_slug> style="display:none"</tmpl_unless></tmpl_if>>
-<th><label id="slug_required_asterisk" <tmpl_unless slug_required>style="display:none"</tmpl_unless>>*</label>Slug</th>
-<td>
-<input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()" style="width:45%" 
-   <tmpl_if idx_page>disabled</tmpl_if>>
-<input name="idx_page" type="checkbox" onchange="usr_toggled_idx_page()"<tmpl_if idx_page> checked </tmpl_if>
-   <tmpl_if slug_required>style="width: 3%; display:none"<tmpl_else>style="width: 3%;"</tmpl_if>>
-<label id="idx_label" <tmpl_if slug_required>style="display: none"</tmpl_if>>Category Index</label>
+<th><label id="require_slug_asterisk" <tmpl_unless require_slug>style="display:none"</tmpl_unless>>*</label>Slug</th>
+<td><input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()"<tmpl_if idx_page> disabled</tmpl_if>>
+<input name="idx_page" type="checkbox" onchange="usr_toggled_idx_page()"<tmpl_if idx_page> checked</tmpl_if> class="pushright small vcenter"<tmpl_if require_slug> style="display:none"</tmpl_if>>
+<label id="idx_label"<tmpl_if require_slug> style="display:none"</tmpl_if>>Category Index</label>
 </td>
 </tr>
-
-
 
 </tbody>
 
