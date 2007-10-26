@@ -246,20 +246,12 @@ sub create {
                                    categories => [ $category_id ],
                                    cover_date => $cover_date);   
     };
-    
+
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        my $class = pkg('ElementLibrary')->top_level(name => $type);
-	    my $url_attributes = join(', ', $class->url_attributes);
-	    my $which = $url_attributes ? $url_attributes . ' and site/category' : 'site/category';
-        add_alert('duplicate_url', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,                    
-                    which    => $which,
-                   );
 
+	my $class = pkg('ElementLibrary')->top_level(name => $type);
+	$self->alert_duplicate_url($@, $class);
         return $self->new_story(bad => ['category_id',$class->url_attributes]);
     } elsif ($@) {
         # rethrow
@@ -314,16 +306,7 @@ sub check_in_and_save {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url',
-                    story_id => $dup->story_id,
-                    url      => $dup->url,
-                    which    => join(' and ',
-                                     join(', ', $story->class->url_attributes),
-                                     "site/category"),
-                   );
-
+	$self->alert_duplicate_url($@, $story->class);
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
@@ -450,7 +433,13 @@ sub edit {
                                                       ) : "");
 
     # remember whether user checked/unchecked 'category index' in case we're returning from an error
-    my $cat_idx = ($query->param('usr_changed_idx') ? $query->param('cat_idx') : !($session{story}->slug));
+    my $cat_idx = ($query->param('usr_changed_idx') ? $query->param('cat_idx') : !($story->slug));
+
+    # remember current value of slug (which will be empty if user has checked 'Category Index'
+    my $slug = ($cat_idx ? '' : ($query->param('slug') || $story->slug));
+
+    # in case user checks 'Category Index' and later unchecks it, remember old value of slug
+    my $slug_before_empty = ($query->param('slug_before_empty') || $story->slug); 
 
     # edit fields for top-level
     my $path  = $query->param('path') || '/';
@@ -459,9 +448,9 @@ sub edit {
                          title             => ($query->param('title') || $story->title),
                          show_slug         => ($story->class->slug_use ne 'prohibit'),
                          require_slug      => ($story->class->slug_use eq 'require'),
-                         cat_idx           => $cat_idx || '',
-                         slug              => ($query->param('slug') || $story->slug),   # This is empty after usr checks "Index",
-                         slug_before_empty => ($query->param('slug_before_empty') || $story->slug), # so in case usr unchecks it..
+                         cat_idx           => $cat_idx,
+                         slug              => $slug,
+                         slug_before_empty => $slug_before_empty,
                          version           => $story->version,
                          published_version => $story->published_version,
                         );
@@ -743,16 +732,7 @@ sub db_save {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,
-                    which    => join(' and ', 
-                                     join(', ', $story->class->url_attributes),
-                                     "site/category"),
-                   );
-
+	$self->alert_duplicate_url($@, $story->class);
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
@@ -796,16 +776,7 @@ sub db_save_and_stay {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,
-                    which    => join(' and ', 
-                                     join(', ', $story->class->url_attributes),
-                                     "site/category"),
-                   );
-
+	$self->alert_duplicate_url($@, $story->class);
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
@@ -886,16 +857,7 @@ sub save_and_publish {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,
-                    which    => join(' and ', 
-                                     join(', ', $story->class->url_attributes),
-                                     "site/category"),
-                   );
-
+	$self->alert_duplicate_url($@, $story->class);
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
@@ -1217,17 +1179,14 @@ sub add_category {
     push(@categories, $category);
 
     # this might fail if a duplicate URL is created
+    $story->slug($query->param('slug') || ''); 
     eval { $story->categories(@categories); };
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url_on_category_add', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,                    
-                    category => $category->url,
-                   );
+
+	# alert user
+	$self->alert_duplicate_url_on_add_category($@, $category);
 
         # remove added category
         pop(@categories);
@@ -1333,17 +1292,14 @@ sub replace_category {
     }
     
     # this might fail if a duplicate URL is created
+    $story->slug($query->param('slug') || ''); 
     eval { $story->categories(@new_categories); };
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url_on_category_add', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,                    
-                    category => $new_category->url,
-                   );
+
+	# alert user
+	$self->alert_duplicate_url_on_add_category($@, $new_category);	
 
         # restore previous state
         $story->categories(\@existing_categories);
@@ -1891,6 +1847,53 @@ sub autocomplete {
     );
 }
 
+sub alert_duplicate_url {
+
+    my ($self, $error, $class) = @_;
+    
+    # figure out how our story builds the URL (to remind user)
+    my $which = join(' and ', 
+		     join(', ', $class->url_attributes),
+		     "site/category");
+
+    # load clashing story/category, and add alert
+    if ($error->story_id) {
+	my ($dup) = pkg('Story')->find(story_id => $error->story_id);
+	add_alert('duplicate_url',
+		  story_id => $dup->story_id,
+		  url      => $dup->url,
+		  which    => $which);
+    } elsif ($error->category_id) {
+	my ($dup) = pkg('Category')->find(category_id => $error->category_id);
+	add_alert('category_has_url',
+		  category_id => $dup->category_id,
+		  url         => $dup->url,
+		  which       => $which);
+    } else {
+	croak ("DuplicateURL didn't include story_id OR category_id");
+    }
+}
+
+sub alert_duplicate_url_on_add_category {
+
+    my ($self, $error, $new_category) = @_;
+
+    if ($error->story_id) {
+	my ($dup) = pkg('Story')->find(story_id => $error->story_id);
+	add_alert('duplicate_url_on_add_category', 
+		  story_id => $dup->story_id,
+		  url      => $dup->url,                    
+		  category => $new_category->url);
+    } elsif ($error->category_id) {
+	my ($dup) = pkg('Category')->find(category_id => $error->category_id);
+	add_alert('category_has_url_on_add_category', 
+		  category_id => $dup->category_id,
+		  url         => $dup->url,                    
+		  category    => $new_category->url);
+    } else {
+	croak ("DuplicateURL didn't include story_id OR category_id");
+    }
+}
 
 
 1;

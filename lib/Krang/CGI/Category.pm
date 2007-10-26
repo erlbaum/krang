@@ -221,12 +221,20 @@ sub create {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Category::DuplicateURL')) {
-        # load duplicate category
-        my ($dup) = pkg('Category')->find(category_id => $@->category_id);
-        add_alert('duplicate_url', 
-                    url         => $dup->url,                    
-                   );
-
+        # load clashing category/story
+	if ($@->category_id) {
+	    my ($dup) = pkg('Category')->find(category_id => $@->category_id);
+	    add_alert('duplicate_url', 
+		      url         => $dup->url,
+		      category_id => $dup->category_id);
+	} elsif ($@->story_id) {
+	    my ($dup) = pkg('Story')->find(story_id => $@->story_id);
+	    add_alert('story_has_url', 
+		      url         => $dup->url,
+		      story_id    => $dup->story_id);
+	} else {
+	    croak ("DuplicateURL didn't include category_id OR story_id");
+	}
         return $self->new_category(bad => ['parent_id','dir']);
     } elsif ($@) {
         # rethrow

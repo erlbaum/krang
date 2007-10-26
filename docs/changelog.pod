@@ -4,21 +4,27 @@ This document contains a list of changes for each release of Krang.
 
 
 
-=head2 3.01? - KRANG_TEG BRANCH
+=head2 3.01 - KRANG_TEG BRANCH
 
 =over
 
 =item *
 
+Enhanced all duplicate-URL checking methods to prevent new stories
+from conflicting with existing categories, and new categories
+from conflicting with existing stories. [Noam Weinstein]
+
+=item *
+
 Implemented 'Replace Category' button in Edit Story CGI
-to simplify process of moving stories.
+to simplify process of moving stories. [Noam Weinstein]
 
 =item *
 
 Made slugs optional (but not required) for all story types,
 added slug_use() method to TopLevel allowing class-based
 defaults/requirements, and enhanced New Story and Edit
-Story CGI to show slug fields only when appropriate.
+Story CGI to show slug fields as appropriate. [Noam Weinstein]
 
 =item *
 
