@@ -52,6 +52,8 @@ Made 'Save' buttons in element editor truly save to disk even
 when editing a container, and replaced old non-disk save with 
 a 'Done' button. [Noam Weinstein]
 
+=back
+
 =head2 3.00 - IN DEVELOPMENT
 
 =over

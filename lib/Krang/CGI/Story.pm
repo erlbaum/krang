@@ -1178,15 +1178,27 @@ sub add_category {
     # push it on
     push(@categories, $category);
 
-    # this might fail if a duplicate URL is created
+    # use newest slug, but keep track of changes in case we need to revert
+    my $old_slug = $story->slug;
     $story->slug($query->param('slug') || ''); 
+
+    # this might fail if a duplicate URL is created
     eval { $story->categories(@categories); };
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+	my $error = $@;
 
-	# alert user
-	$self->alert_duplicate_url_on_add_category($@, $category);
+	# if slug has changed, revert it and notify user
+	if ($story->slug ne $old_slug) {
+	    $story->slug($old_slug || '');
+	    $query->param(slug => $old_slug);
+	    add_alert('reverting_slug_along_with_categories',
+		      reverting_to_slug => $old_slug || 'empty string');
+	}
+
+	# regardless, alert user of duplicate
+	$self->alert_duplicate_url_on_add_category($error, $category);
 
         # remove added category
         pop(@categories);
@@ -1290,16 +1302,28 @@ sub replace_category {
 	    push @new_categories, $existing_category;
 	}
     }
+
+    # use newest slug, but keep track of changes in case we need to revert
+    my $old_slug = $story->slug;
+    $story->slug($query->param('slug') || ''); 
     
     # this might fail if a duplicate URL is created
-    $story->slug($query->param('slug') || ''); 
     eval { $story->categories(@new_categories); };
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+	my $error = $@;
 
-	# alert user
-	$self->alert_duplicate_url_on_add_category($@, $new_category);	
+	# if slug has changed, revert it and notify user
+	if ($story->slug ne $old_slug) {
+	    $story->slug($old_slug || '');
+	    $query->param(slug => $old_slug);
+	    add_alert('reverting_slug_along_with_categories',
+		      reverting_to_slug => $old_slug || 'empty string');
+	}
+
+	# regardless, alert user of duplicate
+	$self->alert_duplicate_url_on_add_category($error, $new_category);	
 
         # restore previous state
         $story->categories(\@existing_categories);
