@@ -11,8 +11,8 @@ This document contains a list of changes for each release of Krang.
 =item *
 
 Enhanced all duplicate-URL checking methods to prevent new stories
-from conflicting with existing categories, and new categories
-from conflicting with existing stories. [Noam Weinstein]
+with slugs from conflicting with existing category URLs, and new
+categories from conflicting with existing stories. [Noam Weinstein]
 
 =item *
 
