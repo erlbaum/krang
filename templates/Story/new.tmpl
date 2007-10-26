@@ -50,14 +50,14 @@ enable_slug_input = function()
 {
   document.new_story.slug.value       = manual_slug() || auto_slug();
   document.new_story.slug.disabled    = false;
-  document.new_story.idx_page.checked = false;	
+  document.new_story.cat_idx.checked = false;	
 }
 
 grey_out_slug_input = function() 
 {
   document.new_story.slug.value       = '';
   document.new_story.slug.disabled    = true;
-  document.new_story.idx_page.checked = true;	
+  document.new_story.cat_idx.checked = true;	
 }
 
 set_slug_entry_by_type = function() {
@@ -80,20 +80,20 @@ set_slug_entry_by_type = function() {
      document.new_story.slug.value = '';
   } else {
      if (slug_entry_for_this_type == 'require') {
-	    document.new_story.idx_page.style.display = 'none';
+	    document.new_story.cat_idx.style.display = 'none';
 	    document.getElementById('idx_label').style.display = 'none';
 	    document.getElementById('require_slug_asterisk').style.display='';
 	    enable_slug_input();
      } else {
-	    document.new_story.idx_page.style.display = '';
+	    document.new_story.cat_idx.style.display = '';
 	    document.getElementById('idx_label').style.display = '';
 	    document.getElementById('require_slug_asterisk').style.display='none';
-            if (document.new_story.usr_checked_idx_page.value == 1) {          
+            if (document.new_story.usr_checked_cat_idx.value == 1) {          
 	       grey_out_slug_input(); 			                       // when switching to a type with
-	    } else if (document.new_story.usr_unchecked_idx_page.value == 1) { // optional slugs, check if user
+	    } else if (document.new_story.usr_unchecked_cat_idx.value == 1) { // optional slugs, check if user
 	       enable_slug_input();			                       // manually checked/unchecked box
 	    } else {
-	       (slug_entry_for_this_type == 'suggest') ? enable_slug_input() : grey_out_slug_input();
+	       (slug_entry_for_this_type == 'encourage') ? enable_slug_input() : grey_out_slug_input();
 	    }	
      }
      document.getElementById('slug_row').style.display = '';
@@ -101,14 +101,14 @@ set_slug_entry_by_type = function() {
 
 }
 
-usr_toggled_idx_page = function() {
-  document.new_story.usr_checked_idx_page.value   = document.new_story.idx_page.checked ? 1 : 0;
-  document.new_story.usr_unchecked_idx_page.value = document.new_story.idx_page.checked ? 0 : 1;
-  document.new_story.idx_page.checked ? grey_out_slug_input() : enable_slug_input();
+usr_toggled_cat_idx = function() {
+  document.new_story.usr_checked_cat_idx.value   = document.new_story.cat_idx.checked ? 1 : 0;
+  document.new_story.usr_unchecked_cat_idx.value = document.new_story.cat_idx.checked ? 0 : 1;
+  document.new_story.cat_idx.checked ? grey_out_slug_input() : enable_slug_input();
 }
 
 usr_changed_title = function() {
-  if (!manual_slug() && !document.new_story.idx_page.checked) {
+  if (!manual_slug() && !document.new_story.cat_idx.checked) {
 	document.new_story.slug.value = auto_slug();
   }
 }
@@ -137,8 +137,8 @@ New Story
 
 <input name="rm"                     type="hidden">
 <input name="manual_slug"            type="hidden" value="<tmpl_var manual_slug>">  
-<input name="usr_checked_idx_page"   type="hidden" value="<tmpl_var usr_checked_idx_page>">  
-<input name="usr_unchecked_idx_page" type="hidden" value="<tmpl_var usr_unchecked_idx_page>">
+<input name="usr_checked_cat_idx"   type="hidden" value="<tmpl_var usr_checked_cat_idx>">  
+<input name="usr_unchecked_cat_idx" type="hidden" value="<tmpl_var usr_unchecked_cat_idx>">
 
 <table class="request" summary="">
 
@@ -161,8 +161,8 @@ New Story
 
 <tr id="slug_row"<tmpl_if bad_slug> class="err"<tmpl_else><tmpl_unless show_slug> style="display:none"</tmpl_unless></tmpl_if>>
 <th><label id="require_slug_asterisk" <tmpl_unless require_slug>style="display:none"</tmpl_unless>>*</label>Slug</th>
-<td><input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()"<tmpl_if idx_page> disabled</tmpl_if>>
-<input name="idx_page" type="checkbox" onchange="usr_toggled_idx_page()"<tmpl_if idx_page> checked</tmpl_if> class="pushright small vcenter"<tmpl_if require_slug> style="display:none"</tmpl_if>>
+<td><input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()"<tmpl_if cat_idx> disabled</tmpl_if>>
+<input name="cat_idx" type="checkbox" onchange="usr_toggled_cat_idx()"<tmpl_if cat_idx> checked</tmpl_if> class="pushright small vcenter"<tmpl_if require_slug> style="display:none"</tmpl_if>>
 <label id="idx_label"<tmpl_if require_slug> style="display:none"</tmpl_if>>Category Index</label>
 </td>
 </tr>

@@ -226,14 +226,14 @@ sub publish_category_per_page { 0 }
 
 Returns 1 of 4 values:
 'require'    - slug is required
-'suggest'    - slug field is present in New Story CGI, but can be left empty
+'encourage'  - slug field is present in New Story CGI, but can be left empty
 'discourage' - slug field is initially greyed-out in New Story CGI
 'prohibit'   - slug is prohibited 
  
 =cut
     
 sub slug_use {
-    return 'suggest';
+    return 'encourage';
 }
 
 

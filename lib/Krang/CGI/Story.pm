@@ -149,12 +149,12 @@ sub new_story {
     my $slug_entry_for_selected_type;
     foreach my $story_type (@types) {
 	my $slug_use = pkg('ElementLibrary')->top_level(name => $story_type)->slug_use();
-	if (($slug_use eq 'require') || ($slug_use eq 'suggest') || ($slug_use eq 'discourage') || ($slug_use eq 'prohibit')) {
+	if (($slug_use eq 'require') || ($slug_use eq 'encourage') || ($slug_use eq 'discourage') || ($slug_use eq 'prohibit')) {
 	    push @slug_entry_by_type, { story_type      => $story_type,
 					slug_entry_mode => $slug_use };
 	    $slug_entry_for_selected_type = $slug_use if ($story_type eq $selected_type);
 	} else {
-	    die ("Invalid slug_use() returned by class '$story_type': must be 'require', 'suggest', 'discourage', or 'prohibit'");
+	    die ("Invalid slug_use() returned by class '$story_type': must be 'require', 'encourage', 'discourage', or 'prohibit'");
 	}
     }
     $template->param(slug_entry_by_type_loop => \@slug_entry_by_type);
@@ -169,7 +169,7 @@ sub new_story {
     $template->param("title_to_slug_function_loop" => \@title_to_slug_loop);
 
     # remember user's manual selections (in case we're returning to screen with an error)
-    for ('manual_slug', 'usr_checked_idx_page', 'usr_unchecked_idx_page') {
+    for ('manual_slug', 'usr_checked_cat_idx', 'usr_unchecked_cat_idx') {
 	$template->param($_ => $query->param($_) || ''); 
     }
 
@@ -215,7 +215,7 @@ sub create {
     my $type = $query->param('type');
     my $title = $query->param('title');
     my $slug = $query->param('slug') || '';
-    my $idx_page = $query->param('idx_page');
+    my $cat_idx = $query->param('cat_idx');
     my $category_id = $query->param('category_id');
     $session{KRANG_PERSIST}{NEW_STORY_DIALOGUE}{ cat_chooser_id_new_story_category_id } = $category_id;
 
@@ -224,7 +224,7 @@ sub create {
     # figure out whether slugs are required/optional
     my $slug_entry_for_type = ($type ? pkg('ElementLibrary')->top_level(name => $type)->slug_use() : 'prohibit');
     my $slug_required       = ($slug_entry_for_type eq 'require');
-    my $slug_optional       = (($slug_entry_for_type eq 'suggest') || ($slug_entry_for_type eq 'discourage'));
+    my $slug_optional       = (($slug_entry_for_type eq 'encourage') || ($slug_entry_for_type eq 'discourage'));
 
     # detect bad fields
     my @bad;
@@ -232,7 +232,7 @@ sub create {
     push(@bad, 'title'),        add_alert('missing_title') unless $title;
     push(@bad, 'slug'),         add_alert('missing_slug') if ($slug_required && !$slug);
     push(@bad, 'slug'),         add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
-    push(@bad, 'slug'),         add_alert('no_slug_no_idx_page') if ($slug_optional && !$slug && !$idx_page);
+    push(@bad, 'slug'),         add_alert('no_slug_no_cat_idx') if ($slug_optional && !$slug && !$cat_idx);
     push(@bad, 'category_id'),  add_alert('missing_category') unless $category_id;
     push(@bad, 'cover_date'),   add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
@@ -449,6 +449,9 @@ sub edit {
                                                        length => 50,
                                                       ) : "");
 
+    # remember whether user checked/unchecked 'category index' in case we're returning from an error
+    my $cat_idx = ($query->param('usr_changed_idx') ? $query->param('cat_idx') : !($session{story}->slug));
+
     # edit fields for top-level
     my $path  = $query->param('path') || '/';
     if ($path eq '/' and not $query->param('bulk_edit')) {
@@ -456,8 +459,9 @@ sub edit {
                          title             => ($query->param('title') || $story->title),
                          show_slug         => ($story->class->slug_use ne 'prohibit'),
                          require_slug      => ($story->class->slug_use eq 'require'),
-                         slug              => ($query->param('slug')  || $story->slug),       # (emptied when user checks "index")
-                         edited_slug       => ($query->param('edited_slug') || $story->slug), # (in case user unchecks "index"!)
+                         cat_idx           => $cat_idx || '',
+                         slug              => ($query->param('slug') || $story->slug),   # This is empty after usr checks "Index",
+                         slug_before_empty => ($query->param('slug_before_empty') || $story->slug), # so in case usr unchecks it..
                          version           => $story->version,
                          published_version => $story->published_version,
                         );
@@ -1142,10 +1146,10 @@ sub _save {
         and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug') || '';
-        my $idx_page = $query->param('idx_page');
+        my $cat_idx = $query->param('cat_idx');
 	my $slug_entry_for_type = pkg('ElementLibrary')->top_level(name => $story->element->name)->slug_use();
 	my $slug_required       = ($slug_entry_for_type eq 'require');
-	my $slug_optional       = (($slug_entry_for_type eq 'suggest') || ($slug_entry_for_type eq 'discourage'));
+	my $slug_optional       = (($slug_entry_for_type eq 'encourage') || ($slug_entry_for_type eq 'discourage'));
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
@@ -1154,8 +1158,8 @@ sub _save {
           unless $title;
         push(@bad, 'slug'),        add_alert('missing_slug')
           if ($slug_required && !$slug);
-        push(@bad, 'slug'),        add_alert('no_slug_no_idx_page') 
-          if ($slug_optional && !$slug && !$idx_page);
+        push(@bad, 'slug'),        add_alert('no_slug_no_cat_idx') 
+          if ($slug_optional && !$slug && !$cat_idx);
         push(@bad, 'slug'),        add_alert('bad_slug')
           if length $slug and $slug !~ /^[-\w]+$/;
         push(@bad, 'cover_date'),  add_alert('missing_cover_date')
