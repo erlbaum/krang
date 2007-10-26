@@ -810,7 +810,7 @@ sub _verify_unique {
                                          ($self->{story_id} ? 
                                           ($self->{story_id}) : ()));
     # throw exception on dup
-    Krang::Story::DuplicateURL->throw(message => "duplicate URL",
+    Krang::Story::DuplicateURL->throw(message => "Duplicate URL",
                                       story_id => $dup_id)
         if $dup_id;
     
@@ -819,7 +819,7 @@ sub _verify_unique {
 	$query = 'SELECT category_id FROM category WHERE ('.
 	    join(' OR ', ('url = ?') x @urls) . ')';
 	($dup_id) = $dbh->selectrow_array($query, undef, map { $_.'/' } $self->urls);
-	Krang::Story::DuplicateURL->throw(message => "category has our URL",
+	Krang::Story::DuplicateURL->throw(message => "Category has our URL",
 					  category_id => $dup_id)
 	    if $dup_id;
     }
