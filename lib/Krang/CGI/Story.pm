@@ -1194,7 +1194,7 @@ sub add_category {
 	    $story->slug($old_slug || '');
 	    $query->param(slug => $old_slug);
 	    add_alert('reverting_slug_along_with_categories',
-		      reverting_to_slug => $old_slug || 'empty string');
+		      slug => $old_slug || 'empty string');
 	}
 
 	# regardless, alert user of duplicate
@@ -1319,7 +1319,7 @@ sub replace_category {
 	    $story->slug($old_slug || '');
 	    $query->param(slug => $old_slug);
 	    add_alert('reverting_slug_along_with_categories',
-		      reverting_to_slug => $old_slug || 'empty string');
+		      slug => $old_slug || 'empty string');
 	}
 
 	# regardless, alert user of duplicate
@@ -1624,7 +1624,7 @@ sub find {
 
 List all active stories.  Provide links to view each story.  If the
 user has 'checkin all' admin abilities then checkboxes are provided to
-allow the stories to be checked-in.
+allow the stories to be stole or checked-in.
 
 =cut
 
