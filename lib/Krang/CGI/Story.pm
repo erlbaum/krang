@@ -65,6 +65,7 @@ sub setup {
                      delete_selected  => 'delete_selected',
                      checkout_selected => 'checkout_selected',
                      checkin_selected  => 'checkin_selected',
+		     steal_selected    => 'steal_selected',
                      delete_categories    => 'delete_categories',
                      add_category         => 'add_category',
 		     replace_category     => 'replace_category',
@@ -1765,8 +1766,68 @@ sub checkin_selected {
 }
 
 
+=item steal_selected
 
+Steal all the stories which were checked on the list_active screen,
+and either go to workspace of user, or - if only one story was checked -
+directly to the edit screen.
 
+=cut
+
+sub steal_selected {
+     my $self = shift;
+
+     my $q = $self->query();
+     my @story_ids = ( $q->param('krang_pager_rows_checked') );
+     $q->delete('krang_pager_rows_checked');
+
+     # loop through selected stories, checking ownership
+     my (@owned_ids, @stolen_ids, %victims);
+     foreach my $story_id (@story_ids) {
+	 my ($s) = pkg('Story')->find(story_id => $story_id);
+	 if ($s->checked_out_by ne $ENV{REMOTE_USER}) {
+	     my ($victim) = pkg('User')->find(user_id => $s->checked_out_by);
+	     my $victim_name = $q->escapeHTML($victim->first_name.' '.$victim->last_name);
+	     $s->checkin();  # this story was checked out to someone
+	     $s->checkout(); # else; steal it and keep track of victim
+	     $victims{$victim_name} = 1;
+	     push @stolen_ids, $story_id;
+	 } else {
+	     push @owned_ids, $story_id; # this story was already ours!
+	 }
+     }
+
+     # explain our actions to user
+     if (@story_ids == 1) {
+	 %victims ? 
+	     add_message('selected_story_stolen', id => $story_ids[0], victim => (keys %victims)[0]) :
+	     add_message('selected_story_yours',  id => $story_ids[0]);
+     } elsif (@owned_ids && !@stolen_ids) {
+	 add_message('all_selected_stories_yours');
+     } else {
+	 if (@owned_ids) {
+	     (@owned_ids > 1) ? 
+		 add_message('multiple_stories_yours', ids => join(' & ',@owned_ids)) :
+		 add_message('one_story_yours', id => $owned_ids[0]);
+	 }
+	 if (@stolen_ids) {
+	     (@stolen_ids > 1) ? 
+		 add_message('multiple_stories_stolen', ids => join(' & ',@stolen_ids), victims => join(' & ', sort keys %victims)) :
+		 add_message('one_story_stolen', id => $stolen_ids[0], victim => (keys %victims)[0]);
+	 }
+     }
+
+     # if user selected one story, open it for editing
+     if (@story_ids == 1) {
+	 ($session{story}) = pkg('Story')->find(story_id => $story_ids[0]);
+	 return $self->edit; 
+     } else { # otherwise send user to Workspace
+	 my $url = "workspace.pl";
+	 $self->header_props(-uri=>$url);
+	 $self->header_type('redirect');
+	 return "Redirect: <a href=\"$url\">$url</a>";
+     }
+}
 
 ###########################
 ####  PRIVATE METHODS  ####

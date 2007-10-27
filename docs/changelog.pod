@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Implemented requested "Steal Story" feature, allowing a user with force-checkin
+permission to grab/edit stories checked out to others in one step. [Noam Weinstein]
+
+=item *
+
 Enhanced all duplicate-URL checking methods to prevent new stories
 with slugs from conflicting with existing category URLs, and new
 categories from conflicting with existing stories. [Noam Weinstein]
