@@ -18,7 +18,7 @@ use File::Spec::Functions qw(catdir canonpath);
 
 # setup exceptions
 use Exception::Class 
-  'Krang::Story::DuplicateURL'         => { fields => [ 'story_id', 'category_id' ] },
+  'Krang::Story::DuplicateURL'         => { fields => [ 'story_id', 'category_id', 'url' ] },
   'Krang::Story::MissingCategory'      => { fields => [               ] },
   'Krang::Story::NoCategoryEditAccess' => { fields => [ 'category_id' ] },
   'Krang::Story::NoEditAccess'         => { fields => [ 'story_id'    ] },
@@ -803,24 +803,26 @@ sub _verify_unique {
     my @urls  = $self->urls;
     return unless @urls;
 
-    my $query = 'SELECT story_id FROM story_category WHERE ('.
+    my $query = 'SELECT story_id, url FROM story_category WHERE ('.
       join(' OR ', ('url = ?') x @urls) . ')' . 
         ($self->{story_id} ? ' AND story_id != ?' : '');
-    my ($dup_id) = $dbh->selectrow_array($query, undef, $self->urls, 
-                                         ($self->{story_id} ? 
-                                          ($self->{story_id}) : ()));
+    my ($dup_id, $dup_url) = $dbh->selectrow_array($query, undef, $self->urls, 
+						   ($self->{story_id} ? 
+						    ($self->{story_id}) : ()));
     # throw exception on dup
     Krang::Story::DuplicateURL->throw(message => "Duplicate URL",
-                                      story_id => $dup_id)
+                                      story_id => $dup_id,
+				      url => $dup_url)
         if $dup_id;
     
     # then - unless we're a category index - make sure no category has our URL!
     if ($self->{slug}) {
-	$query = 'SELECT category_id FROM category WHERE ('.
+	$query = 'SELECT category_id, url FROM category WHERE ('.
 	    join(' OR ', ('url = ?') x @urls) . ')';
-	($dup_id) = $dbh->selectrow_array($query, undef, map { $_.'/' } $self->urls);
+	($dup_id, $dup_url) = $dbh->selectrow_array($query, undef, map { $_.'/' } $self->urls);
 	Krang::Story::DuplicateURL->throw(message => "Category has our URL",
-					  category_id => $dup_id)
+					  category_id => $dup_id,
+					  url => $dup_url)
 	    if $dup_id;
     }
 }

@@ -1198,7 +1198,7 @@ sub add_category {
 	}
 
 	# regardless, alert user of duplicate
-	$self->alert_duplicate_url_on_add_category($error, $category);
+	$self->alert_duplicate_url_on_add_category($error);
 
         # remove added category
         pop(@categories);
@@ -1323,7 +1323,7 @@ sub replace_category {
 	}
 
 	# regardless, alert user of duplicate
-	$self->alert_duplicate_url_on_add_category($error, $new_category);	
+	$self->alert_duplicate_url_on_add_category($error);	
 
         # restore previous state
         $story->categories(\@existing_categories);
@@ -1944,16 +1944,14 @@ sub alert_duplicate_url {
 
     # load clashing story/category, and add alert
     if ($error->story_id) {
-	my ($dup) = pkg('Story')->find(story_id => $error->story_id);
 	add_alert('duplicate_url',
-		  story_id => $dup->story_id,
-		  url      => $dup->url,
+		  story_id => $error->story_id,
+		  url      => $error->url,
 		  which    => $which);
     } elsif ($error->category_id) {
-	my ($dup) = pkg('Category')->find(category_id => $error->category_id);
 	add_alert('category_has_url',
-		  category_id => $dup->category_id,
-		  url         => $dup->url,
+		  category_id => $error->category_id,
+		  url         => $error->url,
 		  which       => $which);
     } else {
 	croak ("DuplicateURL didn't include story_id OR category_id");
@@ -1965,17 +1963,13 @@ sub alert_duplicate_url_on_add_category {
     my ($self, $error, $new_category) = @_;
 
     if ($error->story_id) {
-	my ($dup) = pkg('Story')->find(story_id => $error->story_id);
 	add_alert('duplicate_url_on_add_category', 
-		  story_id => $dup->story_id,
-		  url      => $dup->url,                    
-		  category => $new_category->url);
+		  story_id => $error->story_id,
+		  url      => $error->url);
     } elsif ($error->category_id) {
-	my ($dup) = pkg('Category')->find(category_id => $error->category_id);
 	add_alert('category_has_url_on_add_category', 
-		  category_id => $dup->category_id,
-		  url         => $dup->url,                    
-		  category    => $new_category->url);
+		  category_id => $error->category_id,
+		  url         => $error->url);
     } else {
 	croak ("DuplicateURL didn't include story_id OR category_id");
     }

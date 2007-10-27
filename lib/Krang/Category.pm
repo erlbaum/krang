@@ -99,7 +99,7 @@ use Carp qw(verbose croak);
 use Exception::Class
   (
    'Krang::Category::Dependent' => {fields => 'dependents'},
-   'Krang::Category::DuplicateURL' => {fields => [ 'category_id', 'story_id' ]},
+   'Krang::Category::DuplicateURL' => {fields => [ 'category_id', 'story_id', 'url' ]},
    'Krang::Category::NoEditAccess' => {fields => 'category_id'},
    'Krang::Category::RootDeletion',
   );
@@ -592,7 +592,8 @@ SQL
     Krang::Category::DuplicateURL->throw(
               message     =>  "Duplicate URL ($self->{url}) for category ID ".
                               "$category_id.",
-              category_id => $category_id)
+              category_id => $category_id,
+	      url         => $self->{url})
         if $category_id;
 
     # 2) check for story that has our URL
@@ -604,7 +605,8 @@ SQL
     Krang::Category::DuplicateURL->throw(
               message     =>  "Duplicate URL ($self->{url}) for story ID ".
                               "$story_id.",
-              story_id => $story_id)
+              story_id => $story_id,
+              url      => $url_without_trailing_slash)
         if $story_id;
 
     # 3) return false if there were no duplicates
