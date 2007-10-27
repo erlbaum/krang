@@ -7,7 +7,7 @@ use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Message => qw(add_message add_alert);
+use Krang::ClassLoader Message => qw(add_message add_alert clear_messages clear_alerts);
 use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader 'CGI::Workspace';
 use Carp qw(croak);
@@ -276,11 +276,13 @@ Save, Check-In story to a particular desk and redirects to that desk.
 =cut
 
 sub check_in_and_save {
-    my $self    = shift;
+    my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
+
     my $query   = $self->query;
     my $desk_id = $query->param('checkin_to');
 
-    # check if they may move object to desired desk
+    # check if user may move object to desired desk
     return $self->access_forbidden()
       unless pkg('Group')->may_move_story_to_desk($desk_id);
 
@@ -414,9 +416,9 @@ sub edit {
         $query->delete('story_id');
         $session{story} = $story;
     } else {
-        $story = $session{story};
-        croak("Unable to load story from session!")
-          unless $story;
+	# story should be checked out to us; make sure!
+	$self->make_sure_story_is_still_ours() || return '';
+	$story = $session{story};
     }
         
     # run the element editor edit
@@ -652,6 +654,8 @@ after C<< $story->revert() >>.
 
 sub revert {
     my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
+
     my $query = $self->query;
     my $version = $query->param('version');
     my $story = $session{story};
@@ -667,7 +671,7 @@ sub revert {
 
 =item copy
 
-Creates a clone of the current story identfied by the passed story_id
+Creates a clone of the current story identified by the passed story_id
 and redirects to edit mode.  The story is not saved.
 
 =cut
@@ -722,6 +726,7 @@ sending control to workspace.pl.
 
 sub db_save {
     my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -766,6 +771,7 @@ This mode saves the story to the database and returns to edit.
 
 sub db_save_and_stay {
     my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -847,6 +853,7 @@ publisher.pl to publish the story.
 
 sub save_and_publish {
     my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
     
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -1400,6 +1407,8 @@ the session.
 
 sub delete {
     my $self = shift;
+    $self->make_sure_story_is_still_ours || return '';
+
     my $query = $self->query();
     my $story = $session{story};
     croak("Unable to load story from session!")
@@ -1980,6 +1989,37 @@ sub alert_duplicate_url_on_add_category {
     }
 }
 
+sub make_sure_story_is_still_ours {
+
+    my ($self) = @_;
+
+    # grab story in session hash
+    if (!$session{story}) { croak ("Could not load story from session!") }
+    my $story_id = $session{story}->story_id;
+    
+    # look up actual story in database to make sure it's still ours
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+    if (!$story) {
+	clear_messages(); clear_alerts(); 
+	add_alert('story_deleted_during_edit', id => $story_id);
+    } elsif (!$story->checked_out) {
+	clear_messages(); clear_alerts(); 
+	add_alert('story_checked_in_during_edit', id => $story_id);
+    } elsif ($story->checked_out_by ne $ENV{REMOTE_USER}) {
+	my ($thief) = pkg('User')->find(user_id => $story->checked_out_by);
+	my $thief_name = CGI->escapeHTML($thief->first_name.' '.$thief->last_name);	
+	clear_messages(); clear_alerts(); 
+	add_alert('story_stolen_during_edit', id => $story_id, thief => $thief_name);
+    } else {
+        # story is still ours
+	return 1; 
+    }
+    
+    # story is no longer ours! go to workspace
+    $self->header_props(-uri=>"workspace.pl");
+    $self->header_type('redirect');
+    return 0;
+}
 
 1;
 

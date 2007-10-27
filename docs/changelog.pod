@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added alerts notifying user if the story being edited was checked-in, stolen,
+or deleted by another user while they were editing it. [Noam Weinstein]
+
+=item *
+
 Implemented requested "Steal Story" feature, allowing a user with force-checkin
 permission to grab/edit stories checked out to others in one step. [Noam Weinstein]
 
