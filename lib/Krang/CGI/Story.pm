@@ -1193,8 +1193,9 @@ sub add_category {
 	if ($story->slug ne $old_slug) {
 	    $story->slug($old_slug || '');
 	    $query->param(slug => $old_slug);
+	    $query->param(cat_idx => !$old_slug);
 	    add_alert('reverting_slug_along_with_categories',
-		      slug => $old_slug || 'empty string');
+		      slug => $old_slug ? '"'.$old_slug.'"' : 'empty string (Category Index)');
 	}
 
 	# regardless, alert user of duplicate
@@ -1318,8 +1319,9 @@ sub replace_category {
 	if ($story->slug ne $old_slug) {
 	    $story->slug($old_slug || '');
 	    $query->param(slug => $old_slug);
+	    $query->param(cat_idx => !$old_slug);
 	    add_alert('reverting_slug_along_with_categories',
-		      slug => $old_slug || 'empty string');
+		      slug => $old_slug ? '"'.$old_slug.'"' : 'empty string (Category Index)');
 	}
 
 	# regardless, alert user of duplicate
