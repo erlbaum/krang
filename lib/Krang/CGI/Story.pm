@@ -405,10 +405,9 @@ sub edit {
     my $query = $self->query;
     my $template = $self->load_tmpl('edit.tmpl', associate => $query, die_on_bad_params => 0, loop_context_vars => 1);
     my %args = @_;
-              
+
     my $story;
     if ($query->param('story_id')) {
-        # load story from DB
         ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
         croak("Unable to load story '" . $query->param('story_id') . "'.")
           unless $story;
@@ -416,16 +415,15 @@ sub edit {
         $query->delete('story_id');
         $session{story} = $story;
     } else {
-	# story should be checked out to us; make sure!
 	$self->make_sure_story_is_still_ours() || return '';
 	$story = $session{story};
     }
-        
+
     # run the element editor edit
     $self->element_edit(template => $template, 
                         element => $story->element);
     
-    # static data
+    # set fields shown everywhere
     $template->param(story_id          => $story->story_id || "N/A",
                      type              => $story->element->display_name,
                      url               => $story->url ? 
@@ -435,25 +433,19 @@ sub edit {
                                                        length => 50,
                                                       ) : "");
 
-    # remember whether user checked/unchecked 'category index' in case we're returning from an error
-    my $cat_idx = ($query->param('usr_changed_idx') ? $query->param('cat_idx') : !($story->slug));
-
-    # remember current value of slug (which will be empty if user has checked 'Category Index'
-    my $slug = ($cat_idx ? '' : ($query->param('slug') || $story->slug));
-
-    # in case user checks 'Category Index' and later unchecks it, remember old value of slug
-    my $slug_before_empty = ($query->param('slug_before_empty') || $story->slug); 
-
-    # edit fields for top-level
+    # set fields for top-level
     my $path  = $query->param('path') || '/';
     if ($path eq '/' and not $query->param('bulk_edit')) {
+
+        my $slug = $query->param('returning_from_edit') ? $query->param('slug') : $story->slug;
+        my $cat_idx = $query->param('returning_from_edit') ? $query->param('cat_idx') : !$slug;
+
         $template->param(is_root           => 1,
                          title             => ($query->param('title') || $story->title),
                          show_slug         => ($story->class->slug_use ne 'prohibit'),
                          require_slug      => ($story->class->slug_use eq 'require'),
-                         cat_idx           => $cat_idx,
-                         slug              => $slug,
-                         slug_before_empty => $slug_before_empty,
+                         cat_idx           => $cat_idx || '',
+                         slug              => $slug || '',
                          version           => $story->version,
                          published_version => $story->published_version,
                         );

@@ -90,12 +90,12 @@ save_and_stay = function() {
   usr_toggled_cat_idx = function() {
     document.edit.slug.disabled = document.edit.cat_idx.checked;
     if (document.edit.slug.disabled) {	
+	document.edit.slug_before_empty.value = document.edit.slug.value; 
 	document.edit.slug.value = '';
     } else {
 	// in case the user checks and then unchecks 'Category Index'...
 	document.edit.slug.value = document.edit.slug_before_empty.value; 
     }
-    document.edit.usr_changed_idx.value = 1;
   }
 
   <tmpl_if may_publish>
@@ -147,8 +147,8 @@ save_and_stay = function() {
 
 <input name="rm" value="edit" type="hidden">
 
+<input name="returning_from_edit" value=1 type="hidden">
 <input name="slug_before_empty" value="<tmpl_var slug_before_empty>" type="hidden">
-<input name="usr_changed_idx"   value="<tmpl_var usr_changed_idx>"   type="hidden">
 
 <tmpl_if is_root><tmpl_if story_id><p class="cram east">
   <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
@@ -200,7 +200,7 @@ Properties
   <tmpl_if show_slug>
     <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
     <th><tmpl_if require_slug>*</tmpl_if>Slug</th>
-    <td><input name="slug" value="<tmpl_var escape=html slug>" onkeyup="document.edit.slug_before_empty.value=this.value"<tmpl_if cat_idx> disabled</tmpl_if>>
+    <td><input name="slug" value="<tmpl_var escape=html slug>" <tmpl_if cat_idx> disabled</tmpl_if>>
     <tmpl_unless require_slug>
       <input name="cat_idx" type="checkbox" onchange="usr_toggled_cat_idx()" class="pushright small hcenter"<tmpl_if cat_idx> checked</tmpl_if>>
       Category Index
