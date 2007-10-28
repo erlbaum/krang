@@ -216,24 +216,20 @@ sub create {
     my $type = $query->param('type');
     my $title = $query->param('title');
     my $slug = $query->param('slug') || '';
-    my $cat_idx = $query->param('cat_idx');
+    my $cat_idx = $query->param('cat_idx') || 0;
     my $category_id = $query->param('category_id');
     $session{KRANG_PERSIST}{NEW_STORY_DIALOGUE}{ cat_chooser_id_new_story_category_id } = $category_id;
 
     my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
 
-    # figure out whether slugs are required/optional
-    my $slug_entry_for_type = ($type ? pkg('ElementLibrary')->top_level(name => $type)->slug_use() : 'prohibit');
-    my $slug_required       = ($slug_entry_for_type eq 'require');
-    my $slug_optional       = (($slug_entry_for_type eq 'encourage') || ($slug_entry_for_type eq 'discourage'));
-
     # detect bad fields
     my @bad;
     push(@bad, 'type'),         add_alert('missing_type') unless $type;
     push(@bad, 'title'),        add_alert('missing_title') unless $title;
-    push(@bad, 'slug'),         add_alert('missing_slug') if ($slug_required && !$slug);
-    push(@bad, 'slug'),         add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
-    push(@bad, 'slug'),         add_alert('no_slug_no_cat_idx') if ($slug_optional && !$slug && !$cat_idx);
+    push(@bad, 'slug'),         if ($type && !$self->verify_slug_input(slug => $slug, 
+								       type => $type, 
+								       cat_idx => $cat_idx));
+
     push(@bad, 'category_id'),  add_alert('missing_category') unless $category_id;
     push(@bad, 'cover_date'),   add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
@@ -437,8 +433,8 @@ sub edit {
     my $path  = $query->param('path') || '/';
     if ($path eq '/' and not $query->param('bulk_edit')) {
 
-        my $slug = $query->param('returning_from_edit') ? $query->param('slug') : $story->slug;
-        my $cat_idx = $query->param('returning_from_edit') ? $query->param('cat_idx') : !$slug;
+        my $slug = $query->param('returning_from_root') ? $query->param('slug') : $story->slug;
+        my $cat_idx = $query->param('returning_from_root') ? $query->param('cat_idx') : !$slug;
 
         $template->param(is_root           => 1,
                          title             => ($query->param('title') || $story->title),
@@ -1108,24 +1104,21 @@ sub _save {
         and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug') || '';
-        my $cat_idx = $query->param('cat_idx');
-	my $slug_entry_for_type = pkg('ElementLibrary')->top_level(name => $story->element->name)->slug_use();
-	my $slug_required       = ($slug_entry_for_type eq 'require');
-	my $slug_optional       = (($slug_entry_for_type eq 'encourage') || ($slug_entry_for_type eq 'discourage'));
+	my $cat_idx = $query->param('cat_idx') || 0;
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
         my @bad;
         push(@bad, 'title'),       add_alert('missing_title')
-          unless $title;
-        push(@bad, 'slug'),        add_alert('missing_slug')
-          if ($slug_required && !$slug);
-        push(@bad, 'slug'),        add_alert('no_slug_no_cat_idx') 
-          if ($slug_optional && !$slug && !$cat_idx);
-        push(@bad, 'slug'),        add_alert('bad_slug')
-          if length $slug and $slug !~ /^[-\w]+$/;
+	    unless $title;
         push(@bad, 'cover_date'),  add_alert('missing_cover_date')
-          unless $cover_date;
+	    unless $cover_date;
+        push(@bad, 'slug')
+	    unless $self->verify_slug_input(slug => $slug, 
+					    story => $story,
+					    cat_idx => $cat_idx,
+					    categories => [$story->categories]);
+	
         # return to edit mode if there were problems
         return $self->edit(bad => \@bad) if @bad;
 
@@ -1175,45 +1168,16 @@ sub add_category {
     croak("Unable to load category '$category_id'!")
       unless $category;
 
-    # push it on
+    # add it to list 
     push(@categories, $category);
 
-    # use newest slug, but keep track of changes in case we need to revert
-    my $old_slug = $story->slug;
-    $story->slug($query->param('slug') || ''); 
-
-    # this might fail if a duplicate URL is created
-    eval { $story->categories(@categories); };
-
-    # is it a dup?
-    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-	my $error = $@;
-
-	# if slug has changed, revert it and notify user
-	if ($story->slug ne $old_slug) {
-	    $story->slug($old_slug || '');
-	    $query->param(slug => $old_slug);
-	    $query->param(cat_idx => !$old_slug);
-	    add_alert('reverting_slug_along_with_categories',
-		      slug => $old_slug ? '"'.$old_slug.'"' : 'empty string (Category Index)');
-	}
-
-	# regardless, alert user of duplicate
-	$self->alert_duplicate_url_on_add_category($error);
-
-        # remove added category
-        pop(@categories);
-        $story->categories(\@categories);
-
-        return $self->edit;
-    } elsif ($@) {
-        # rethrow
-        die($@);
+    # and, assuming update_categories() succeeds...
+    if ($self->update_categories(query => $query,    
+				 story => $story,    
+				 categories => \@categories)) {
+	add_message('added_category', url => $category->url);
     }
-
-    # success
-    add_message('added_category', url => $category->url);
-
+    
     return $self->edit();
 }
 
@@ -1248,9 +1212,12 @@ sub set_primary_category {
         }
     }
 
-    # set it
-    $story->categories(@categories);
-    add_message('set_primary_category', url => $url);
+    # and, assuming update_categories() succeeds...
+    if ($self->update_categories(query => $query, 
+				 story => $story,
+				 categories => \@categories)) {
+	add_message('set_primary_category', url => $url);
+    }
 
     return $self->edit();
 }
@@ -1304,41 +1271,14 @@ sub replace_category {
 	}
     }
 
-    # use newest slug, but keep track of changes in case we need to revert
-    my $old_slug = $story->slug;
-    $story->slug($query->param('slug') || ''); 
-    
-    # this might fail if a duplicate URL is created
-    eval { $story->categories(@new_categories); };
+    # and, assuming update_categories() succeeds...
+    if ($self->update_categories(query => $query, 
+				 story => $story,
+				 categories => \@new_categories)) {
 
-    # is it a dup?
-    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-	my $error = $@;
-
-	# if slug has changed, revert it and notify user
-	if ($story->slug ne $old_slug) {
-	    $story->slug($old_slug || '');
-	    $query->param(slug => $old_slug);
-	    $query->param(cat_idx => !$old_slug);
-	    add_alert('reverting_slug_along_with_categories',
-		      slug => $old_slug ? '"'.$old_slug.'"' : 'empty string (Category Index)');
-	}
-
-	# regardless, alert user of duplicate
-	$self->alert_duplicate_url_on_add_category($error);	
-
-        # restore previous state
-        $story->categories(\@existing_categories);
-
-        return $self->edit;
-    } elsif ($@) {
-        # rethrow
-        die($@);
-    }
-
-    # success
-    add_message('replaced_category', old_url => $old_category->url, new_url => $new_category->url);
-    $query->param('category_to_replace_id' => $new_category->category_id); # so radio-button doesn't disappear!
+	add_message('replaced_category', old_url => $old_category->url, new_url => $new_category->url);
+	$query->param('category_to_replace_id' => $new_category->category_id); # so radio-button remains!
+    } 
 
     return $self->edit();
 }
@@ -1375,18 +1315,21 @@ sub delete_categories {
         }
     }
 
-    # set remaining cats
-    $story->categories(@categories);
-
-    # put together a reasonable summary of what happened
-    if (@urls == 0) {
-        add_alert('deleted_no_categories');
-    } elsif (@urls == 1) {
-        add_message('deleted_a_category', url => $urls[0]);
-    } else {
-        add_message('deleted_categories', 
-                    urls => join(', ', @urls[0..$#urls-1]) . 
-                              ' and ' . $urls[-1]);
+    # and, assuming update_categories() succeeds...
+    if ($self->update_categories(query => $query, 
+				 story => $story,
+				 categories => \@categories)) {
+	
+	# put together a reasonable summary of what happened
+	if (@urls == 0) {
+	    add_alert('deleted_no_categories');
+	} elsif (@urls == 1) {
+	    add_message('deleted_a_category', url => $urls[0]);
+	} else {
+	    add_message('deleted_categories', 
+			urls => join(', ', @urls[0..$#urls-1]) . 
+			' and ' . $urls[-1]);
+	}
     }
 
     return $self->edit();
@@ -1935,25 +1878,112 @@ sub autocomplete {
     );
 }
 
+sub update_categories {
+
+    my ($self, %args)  = @_;
+    my $query          = $args{query};
+    my $story          = $args{story};
+    my @old_cats       = $story->categories;
+    my @new_cats       = @{$args{categories}};
+
+    # find what has changed between old and new categories
+    my %old_cats       = map { $_ => 1 } @old_cats;
+    my @added_cats     = grep { !$old_cats{$_} } @new_cats;
+    my @unchanged_cats = grep {  $old_cats{$_} } @new_cats; 
+
+    # if user changed slug...
+    my $old_slug      = $story->slug || '';
+    my $new_slug      = $query->param('slug') || '';
+    if ($new_slug ne $old_slug) {
+	
+	# is new slug valid? will it build unique URLs with the unchanged categories?
+	if (!$self->verify_slug_input(slug => $new_slug, 
+				      story => $story,
+				      cat_idx => $query->param('cat_idx') || 0,
+				      categories => \@unchanged_cats)) {
+	    add_alert('new_slug_prevented_category_change');
+	    return 0;
+	}
+    }
+    
+    # slug is safe on current cats, so now let's try the new cats
+    eval { $story->categories(@new_cats) };
+    return 1 unless $@;
+
+    # throw any errors
+    if (ref($@) and $@->isa('Krang::Story::DuplicateURL')) {    
+	$self->alert_duplicate_url_on_add_category($@, \@added_cats);
+	$story->categories(@old_cats);
+	return 0;
+    } else { 
+	die ($@); 
+    }
+}
+
+sub verify_slug_input {
+
+    my ($self, %args) = @_;
+
+    my $slug       = $args{slug};       
+    my $story      = $args{story};        
+    my $type       = $args{type} || ($story && $story->class->name);
+    my $cat_idx    = $args{cat_idx};    
+    my @categories = $args{categories} && @{$args{categories}}; 
+    
+    my $slug_entry_for_type = pkg('ElementLibrary')->top_level(name => $type)->slug_use();
+    my $slug_required       = ($slug_entry_for_type eq 'require');
+    my $slug_optional       = (($slug_entry_for_type eq 'encourage') || ($slug_entry_for_type eq 'discourage'));
+
+    if (length $slug && $slug !~ /^[-\w]+$/) {
+	add_alert('bad_slug');
+	return 0;
+    } elsif ($slug_optional && !$slug && !$cat_idx) {
+	add_alert('no_slug_no_cat_idx');
+	return 0;
+    } elsif ($slug_required && !$slug) {
+	add_alert('missing_slug');
+	return 0;
+    } elsif ($story && @categories && ($story->slug ne $slug)) {
+
+	# store old slug/cats in case we need to revert
+	my $old_slug = $story->slug;         
+	my @old_cats = $story->categories;   
+
+        # try out new slug on category list to see if it causes any dupes
+	$story->slug($slug); 
+	eval { $story->categories(@categories) };
+	if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+	    $self->alert_duplicate_url($@, $story->class);
+	    $story->slug($old_slug);       
+	    $story->categories(@old_cats); 
+	    return 0;
+	} elsif ($@) {
+	    die ($@);
+	}
+    }
+    # success
+    return 1; 
+}
+
 sub alert_duplicate_url {
 
-    my ($self, $error, $class) = @_;
+    my ($self, $dupe, $class) = @_;
     
     # figure out how our story builds the URL (to remind user)
-    my $which = join(' and ', 
+    my $which = join(' or ', 
 		     join(', ', $class->url_attributes),
 		     "site/category");
 
     # load clashing story/category, and add alert
-    if ($error->story_id) {
+    if ($dupe->story_id) {
 	add_alert('duplicate_url',
-		  story_id => $error->story_id,
-		  url      => $error->url,
+		  story_id => $dupe->story_id,
+		  url      => $dupe->url,
 		  which    => $which);
-    } elsif ($error->category_id) {
+    } elsif ($dupe->category_id) {
 	add_alert('category_has_url',
-		  category_id => $error->category_id,
-		  url         => $error->url,
+		  category_id => $dupe->category_id,
+		  url         => $dupe->url,
 		  which       => $which);
     } else {
 	croak ("DuplicateURL didn't include story_id OR category_id");
@@ -1962,16 +1992,19 @@ sub alert_duplicate_url {
 
 sub alert_duplicate_url_on_add_category {
 
-    my ($self, $error, $new_category) = @_;
+    my ($self, $dupe, $added_cats) = @_;
+    my $new_cat_url = join(' & ', map { $_->{url} } @{$added_cats});
 
-    if ($error->story_id) {
+    if ($dupe->story_id) {
 	add_alert('duplicate_url_on_add_category', 
-		  story_id => $error->story_id,
-		  url      => $error->url);
-    } elsif ($error->category_id) {
+		  story_id     => $dupe->story_id,
+		  url          => $dupe->url,
+		  category_url => $new_cat_url);
+    } elsif ($dupe->category_id) {
 	add_alert('category_has_url_on_add_category', 
-		  category_id => $error->category_id,
-		  url         => $error->url);
+		  category_id  => $dupe->category_id,
+		  url          => $dupe->url,
+		  category_url => $new_cat_url);
     } else {
 	croak ("DuplicateURL didn't include story_id OR category_id");
     }

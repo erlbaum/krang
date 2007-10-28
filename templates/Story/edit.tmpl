@@ -147,12 +147,11 @@ save_and_stay = function() {
 
 <input name="rm" value="edit" type="hidden">
 
-<input name="returning_from_edit" value="1" type="hidden">
-<input name="slug_before_empty" value="<tmpl_var slug_before_empty>" type="hidden">
-
 <tmpl_if is_root><tmpl_if story_id><p class="cram east">
   <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
   <input value="View Schedule" onclick="save_and_edit_schedule()" type="button" class="button">
+  <input name="returning_from_root" value="1" type="hidden">
+  <input name="slug_before_empty" value="<tmpl_var slug_before_empty>" type="hidden">
 </p></tmpl_if></tmpl_if>
 
 <h2>
