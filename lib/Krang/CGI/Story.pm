@@ -722,6 +722,8 @@ sub copy {
 
 =item replace_dupes
 
+(THE REPLACE_DUPES() RUNMODE IS NOT UTILIZED IN V3; AWAITING FURTHER TESTING...)
+
 This mode gathers a list of stories whose URLs duplicate the current story's
 and either removes them from the conflicting locations, or - if all their
 locations conflict - deletes them entirely. 
