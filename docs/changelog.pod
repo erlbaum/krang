@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in Sites:  Sites can now rename their URL without
+losing deployed templates.  [Jesse Erlbaum]
+
+=item *
+
 Added alerts notifying user if the story being edited was checked-in, stolen,
 or deleted by another user while they were editing it. [Noam Weinstein]
 
