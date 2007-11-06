@@ -10,6 +10,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Made C<Krang::ElementClass::XinhaEditor> work again. [Bodo Schulze]
+
+=item *
+
 Fixed bug in Sites:  Sites can now rename their URL without
 losing deployed templates.  [Jesse Erlbaum]
 
