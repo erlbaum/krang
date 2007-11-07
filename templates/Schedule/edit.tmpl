@@ -105,7 +105,10 @@ Current Schedule
     <input name="advanced_schedule" value="1" type="hidden">
   </tmpl_if>
 
-  <table class="result select_row" summary=""><!--:FIX(db2)-->
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
 
   <colgroup>
   <col>
@@ -127,7 +130,7 @@ Current Schedule
 
   <tbody><tmpl_loop existing_schedule_loop>
     <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-    <td><tmpl_var escape=html action></td>
+    <td class="f"><tmpl_var escape=html action></td>
     <td><tmpl_if version>
       <tmpl_var escape=html version>
     <tmpl_else>
@@ -135,7 +138,7 @@ Current Schedule
     </tmpl_if></td>
     <td><tmpl_var escape=html schedule></td>
     <td><tmpl_var escape=html next_run></td>
-    <td class="tick"><input name="schedule_delete_list" value="<tmpl_var escape=html schedule_id>" type="checkbox"></td>
+    <td class="tick l"><input name="schedule_delete_list" value="<tmpl_var escape=html schedule_id>" type="checkbox"></td>
     </tr>
   </tmpl_loop></tbody>
 

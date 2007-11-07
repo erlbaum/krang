@@ -36,7 +36,10 @@ Current Alerts
 
   <input name="rm" value="delete_alerts" type="hidden">
 
-  <table class="result select_row" summary="">
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
 
   <colgroup>
   <col>
@@ -56,14 +59,14 @@ Current Alerts
 
   <tbody><tmpl_loop alert_loop>
     <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-    <td><tmpl_var escape=html action></td>
+    <td class="f"><tmpl_var escape=html action></td>
     <td><tmpl_if category><tmpl_var escape=html category><tmpl_else>Any</tmpl_if></td>
     <td><tmpl_if desk><tmpl_var escape=html desk><tmpl_else>Any</tmpl_if></td>
-    <td class="tick"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox"></td>
+    <td class="tick l"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox"></td>
     </tr>
   </tmpl_loop></tbody>
 
-  </table>
+  </table></div>
 
   <div class="panel">
   <input value="Delete" onclick="delete_checked()" type="button">
