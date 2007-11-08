@@ -73,17 +73,9 @@ Current Alerts
 
   </table></div>
 
-<!--   <div class="panel"> -->
-<!--   <input value="Delete" onclick="delete_checked()" type="button">k -->
-<!--   </div> -->
-
   </form>
 
 </tmpl_unless>
-
-<!-- <h3> -->
-<!-- Create a New Alert -->
-<!-- </h3> -->
 
 <form name="add_alert_form" method="post" action="my_alerts.pl">
 
@@ -93,7 +85,6 @@ Current Alerts
   <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
   <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
   <table cellspacing="0" class="props" summary="">
-<!-- <table class="request" summary=""> -->
 
 <colgroup>
 <col class="c-mini">
@@ -103,7 +94,6 @@ Current Alerts
 <thead>
 <tr>
 <th class="c-mini f l" colspan="2">Create a New Alert</th>
-<!-- <th class="l">&nbsp;</th> -->
 </tr>
 </thead>
 
@@ -116,7 +106,7 @@ Current Alerts
 
 <tr>
 <td class="f">Site/Category</td>
-<td class="l"><tmpl_var category_chooser></td>
+<td class="l"><tmpl_var category_chooser_interface></td>
 </tr>
 
 <tr>
@@ -132,6 +122,7 @@ Current Alerts
 <input value="Add Alert" type="submit" class="west">
 </div>
 
+<tmpl_var category_chooser>
 </form>
 
 <tmpl_include footer.tmpl>

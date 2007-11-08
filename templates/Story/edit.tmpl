@@ -230,19 +230,16 @@ Edit Story
   </tr>
 
   <tr>
-<!--   <tr class="even"> -->
   <td class="f">Current Version</td>
   <td class="l"><tmpl_var escape=html version></td>
   </tr>
 
   <tr>
-<!--   <tr class="even"> -->
   <td class="f">Published Version</td>
   <td class="l"><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
   </tr>
 
   <tr>
-<!--   <tr class="even"> -->
   <td class="f">All Versions</td>
   <td class="l">
   <tmpl_var version_selector>
@@ -294,11 +291,14 @@ Edit Story
     No Categories assigned.
     </p>
 
-    <tmpl_var add_category_chooser><!--:FIXME(db2)-->
+    <tmpl_var add_category_button>
 
   <tmpl_else>
 
-    <table class="request select_row" summary=""><!--:FIX(db2)-->
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result edit select_row" summary="">
 
     <colgroup>
     <col class="series">
@@ -323,26 +323,26 @@ Edit Story
 
     <tmpl_loop category_loop>
       <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-      <td class="series"><input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>></td>
+      <td class="series f"><input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>></td>
       <td><tmpl_var escape=html site></td>
       <td colspan="2"><tmpl_var escape=html category></td>
       <td class="series"><input name="category_to_replace_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if selected_for_replace> checked</tmpl_if>></td>
-      <td class="series"><tmpl_unless __first__>
+      <td class="series l"><tmpl_unless __first__>
         <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox">
-      </tmpl_unless></td>
+      <tmpl_else>&nbsp;</tmpl_unless></td>
       </tr>
     </tmpl_loop>
 
-    <tr>
-    <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Set" onclick="set_primary_category()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
-    <td colspan="3"><tmpl_var add_category_chooser></td>
-    <td><tmpl_var replace_category_chooser></td>
-    <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Delete" onclick="remove_categories()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
+    <tr class="command-row">
+    <td class="series f"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Set" onclick="set_primary_category()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
+    <td colspan="3"><tmpl_var add_category_button></td>
+    <td><tmpl_var replace_category_button></td>
+    <td class="series l"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Delete" onclick="remove_categories()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
     </tr>
 
     </tbody>
 
-    </table>
+    </table></div>
 
   </tmpl_unless>
 
@@ -384,7 +384,8 @@ Edit Story
 
 </div>
 
-
+<tmpl_var add_category_chooser>
+<tmpl_var replace_category_chooser>
 </form>
 
 <tmpl_include footer.tmpl>
