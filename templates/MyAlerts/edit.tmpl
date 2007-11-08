@@ -45,7 +45,7 @@ Current Alerts
   <col>
   <col>
   <col>
-  <col class="tick">
+  <col class="series">
   </colgroup>
 
   <thead>
@@ -53,7 +53,7 @@ Current Alerts
   <th class="f">Action</th>
   <th>Site/Category</th>
   <th>Desk</th>
-  <th class="tick l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
+  <th class="series l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
   </tr>
   </thead>
 
@@ -62,55 +62,71 @@ Current Alerts
     <td class="f"><tmpl_var escape=html action></td>
     <td><tmpl_if category><tmpl_var escape=html category><tmpl_else>Any</tmpl_if></td>
     <td><tmpl_if desk><tmpl_var escape=html desk><tmpl_else>Any</tmpl_if></td>
-    <td class="tick l"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox"></td>
+    <td class="series l"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox"></td>
     </tr>
   </tmpl_loop></tbody>
 
+  <tr class="command-row">
+  <td class="f" colspan="3">&nbsp;</td>
+  <td class="series l"><input value="Delete" onclick="delete_checked()" type="button" class="button"></td
+  </tr>
+
   </table></div>
 
-  <div class="panel">
-  <input value="Delete" onclick="delete_checked()" type="button">
-  </div>
+<!--   <div class="panel"> -->
+<!--   <input value="Delete" onclick="delete_checked()" type="button">k -->
+<!--   </div> -->
 
   </form>
 
 </tmpl_unless>
 
-<h3>
-Create a New Alert
-</h3>
+<!-- <h3> -->
+<!-- Create a New Alert -->
+<!-- </h3> -->
 
 <form name="add_alert_form" method="post" action="my_alerts.pl">
 
 <input name="rm" value="add" type="hidden">
 
-<table class="request" summary="">
+  <div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="props" summary="">
+<!-- <table class="request" summary=""> -->
 
 <colgroup>
 <col class="c-mini">
 <col>
 </colgroup>
 
+<thead>
+<tr>
+<th class="c-mini f l" colspan="2">Create a New Alert</th>
+<!-- <th class="l">&nbsp;</th> -->
+</tr>
+</thead>
+
 <tbody class="half">
 
 <tr>
-<th>*Action</th>
-<td><tmpl_var action_selector></td>
+<td class="f">*Action</td>
+<td class="l"><tmpl_var action_selector></td>
 </tr>
 
 <tr>
-<th>Site/Category</th>
-<td><tmpl_var category_chooser></td>
+<td class="f">Site/Category</td>
+<td class="l"><tmpl_var category_chooser></td>
 </tr>
 
 <tr>
-<th>Desk</th>
-<td><tmpl_var desk_selector></td>
+<td class="f">Desk</td>
+<td class="l"><tmpl_var desk_selector></td>
 </tr>
 
 </tbody>
 
-</table>
+</table></div>
 
 <div class="panel lame capped">
 <input value="Add Alert" type="submit" class="west">
