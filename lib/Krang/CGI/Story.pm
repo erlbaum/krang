@@ -2182,7 +2182,7 @@ sub alert_duplicate_url {
 		  url        => $error->categories->[0]->{url},  # most one new duplicate URL
   		  cat        => $new_cat) :
 	add_alert('category_has_url',
-		  ids        => join(', ', map { $_->{id} }  @{$error->categories}),
+		  ids        => join(' and Category ', map { $_->{id} }  @{$error->categories}),
 		  urls       => join(', ', map { $_->{url} } @{$error->categories}),
 		  s          => @{$error->categories} > 1  ? 's' : '',  # plural
   		  attributes => $url_attributes); 
