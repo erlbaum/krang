@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added F<bin/krang_dump_session> CLI util to help track down session
+problems. [Michael Peters]
+
+=item *
+
 Made C<Krang::ElementClass::XinhaEditor> work again. [Bodo Schulze]
 
 =item *
