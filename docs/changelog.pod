@@ -10,6 +10,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added platform file for RedHat Enterprise Server 5 (ES5) [Jesse Erlbaum]
+
+=item *
+
 Added F<bin/krang_dump_session> CLI util to help track down session
 problems. [Michael Peters]
 
