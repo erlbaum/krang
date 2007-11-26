@@ -2148,8 +2148,8 @@ sub alert_duplicate_url {
     if ($error->stories) {
 
       # dupe story alerts get a special easily-readable table of IDs/URLs; we build the rows here
-      my $dupes = join ('', map { sprintf(qq{<tr>  <td> %d </td>  <td> <a href="%s" target='_blank'>%s</a> </td>  </tr>},
-					  $_->{id}, 'http://'.$_->{url}, $_->{url}) } @{$error->stories});
+      my $dupes = join ('', map { sprintf(qq{<tr>  <td> %d </td>  <td> <a href="javascript:Krang.preview('story',%d)">%s</a> </td>  </tr>},
+					  $_->{id}, $_->{id}, $_->{url}) } @{$error->stories});
       # and we throw (using $s for plural messages, $q for quotes, $f for form)...
       my $s = @{$error->stories} > 1 ? 's' : '';
       my $f = $self->query->param('returning_from_root') ? 'edit' : 'new_story';
