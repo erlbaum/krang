@@ -68,11 +68,9 @@ C<< $r->notes() >> and logs them with Krang::Log.
 
 =back
 
-=head1 INTERFACE
-
-None.
 
 =cut
+
 
 use Apache::Constants qw(:response);
 use Apache::Cookie;
@@ -96,8 +94,6 @@ use Krang;
 
 BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
-# Login app name
-use constant LOGIN_APP => 'login.pl';
 
 if( ApacheMaxSize ) {
     Apache::SizeLimit->set_max_process_size(ApacheMaxSize);
@@ -106,9 +102,54 @@ if( ApacheMaxSize ) {
 }
 Apache::SizeLimit->set_max_unshared_size(ApacheMaxUnsharedSize) if ApacheMaxUnsharedSize;
 
+
 ##########################
 ####  PUBLIC METHODS  ####
 ##########################
+
+
+=head1 INTERFACE
+
+Following are methods which can be overridden in sub-classes.
+
+=over 4
+
+=item unprotected_uri()
+
+Return a list of URIs which should never be restricted by login.
+
+=cut
+
+sub unprotected_uri {
+    my $self = shift;
+
+    # Just the login.pl, by default
+    my @uris = ( $self->login_uri );
+
+    return @uris;
+}
+
+
+=item login_uri()
+
+The URI to which users should be redirected if they fail authorization.
+
+=cut
+
+sub login_uri {
+    my $self = shift;
+
+    return qw(login.pl);
+}
+
+
+
+=pod
+
+=back
+
+=cut
+
 
 
 # Re-write the incoming request, based on Krang Instance rules:
@@ -372,12 +413,14 @@ sub authz_handler ($$) {
     my $instance  = pkg('Conf')->instance();
     my $flavor    = $r->dir_config('flavor');
 
-    # always allow access to the login app
-    my $login_app = LOGIN_APP;
-    if (($flavor eq 'root'     and $path =~ m!^/$instance/$login_app!) or 
-        ($flavor eq 'instance' and $path =~ m!^/$login_app!)
-       ) {
-        return OK;
+    # always allow access to the specified apps
+    my @unprotected_uri = $self->unprotected_uri();
+    foreach my $uu (@unprotected_uri) {
+        if (($flavor eq 'root'     and $path =~ m!^/$instance/$uu!) or 
+            ($flavor eq 'instance' and $path =~ m!^/$uu!)
+           ) {
+            return OK;
+        }
     }
 
     # always allow access to the CSS file and images - needed before
@@ -531,7 +574,7 @@ sub _redirect_to_login {
     my $self = shift;
     my ($r, $flavor, $instance) = @_;
 
-    my $login_app = LOGIN_APP;
+    my $login_app = $self->login_uri();
     my $new_uri = ($flavor eq 'instance' ? "/$login_app" : "/$instance/$login_app");
 
     return $self->_do_redirect($r, $new_uri);

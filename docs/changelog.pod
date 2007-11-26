@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added inheritable/overridable methods to Krang::Handler, login_uri()
+and unprotected_uri().  [Jesse Erlbaum]
+
+=item *
+
 Made previewing from story-edit screen validate and then display the user's
 latest changes (i.e. changes they haven't yet saved). [Noam Weinstein]
 
