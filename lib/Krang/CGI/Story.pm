@@ -916,7 +916,7 @@ sub preview_and_stay {
     my $self = shift;
 
     # call internal _save and return output from it on error
-    my $output = $self->_save();
+    my $output = $self->_save(previewing_story => 1);
     return $output if length $output;
 
     # re-load edit window and have it launch new window for preview
@@ -1222,7 +1222,7 @@ sub save_and_go_up {
 # underlying save routine.  returns false on success or HTML to show
 # to the user on failure.
 sub _save {
-    my $self = shift;
+    my ($self, %args) = @_;
     my $query = $self->query;
 
     my $story = $session{story};
@@ -1230,7 +1230,7 @@ sub _save {
       unless $story;
 
     # run element editor save and return to edit mode if errors were found.
-    my $elements_ok = $self->element_save(element => $story->element);
+    my $elements_ok = $self->element_save(element => $story->element, previewing_story => $args{previewing_story});
     return $self->edit() unless $elements_ok;
 
     # if we're saving in the root then save the story data
