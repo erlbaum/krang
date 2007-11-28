@@ -447,6 +447,7 @@ Krang.Ajax.update = function(args) {
 
                 // update the navigation if we need to
                 if( json && json.krang_update_nav ) {
+	            Krang.Window.pass_id();
                     Krang.Ajax.update({ url: 'nav.pl', target: 'S', to_top: false });
 	        }
             },
