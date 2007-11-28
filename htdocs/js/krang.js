@@ -330,6 +330,9 @@ Krang.Ajax.request = function(args) {
     // add the ajax=1 flag to the existing query params
     params['ajax'] = 1;
 
+    // pass window ID to handler
+    Krang.Window.pass_id();
+
     Krang.unload();
 
     new Ajax.Request(
@@ -422,6 +425,9 @@ Krang.Ajax.update = function(args) {
     // add the ajax=1 flag to the existing query params
     params['ajax'] = 1;
 
+    // pass window ID to handler
+    Krang.Window.pass_id();
+
     // the default target
     if( target == null || target == '' )
         target = 'C';
@@ -447,7 +453,6 @@ Krang.Ajax.update = function(args) {
 
                 // update the navigation if we need to
                 if( json && json.krang_update_nav ) {
-	            Krang.Window.pass_id();
                     Krang.Ajax.update({ url: 'nav.pl', target: 'S', to_top: false });
 	        }
             },
@@ -716,7 +721,6 @@ Krang.Help = {
         // if we have something go to it
         if( topic )    url = url + '?topic=' + topic;
         if( subtopic ) url = url + '#' + subtopic;
-	Krang.Window.pass_id();
         Krang.popup(url, { width: 500, height: 600});
     }
 };
