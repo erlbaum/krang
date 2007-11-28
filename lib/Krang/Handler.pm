@@ -363,8 +363,14 @@ sub authen_handler ($$) {
 
     # If there's no ID or no session cookie, redirect to Login
     unless ($window_id && $cookies{"krang_window_$window_id"}) {
-        debug("No ID/cookie found, passing Authen without user login");
-        return OK;
+      if ($window_id) {
+	info ("Invalid Window ID: No cookie exists for window $window_id. Redirecting to login.");
+      } else {
+	my $login = $self->login_uri;
+	info ("No Window ID: Either this window is new or it failed to pass_id() before sending its request.")
+	  unless ($r->uri =~ /$login$/);
+      }
+      return OK;
     }
 
     # Validate session cookie
