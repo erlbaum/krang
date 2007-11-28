@@ -158,7 +158,10 @@ Krang.Window = {
 	if (!confirm('Are you sure? This will discard any unsaved changes in any window.')) { return; }
         Krang.show_indicator();
 
-        // first log out any other windows that have cookies set
+	// clear new-window cookie (in case we're closing a window that hasn't been initialized)
+	Krang.Cookie.set('krang_new_window_id', '0');
+
+        // log out any other windows that have cookies set
 	var win_names = document.cookie.match(/(krang_window_\d+)/g);
 	for (i = 0; i < win_names.length; i++) {
 	   var win_name = win_names[i];
