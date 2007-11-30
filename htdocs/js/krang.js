@@ -124,6 +124,7 @@ Krang.Window = {
 	var id = Krang.Window.get_id();
 	if (!id) { 
 	   // we couldn't find a valid Window ID; get a new one!
+           alert ("Krang couldn't find a valid Window ID for this login. Please login again, and if the problem persists, try restarting your browser.");
    	   window.location = 'login.pl?rm=logout';
 	   return;
         }
