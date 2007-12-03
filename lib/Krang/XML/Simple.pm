@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use XML::Simple ();
 use MIME::Base64 qw(decode_base64);
+use Encode qw(decode_utf8);
 
 use base 'Exporter';
 our @EXPORT_OK = qw(XMLin);
@@ -46,13 +47,13 @@ sub _fix {
         foreach my $val (values %$data) {
             _fix($val) if ref $val;
             if ($val =~ s/^!!!BASE64!!!//) {
-                $val = decode_base64($val);
+                $val = decode_utf8(decode_base64($val));
             }
         }
     } elsif ($type eq 'ARRAY') {
         foreach my $val (@$data) {
             _fix($val) if ref $val;
-            $val = decode_base64($val) if $val =~ s/^!!!BASE64!!!//;
+            $val = decode_utf8(decode_base64($val)) if $val =~ s/^!!!BASE64!!!//;
         }
     } else {
         croak("What am I supposed to do with '$type'?");
