@@ -62,7 +62,7 @@ sub input_form {
         . scalar $query->filefield(-name => $param) . '&nbsp;' .
           scalar $query->button(-name    => "upload_media_$param",
                                 -value   => "Upload",
-                                -onClick => "save_and_stay()",
+                                -onClick => "db_save_and_stay()",
                                 -class   => "button");
 
     # Add hard find parameters
