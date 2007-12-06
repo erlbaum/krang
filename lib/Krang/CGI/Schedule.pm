@@ -281,7 +281,8 @@ sub list_all {
     );
 
     # Run pager
-    $template->param(pager_html =>  $pager->output());
+    $template->param(pager_html => $pager->output(),
+                     row_count  => $pager->row_count);
 
     return $template->output;
 }
