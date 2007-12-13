@@ -687,10 +687,8 @@ sub copy {
     my $clone = $session{story} = $story->clone();
     
     # make sure it's checked out in case we want to save it later
-    unless( $clone->{checked_out} ) {
-        $clone->{checked_out}    = 1;
-        $clone->{checked_out_by} = $ENV{REMOTE_USER};
-    }
+    $clone->{checked_out}    = 1;
+    $clone->{checked_out_by} = $ENV{REMOTE_USER};
 
     # talk about it, get it all out
     if ($clone->categories) {
