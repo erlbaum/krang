@@ -319,6 +319,7 @@ foreach my $instance (@instances) {
     my $media_dir = catdir(element_lib_path(), 'media');
     if (-d $media_dir) {
         $cmd = catdir(KrangRoot, 'bin', 'krang_upload_media');
+        $cmd .= " --path $media_dir";
         $cmd .= " --verbose " if $verbose;
         $cmd .= " --verbose " if $verbose > 1;
         local $ENV{KRANG_INSTANCE} = $instance;
