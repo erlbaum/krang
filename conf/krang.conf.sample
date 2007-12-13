@@ -123,6 +123,11 @@ PreviewSSL 0
 # Secret is a shared secret used for encryption and checksumming
 Secret 'ad0243-1j!@LdaAWEOIGFa-39021-:skj'
 
+#
+# This variable prevents the user from creating an unreliable number
+# of session cookies. (When absent, the default is 10.)
+MaxConcurrentKrangSessions 10
+
 ###########################################################################
 #
 # Instance Configuration
