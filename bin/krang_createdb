@@ -307,6 +307,7 @@ foreach my $instance (@instances) {
     my $tmpl_dir = catdir(element_lib_path(), 'templates');
     if (-d $tmpl_dir) {
         $cmd = catdir(KrangRoot, 'bin', 'krang_upload_templates');
+        $cmd .= " --path $tmpl_dir";
         $cmd .= " --verbose " if $verbose;
         $cmd .= " --verbose " if $verbose > 1;
         local $ENV{KRANG_INSTANCE} = $instance;

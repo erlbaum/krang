@@ -47,8 +47,6 @@ to the site.  For example:
 Sites and Categories will NOT be created.  Template files in invalid directories 
 will be ignored.
 
-If not specified, --path default to /element_lib/InstanceElementSet/templates/
-
 =item --makecats
 
 If specified, categories which do not exist in the CMS will be created instead of skipped.
@@ -110,8 +108,7 @@ use Getopt::Long;
 use Pod::Usage;
 
 
-my ($help, $man);
-my $path = catdir(element_lib_path(), 'templates');
+my ($help, $man, $path);
 my $user = "admin";
 my $password = "";
 my $makecats = 0;
@@ -128,7 +125,7 @@ pod2usage(2) unless
              'man' => \$man,
             );
 
-pod2usage(1)             if $help;
+pod2usage(1)             if $help || !$path;
 pod2usage(-verbose => 2) if $man;
 
 # Does path exist?
