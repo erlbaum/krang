@@ -483,6 +483,9 @@ sub save_add {
     my %save_errors = ( $self->do_save_media($m) );
     return $self->_add(%save_errors) if (%save_errors);
 
+    # Publish to preview
+    $m->preview();
+
     # Checkout to Workspace
     $m->checkout();
 
@@ -591,6 +594,9 @@ sub save_stay_add {
     # Save object to database
     my %save_errors = ( $self->do_save_media($m) );
     return $self->_add(%save_errors) if (%save_errors);
+
+    # Publish to preview
+    $m->preview();
 
     # Checkout to Workspace
     $m->checkout();
@@ -726,6 +732,9 @@ sub save_edit {
     my %save_errors = ( $self->do_save_media($m) );
     return $self->edit(%save_errors) if (%save_errors);
 
+    # Publish to preview
+    $m->preview();
+
     # Checkout to Workspace
     $m->checkout();
 
@@ -808,6 +817,9 @@ sub save_stay_edit {
     # Save object to database
     my %save_errors = ( $self->do_save_media($m) );
     return $self->edit(%save_errors) if (%save_errors);
+
+    # Publish to preview
+    $m->preview();
 
     # Checkout to Workspace
     $m->checkout();

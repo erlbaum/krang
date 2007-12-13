@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+When editing media, made Save and Save_and_Stay buttons automatically
+publish to preview. [Noam Weinstein]
+
+=item *
+
 Added a new script F<bin/krang_exec> to make it really simple to run
 commands against multiple Krang instances using Krang libraries, addons,
 etc. [Michael Peters]
