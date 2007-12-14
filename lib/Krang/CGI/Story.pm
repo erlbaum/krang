@@ -1519,6 +1519,10 @@ sub find {
     my $template = $self->load_tmpl('find.tmpl', associate=>$q);
     my %tmpl_data = ();
 
+    # figure out if user should see publish, checkin, delete, etc.
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    $tmpl_data{read_only} = ($user_permissions{story} eq 'read-only');
+
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
         delete $session{KRANG_PERSIST}{pkg('Story')};
@@ -1689,7 +1693,7 @@ sub find {
     );
     $pager->fill_template($pager_tmpl);
     $pager_tmpl->param(show_type_and_version => $show_type_and_version);
-
+    
     # Set up output
     $template->param(
         %tmpl_data,
