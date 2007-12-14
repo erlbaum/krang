@@ -442,7 +442,7 @@ sub check_prereqs {
             die $@; # nothing more we can do
         }
 
-        my $mysql_charset = $self->mysql_charset($charset);
+        my $mysql_charset = mysql_charset($charset);
         $test_sql = qq/SHOW CHARACTER SET LIKE "$mysql_charset"/;
         $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd`;
         unless( $mysql_test_output =~ /\Q$mysql_charset\E/ ) {
