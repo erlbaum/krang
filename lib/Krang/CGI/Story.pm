@@ -1670,8 +1670,8 @@ sub find {
                                                      cover_date 
                                                      commands_column 
                                                      status),
-                                                     ($read_only ? () : 'checkbox_column')
-                                                    ],
+                                                  ($read_only ? () : 'checkbox_column')
+                                                 ],
                                       column_labels => {
                                                         pub_status => '',
                                                         story_id => 'ID',

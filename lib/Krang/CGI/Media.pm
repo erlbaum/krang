@@ -1695,6 +1695,10 @@ sub make_pager {
     my $self = shift;
     my ($persist_vars, $find_params, $show_thumbnails) = @_;
 
+    # read-only users don't see checkbox column....
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    my $read_only = ( $user_permissions{media} eq 'read-only' );
+
     my @columns = qw(
                      pub_status 
                      media_id 
@@ -1703,9 +1707,8 @@ sub make_pager {
                      url
                      creation_date
                      commands_column
-                     status
-                     checkbox_column
-                    );
+                     status);
+    push @columns, 'checkbox_column' unless $read_only;
 
     my %column_labels = ( 
                           pub_status      => '',
