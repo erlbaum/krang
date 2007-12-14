@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+When a user has read-only access to stories, media, and/or templates, made
+buttons like Publish, Add, Checkin, etc. hidden from view. [Noam Weinstein]
+
+=item *
+
 When editing media, made Save and Save_and_Stay buttons automatically
 publish to preview. [Noam Weinstein]
 

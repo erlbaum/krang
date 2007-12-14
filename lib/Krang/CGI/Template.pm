@@ -297,6 +297,9 @@ sub advanced_search {
     my $q = $self->query();
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
 
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    $t->param(read_only => ( $user_permissions{template} eq 'read-only' ));
+
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
         delete $session{KRANG_PERSIST}{pkg('Template')};
@@ -816,6 +819,9 @@ sub search {
                              associate => $q,
                              loop_context_vars => 1);
 
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    $t->param(read_only => ( $user_permissions{template} eq 'read-only' ));
+
     $t->param(history_return_params =>
               $self->make_history_return_params(@history_param_list));
 
@@ -1069,15 +1075,17 @@ sub make_pager {
     my $self = shift;
     my ($persist_vars, $find_params) = @_;
 
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+
     my @columns = qw(deployed
                      template_id
                      filename
                      url
                      commands_column
-                     status
-                     checkbox_column
-                    );
-
+                     status);
+    push @columns, 'checkbox_column' 
+      unless ( $user_permissions{template} eq 'read-only' );
+    
     my %column_labels = (deployed        => '',
                          template_id     => 'ID',
                          filename        => 'File Name',
@@ -1119,7 +1127,7 @@ sub search_row_handler {
         (($template->checked_out) and
          ($template->checked_out_by ne $ENV{REMOTE_USER}))) {
         $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|;
-        $row->{checkbox_column} = "&nbsp;";
+        $row->{checkbox_column} = "&nbsp;" if defined $row->{checkbox_column};
     } else {
         $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|
             . ' '
