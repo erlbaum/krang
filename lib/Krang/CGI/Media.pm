@@ -121,6 +121,10 @@ sub find {
 
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
 
+    # figure out if user should see add, publish, checkin, delete
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    $t->param(read_only => ($user_permissions{media} eq 'read-only'));
+    
     # Persist data for return from view in "return_params"
     my @return_param_list = qw(
                                rm

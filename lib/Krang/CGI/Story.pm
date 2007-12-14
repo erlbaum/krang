@@ -1519,7 +1519,7 @@ sub find {
     my $template = $self->load_tmpl('find.tmpl', associate=>$q);
     my %tmpl_data = ();
 
-    # figure out if user should see publish, checkin, delete, etc.
+    # figure out if user should see add, publish, checkin, delete
     my %user_permissions = (pkg('Group')->user_asset_permissions);
     $tmpl_data{read_only} = ($user_permissions{story} eq 'read-only');
 
