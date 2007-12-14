@@ -985,7 +985,7 @@ my %MYSQL_MAP = (
     windows1252 => 'latin1',
                  );
 sub mysql_charset {
-    my ($pkg, $charset) = @_;
+    my ($charset) = @_;
     $charset = _munge_charset($charset);
     return $MYSQL_MAP{$charset} || $charset;
 }
