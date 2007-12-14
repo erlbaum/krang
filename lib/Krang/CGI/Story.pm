@@ -1519,9 +1519,10 @@ sub find {
     my $template = $self->load_tmpl('find.tmpl', associate=>$q);
     my %tmpl_data = ();
 
-    # figure out if user should see add, publish, checkin, delete
+    # read-only users don't see everything....
     my %user_permissions = (pkg('Group')->user_asset_permissions);
-    $tmpl_data{read_only} = ($user_permissions{story} eq 'read-only');
+    my $read_only = ( $user_permissions{story} eq 'read-only' );
+    $tmpl_data{read_only} = $read_only;
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
@@ -1668,9 +1669,9 @@ sub find {
                                                      url 
                                                      cover_date 
                                                      commands_column 
-                                                     status 
-                                                     checkbox_column
-                                                    )],
+                                                     status),
+                                                     ($read_only ? () : 'checkbox_column')
+                                                    ],
                                       column_labels => {
                                                         pub_status => '',
                                                         story_id => 'ID',
@@ -1929,6 +1930,10 @@ sub find_story_row_handler {
     my $q = $self->query;
     my $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
 
+    # Read-only users don't see everything....
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    my $read_only = ( $user_permissions{story} eq 'read-only' );
+
     # Columns:
     $row->{story_id}   = $story->story_id();
     $row->{title}      = $story->title;
@@ -1950,10 +1955,13 @@ sub find_story_row_handler {
         . qq|')" type="button" class="button">|
         . ' '
         . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id 
-        . qq|')" type="button" class="button">|
-        . ' '
-        . qq|<input value="Copy" onclick="copy_story('| . $story->story_id 
         . qq|')" type="button" class="button">|;
+
+    unless ($read_only) {
+        $row->{commands_column} .= ' '
+          . qq|<input value="Copy" onclick="copy_story('| . $story->story_id 
+          . qq|')" type="button" class="button">|;
+    }
 
     if (($story->checked_out) and 
         ($story->checked_out_by ne $ENV{REMOTE_USER})
