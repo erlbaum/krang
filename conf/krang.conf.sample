@@ -9,8 +9,8 @@
 # Krang processes run as this user/group and all files must be owned by
 # this user.
 #
-KrangUser  jesse
-KrangGroup jesse
+KrangUser  krang
+KrangGroup krang
 
 #
 # MySQL user and password for Krang
