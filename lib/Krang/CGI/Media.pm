@@ -209,6 +209,10 @@ sub advanced_find {
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
     $t->param(do_advanced_search=>1);
 
+    # figure out if user should see add, publish, checkin, delete
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    $t->param(read_only => ($user_permissions{media} eq 'read-only'));
+
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
         delete $session{KRANG_PERSIST}{pkg('Media')};
