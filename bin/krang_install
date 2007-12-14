@@ -989,3 +989,10 @@ sub mysql_charset {
     $charset = _munge_charset($charset);
     return $MYSQL_MAP{$charset} || $charset;
 }
+
+sub _munge_charset {
+    my $charset = lc shift;
+    $charset =~ s/\s*//g; # remove ws
+    $charset =~ s/-//g;   # remove hyphens
+    return $charset;
+}
