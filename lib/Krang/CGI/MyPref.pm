@@ -168,6 +168,10 @@ sub update_prefs {
             add_message("changed_password");
         }
     }
+    unless ($prefs_changed || $q->param('new_password')) {
+        add_message("nothing_to_update");
+    }
+
     return $self->edit();
 }
 
