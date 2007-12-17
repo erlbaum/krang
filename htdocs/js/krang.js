@@ -1512,76 +1512,75 @@ Krang.Widget.BlindUpDown = function(element, args) {
 /*
     Krang.Base64
 
-    Contains 2 public methods for encoding and decoding Base64 data.
+    Contains a public methods for encoding Base64 data.
 
     base64      = Krang.Base64.encode(some_string);
-    some_string = Krang.Base64.decode(base64);
 */
 Krang.Base64 = {  
-    chars  : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",  
-  
-    // public method for encoding  
-    encode : function (input) {  
-        var output = "";  
-        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;  
-        var i = 0;  
-  
-        while (i < input.length) {  
-            chr1 = input.charCodeAt(i++);  
-            chr2 = input.charCodeAt(i++);  
-            chr3 = input.charCodeAt(i++);  
-  
-            enc1 = chr1 >> 2;  
-            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);  
-            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);  
-            enc4 = chr3 & 63;  
-  
-            if (isNaN(chr2)) {  
-                enc3 = enc4 = 64;  
-            } else if (isNaN(chr3)) {  
-                enc4 = 64;  
-            }  
-  
-            output = output 
-                + this.chars.charAt(enc1) + this.chars.charAt(enc2) 
-                + this.chars.charAt(enc3) + this.chars.charAt(enc4);  
-        }  
-  
-        return output;  
-    },  
-  
-    // public method for decoding  
-    decode : function (input) {  
-        var output = "";  
-        var chr1, chr2, chr3;  
-        var enc1, enc2, enc3, enc4;  
-        var i = 0;  
-  
-        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");  
-  
-        while (i < input.length) {  
-            enc1 = this.chars.indexOf(input.charAt(i++));  
-            enc2 = this.chars.indexOf(input.charAt(i++));  
-            enc3 = this.chars.indexOf(input.charAt(i++));  
-            enc4 = this.chars.indexOf(input.charAt(i++));  
-  
-            chr1 = (enc1 << 2) | (enc2 >> 4);  
-            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);  
-            chr3 = ((enc3 & 3) << 6) | enc4;  
-  
-            output = output + String.fromCharCode(chr1);  
-  
-            if (enc3 != 64) {  
-                output = output + String.fromCharCode(chr2);  
-            }  
-            if (enc4 != 64) {  
-                output = output + String.fromCharCode(chr3);  
-            }  
-  
-        }  
-        return output;  
+    maxLineLength : 76,
+    chars : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+   
+    encode : function(decStr)
+    {
+      //      decStr = decStr.replace(Krang.Slug.high_latin1_re, function(notNeeded, code_position) {
+      //	return Krang.Slug.high_latin1_map[code_position];
+      //      });
+      var encArray=new Array();
+      var bits, dual, i = 0, encOut = "";
+      var linelen = 0;
+      var encOut='';
+      while(decStr.length >= i + 3){
+        bits =    (decStr.charCodeAt(i++) & 0xff) <<16 |
+          (decStr.charCodeAt(i++) & 0xff) <<8 |
+          decStr.charCodeAt(i++) & 0xff;
+            encOut +=
+              Krang.Base64.chars.charAt((bits & 0x00fc0000) >>18) +
+              Krang.Base64.chars.charAt((bits & 0x0003f000) >>12) +
+              Krang.Base64.chars.charAt((bits & 0x00000fc0) >> 6) +
+              Krang.Base64.chars.charAt((bits & 0x0000003f));
+            linelen += 4;
+            if (linelen>Krang.Base64.maxLineLength-3) {
+              encOut += "\n";
+              encArray.push(encOut);
+              encOut='';
+              linelen = 0;
+            }
+      }
+      if(decStr.length -i > 0 && decStr.length -i < 3) {
+        dual = Boolean(decStr.length -i -1);
+            bits =
+        ((decStr.charCodeAt(i++) & 0xff) <<16) |
+        (dual ? (decStr.charCodeAt(i) & 0xff) <<8 : 0);
+            encOut +=
+        Krang.Base64.chars.charAt((bits & 0x00fc0000) >>18) +
+        Krang.Base64.chars.charAt((bits & 0x0003f000) >>12) +
+        (dual ? Krang.Base64.chars.charAt((bits & 0x00000fc0) >>6) : '=') +
+        '=';
+      }
+       
+      encArray.push(encOut);
+      // this loop progressive concatenates the array elements entil there is only one
+      var ar2=new Array();
+      for(;encArray.length>1;)
+      {
+        var l=encArray.length;
+        for(var c=0;c<l;c+=2)
+          {
+            if(c+1==l)
+              {
+                ar2.push(encArray[c]);
+              }
+            else
+              {
+                ar2.push(''+encArray[c]+encArray[c+1]);
+              }
+          }
+        encArray=ar2;
+        ar2=new Array();
+      }
+      return encArray[0];
     }
-}
+};
 
 Krang.ElementEditor = {
     save_hooks     : [],
