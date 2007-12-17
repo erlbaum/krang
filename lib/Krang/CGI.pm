@@ -426,8 +426,6 @@ C<$pkg->redirect_to_login($msg)>.
 If not provided, the message defaults to C<You do not have permissions
 to access that portion of the site.>
 
-=back
-
 =cut
 
 sub access_forbidden {
@@ -442,6 +440,8 @@ sub access_forbidden {
 
     return $self->redirect_to_login($msg);
 }
+
+
 
 =item * redirect_to_login($msg)
 
@@ -604,5 +604,13 @@ sub cgiapp_postrun {
   }
   $self->SUPER::cgiapp_postrun;
 }
+
+
+=pod
+
+=back
+
+=cut
+
 
 1;
