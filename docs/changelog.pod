@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In Krang::ElementClass::XinhaEditor fixed caching of
+htmlarea.js. [Bodo Schulze]
+
+=item *
+
 When a user has read-only access to stories, media, and/or templates, made
 buttons like Publish, Add, Checkin, etc. hidden from view. [Noam Weinstein]
 
