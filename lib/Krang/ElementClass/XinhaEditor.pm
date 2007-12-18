@@ -2,6 +2,8 @@ package Krang::ElementClass::XinhaEditor;
 use strict;
 use warnings;
 
+use Krang::ClassFactory qw(pkg);
+
 use base 'Krang::ElementClass::Textarea';
 use Carp qw(croak);
 
@@ -98,6 +100,8 @@ sub input_form {
     my ($param) = $self->param_names( element => $element );
     my $html = "";
 
+    my $install_id = pkg('Info')->install_id();
+
     # only add this once
     my @sibs = grep { $_->class->isa(__PACKAGE__) } 
       $element->parent()->children();
@@ -122,7 +126,7 @@ sub input_form {
     if (!Krang.XinhaLoaded) {
         var xinha_script = document.createElement('script');
         xinha_script.setAttribute('type', 'text/javascript');
-        xinha_script.setAttribute('src',  '/static/<tmpl_var krang_install_id>/xinha/htmlarea.js');
+        xinha_script.setAttribute('src',  '/static/$install_id/xinha/htmlarea.js');
         document.body.appendChild(xinha_script);
         Krang.XinhaLoaded = 1;
     }
