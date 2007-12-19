@@ -80,6 +80,10 @@ Once gives you a play-by-play.  Twice gets you full SQL.
 The character set for the database. If this is unspecified it will be
 taken from C<krang.conf> if one exists.
 
+If you use this option together with C<--all>, the given charset will
+be used to create all databases for all instances in C<krang.conf>,
+overriding instance-specific Charset directives therein.
+
 =item --help
 
 =item --man
@@ -128,7 +132,7 @@ use Krang::ClassLoader 'Charset';
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, $password, $hostname, $destroy, $no_prompt, $no_create, $all, $charset);
+my ($help, $man, $password, $hostname, $destroy, $no_prompt, $no_create, $all, $CHARSET);
 my $verbose = 0;
 GetOptions(help         => \$help,
            man          => \$man,
@@ -138,14 +142,11 @@ GetOptions(help         => \$help,
             no_create   => \$no_create,
            'password=s' => \$password,
            'hostname=s' => \$hostname,
-           'charset=s'  => \$charset,
+           'charset=s'  => \$CHARSET,
            all          => \$all,
           );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
-
-# use the configured charset if one exists
-$charset ||= Charset();
 
 # get an instance, or collect instances for all
 my @instances;
@@ -229,6 +230,9 @@ foreach my $instance (@instances) {
     my $name = InstanceDBName;
     my $user = DBUser;
     my $pass = DBPass;
+
+    # use the configured charset or override it from the cmdline for all instances
+    my $charset = $CHARSET ? $CHARSET : Charset();
 
     # skip if database exists
     my $cmd = qq{mysql -uroot -e 'select "$name exists"' $name};
