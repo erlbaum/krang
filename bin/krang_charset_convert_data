@@ -20,7 +20,7 @@ please, B<please> back up before using this.
 
 This script will convert your data in the Krang database from one
 character set to another. This is useful if you've been running
-Krang for while and your site needs to change it's character set.
+Krang for a while and your site needs to change its character set.
 
 =head1 OPTIONS
 
@@ -33,7 +33,7 @@ The script takes the following options:
 Specify the character set your data is already in. If you never set
 Krang to use a particular character set, chances are you are using
 either an C<ISO-8859> version or C<windows-1252>. You can also look
-to see if the site being served declares it's character set.
+to see if the site being served declares its character set.
 
 When in doubt, you'll probably have to guess and try one. Make sure to
 backup so you can roll it back if your guess was wrong.
@@ -54,6 +54,11 @@ By default this will run for all of the sites in the give instance
 instance (as set in C<$ENV{KRANG_INSTANCE}>). But you can optionally
 tell it to run for just a specific site. This option can be specified
 multiple times.
+
+=item --story-ids
+
+By default this will run for all stories, but you can optionally tell it 
+to run for specific stories. This should be a comma-delimited list of IDs.
 
 =item --verbose
 
@@ -123,7 +128,7 @@ use Storable qw(nfreeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
 
 # options
-my ($from, $to, $help, $man, $all_instances, @site_ids, @instances, $v);
+my ($from, $to, $help, $man, $all_instances, $story_ids, @site_ids, @instances, $v);
 GetOptions(
     'from=s'        => \$from,
     'to=s'          => \$to,
@@ -131,6 +136,7 @@ GetOptions(
     'man'           => \$man,
     'all-instances' => \$all_instances,
     'site-id=s'     => \@site_ids,
+    'story-ids'     => \$story_ids,
     'verbose'       => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
@@ -140,17 +146,23 @@ die "You must supply a --from encoding!\n" unless $from;
 die "You must supply a --to encoding!\n"   unless $to;
 die "You can't use both --all-instances and --site-id at the same time!\n"
   if $all_instances and @site_ids;
+die "You can't use both --all-instances and --story-ids at the same time!\n"
+  if $all_instances and $story_ids;
+die "Couldn't parse list of story IDs!"
+  if $story_ids and (not $story_ids =~ /^[\d,]+$/);
+my @story_ids = split(',',$story_ids);
 
-# which instances are we going to use
+# figure out which instances we're going to use
 @instances = $all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE});
 
 # figure out which sites (and hence, which stories) we're going to use
-my @story_ids;
-if(!@site_ids) {
+unless (@site_ids) {
     foreach my $instance (@instances) {
+        pkg('Conf')->instance($instance);
         my @instance_site_ids = pkg('Site')->find(ids_only => 1);
         push(@site_ids, @instance_site_ids);
-        push(@story_ids, pkg('Story')->find(ids_only => 1, site_id => \@instance_site_ids));
+        push(@story_ids, pkg('Story')->find(ids_only => 1, site_id => \@instance_site_ids))
+            unless $story_ids;
     }
 }
 
@@ -290,6 +302,8 @@ foreach my $instance (@instances) {
         $count++;
     }
     print "    Converted #$count elements\n" if $v;
+
+    pkg('Conf')->instance($ENV{KRANG_INSTANCE}) if $ENV{KRANG_INSTANCE};
 
     # now deploy any deployed templates after their data has been changed
 }
