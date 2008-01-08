@@ -57,8 +57,9 @@ multiple times.
 
 =item --story-ids
 
-By default this will run for all stories, but you can optionally tell it 
-to run for specific stories. This should be a comma-delimited list of IDs.
+By default this will run for all tables and all stories, but you can optionally tell it to 
+run for specific stories (and no non-story tables). If so, this parameter should be a 
+comma-delimited list of IDs.
 
 =item --verbose
 
@@ -128,7 +129,7 @@ use Storable qw(nfreeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
 
 # options
-my ($from, $to, $help, $man, $all_instances, $story_ids, @site_ids, @instances, $v);
+my ($from, $to, $help, $man, $all_instances, $manual_story_ids, @site_ids, @instances, $v);
 GetOptions(
     'from=s'        => \$from,
     'to=s'          => \$to,
@@ -136,7 +137,7 @@ GetOptions(
     'man'           => \$man,
     'all-instances' => \$all_instances,
     'site-id=s'     => \@site_ids,
-    'story-ids'     => \$story_ids,
+    'story-ids'     => \$manual_story_ids,
     'verbose'       => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
@@ -147,10 +148,10 @@ die "You must supply a --to encoding!\n"   unless $to;
 die "You can't use both --all-instances and --site-id at the same time!\n"
   if $all_instances and @site_ids;
 die "You can't use both --all-instances and --story-ids at the same time!\n"
-  if $all_instances and $story_ids;
+  if $all_instances and $manual_story_ids;
 die "Couldn't parse list of story IDs!"
-  if $story_ids and (not $story_ids =~ /^[\d,]+$/);
-my @story_ids = split(',',$story_ids);
+  if $manual_story_ids and (not $manual_story_ids =~ /^[\d,]+$/);
+my @story_ids = $manual_story_ids ? split(',',$manual_story_ids) : ();
 
 # figure out which instances we're going to use
 @instances = $all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE});
@@ -162,7 +163,7 @@ unless (@site_ids) {
         my @instance_site_ids = pkg('Site')->find(ids_only => 1);
         push(@site_ids, @instance_site_ids);
         push(@story_ids, pkg('Story')->find(ids_only => 1, site_id => \@instance_site_ids))
-            unless $story_ids;
+            unless $manual_story_ids;
     }
 }
 
@@ -171,7 +172,15 @@ my $site_ph  = join(', ', ('?') x scalar @site_ids);
 my $story_ph = join(', ', ('?') x scalar @story_ids);
 
 my %tables = (
-    category => {
+    story      => {
+        fields    => [qw(title slug notes)],
+        extra_sql => " WHERE story_id IN ($story_ph) ",
+        binds     => \@story_ids,
+    },
+
+    ($manual_story_ids ? () : 
+
+    (category => {
         fields    => [qw(dir)],
         extra_sql => " WHERE category.site_id IN ($site_ph)",
         binds     => \@site_ids,
@@ -188,18 +197,13 @@ my %tables = (
         binds     => \@site_ids,
     },
     media_type => {fields => [qw(name)],},
-    story      => {
-        fields    => [qw(title slug notes)],
-        extra_sql => " WHERE story_id IN ($story_ph) ",
-        binds     => \@story_ids,
-    },
     template => {
         fields    => [qw(content)],
         extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
         binds     => \@site_ids,
     },
     template_version => {fields => [qw(data)], id_fields => [qw(template_id version)]},
-    user => {fields => [qw(first_name last_name login password)],},
+    user => {fields => [qw(first_name last_name login password)],}))
 );
 
 foreach my $instance (@instances) {
@@ -252,26 +256,40 @@ foreach my $instance (@instances) {
     # thaw/decode it and store it.
     print "  Converting element data\n" if $v;
 
-    # we need to select all the elements for the sites in question.
-    # this means all elements attached to categories in these sites
-    # as well as all elements and sub-elements attached to the stories
-    # in these categories
-    my $fetch_sth = $dbh->prepare_cached(
-        qq/
-        SELECT e.element_id AS id, e.data AS data FROM element e 
-        JOIN category c USING (element_id)
-        WHERE c.site_id IN ($site_ph)
-      UNION DISTINCT
-        SELECT e.element_id AS id, e.data AS data FROM element e 
-        JOIN story s ON (s.element_id = e.element_id OR s.element_id = e.root_id)
-        WHERE s.story_id IN ($story_ph)
-    /
-    );
+    # we need to select all the elements for the sites in question. this means all 
+    # elements and sub-elements attached to the sites' stories, and - unless we're
+    # only converting stories - all elements attached to categories 
+    my $fetch_sth = 
+        $manual_story_ids ? 
 
+         $dbh->prepare_cached
+         (
+          qq/
+          SELECT e.element_id AS id, e.data AS data FROM element e 
+          JOIN story s ON (s.element_id = e.element_id OR s.element_id = e.root_id)
+          WHERE s.story_id IN ($story_ph)
+          /
+          )
+
+         :
+
+         $dbh->prepare_cached
+         (
+          qq/
+          SELECT e.element_id AS id, e.data AS data FROM element e 
+          JOIN category c USING (element_id)
+          WHERE c.site_id IN ($site_ph)
+          UNION DISTINCT
+          SELECT e.element_id AS id, e.data AS data FROM element e 
+          JOIN story s ON (s.element_id = e.element_id OR s.element_id = e.root_id)
+          WHERE s.story_id IN ($story_ph)
+          /
+          );
+    
     my $to_dbh = dbh();
     $to_dbh->do("SET names " . pkg('Charset')->mysql_charset($to));
     my $update_sth = $to_dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
-    $fetch_sth->execute(@site_ids, @story_ids);
+    $fetch_sth->execute($manual_story_ids ? @story_ids : (@site_ids, @story_ids));
 
     # tell the DB what the data is coming as
     my $count = 0;
