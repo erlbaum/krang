@@ -137,7 +137,7 @@ GetOptions(
     'man'           => \$man,
     'all-instances' => \$all_instances,
     'site-id=s'     => \@site_ids,
-    'story-ids'     => \$manual_story_ids,
+    'story-ids=s'   => \$manual_story_ids,
     'verbose'       => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
