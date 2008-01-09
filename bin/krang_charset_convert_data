@@ -55,11 +55,15 @@ instance (as set in C<$ENV{KRANG_INSTANCE}>). But you can optionally
 tell it to run for just a specific site. This option can be specified
 multiple times.
 
-=item --story-ids
+=item --only-story-id
 
 By default this will run for all tables and all stories, but you can optionally tell it to 
-run for specific stories (and no non-story tables). If so, this parameter should be a 
-comma-delimited list of IDs.
+run only for a specific story (and no non-story data). This can be specified multiple times.
+
+=item --skip-story-id
+
+This parameter (which is mutually exclusive with --only-story-id) will convert all
+tables and all stories except the given one. This can be specified multiple times.
 
 =item --verbose
 
@@ -129,16 +133,17 @@ use Storable qw(nfreeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
 
 # options
-my ($from, $to, $help, $man, $all_instances, $manual_story_ids, @site_ids, @instances, $v);
+my ($from, $to, $help, $man, $all_instances, @only_site_ids, @only_story_ids, @skip_story_ids, $v);
 GetOptions(
-    'from=s'        => \$from,
-    'to=s'          => \$to,
-    'help'          => \$help,
-    'man'           => \$man,
-    'all-instances' => \$all_instances,
-    'site-id=s'     => \@site_ids,
-    'story-ids=s'   => \$manual_story_ids,
-    'verbose'       => \$v,
+    'from=s'                     => \$from,
+    'to=s'                       => \$to,
+    'help'                       => \$help,
+    'man'                        => \$man,
+    'all-instances'              => \$all_instances,
+    'site-id=s'                  => \@only_site_ids,
+    'only-story-id=s'            => \@only_story_ids,
+    'skip-story-id=s'            => \@skip_story_ids,
+    'verbose'                    => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
@@ -146,72 +151,68 @@ pod2usage(-verbose => 2) if $man;
 die "You must supply a --from encoding!\n" unless $from;
 die "You must supply a --to encoding!\n"   unless $to;
 die "You can't use both --all-instances and --site-id at the same time!\n"
-  if $all_instances and @site_ids;
-die "You can't use both --all-instances and --story-ids at the same time!\n"
-  if $all_instances and $manual_story_ids;
-die "Couldn't parse list of story IDs!"
-  if $manual_story_ids and (not $manual_story_ids =~ /^[\d,]+$/);
-my @story_ids = $manual_story_ids ? split(',',$manual_story_ids) : ();
+  if $all_instances and @only_site_ids;
+die "You can't use both --all-instances and a specific story ID!\n"
+  if $all_instances and (@only_story_ids or @skip_story_ids);
+die "You can't use both --only-story-id and --skip-story-id at the same time!\n"
+  if @only_story_ids and @skip_story_ids;
 
-# figure out which instances we're going to use
-@instances = $all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE});
+# figure out which instances we're going to use, and loop through them
+foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
+    pkg('Conf')->instance($instance);
 
-# figure out which sites (and hence, which stories) we're going to use
-unless (@site_ids) {
-    foreach my $instance (@instances) {
-        pkg('Conf')->instance($instance);
-        my @instance_site_ids = pkg('Site')->find(ids_only => 1);
-        push(@site_ids, @instance_site_ids);
-        push(@story_ids, pkg('Story')->find(ids_only => 1, site_id => \@instance_site_ids))
-            unless $manual_story_ids;
+    # figure out which sites (and hence, which stories) we're going to use for this instance
+    my @site_ids  = @only_site_ids  || pkg('Site')->find(ids_only => 1);
+    my @story_ids = @only_story_ids || pkg('Story')->find(ids_only => 1, site_id => \@site_ids);
+    if (@skip_story_ids) {
+        my %skip_id = map { $_ => 1 } @skip_story_ids;
+        @story_ids = grep { not $skip_id{$_} } @story_ids;
     }
-}
-
-# placeholders when using site_ids in queries
-my $site_ph  = join(', ', ('?') x scalar @site_ids);
-my $story_ph = join(', ', ('?') x scalar @story_ids);
-
-my %tables = (
-    story      => {
-        fields    => [qw(title slug notes)],
-        extra_sql => " WHERE story_id IN ($story_ph) ",
-        binds     => \@story_ids,
-    },
-
-    ($manual_story_ids ? () : 
-
-    (category => {
-        fields    => [qw(dir)],
-        extra_sql => " WHERE category.site_id IN ($site_ph)",
-        binds     => \@site_ids,
-    },
-    contrib      => {fields => [qw(prefix first middle last suffix bio)],},
-    contrib_type => {fields => [qw(type)],},
-    desk         => {fields => [qw(name)],},
-    list         => {fields => [qw(name)],},
-    list_group   => {fields => [qw(name description)],},
-    list_item    => {fields => [qw(data)],},
-    media => {
-        fields    => [qw(title filename caption copyright notes alt_tag)],
-        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
-        binds     => \@site_ids,
-    },
-    media_type => {fields => [qw(name)],},
-    template => {
-        fields    => [qw(content)],
-        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
-        binds     => \@site_ids,
-    },
-    template_version => {fields => [qw(data)], id_fields => [qw(template_id version)]},
-    user => {fields => [qw(first_name last_name login password)],}))
-);
-
-foreach my $instance (@instances) {
+    
+    # placeholders when using site_ids in queries
+    my $site_ph  = join(', ', ('?') x scalar @site_ids);
+    my $story_ph = join(', ', ('?') x scalar @story_ids);
+    
+    my %tables = (
+                  story      => {
+                      fields    => [qw(title slug notes)],
+                      extra_sql => " WHERE story_id IN ($story_ph) ",
+                      binds     => \@story_ids,
+                  },
+                  
+                  (@only_story_ids ? () : 
+                   
+                   (category => {
+                       fields    => [qw(dir)],
+                       extra_sql => " WHERE category.site_id IN ($site_ph)",
+                       binds     => \@site_ids,
+                   },
+                    contrib      => {fields => [qw(prefix first middle last suffix bio)],},
+                    contrib_type => {fields => [qw(type)],},
+                    desk         => {fields => [qw(name)],},
+                    list         => {fields => [qw(name)],},
+                    list_group   => {fields => [qw(name description)],},
+                    list_item    => {fields => [qw(data)],},
+                    media => {
+                        fields    => [qw(title filename caption copyright notes alt_tag)],
+                        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
+                        binds     => \@site_ids,
+                    },
+                    media_type => {fields => [qw(name)],},
+                    template => {
+                        fields    => [qw(content)],
+                        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
+                        binds     => \@site_ids,
+                    },
+                    template_version => {fields => [qw(data)], id_fields => [qw(template_id version)]},
+                    user => {fields => [qw(first_name last_name login password)],}))
+                  );
+    
     print "Converting instance '$instance'\n" if $v;
     print "  For site(s) " . join(', ', map { "#$_" } @site_ids) . "\n" if $v;
     pkg('Conf')->instance($instance);
     my $dbh = dbh();
-
+    
     # convert all the fields in the tables listed above
     foreach my $name (keys %tables) {
         my $table     = $tables{$name};
@@ -255,12 +256,12 @@ foreach my $instance (@instances) {
     # dig into the elements' data to decode/unthaw it, convert it and then
     # thaw/decode it and store it.
     print "  Converting element data\n" if $v;
-
+    
     # we need to select all the elements for the sites in question. this means all 
     # elements and sub-elements attached to the sites' stories, and - unless we're
     # only converting stories - all elements attached to categories 
     my $fetch_sth = 
-        $manual_story_ids ? 
+        @only_story_ids ? 
 
          $dbh->prepare_cached
          (
@@ -289,7 +290,7 @@ foreach my $instance (@instances) {
     my $to_dbh = dbh();
     $to_dbh->do("SET names " . pkg('Charset')->mysql_charset($to));
     my $update_sth = $to_dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
-    $fetch_sth->execute($manual_story_ids ? @story_ids : (@site_ids, @story_ids));
+    $fetch_sth->execute(@only_story_ids ? @story_ids : (@site_ids, @story_ids));
 
     # tell the DB what the data is coming as
     my $count = 0;
@@ -320,9 +321,9 @@ foreach my $instance (@instances) {
         $count++;
     }
     print "    Converted #$count elements\n" if $v;
-
+        
     pkg('Conf')->instance($ENV{KRANG_INSTANCE}) if $ENV{KRANG_INSTANCE};
-
+    
     # now deploy any deployed templates after their data has been changed
 }
 
