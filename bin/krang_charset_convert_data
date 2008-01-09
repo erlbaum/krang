@@ -135,15 +135,15 @@ use MIME::Base64 qw(encode_base64 decode_base64);
 # options
 my ($from, $to, $help, $man, $all_instances, @only_site_ids, @only_story_ids, @skip_story_ids, $v);
 GetOptions(
-    'from=s'                     => \$from,
-    'to=s'                       => \$to,
-    'help'                       => \$help,
-    'man'                        => \$man,
-    'all-instances'              => \$all_instances,
-    'site-id=s'                  => \@only_site_ids,
-    'only-story-id=s'            => \@only_story_ids,
-    'skip-story-id=s'            => \@skip_story_ids,
-    'verbose'                    => \$v,
+    'from=s'          => \$from,
+    'to=s'            => \$to,
+    'help'            => \$help,
+    'man'             => \$man,
+    'all-instances'   => \$all_instances,
+    'site-id=s'       => \@only_site_ids,
+    'only-story-id=s' => \@only_story_ids,
+    'skip-story-id=s' => \@skip_story_ids,
+    'verbose'         => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
