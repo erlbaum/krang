@@ -360,7 +360,7 @@ sub build_special_cp1252_conversions {
 
 sub convert_scalar {
     my $data = shift;
-    return unless defined $data;
+    return '' unless defined $data;
     
     if ($from =~ /(manual|all)-cp1252/) {
         # handle special cp1252 modes (see POD)
