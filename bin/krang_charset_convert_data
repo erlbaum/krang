@@ -308,9 +308,9 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         eval {
             no warnings;
             $data   = thaw(decode_base64($row->{data}));
-            $frozen = 1;
+            $frozen = 1 if ref $data;
         };
-        $data = $row->{data} if $@;
+        $data = $row->{data} unless $frozen;
 
         $data = convert_element_data($data);
         if(defined $data) {
