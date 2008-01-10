@@ -38,6 +38,10 @@ to see if the site being served declares its character set.
 When in doubt, you'll probably have to guess and try one. Make sure to
 backup so you can roll it back if your guess was wrong.
 
+NOTE: If you pass this argument the special value 'manual-cp1252', the
+script will fix (and only fix) five and six-character strings like "&#147;"
+If you pass 'all-cp1252' it will fix both these and the actual cp1252 chars.
+
 =item --to
 
 Specify the character set that you are converting your data to.
@@ -244,7 +248,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             my @ids  = map { $row->{$_} } @id_fields;
 
             # convert each data field
-            from_to($_, $from, $to) foreach @data;
+            @data = map { convert_scalar($_, $from, $to) } @data;
 
             # now put the data back
             $update_sth->execute(@data, @ids);
@@ -331,11 +335,9 @@ sub convert_element_data {
     my $data = shift;
     my $ref  = ref $data;
     if(!$ref) {
-        from_to($data, $from, $to);
-        return $data;
+        return convert_scalar($data, $from, $to);
     } elsif($ref eq 'SCALAR') {
-        from_to($$data, $from, $to);
-        return $data;
+        return convert_scalar($$data, $from, $to);
     } elsif($ref eq 'ARRAY') {
         return [map { convert_element_data($_) } @$data];
     } elsif($ref eq 'HASH') {
@@ -346,3 +348,32 @@ sub convert_element_data {
     return;
 }
 
+my %cp1252_string_to_char;
+sub build_special_cp1252_conversions {
+     for (my $val = 32; $val < 256; $val++) {
+        my $char = chr($val);
+        from_to($char, 'windows-1252', $to);
+        my $string = "&#$val;";
+        $cp1252_string_to_char{$string} = $char;
+    }
+}
+
+sub convert_scalar {
+    my $data = shift;
+    return unless defined $data;
+    
+    if ($from =~ /(manual|all)-cp1252/) {
+        # handle special cp1252 modes (see POD)
+        from_to($data, $from, $to) if ($1 eq 'all');
+        build_special_cp1252_conversions if !%cp1252_string_to_char;
+        while ($data =~ /(\&\#\d\d\d?\;)/s) {
+            if (my $char = $cp1252_string_to_char{$1}) {
+                $data =~ s/$1/$char/sg;
+            }
+        }
+    } else {  
+        # handle all other modes
+        from_to($data, $from, $to);
+    }
+    return $data;
+}     
