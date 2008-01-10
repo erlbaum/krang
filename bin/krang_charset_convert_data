@@ -40,7 +40,7 @@ backup so you can roll it back if your guess was wrong.
 
 NOTE: If you pass this argument the special value 'manual-cp1252', the
 script will fix (and only fix) five and six-character strings like "&#147;"
-If you pass 'all-cp1252' it will fix both these and the actual cp1252 chars.
+If you pass 'all-cp1252' it will convert these AND actual characters.
 
 =item --to
 
