@@ -248,7 +248,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             my @ids  = map { $row->{$_} } @id_fields;
 
             # convert each data field
-            @data = map { convert_scalar($_, $from, $to) } @data;
+            @data = map { convert_scalar($_, $from, $to) || '' } @data;
 
             # now put the data back
             $update_sth->execute(@data, @ids);
@@ -360,16 +360,14 @@ sub build_special_cp1252_conversions {
 
 sub convert_scalar {
     my $data = shift;
-    return '' unless defined $data;
+    return unless defined $data;
     
     if ($from =~ /(manual|all)-cp1252/) {
         # handle special cp1252 modes (see POD)
         from_to($data, $from, $to) if ($1 eq 'all');
         build_special_cp1252_conversions if !%cp1252_string_to_char;
-        while ($data =~ /(\&\#\d\d\d?\;)/s) {
-            if (my $char = $cp1252_string_to_char{$1}) {
-                $data =~ s/$1/$char/sg;
-            }
+        while ($data =~ /(\&\#\d\d\d?\;)/s && (my $char = $cp1252_string_to_char{$1})) {
+            $data =~ s/$1/$char/sg;
         }
     } else {  
         # handle all other modes
