@@ -39,7 +39,7 @@ When in doubt, you'll probably have to guess and try one. Make sure to
 backup so you can roll it back if your guess was wrong.
 
 NOTE: If you pass this argument the special value 'manual-cp1252', the
-script will fix (and only fix) five and six-character strings like "&#147;"
+script will fix (and only fix) six-character strings like "&#147;" 
 If you pass 'all-cp1252' it will convert these AND actual characters.
 
 =item --to
@@ -350,10 +350,10 @@ sub convert_element_data {
 
 my %cp1252_string_to_char;
 sub build_special_cp1252_conversions {
-     for (my $val = 32; $val < 256; $val++) {
+     for (my $val = 0; $val < 256; $val++) {
         my $char = chr($val);
         from_to($char, 'windows-1252', $to);
-        my $string = "&#$val;";
+        my $string = '&#' . sprintf("%03d", $val) . ';';
         $cp1252_string_to_char{$string} = $char;
     }
 }
@@ -366,7 +366,7 @@ sub convert_scalar {
         # handle special cp1252 modes (see POD)
         from_to($data, $from, $to) if ($1 eq 'all');
         build_special_cp1252_conversions if !%cp1252_string_to_char;
-        while ($data =~ /(\&\#\d\d\d?\;)/s && (my $char = $cp1252_string_to_char{$1})) {
+        while ($data =~ /(\&\#\d\d\d\;)/s && (my $char = $cp1252_string_to_char{$1})) {
             $data =~ s/$1/$char/sg;
         }
     } else {  
