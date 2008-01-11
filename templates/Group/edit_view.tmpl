@@ -7,7 +7,7 @@ Krang.onload( function() {
 } );
 
 do_save = function()
-{	
+{
   Krang.Form.submit('edit_group_form', { rm: 'save' });
 }
 
@@ -69,7 +69,7 @@ Group
 <tbody>
 
 <tr class="demi<tmpl_if duplicate_name> err<tmpl_else><tmpl_if error_invalid_name> err</tmpl_if></tmpl_if>">
-<th class="f">Group Name</td>
+<th class="f">Group Name</th>
 <td class="l"><input name="name" value="<tmpl_var escape=html name>"></td>
 </tr>
 
@@ -102,7 +102,7 @@ Group
 <tbody><tmpl_loop categories>
   <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
   <td class="f"><tmpl_var escape=html category_url></td>
-  <td class=""><input value="Set Category Permissions" onclick="edit_categories('<tmpl_var escape=html category_id>')" type="button" class="button"></td>
+  <td><input value="Set Category Permissions" onclick="edit_categories('<tmpl_var escape=html category_id>')" type="button" class="button"></td>
   <tmpl_loop permission_radio>
     <td class="series<tmpl_if __last__> l</tmpl_if>"><tmpl_var radio_select></td>
   </tmpl_loop>
