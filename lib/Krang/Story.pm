@@ -627,15 +627,17 @@ sub prune_versions {
     my ($self, %args) = @_;
     my $dbh = dbh;
 
+    # figure out how many versions can be deleted
     my @all_versions     = @{$self->all_versions};
     my $number_to_keep   = $args{number_to_keep} || 10;
-    my $number_to_delete = (@all_versions - $number_to_keep) || 0;
-    if ($number_to_delete) {
-        my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
-        $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version IN ('.
-                 join(',', ("?") x @versions_to_delete) . ')',
-                 undef, $self->story_id, @versions_to_delete);
-    }
+    my $number_to_delete = @all_versions - $number_to_keep;
+    return 0 unless $number_to_delete > 0;
+    
+    # delete the oldest ones (which will be first since list is ascending)
+    my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
+    $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version IN ('.
+             join(',', ("?") x @versions_to_delete) . ')',
+             undef, $self->story_id, @versions_to_delete);
     return $number_to_delete;
 }
 
@@ -723,6 +725,8 @@ sub save {
     add_history(    object => $self, 
                     action => 'save',
                );
+
+    $self->prune_versions(number_to_keep => 1);
 }
 
 # save core Story data
