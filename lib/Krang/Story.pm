@@ -607,7 +607,31 @@ sub all_versions {
     my $self = shift;
     my $dbh = dbh;
     return $dbh->selectcol_arrayref('SELECT version FROM story_version WHERE story_id=?', 
-                                    undef, $self->{story_id});
+                                    undef, $self->story_id);
+}
+
+
+=item C<< $story->prune_versions(number_to_keep => 10); >>
+
+Deletes old versions of this story. By default the last 10 versions are kept.
+Returns the number of versions deleted.
+
+=cut
+
+sub prune_versions {
+    my ($self, %args) = @_;
+    my $dbh = dbh;
+
+    my @all_versions     = @{$self->all_versions};
+    my $number_to_keep   = $args{number_to_keep} || 10;
+    my $number_to_delete = (@all_versions - $number_to_keep) || 0;
+    if ($number_to_delete) {
+        my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
+        $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version IN ('.
+                 join(',', ("?") x @versions_to_delete) . ')',
+                 undef, $self->story_id, @versions_to_delete);
+    }
+    return $number_to_delete;
 }
 
 =item C<< $story->save() >>
