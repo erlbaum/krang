@@ -636,8 +636,6 @@ current user doesn't have edit access to the story.
 
 =cut
 
-
-
 sub save {
     my $self = shift;
     my %args = @_;
