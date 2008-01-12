@@ -597,6 +597,18 @@ Removes all contributor associatisons.
 
 sub clear_contribs { shift->{contrib_ids} = []; }
 
+=item C<< $all_version_numbers = $story->all_versions(); >>
+
+Returns an arrayref containing all the existing version numbers for this story.
+
+=cut
+
+sub all_versions {
+    my $self = shift;
+    my $dbh = dbh;
+    return $dbh->selectcol_arrayref('SELECT version FROM story_version WHERE story_id=?', 
+                                    undef, $self->{story_id});
+}
 
 =item C<< $story->save() >>
 
@@ -623,6 +635,8 @@ Will throw a Krang::Story::NoEditAccess exception if the
 current user doesn't have edit access to the story.
 
 =cut
+
+
 
 sub save {
     my $self = shift;

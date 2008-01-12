@@ -517,7 +517,7 @@ sub edit {
 
         $template->param(version_selector => scalar
                          $query->popup_menu(-name    => 'version',
-                                            -values  => [1 .. $story->version],
+                                            -values  => $story->all_versions,
                                             -default => $story->version,
                                             -override => 1));
 
