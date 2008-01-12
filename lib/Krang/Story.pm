@@ -725,8 +725,6 @@ sub save {
     add_history(    object => $self, 
                     action => 'save',
                );
-
-    $self->prune_versions(number_to_keep => 1);
 }
 
 # save core Story data
