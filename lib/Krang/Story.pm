@@ -613,8 +613,13 @@ sub all_versions {
 
 =item C<< $story->prune_versions(number_to_keep => 10); >>
 
-Deletes old versions of this story. By default the last 10 versions are kept.
-Returns the number of versions deleted.
+Deletes old versions of this story. By default prune_versions()
+keeps the last 10 versions; the number can be overridden as above.
+In either case, it returns the number of versions actually deleted.
+
+NOTE: prune_versions() is not currently integrated into the 
+save() process (or any other part of native Krang), which means
+unless it is specially called, all versions of all stories are preserved.
 
 =cut
 
