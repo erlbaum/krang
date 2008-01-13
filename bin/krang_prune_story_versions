@@ -1,0 +1,121 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_prune_story_versions - delete old story versions from the database
+
+=head1 SYNOPSIS
+
+   krang_prune_story_versions --number_to_keep 10
+
+=head1 DESCRIPTION
+
+Cleans up the story_version database via the API. Iterates through 
+each Story and calls its prune_versions() method.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --number_to_keep
+
+This is a required argument, and sets the maximum number of
+versions to keep per story.
+
+=item --all_instances
+
+By default, the script only processes stories for the instance specified
+in the environmental variable KRANG_INSTANCE. This parameter causes it
+to process all instances.
+
+=item --verbose
+
+If specified once, every Story that is modified will be displayed. If
+specified twice, every Story that is not modified will also be displayed.
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot);
+use Krang::ClassLoader 'Story';
+
+use Getopt::Long;
+use Pod::Usage;
+
+my ($help, $man, $number_to_keep, $all_instances);
+my $verbose = 0;
+
+pod2usage(2) unless
+  GetOptions(
+             'number_to_keep=i' => \$number_to_keep,
+             'all_instances'    => \$all_instances,
+             'verbose+'         => \$verbose,
+             'help'             => \$help,
+             'man'              => \$man,
+            );
+
+pod2usage(1)             if $help || !$number_to_keep;
+pod2usage(-verbose => 2) if $man;
+
+print "\nkrang_prune_story_versions\n".
+        "--------------------------\n";
+
+foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
+    print "\nprocessing instance $instance\n";
+    pkg('Conf')->instance($instance);
+    foreach my $story_id (pkg('Story')->find(ids_only => 1)) {
+        my ($story) = pkg('Story')->find(story_id => $story_id);
+        my $number_deleted = $story->prune_versions(number_to_keep => $number_to_keep);
+        if ($verbose and ($number_deleted or $verbose > 1)) {
+            print "Story $story_id: deleted $number_deleted version" . 
+                ($number_deleted == 1 ? '' : 's') . "\n";
+        }
+    }
+}
+print "\ndone\n\n";
