@@ -288,7 +288,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           
           qq/
           SELECT e.element_id AS id, e.data AS data FROM element e 
-          JOIN story s ON (s.element_id = e.element_id OR s.element_id = e.root_id)
+          JOIN story s ON (s.element_id = e.root_id)
           WHERE s.story_id IN ($story_ph)
           /
           ) .
