@@ -308,7 +308,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         my $frozen;
         eval {
             no warnings;
-            if (ref (my $thawed = thaw(decode_base64($row->{data})))) {
+            if (ref (my $thawed = thaw(decode_base64($data)))) {
                 $data = $thawed;
                 $frozen = 1;
             }
