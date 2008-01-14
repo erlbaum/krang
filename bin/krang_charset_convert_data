@@ -129,7 +129,6 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Story';
-use Krang::ClassLoader 'Conf';
 use Krang::ClassLoader 'Charset';
 use Krang::ClassLoader DB => qw(dbh);
 use Encode qw(from_to);
