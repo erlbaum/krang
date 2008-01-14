@@ -134,7 +134,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
     print "\n$instance:\n";
     pkg('Conf')->instance($instance);
     foreach my $type ('story', 'media', 'template') {
-        my $pkg_name = uc(substr($type, 0, 1)) . substr($type, 1); # convert story to Story, etc.
+        my $pkg_name = uc(substr($type, 0, 1)) . substr($type, 1); # convert 'story' to 'Story', etc.
         if (my $versions_to_keep = $versions_to_keep{$type}) {
             print "\npruning $type objects\n";
             my %args = ($versions_to_keep eq 'default' ? () : (number_to_keep => $versions_to_keep));
