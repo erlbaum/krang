@@ -299,37 +299,46 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
     # tell the DB what the data is coming as
     my $count = 0;
     while(my $row = $fetch_sth->fetchrow_hashref) {
-        next unless defined $row->{data};
-        my $data;
+        my $data = $row->{data};
         my $id = $row->{id};
 
-        # try an unthaw it to tell if it was frozen with Storable
+        next unless defined $data;
+
+        # try and thaw it to tell if it was frozen with Storable
         my $frozen;
         eval {
             no warnings;
-            $data   = thaw(decode_base64($row->{data}));
-            $frozen = 1 if ref $data;
+            if (ref (my $thawed = thaw(decode_base64($row->{data})))) {
+                $data = $thawed;
+                $frozen = 1;
+            }
         };
-        $data = $row->{data} unless $frozen;
-
+        
         $data = convert_element_data($data);
         if(defined $data) {
-            if($frozen && ref $data) {
+            if ($frozen) {
                 $data = encode_base64(nfreeze($data));
             }
             $update_sth->execute($data, $id);
+            $count++;
         } else {
             warn "  !Could not convert element #$id which is a "
               . (ref $data ? ref $data : 'scalar') . "!\n";
         }
-        $count++;
     }
     print "    Converted #$count elements\n" if $v;
         
-    pkg('Conf')->instance($ENV{KRANG_INSTANCE}) if $ENV{KRANG_INSTANCE};
-    
-    # now deploy any deployed templates after their data has been changed
+    # now that template contents have changed, redeploy all deployed templates
+    foreach my $template_id (pkg('Template')->find(ids_only => 1)) {
+        my ($template) = pkg('Template')->find(template_id => $template_id);
+        if ($template->deployed) {
+            $template->deploy;
+            print "  Re-deployed template $template_id\n" if $v;
+        }
+    }
 }
+# restore original instance (in case we were called by another Krang script)
+pkg('Conf')->instance($ENV{KRANG_INSTANCE}) if $ENV{KRANG_INSTANCE};
 
 sub convert_element_data {
     my $data = shift;
@@ -337,15 +346,16 @@ sub convert_element_data {
     if(!$ref) {
         return convert_scalar($data, $from, $to);
     } elsif($ref eq 'SCALAR') {
-        return convert_scalar($$data, $from, $to);
+        $$data = convert_element_data($$data, $from, $to);
+        return $data;
     } elsif($ref eq 'ARRAY') {
         return [map { convert_element_data($_) } @$data];
     } elsif($ref eq 'HASH') {
         return {map { $_ => convert_element_data($data->{$_}) } %$data};
+    } else {
+        # we don't know how to convert it, so leave it unchanged
+        return $data;
     }
-
-    # else we don't know how to convert it
-    return;
 }
 
 my %cp1252_string_to_char;
