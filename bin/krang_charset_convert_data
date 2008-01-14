@@ -22,6 +22,11 @@ This script will convert your data in the Krang database from one
 character set to another. This is useful if you've been running
 Krang for a while and your site needs to change its character set.
 
+NOTE: If your tables aren't already in the C<--to> format, 
+<bin/krang_charset_convert_tables> must be run AFTER this script.
+Either way, the charset directive in krang.conf should not be changed
+to the C<--to> format until both your data and tables are updated.
+
 =head1 OPTIONS
 
 The script takes the following options:
