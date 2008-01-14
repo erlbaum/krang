@@ -415,6 +415,10 @@ SKIP: {
     is($v1->checked_out_by, 0);
     is($v1->published_version, 0);
 
+    # try pruning old versions
+    is (@{$v->all_versions}, 5);
+    $v->prune_versions(number_to_keep => 3);
+    is (@{$v->all_versions}, 3);
 };
 
 
