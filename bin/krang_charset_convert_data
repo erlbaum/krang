@@ -326,14 +326,16 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         }
     }
     print "    Converted #$count elements\n" if $v;
-        
+
     # now that template contents have changed, redeploy all deployed templates
-    foreach my $template_id (pkg('Template')->find(ids_only => 1)) {
-        my ($template) = pkg('Template')->find(template_id => $template_id);
-        if ($template->deployed) {
-            $template->deploy;
-            print "  Re-deployed template $template_id\n" if $v;
-        }
+    unless (@only_story_ids) {  
+        foreach my $template_id (pkg('Template')->find(ids_only => 1)) {
+            my ($template) = pkg('Template')->find(template_id => $template_id);
+            if ($template->deployed) {
+                $template->deploy;
+                print "  Re-deployed template $template_id\n" if $v;
+            }
+        } 
     }
 }
 # restore original instance (in case we were called by another Krang script)
