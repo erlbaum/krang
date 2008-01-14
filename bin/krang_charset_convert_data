@@ -182,7 +182,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
     
     my %tables = (
 
-                  (not @story_ids ? () :
+                  (@story_ids == 0 ? () :
 
                   (story      => {
                       fields    => [qw(title slug notes)],
@@ -285,7 +285,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
 
          $dbh->prepare_cached
          (
-          (not @story_ids ? '' :
+          (@story_ids == 0 ? '' :
           
           qq/
           SELECT e.element_id AS id, e.data AS data FROM element e 
