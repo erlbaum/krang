@@ -141,12 +141,16 @@ Secret '<tmpl_var Secret>'
 # ContactEmail cms@company.org
 
 #
-# These optional variables limit the number of versions
+# The three optional variables below limit the number of versions
 # saved in the database for Story, Media, and Template objects.
-# The default for each is 0, meaning all versions are kept.
+# The default for each is 0, meaning all versions are kept. 
 #
 # For Stories, specific classes may override the universal
 # value via a method called versions_to_keep() (see TopLevel.pm)
+#
+# For Media, versions refer to the metadata associated with
+# a media file, and not the file itself (of which only the latest
+# copy is kept, in the file system rather than the database).
 #
 # NOTE: Changing one of these variables does not automatically
 # prune existing versions from the database - to do that, you
