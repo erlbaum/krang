@@ -104,6 +104,9 @@ use Pod::Usage;
 my ($help, $man, $per_story, $per_media, $per_template, $all_instances);
 my $verbose = 0;
 
+print "\nkrang_prune_versions\n".
+        "--------------------\n";
+
 pod2usage(2) unless
   GetOptions(
              'versions_per_story=s' => \$per_story,
@@ -118,14 +121,20 @@ pod2usage(2) unless
 pod2usage(1) if $help or $man or not($per_story or $per_media or $per_template);
 my %versions_to_keep = (story => $per_story, media => $per_media, template => $per_template);
 
-print "\nkrang_prune_versions\n".
-        "--------------------\n";
+# make sure we weren't passed anything strange for arguments
+foreach my $type ('story', 'media', 'template') {
+    if (my $versions = $versions_to_keep{$type}) {
+        die "\nversions_per_$type must be an integer or 'default'\n\n" 
+            unless $versions =~ /^\d+$/ || $versions eq 'default';
+    }
+}
 
+# begin actual work
 foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
     print "\n$instance:\n";
     pkg('Conf')->instance($instance);
     foreach my $type ('story', 'media', 'template') {
-        my $pkg_name = uc(substr($type, 0, 1)) . substr($type, 1);
+        my $pkg_name = uc(substr($type, 0, 1)) . substr($type, 1); # convert story to Story, etc.
         if (my $versions_to_keep = $versions_to_keep{$type}) {
             print "\npruning $type objects\n";
             my %args = ($versions_to_keep eq 'default' ? () : (number_to_keep => $versions_to_keep));
