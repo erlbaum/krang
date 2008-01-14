@@ -381,9 +381,7 @@ sub convert_scalar {
         # handle special cp1252 modes (see POD)
         from_to($data, $from, $to) if ($1 eq 'all');
         build_special_cp1252_conversions if !%cp1252_string_to_char;
-        while ($data =~ /(\&\#\d\d\d\;)/s && (my $char = $cp1252_string_to_char{$1})) {
-            $data =~ s/$1/$char/sg;
-        }
+        $data =~ s/(\&\#\d\d\d\;)/$cp1252_string_to_char{$1}/sg;
     } else {  
         # handle all other modes
         from_to($data, $from, $to);
