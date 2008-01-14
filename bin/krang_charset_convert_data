@@ -182,7 +182,8 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
     
     my %tables = (
 
-                  (!@story_ids ? () :
+                  (not @story_ids ? () :
+
                   (story      => {
                       fields    => [qw(title slug notes)],
                       extra_sql => " WHERE story_id IN ($story_ph) ",
@@ -284,7 +285,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
 
          $dbh->prepare_cached
          (
-          (!@story_ids ? '' :
+          (not @story_ids ? '' :
           
           qq/
           SELECT e.element_id AS id, e.data AS data FROM element e 
