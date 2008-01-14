@@ -167,7 +167,9 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
     pkg('Conf')->instance($instance);
 
     # figure out which sites (and hence, which stories) we're going to use for this instance
-    my @site_ids  = @only_site_ids ? @only_site_ids : pkg('Site')->find(ids_only => 1);
+    my @site_ids = @only_site_ids ? @only_site_ids : pkg('Site')->find(ids_only => 1);
+    next unless @site_ids;
+    
     my @story_ids = @only_story_ids ? @only_story_ids : pkg('Story')->find(ids_only => 1, site_id => \@site_ids);
     if (@skip_story_ids) {
         my %skip_id = map { $_ => 1 } @skip_story_ids;
@@ -179,11 +181,12 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
     my $story_ph = join(', ', ('?') x scalar @story_ids);
     
     my %tables = (
-                  story      => {
+
+                  (!@story_ids ? () :
+                  (story      => {
                       fields    => [qw(title slug notes)],
                       extra_sql => " WHERE story_id IN ($story_ph) ",
-                      binds     => \@story_ids,
-                  },
+                      binds     => \@story_ids})),
                   
                   (@only_story_ids ? () : 
                    
@@ -256,7 +259,21 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         print "    Updated $count rows in $name\n" if $v;
     }
 
-    # dig into the elements' data to decode/unthaw it, convert it and then
+    # now that template contents have changed, redeploy all deployed templates
+    unless (@only_story_ids) {  
+        foreach my $template_id (pkg('Template')->find(ids_only => 1)) {
+            my ($template) = pkg('Template')->find(template_id => $template_id);
+            if ($template->deployed) {
+                $template->deploy;
+                print "  Re-deployed template $template_id\n" if $v;
+            }
+        } 
+    }
+
+    # if there are no stories, no need to convert element table
+    next unless @story_ids;
+    
+    # otherwise, dig into the elements' data to decode/unthaw it, convert it and then
     # thaw/decode it and store it.
     print "  Converting element data\n" if $v;
     
@@ -264,36 +281,32 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
     # elements and sub-elements attached to the sites' stories, and - unless we're
     # only converting stories - all elements attached to categories 
     my $fetch_sth = 
-        @only_story_ids ? 
 
          $dbh->prepare_cached
          (
+          (!@story_ids ? '' :
+          
           qq/
           SELECT e.element_id AS id, e.data AS data FROM element e 
           JOIN story s ON (s.element_id = e.element_id OR s.element_id = e.root_id)
           WHERE s.story_id IN ($story_ph)
           /
-          )
+          ) .
 
-         :
+          (@only_story_ids ? '' :
 
-         $dbh->prepare_cached
-         (
           qq/
-          SELECT e.element_id AS id, e.data AS data FROM element e 
+          UNION DISTINCT
+          SELECT e.element_id AS id, e.data AS data FROM element e
           JOIN category c USING (element_id)
           WHERE c.site_id IN ($site_ph)
-          UNION DISTINCT
-          SELECT e.element_id AS id, e.data AS data FROM element e 
-          JOIN story s ON (s.element_id = e.element_id OR s.element_id = e.root_id)
-          WHERE s.story_id IN ($story_ph)
           /
-          );
+          ));
     
     my $to_dbh = dbh();
     $to_dbh->do("SET names " . pkg('Charset')->mysql_charset($to));
     my $update_sth = $to_dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
-    $fetch_sth->execute(@only_story_ids ? @story_ids : (@site_ids, @story_ids));
+    $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids);
 
     # tell the DB what the data is coming as
     my $count = 0;
@@ -325,19 +338,9 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
               . (ref $data ? ref $data : 'scalar') . "!\n";
         }
     }
-    print "    Converted #$count elements\n" if $v;
-
-    # now that template contents have changed, redeploy all deployed templates
-    unless (@only_story_ids) {  
-        foreach my $template_id (pkg('Template')->find(ids_only => 1)) {
-            my ($template) = pkg('Template')->find(template_id => $template_id);
-            if ($template->deployed) {
-                $template->deploy;
-                print "  Re-deployed template $template_id\n" if $v;
-            }
-        } 
-    }
+    print "    Converted $count elements\n" if $v;
 }
+
 # restore original instance (in case we were called by another Krang script)
 pkg('Conf')->instance($ENV{KRANG_INSTANCE}) if $ENV{KRANG_INSTANCE};
 
