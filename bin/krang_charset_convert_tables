@@ -42,6 +42,11 @@ By default this will just run for all of the tables in the given
 instance (as set in C<$ENV{KRANG_INSTANCE}>). But you can optionally
 tell it to run for every instance installed.
 
+=item --only-table
+
+This optional parameter (which may be used multiple times) limits
+the conversion to a particular table.
+
 =item --skip-table
 
 This optional parameter (which may be used multiple times) skips a 
@@ -109,12 +114,13 @@ use Krang::ClassLoader 'Charset';
 use Krang::ClassLoader DB => qw(dbh);
 
 # options
-my ($to, $help, $man, $all_instances, @instances, @skip_tables, $v);
+my ($to, $help, $man, $all_instances, @instances, @only_tables, @skip_tables, $v);
 GetOptions(
     'to=s'          => \$to,
     'help'          => \$help,
     'man'           => \$man,
     'all-instances' => \$all_instances,
+    'only-table=s'  => \@only_tables,
     'skip-table=s'  => \@skip_tables,
     'verbose'       => \$v,
 ) or pod2usage(2);
@@ -122,12 +128,14 @@ pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 die "You must supply a --to encoding!\n"   unless $to;
+die "You cannot use --only-table and --skip-table at the same time!\n" if (@only_tables && @skip_tables);
 
 # which instances are we going to use
 @instances = $all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE});
 
-# which tables are we going to skip (if any)
-my %skipping = @skip_tables ? map { $_ => 1 } @skip_tables : ();
+# which tables are we going to process (if not all)
+my %do_these   = @only_tables ? map { $_ => 1 } @only_tables : ();
+my %skip_these = @skip_tables ? map { $_ => 1 } @skip_tables : ();
 
 foreach my $instance (@instances) {
     pkg('Conf')->instance($instance);
@@ -144,7 +152,8 @@ foreach my $instance (@instances) {
     }
 
     foreach my $table (@tables) {
-        next if $skipping{$table};
+        next if %do_these && !$do_these{$table};
+        next if %skip_these && $skip_these{$table};
         print "  Altering $table\n" if $v;
         my @cols;
         $sth = $dbh->prepare_cached("DESCRIBE $table");
