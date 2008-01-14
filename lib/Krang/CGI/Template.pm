@@ -1013,7 +1013,7 @@ sub get_tmpl_params {
                                                      -size => 32);
         $tmpl_params{version_chooser} =
           $q->popup_menu(-name => 'selected_version',
-                         -values => [1..$version],
+                         -values => $template->all_versions,
                          -default => $version,
                          -override => 1);
         $tmpl_params{history_return_params} =

@@ -10,6 +10,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added the ability to limit the number of versions saved in the database
+for each Story, Media, and/or Template object, automatically pruning
+the oldest ones. [Noam Weinstein]
+
+=item *
+
 In Krang::ElementClass::XinhaEditor fixed caching of
 htmlarea.js. [Bodo Schulze]
 

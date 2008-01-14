@@ -1446,7 +1446,7 @@ sub make_media_tmpl_data {
         my $curr_version = $tmpl_data{version};
         my $media_version_chooser = $q->popup_menu(
                                                    -name => 'selected_version',
-                                                   -values => [1..$curr_version],
+                                                   -values => $m->all_versions,
                                                    -default => $curr_version,
                                                    -override => 1,
                                                   );

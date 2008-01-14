@@ -7,6 +7,7 @@ use Krang::ClassLoader Element => qw(foreach_element);
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader History => qw( add_history );
 use Krang::ClassLoader Log => qw(assert ASSERT affirm debug info critical);
+use Krang::ClassLoader Conf => qw(SavedVersionsPerStory);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Pref';
@@ -613,13 +614,10 @@ sub all_versions {
 
 =item C<< $story->prune_versions(number_to_keep => 10); >>
 
-Deletes old versions of this story. By default prune_versions()
-keeps the last 10 versions; the number can be overridden as above.
-In either case, it returns the number of versions actually deleted.
-
-NOTE: prune_versions() is not currently integrated into the 
-save() process (or any other part of native Krang), which means
-unless it is specially called, all versions of all stories are preserved.
+Deletes old versions of this story. By default prune_versions() keeps
+the number of versions specified by SavedVersionsPerStory in krang.conf;
+this can be overridden as above. In either case, it returns the number of 
+versions actually deleted.
 
 =cut
 
@@ -627,13 +625,16 @@ sub prune_versions {
     my ($self, %args) = @_;
     my $dbh = dbh;
 
+    # figure out how many versions to keep
+    my $number_to_keep = $args{number_to_keep} || SavedVersionsPerStory;
+    return 0 unless $number_to_keep;
+
     # figure out how many versions can be deleted
     my @all_versions     = @{$self->all_versions};
-    my $number_to_keep   = $args{number_to_keep} || 10;
     my $number_to_delete = @all_versions - $number_to_keep;
     return 0 unless $number_to_delete > 0;
     
-    # delete the oldest ones (which will be first since list is ascending)
+    # delete the oldest ones (which will be first since the list is ascending)
     my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
     $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version IN ('.
              join(',', ("?") x @versions_to_delete) . ')',
@@ -714,6 +715,9 @@ sub save {
 
     # save a serialized copy in the version table
     $self->_save_version;
+    
+    # prune previous versions from the version table (see TopLevel.pm::versions_to_keep)
+    $self->prune_versions(number_to_keep => $self->class->versions_to_keep);
 
     # register creation if is the first version
     add_history(    object => $self, 

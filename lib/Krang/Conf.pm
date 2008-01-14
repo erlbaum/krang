@@ -56,6 +56,9 @@ PasswordChangeTime
 PasswordChangeCount
 PreviewSSL
 RewriteLogLevel
+SavedVersionsPerMedia
+SavedVersionsPerStory
+SavedVersionsPerTemplate
 SchedulerMaxChildren
 Secret
 SiteServerAddr
