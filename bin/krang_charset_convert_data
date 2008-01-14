@@ -161,13 +161,15 @@ die "You can't use both --all-instances and a specific story ID!\n"
 die "You can't use both --only-story-id and --skip-story-id at the same time!\n"
   if @only_story_ids and @skip_story_ids;
 
+my $dbh = dbh();
+
 # figure out which instances we're going to use, and loop through them
 foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
     pkg('Conf')->instance($instance);
 
     # figure out which sites (and hence, which stories) we're going to use for this instance
-    my @site_ids  = @only_site_ids  || pkg('Site')->find(ids_only => 1);
-    my @story_ids = @only_story_ids || pkg('Story')->find(ids_only => 1, site_id => \@site_ids);
+    my @site_ids  = @only_site_ids ? @only_site_ids : pkg('Site')->find(ids_only => 1);
+    my @story_ids = @only_story_ids ? @only_story_ids : pkg('Story')->find(ids_only => 1, site_id => \@site_ids);
     if (@skip_story_ids) {
         my %skip_id = map { $_ => 1 } @skip_story_ids;
         @story_ids = grep { not $skip_id{$_} } @story_ids;
@@ -214,8 +216,6 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
     
     print "Converting instance '$instance'\n" if $v;
     print "  For site(s) " . join(', ', map { "#$_" } @site_ids) . "\n" if $v;
-    pkg('Conf')->instance($instance);
-    my $dbh = dbh();
     
     # convert all the fields in the tables listed above
     foreach my $name (keys %tables) {
@@ -314,7 +314,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
 
         $data = convert_element_data($data);
         if(defined $data) {
-            if($frozen) {
+            if($frozen && ref $data) {
                 $data = encode_base64(nfreeze($data));
             }
             $update_sth->execute($data, $id);
