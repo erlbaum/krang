@@ -15,6 +15,9 @@ sub per_instance {
     my $self = shift;
     my $dbh = dbh();
 
+    # correct size of session column
+    $dbh->do('ALTER TABLE sessions MODIFY COLUMN a_session mediumblob');
+
     # remove deprecated 'priority' field from story table
     $dbh->do('ALTER TABLE story DROP COLUMN priority');
 }
