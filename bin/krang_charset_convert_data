@@ -43,9 +43,9 @@ to see if the site being served declares its character set.
 When in doubt, you'll probably have to guess and try one. Make sure to
 backup so you can roll it back if your guess was wrong.
 
-NOTE: If you pass this argument the special value 'manual-cp1252', the
+NOTE: If you pass this argument the special value 'manual-1252', the
 script will fix (and only fix) six-character strings like "&#147;" 
-If you pass 'all-cp1252' it will convert these AND actual characters.
+In this special case the tables must already be in the --to encoding.
 
 =item --to
 
@@ -381,9 +381,8 @@ sub convert_scalar {
     my $data = shift;
     return unless defined $data;
     
-    if ($from =~ /(manual|all)-cp1252/) {
-        # handle special cp1252 modes (see POD)
-        from_to($data, $from, $to) if ($1 eq 'all');
+    if ($from eq 'manual-1252') {
+        # handle special manual-1252 mode (see POD)
         build_special_cp1252_conversions if !%cp1252_string_to_char;
         $data =~ s/(\&\#\d\d\d\;)/$cp1252_string_to_char{$1}/sg;
     } else {  
