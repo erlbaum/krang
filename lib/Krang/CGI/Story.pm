@@ -578,15 +578,22 @@ sub view {
     croak("Unable to get story_id!") unless $story_id;
     
     # load story from DB
-    my $version = $query->param('version');
-    my ($story) = pkg('Story')->find(story_id => $story_id,
-                                     ($version && length($version) ? 
-                                      (version => $version) : ()),
-                                    );
-    croak("Unable to load story '" . $query->param('story_id') . "'" . 
-          (defined $version ? ", version '$version'." : "."))
-      unless $story;
-    
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+    croak("Unable to load latest version of story $story_id")
+        unless $story;
+
+    # if we're being asked for a version that isn't the latest, get it
+    # (we do this as a separate find() so that the latest version is
+    # always pulled from the element table and not the story_version table)
+    if (my $version = $query->param('version')) {
+        if ($version != $story->version) {
+            ($story) = pkg('Story')->find(story_id => $story_id,
+                                          version => $version);
+            croak("Unable to load version $version of story $story_id")
+                unless $story;
+        }
+    }
+
     # run the element editor edit
     $self->element_view(template => $template, 
                         element  => $story->element);
