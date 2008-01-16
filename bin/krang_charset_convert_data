@@ -165,11 +165,10 @@ die "You can't use both --all-instances and a specific story ID!\n"
 die "You can't use both --only-story-id and --skip-story-id at the same time!\n"
   if @only_story_ids and @skip_story_ids;
 
-my $dbh = dbh();
-
 # figure out which instances we're going to use, and loop through them
 foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
     pkg('Conf')->instance($instance);
+    my $dbh = dbh();
 
     # figure out which sites (and hence, which stories) we're going to use for this instance
     my @site_ids = @only_site_ids ? @only_site_ids : pkg('Site')->find(ids_only => 1);
