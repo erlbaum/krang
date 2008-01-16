@@ -15,8 +15,11 @@ sub per_instance {
     my $self = shift;
     my $dbh = dbh();
 
-    # correct size of session column
-    $dbh->do('ALTER TABLE sessions MODIFY COLUMN a_session mediumblob');
+    # correct size of binary DB columns
+    $dbh->do('ALTER TABLE sessions MODIFY COLUMN a_session MEDIUMBLOB');
+    $dbh->do('ALTER TABLE story_version MODIFY COLUMN data MEDIUMBLOB');
+    $dbh->do('ALTER TABLE media_version MODIFY COLUMN data MEDIUMBLOB');
+    $dbh->do('ALTER TABLE template_version MODIFY COLUMN data MEDIUMBLOB');
 
     # remove deprecated 'priority' field from story table
     $dbh->do('ALTER TABLE story DROP COLUMN priority');
