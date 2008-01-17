@@ -8,6 +8,16 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Added C<PreloadHandler> available to addons to run code during Apache's
+preload stage. [Michael Peters]
+
+=item *
+
+Added C<EnableTemplateCache> configuration parameter to be able to turn Krang
+UI template caching on. [Michael Peters]
+
 =item *
 
 Added the ability to limit the number of versions saved in the database
