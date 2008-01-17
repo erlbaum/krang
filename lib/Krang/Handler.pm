@@ -333,7 +333,7 @@ sub authen_handler ($$) {
     my %cookies = Apache::Cookie->new($r)->parse;
 
     # Determine window ID of request
-    my $window_id;
+    my $window_id = '';
     my $new_login_id;
     if ($new_login_id = ($cookies{krang_login_id} && $cookies{krang_login_id}->value)) {
       # 1. This is a new window: login.pm passed us the ID
