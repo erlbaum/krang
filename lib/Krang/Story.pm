@@ -1143,7 +1143,7 @@ sub find {
 
         # handle class => ['article', 'cover']
         if ($key eq 'class' and ref($value) and ref($value) eq 'ARRAY') {
-            # an array of IDs selects a list of stories by ID
+            # an array of classes selects a list of stories by class
             push @where, 's.class IN (' . 
               join(',', ("?") x @$value) . ')';
             push @param, @$value;
