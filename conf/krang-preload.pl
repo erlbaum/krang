@@ -13,7 +13,7 @@ BEGIN {
     pkg('AddOn')->call_handler('InitHandler');
 }
 use Krang::ClassLoader 'lib';
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot EnableTemplateCache);
 use File::Find qw(find);
 use Krang::ClassLoader 'HTMLTemplate';
 
@@ -36,6 +36,7 @@ find({
      KrangRoot . '/lib/Krang');
 
 # load all template
+if( EnableTemplateCache ) {
 print STDERR "Pre-loading HTML Templates...\n";
 find(
      sub {
@@ -48,7 +49,11 @@ find(
                                  );
      },
      KrangRoot . '/templates');
+}
 
+# pre-load any addons that want it
+print STDERR "Pre-loading Addons...\n";
+pkg('AddOn')->call_handler('PreloadHandler');
 
 print STDERR "Krang Pre-load complete.\n";
 
