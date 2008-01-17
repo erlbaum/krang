@@ -25,6 +25,7 @@ DBPass
 DBUser
 DBHost
 DBSock
+EnableTemplateCache
 EnableBugzilla
 EnableFTP
 EnableSiteServer
