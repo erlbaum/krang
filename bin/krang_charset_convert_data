@@ -135,7 +135,7 @@ use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Charset';
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB => qw(dbh forget_dbh);
 use Encode qw(from_to);
 use Storable qw(nfreeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
@@ -168,7 +168,14 @@ die "You can't use both --only-story-id and --skip-story-id at the same time!\n"
 # figure out which instances we're going to use, and loop through them
 foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
     pkg('Conf')->instance($instance);
+
+    # get a clean (un-cached) DB handle
+    forget_dbh();
     my $dbh = dbh();
+
+    # make sure MySQL interprets incoming & outgoing data in the original charset since
+    # the tables haven't yet been converted (except when running special manual-1252 mode)
+    $dbh->do('SET names ' . pkg('Charset')->mysql_charset($from eq 'manual-1252' ? $to : $from));
 
     # figure out which sites (and hence, which stories) we're going to use for this instance
     my @site_ids = @only_site_ids ? @only_site_ids : pkg('Site')->find(ids_only => 1);
@@ -307,13 +314,10 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           WHERE c.site_id IN ($site_ph)
           /
           ));
-    
-    my $to_dbh = dbh();
-    $to_dbh->do("SET names " . pkg('Charset')->mysql_charset($to));
-    my $update_sth = $to_dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
+
+    my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
     $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids);
 
-    # tell the DB what the data is coming as
     my $count = 0;
     while(my $row = $fetch_sth->fetchrow_hashref) {
         my $data = $row->{data};
@@ -380,7 +384,7 @@ sub build_special_cp1252_conversions {
 sub convert_scalar {
     my $data = shift;
     return unless defined $data;
-    
+
     if ($from eq 'manual-1252') {
         # handle special manual-1252 mode (see POD)
         build_special_cp1252_conversions if !%cp1252_string_to_char;
