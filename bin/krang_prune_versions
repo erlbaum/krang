@@ -10,7 +10,7 @@ krang_prune_versions - delete old versions of stories, medias, and/or templates 
 
 =head1 SYNOPSIS
 
-   krang_prune_versions --versions_per_story 10 --versions_per_media default --versions_per_template 5
+   krang_prune_versions --versions-per-story 10 --versions-per-media default --versions-per-template 5
 
 =head1 DESCRIPTION
 
@@ -22,30 +22,36 @@ The script takes the following options:
 
 =over
 
-=item --versions_per_story
+=item --versions-per-story
 
 Use this argument if you wish to clean up the story_version table, and
 pass it the number of versions to keep, or 'default' to use the value returned
 by the class's versions_to_keep() method (which normally just checks 
 SavedVersionsPerStory in krang.conf)
 
-=item --versions_per_media
+=item --versions-per-media
 
 Use this argument if you wish to clean up the media_version table, and
 pass the number of versions to keep or 'default' to use the value of 
 SavedVersionsPerMedia in krang.conf
 
-=item --versions_per_template
+=item --versions-per-template
 
 Use this argument if you wish to clean up the template_version table, and
 pass the number of versions to keep or 'default' to use the value of 
 SavedVersionsPerTemplate in krang.conf
 
-=item --all_instances
+=item --all-instances
 
 By default, the script only processes stories for the instance specified
 in the environmental variable KRANG_INSTANCE. This parameter causes it
 to process all instances.
+
+=item --first-resave
+
+This optional argument causes every object to be opened & resaved before
+it is pruned, ensuring that the database's version table has the latest copy.
+(NOTE: Running in this mode forcibly checks in any checked-out objects.)
 
 =item --verbose
 
@@ -101,7 +107,7 @@ use Krang::Conf qw(SavedVersionsPerStory SavedVersionsPerMedia SavedVersionsPerT
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, $per_story, $per_media, $per_template, $all_instances);
+my ($help, $man, $per_story, $per_media, $per_template, $all_instances, $first_resave);
 my $verbose = 0;
 
 print "\nkrang_prune_versions\n".
@@ -109,10 +115,11 @@ print "\nkrang_prune_versions\n".
 
 pod2usage(2) unless
   GetOptions(
-             'versions_per_story=s' => \$per_story,
-             'versions_per_media=s' => \$per_media,
-             'versions_per_template=s' => \$per_template,
-             'all_instances'    => \$all_instances,
+             'versions-per-story=s' => \$per_story,
+             'versions-per-media=s' => \$per_media,
+             'versions-per-template=s' => \$per_template,
+             'all-instances'    => \$all_instances,
+	     'first-resave'     => \$first_resave,
              'verbose+'         => \$verbose,
              'help'             => \$help,
              'man'              => \$man,
@@ -124,7 +131,7 @@ my %versions_to_keep = (story => $per_story, media => $per_media, template => $p
 # make sure we weren't passed anything strange for arguments
 foreach my $type ('story', 'media', 'template') {
     if (my $versions = $versions_to_keep{$type}) {
-        die "\nversions_per_$type must be an integer or 'default'\n\n" 
+        die "\nversions-per-$type must be an integer or 'default'\n\n" 
             unless $versions =~ /^\d+$/ || $versions eq 'default';
     }
 }
@@ -140,6 +147,12 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             my %args = ($versions_to_keep eq 'default' ? () : (number_to_keep => $versions_to_keep));
             foreach my $object_id (pkg($pkg_name)->find(ids_only => 1)) {
                 my ($object) = pkg($pkg_name)->find($type.'_id' => $object_id);
+		if ($first_resave) {
+		    $object->checkin if ($object->checked_out);
+		    $object->checkout;
+		    $object->save(keep_version => 1);
+		    $object->checkin;
+		}
                 my $number_deleted = $object->prune_versions(%args);
                 if ($verbose and ($number_deleted or $verbose > 1)) {
                     print "#$object_id: deleted $number_deleted version" . 
