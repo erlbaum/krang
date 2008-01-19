@@ -62,6 +62,7 @@ END
     $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
     unshift @INC, $plib;
 }
+my $bin = catdir($ENV{KRANG_ROOT}, "bin");
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Charset';
@@ -131,31 +132,31 @@ unless (confirm) {
 print "\nExcellent. Please sit back and enjoy the conversion.\n";
 
 print "\nSTOPPING KRANG\n\n";
-system ('./krang_ctl stop');
+system ($bin.'/krang_ctl stop');
 
 if ($backup_data) {
     print "\nBACKING UP EVERYTHING\n\n";
-    if (system ('./krang_backup --verbose')) {
+    if (system ($bin.'/krang_backup --verbose')) {
 	print "\nBACKUP FAILED: UTF8 UPGRADE ABORTED\n\n";
 	exit;
     }
 }
 
 print "\nCONVERTING DATA TO UTF8\n\n";
-if (system ('./krang_charset_convert_data --from '.$old_charset.' --to utf8 --all-instances --verbose')) {
+if (system ($bin.'/krang_charset_convert_data --from '.$old_charset.' --to utf8 --all-instances --verbose')) {
     print "\nDATA-CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
     exit;
 }
 
 print "\nCONVERING SQL TABLES TO UTF8\n\n";  # skip history - it's huge and only has ASCII anyway
-if (system('./krang_charset_convert_tables --to utf8 --all-instances --skip-table history --verbose')) {
+if (system($bin.'/krang_charset_convert_tables --to utf8 --all-instances --skip-table history --verbose')) {
     print "\nTABLE-CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
     exit;
 }
 
 if ($convert_manual_1252) {
     print "\nREPLACING WINDOWS-1252 HEXADECIMAL STRINGS WITH UNICODE SYMBOLS\n\n";
-    if (system('./krang_charset_convert_data --from manual-1252 --to utf8 --all-instances --verbose')) {
+    if (system($bin.'/krang_charset_convert_data --from manual-1252 --to utf8 --all-instances --verbose')) {
 	print "\nHEX-STRING CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
 	exit;
     }
@@ -205,6 +206,9 @@ if ($remove_old_versions) {
 if (system ("./krang_prune_versions --first-resave --versions-per-media $versions --versions-per-story $versions --versions-per-template $versions --verbose")) {
     print "KRANG_PRUNE_VERSIONS FAILED: NOT THE END OF THE WORLD; YOU CAN RUN THIS BY HAND LATER.\n";
 }
+
+print "\nRE-STARTING KRANG\n\n";
+system ($bin.'/krang_ctl start');
 
 print "\nUTF8 UPGRADE COMPLETE!\n\nASSUMING NO ERRORS ABOVE, ALL YOU HAVE TO DO NOW IS MAKE SURE YOUR CATEGORY TEMPLATES AND/OR SERVER CONFIGURATION INCLUDE A UTF8 HEADER (E.G. \"Content-Type: text/html; charset=utf-8\") AND THEN RE-PUBLISH!\n\n";
 
