@@ -1386,6 +1386,9 @@ sub update_media {
             next;
         }
         if ($mf eq 'text_content') {
+            # Upload takes precedence over inline edit
+            next if $q->param('media_file');
+
             # Handle direct text-file editing
             next unless $q->param('text_content');
             my $text = $q->param('text_content');
