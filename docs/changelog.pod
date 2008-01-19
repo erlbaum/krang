@@ -8,6 +8,8 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+Added interactive C<krang_to_utf8> script to ease conversions. [Noam Weinstein]
+
 =item * 
 
 Added C<PreloadHandler> available to addons to run code during Apache's
