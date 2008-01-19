@@ -121,7 +121,7 @@ my $remove_old_versions = confirm();
 if ($remove_old_versions) {
     print "\nOK - We will keep only the latest versions.\n";
 } else {
-    print "\nOK - Just a warning that reverting to old versions in the CMS may cause errors since the old versions may not be UTF8 compliant.\n";
+    print "\nOK - Just to warn you, reverting to old versions in the CMS may cause errors since the old versions may not be UTF8 compliant.\n";
 }
 
 print "\nLooks like we have all the information we need. Are you ready to begin?\n";
@@ -187,7 +187,8 @@ while (<KRANG_CONF>) {
 }
 unless ($added_charset) {
     print "\nADDING 'Charset UTF-8' AT THE END OF $krang_conf_file\n";
-    $output .= "\nCharset UTF-8\n";
+    $output =~ s/\s+$//;
+    $output .= "\n\nCharset UTF-8\n";
 }
 close KRANG_CONF;
 open KRANG_CONF, "> $krang_conf_file";
@@ -199,7 +200,7 @@ if ($remove_old_versions) {
     print "\nREMOVING OLD VERSIONS OF STORIES, TEMPLATES, AND MEDIA OBJECTS FROM DATABASE\n";
     $versions = 1;
 } else {
-    print "\nADDING LATEST VERSION OF STORIES, TEMPLATES, AND MEDIA OBJECTS TO VERSION TABLES\n";
+    print "\nADDING LATEST VERSION OF STORIES, TEMPLATES, AND MEDIA OBJECTS TO VERSION TABLES\n(THIS CALL TO KRANG_PRUNE_VERSIONS WILL NOT ACTUALLY DELETE ANYTHING, JUST UPDATE THE VERSION TABLES)\n";
     $versions = 999999;
 }
 
