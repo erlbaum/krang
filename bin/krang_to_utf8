@@ -203,7 +203,7 @@ if ($remove_old_versions) {
     $versions = 999999;
 }
 
-if (system ("./krang_prune_versions --first-resave --versions-per-media $versions --versions-per-story $versions --versions-per-template $versions --verbose")) {
+if (system ("$bin/krang_prune_versions --first-resave --versions-per-media $versions --versions-per-story $versions --versions-per-template $versions --verbose")) {
     print "KRANG_PRUNE_VERSIONS FAILED: NOT THE END OF THE WORLD; YOU CAN RUN THIS BY HAND LATER.\n";
 }
 
