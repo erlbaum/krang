@@ -134,7 +134,7 @@ Krang.Window = {
         }
 
         // make sure page refresh will send Handler our ID 
-        window.onbeforeunload = Krang.Window.pass_id; // only IE & Firefox support this?
+        window.onbeforeunload = Krang.Window.pass_id; // this doesn't work in Safari
     },
 
     get_id : function() {
@@ -1673,7 +1673,7 @@ var rules = {
     },
     // create an autocomplete widget. This involves creating a div
     // in which to place the results and creating an Ajax.Autocompleter
-    // object. We only do this if the use has the "use_autocomplete"
+    // object. We only do this if the user has the "use_autocomplete"
     // preference.
     // Can specifically ignore inputs by giving them the 'non_auto' class
     'input.autocomplete' : function(el) {
@@ -1698,6 +1698,7 @@ var rules = {
                     paramName: 'phrase',
                     tokens   : [' '],
                     callback : function(el, url) {
+                        Krang.Window.pass_id();
                         url = url + '&rm=autocomplete';
                         return url;
                     }
