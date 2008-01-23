@@ -306,7 +306,8 @@ sub add {
     my $file   = $args{file};
     my $path   = $args{path};
     
-    # in skip_dependencies mode, we only add primary objects & their files
+    # in skip_dependencies mode, we only add primary 
+    # objects and - for media objects - their files
     return if ($self->{skip_dependencies} && $from && !$file);
 
     if ($object) {
