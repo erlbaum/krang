@@ -68,8 +68,7 @@ overwrite any existing data.
 
 =item --skip_dependencies
 
-Use this option when importing a KDS file created via "krang_export --skip_dependencies"
-(If your KDS file was created without that option, don't use it here either!)
+This option is necessary when importing a KDS file created via "krang_export --skip_dependencies"
 
 =item --verbose
 
