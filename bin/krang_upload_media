@@ -102,7 +102,7 @@ END
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot);
+use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot);
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Media';

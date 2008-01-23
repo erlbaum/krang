@@ -80,6 +80,7 @@ BEGIN {
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
+    $ENV{KRANG_NO_ELEMENTLIBS} = 1;
     eval { require Krang::Conf };
     warn << "END" and exit(1) if $@;
 ######################################################################
@@ -98,7 +99,7 @@ END
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot);
+use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot);
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Template';
