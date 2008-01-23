@@ -310,7 +310,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           qq/
           UNION DISTINCT
           SELECT e.element_id AS id, e.data AS data FROM element e
-          JOIN category c USING (element_id)
+          JOIN category c ON (c.element_id = e.root_id)
           WHERE c.site_id IN ($site_ph)
           /
           ));
