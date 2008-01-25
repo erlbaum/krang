@@ -333,7 +333,7 @@ sub authen_handler ($$) {
     my %cookies = Apache::Cookie->new($r)->parse;
 
     # Determine window ID of request
-    my $window_id = '';
+    my $window_id;
     my $new_login_id;
     if ($new_login_id = ($cookies{krang_login_id} && $cookies{krang_login_id}->value)) {
       # 1. This is a new window: login.pm passed us the ID
@@ -357,9 +357,9 @@ sub authen_handler ($$) {
     Apache::Cookie->new($r, -name => 'krang_login_id', -value => '0', -path => '/')->bake; 
 
     # Update window cookies used by JS
-    $r->headers_out->add("Set-Cookie" => "krang_window_id=0");                 # So next request starts fresh
-    $r->headers_out->add("Set-Cookie" => "krang_previous_wid=$window_id");     #     (unless it needs our ID)!
-    $r->headers_out->add("Set-Cookie" => "krang_new_window_id=$new_login_id"); # For JS Krang.Window.init()...
+    $r->headers_out->add("Set-Cookie" => "krang_window_id=0");                          # So next request starts fresh
+    $r->headers_out->add("Set-Cookie" => "krang_previous_wid=".($window_id || ''));     #     (unless it needs our ID)!
+    $r->headers_out->add("Set-Cookie" => "krang_new_window_id=".($new_login_id || '')); # For JS Krang.Window.init()...
 
     # If there's no ID or no session cookie, redirect to Login
     unless ($window_id && $cookies{"krang_window_$window_id"}) {
