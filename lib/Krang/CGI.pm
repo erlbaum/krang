@@ -597,7 +597,7 @@ sub cgiapp_postrun {
   if ($self->header_type eq 'redirect' && $ENV{KRANG_WINDOW_ID}) {
     my %props = $self->header_props();
     my $cookies = $props{'-cookie'} || [];
-    push @$cookies, $self->query->cookie(-name => 'krang_redirect_wid', 
+    push @$cookies, $self->query->cookie(-name => 'krang_window_id', 
 					 -value => $ENV{KRANG_WINDOW_ID},
 					 -path => '/');
     $props{'-cookie'} = $cookies;

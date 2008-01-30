@@ -160,9 +160,6 @@ Krang.Window = {
         if (!confirm('Are you sure? This will discard any unsaved changes in any window.')) { return; }
         Krang.show_indicator();
 
-        // clear new-window cookie (in case we're closing a window that hasn't been initialized)
-        Krang.Cookie.set('krang_new_window_id', '0');
-
         // log out any other windows that have cookies set
         var win_names = document.cookie.match(/(krang_window_\d+)/g);
         for (i = 0; i < win_names.length; i++) {
@@ -184,8 +181,8 @@ Krang.Window = {
     },    
 
     _id_from_pool : function() {
-        var id = Krang.Cookie.get('krang_new_window_id');
-        Krang.Cookie.set('krang_new_window_id', '0'); // so next window doesn't find our ID!
+        var id = Krang.Cookie.get('krang_login_id');
+        Krang.Cookie.set('krang_login_id', '0'); // so next window doesn't find our ID!
         return id;
     }    
 }

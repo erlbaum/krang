@@ -213,7 +213,7 @@ sub _do_login {
         -path  => '/'
     );
 
-    # pass ID of new window to handler
+    # pass ID of new window to handler and JS
     my $login_id_cookie = $q->cookie(
         -name  => 'krang_login_id',
         -value => $window_id,
@@ -261,7 +261,7 @@ sub _do_login {
     return "Redirect: <a href=\"$target\">$target</a>";
 }
 
-# build new session for new window (keep same user)
+# build new session for new window (keeping same user)
 sub new_window {
     my $self = shift;
     return $self->_do_login($ENV{REMOTE_USER}, 'copy_existing');
