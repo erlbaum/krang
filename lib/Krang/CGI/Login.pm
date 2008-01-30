@@ -209,7 +209,8 @@ sub _do_login {
     # build the session cookie (using next available window ID)
     my $session_cookie = $q->cookie(
         -name  => "krang_window_$window_id",
-        -value => \%filling
+        -value => \%filling,
+        -path  => '/'
     );
 
     # pass ID of new window to handler
@@ -235,6 +236,7 @@ sub _do_login {
       my $pref_cookie = $q->cookie(
           -name  => 'KRANG_PREFS',
           -value => objToJson(\%prefs),
+          -path  => '/'
       );
 
       # and store meta information about this installation/instance of Krang
@@ -244,6 +246,7 @@ sub _do_login {
       my $conf_cookie = $q->cookie(
           -name  => 'KRANG_CONFIG',
           -value => objToJson(\%conf_info),
+	  -path  => '/'
       );
     
       # and set all four cookies

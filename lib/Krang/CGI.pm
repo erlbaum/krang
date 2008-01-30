@@ -598,7 +598,8 @@ sub cgiapp_postrun {
     my %props = $self->header_props();
     my $cookies = $props{'-cookie'} || [];
     push @$cookies, $self->query->cookie(-name => 'krang_redirect_wid', 
-					 -value => $ENV{KRANG_WINDOW_ID});
+					 -value => $ENV{KRANG_WINDOW_ID},
+					 -path => '/');
     $props{'-cookie'} = $cookies;
     $self->header_props(%props);
   }

@@ -236,7 +236,7 @@ Krang.Cookie = {
         return value;
     },
     set : function(name, value) {
-        document.cookie = name + '=' + encodeURIComponent(value);
+	document.cookie = name + '=' + encodeURIComponent(value) + "; path=/";
     },
     json_get : function(name) {
         var json = Krang.Cookie.get(name);

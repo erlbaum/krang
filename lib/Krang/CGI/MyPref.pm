@@ -137,8 +137,9 @@ sub update_prefs {
         my $pref_cookie = $q->cookie(
             -name  => 'KRANG_PREFS',
             -value => objToJson(\%prefs),
+	    -path  => '/'
         );
-        $self->header_add(-cookie => [$pref_cookie]);
+        $self->header_add(-cookie => [$pref_cookie->as_string]);
     }
 
     if (my $pass = $q->param('new_password')) {
