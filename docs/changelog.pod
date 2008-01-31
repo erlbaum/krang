@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in both JavaScript and PERL where some cookies were being written
+to root path and others to active path. [Noam Weinstein]
+
+=item *
+
 Added an optimization for Krang admin scripts that know they won't use any
 elements. This dramatically speeds up those admin scripts on systems with multiple
 element libraries. [Michael Peters]
