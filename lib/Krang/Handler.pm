@@ -341,7 +341,7 @@ sub authen_handler ($$) {
       # 2. A dying window: krang.js passed us the ID via Krang.Window.log_out/log_out_all()
       $window_id = $1;   
     } elsif ($cookies{krang_window_id} && $cookies{krang_window_id}->value) {
-      # 3. An eixsting window: krang.js passed us the ID via Krang.Window.pass_id()
+      # 3. An existing window: krang.js passed us the ID via Krang.Window.pass_id()
       $window_id = $cookies{krang_window_id}->value;
     } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi$/ || $r->uri =~ /\/help\.pl$/) {
       # 4. A non-PERL request (e.g. image), bug, or help file: inherit ID from previous request
