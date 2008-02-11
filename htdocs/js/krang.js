@@ -616,15 +616,16 @@ Krang.hide_indicator = function(indicator) {
 };
 
 /*
-    Krang.update_progress(count, total, label)
+    Krang.Progress.update(count, total, label)
 
     Updates the progress bar (with id "progress_bar") to the correct
     width, sets the percentage counter (with id "progress_bar_percent")
     and the optionally updates a label (with id "progress_bar_label")
 */
-Krang.update_progress = function( count, total, label ) {
-    var bar      = document.getElementById('progress_bar');
-    var percent  = document.getElementById('progress_bar_percent');
+Krang.Progress = {};
+Krang.Progress.update = function( count, total, label ) {
+    var bar      = $('progress_bar');
+    var percent  = $('progress_bar_percent');
     var progress = total > 0 ? ( count + 1 ) / total : 1;
 
     // can't go over 100%
@@ -634,8 +635,20 @@ Krang.update_progress = function( count, total, label ) {
 
     bar.style.width   = width + 'px';
 
-    percent.innerHTML = Math.floor( progress * 100 ) + '%';
-    if ( label ) document.getElementById( 'progress_bar_label' ).innerHTML = label;
+    percent.update(Math.floor( progress * 100 ) + '%');
+    if ( label ) $('progress_bar_label').update(label);
+};
+
+/*
+    Krang.Progress.reset(label);
+
+    Resets the progress bar back to zero so that subsequent calls to Krang.Progress.update()
+    will start over again.
+*/
+Krang.Progress.reset() = function(label) {
+    $('progress_bar').style.width = '0px';
+    $('progress_bar_percent').update('0%');
+    if ( label ) $('progress_bar_label').update(label);
 };
 
 /*
