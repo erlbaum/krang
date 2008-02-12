@@ -10,6 +10,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug #32 along with a related bug in
+C<Krang::Publisher->unpublish_story()> where after deleting a story
+its preview path would not be deleted even if it is empty. [Bodo
+Schulze]
+
+=item *
+
 Fixed long standing bug where Edit button is present when viewing an
 old Story version. [Bodo Schulze]
 
