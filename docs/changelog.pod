@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Fixed long standing bug where Edit button is present when viewing an
+old Story version. [Bodo Schulze]
+
 =back
 
 

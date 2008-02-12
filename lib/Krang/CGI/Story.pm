@@ -591,6 +591,7 @@ sub view {
                                           version => $version);
             croak("Unable to load version $version of story $story_id")
                 unless $story;
+            $template->param(is_old_version => 1);
         }
     }
 
