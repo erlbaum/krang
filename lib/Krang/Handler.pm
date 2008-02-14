@@ -478,7 +478,7 @@ sub instance_menu {
                 @loop, 
                 { 
                     InstanceName        => $instance,
-                    InstanceDisplayName => pkg('Conf')->InstanceDisplayName(),
+                    InstanceDisplayName => (pkg('Conf')->InstanceDisplayName || $instance),
                 }
             );
         }
