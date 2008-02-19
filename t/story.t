@@ -104,7 +104,8 @@ can_ok($story, qw/title slug cover_date class element category categories
                   contribs url preview_url urls preview_urls find save
                   checkin checkout checked_out checked_out_by revert
                   linked_stories linked_media move_to_desk publish_path preview_path
-                  delete clone serialize_xml deserialize_xml story_uuid/);
+                  delete clone serialize_xml deserialize_xml story_uuid
+                  archive unarchive trash untrash/);
 
 
 
@@ -228,7 +229,9 @@ for (qw( story_id
          slug
          notes
          cover_date
-         publish_date )) {
+         publish_date
+         archived
+         trashed )) {
     is($story->$_, $story2->$_, "$_ save/load");
 }
 
@@ -286,7 +289,9 @@ for (qw( class
          checked_out
          checked_out_by
          notes
-         cover_date )) {
+         cover_date
+         archived
+         trashed )) {
     is($story->$_, $copy->$_, "$_ cloned");
 }
 
@@ -841,8 +846,20 @@ is($change->url, 'storyzest.com/test_0/change');
     is($tmp->may_see, 1, "Found may_see");
     is($tmp->may_edit, 1, "Found may_edit");
 
-    # Change group asset_story permissions to "read-only" and check permissions
+    # Unset admin_delete permission and try to delete
     my ($admin_group) = pkg('Group')->find(group_id=>1);
+    $admin_group->admin_delete(0);
+    $admin_group->save();
+
+    ($tmp) = pkg('Story')->find(story_id=>$stories[-1]->story_id);
+    eval { $tmp->delete };
+    isa_ok($@, "Krang::Story::NoDeleteAccess");
+
+    # Set admin_delete permission again
+    $admin_group->admin_delete(1);
+    $admin_group->save();
+
+    # Change group asset_story permissions to "read-only" and check permissions
     $admin_group->asset_story("read-only");
     $admin_group->save();
 
@@ -902,7 +919,7 @@ is($change->url, 'storyzest.com/test_0/change');
     isa_ok($@, "Krang::Story::NoEditAccess", "save() on read-only story exception");
 
     # Try to delete()
-    eval { $tmp->delete() };
+    eval { $tmp->trash() };
     isa_ok($@, "Krang::Story::NoEditAccess", "delete() on read-only story exception");
 
     # Try to checkout()

@@ -25,6 +25,7 @@ use Exception::Class
   'Krang::Story::NoEditAccess'         => { fields => [ 'story_id'    ] },
   'Krang::Story::CheckedOut'           => { fields => [ 'desk_id'     ] },
   'Krang::Story::NoDesk'               => { fields => [ 'desk_id'     ] },
+  'Krang::Story::NoDeleteAccess'       => { fields => [ 'story_id'    ] },
   ;
   
 # create accessors for object fields
@@ -40,6 +41,8 @@ use Krang::ClassLoader MethodMaker =>
                         may_see
                         may_edit
                         hidden
+                        archived
+                        trashed
                        ) ],
   get_set_with_notify => [ { 
                             method => '_notify',
@@ -75,6 +78,8 @@ use constant STORY_FIELDS =>
       desk_id
       last_desk_id
       hidden
+      archived
+      trashed
     );
 
 sub id_meth { 'story_id' }
@@ -511,6 +516,8 @@ sub init {
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
     $self->{cover_date}        = Time::Piece->new();
     $self->{story_uuid}        = pkg('UUID')->new;
+    $self->{archived}          = 0;
+    $self->{trashed}           = 0;
 
     # Set up temporary permissions
     $self->{may_see} = 1;
@@ -856,10 +863,14 @@ sub _verify_unique {
       }
     }
 
-    # then look for stories that have one of our URLs
-    my $query = 'SELECT story_id, url FROM story_category WHERE ('.
-      join(' OR ', ('url = ?') x @urls) . ')' . 
-        ($self->{story_id} ? ' AND story_id != ?' : '');
+    # then look for stories that have one of our URLs without being archived
+    my $query = 'SELECT s.story_id, url, archived, trashed '
+              . 'FROM   story s '
+              . 'LEFT   JOIN story_category as sc '
+              . 'ON     s.story_id = sc.story_id '
+              . 'WHERE  archived = 0 AND trashed = 0 AND ('
+              . join(' OR ', ('url = ?') x @urls) . ')'
+	      . ($self->{story_id} ? ' AND s.story_id != ?' : '');
     my $result = $dbh->selectall_arrayref($query, undef, $self->urls, 
 					  ($self->{story_id} ? 
 					   ($self->{story_id}) : ()));
@@ -1067,6 +1078,14 @@ Output field to sort by.  Defaults to 'story_id'.
 Results will be in sorted in ascending order unless this is set to 1
 (making them descending).
 
+=item archived
+
+Only return archived stories.
+
+=item trashed
+
+Only return stories that have been moved to the trashbin.
+
 =item show_hidden
 
 Returns all stories, not just those where C<< Krang::Story->hidden() >>
@@ -1116,12 +1135,19 @@ sub find {
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
 
+    # archived and trashed flags
+    my $archived_only = delete $args{archived};
+    my $trashed_only  = delete $args{trashed};
+
     # check for invalid argument sets
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.")
       if $count and $ids_only;
     croak(__PACKAGE__ . "->find(): can't use 'version' without 'story_id'.")
       if $args{version} and not $args{story_id};
+    croak(__PACKAGE__ . "->find(): 'archived' and 'trashed' were supplied. " .
+	  "Only one can be present.")
+      if $archived_only and $trashed_only;
 
     # loading a past version is handled by _load_version()
     return $pkg->_load_version($args{story_id}, $args{version})
@@ -1433,6 +1459,17 @@ sub find {
 
     # always restrict perm checking to primary category
     push(@where, 'sc_p.ord = 0');
+
+    # only live stories?
+    unless ($archived_only or $trashed_only) {
+	push(@where, 's.archived = 0 AND s.trashed = 0');
+    }
+
+    # only archived stories?
+    push(@where, 's.archived = 1 AND s.trashed = 0') if $archived_only;
+
+    # only trashed stories?
+    push(@where, 's.trashed = 1') if $trashed_only;
 
     # construct base query
     my $query;
@@ -1916,9 +1953,11 @@ sub revert {
 
 =item C<< Krang::Story->delete($story_id) >>
 
-Deletes a story from the database.  This is a permanent operation.
-Stories will be checked-out before they are deleted, which will fail
-if the story is checked out to another user.
+Deletes a story from the database.  This is a permanent operation and
+requires the admin permission may_delete. Throws a
+Krang::Story::NoDeleteAccess exception if user may not delete
+assets. Stories will be checked-out before they are deleted, which
+will fail if the story is checked out to another user.
 
 =cut
 
@@ -1932,8 +1971,8 @@ sub delete {
     $self->checkout;
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
-        unless ($self->may_edit);
+    Krang::Story::NoDeleteAccess->throw( message => "Not allowed to delete story", story_id => $self->story_id )
+        unless pkg('Group')->user_admin_permissions('admin_delete');
 
     # unpublish
     pkg('Publisher')->new->unpublish_story(story => $self);
@@ -2162,7 +2201,9 @@ sub serialize_xml {
     $writer->dataElement(version    => $self->version);
     $writer->dataElement(cover_date => $self->cover_date->datetime);
     $writer->dataElement(notes      => $self->notes);
-    
+    $writer->dataElement(archived   => $self->archived);
+    $writer->dataElement(trashed    => $self->trashed);
+
     # categories
     for my $category ($self->categories) {
         $writer->dataElement(category_id => $category->category_id);
@@ -2370,9 +2411,225 @@ sub deserialize_xml {
     return $story;
 }
 
-=back
+=item C<< $story->archive() >>
+
+=item C<< Krang::Story->archive(story_id => $story_id) >>
+
+Archive the story, i.e. remove it from its publish/preview location
+and don't show it on the Find Story screen.  Throws a
+Krang::Story::NoEditAccess exception if user may not edit this
+story. Croaks if the story is checked out by another user. Remembers
+the story's last desk ID.
 
 =cut
 
+sub archive {
+    my ($self, %args) = @_;
+    unless(ref $self) {
+        my $story_id = $args{story_id};
+        ($self) = pkg('Story')->find(story_id => $story_id);
+        croak("Unable to load story '$story_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
+        unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # unpublish
+    pkg('Publisher')->new->unpublish_story(story => $self);
+
+    # archive the story
+    my $dbh = dbh();
+    $dbh->do("UPDATE story
+              SET    archived = 1, desk_id = ?
+              WHERE  story_id = ?", undef,
+	     undef, $self->{story_id});
+
+    # update some fields
+    $self->{archived} = 1;
+    $self->{last_desk_id} = $self->{desk_id};
+    $self->{desk_id}      = undef;
+
+    $self->checkin();
+
+    add_history(
+        object => $self,
+        action => 'archive'
+    );
+}
+
+=item C<< $story->unarchive() >>
+
+=item C<< Krang::Story->unarchive(story_id => $story_id) >>
+
+Unarchive the story, i.e. show it again on the Find Story screen, but
+don't republish it. Throws a Krang::Story::NoEditAccess exception if
+user may not edit this story. Croaks if the story is checked out by
+another user.
+
+=cut
+
+sub unarchive {
+    my ($self, %args) = @_;
+    unless(ref $self) {
+        my $story_id = $args{story_id};
+        ($self) = pkg('Story')->find(story_id => $story_id);
+        croak("Unable to load story '$story_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
+        unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # unarchive the story
+    my $dbh = dbh();
+    $dbh->do('UPDATE story
+              SET    archived = 0
+              WHERE  story_id = ?', undef,
+	     $self->{story_id});
+
+    # update some fields
+    $self->{archived} = 0;
+
+    # check back in
+    $self->checkin();
+
+    add_history(
+        object => $self,
+        action => 'unarchive',
+    );
+
+    # make sure no other story occupies our initial place (URL)
+    $self->_verify_unique;
+}
+
+=item C<< $story->trash() >>
+
+=item C<< Krang::Story->trash(story_id => $story_id) >>
+
+Move the story to the trashbin, i.e. remove it from its
+publish/preview location and don't show it on the Find Story screen.
+Throws a Krang::Story::NoEditAccess exception if user may not edit
+this story. Croaks if the story is checked out by another
+user. Remembers the story's last desk ID.
+
+=cut
+
+=for Development:
+
+The current implementation clears the 'archived' flag when moving a
+story to the trashbin.  Untrashing it, then, will restore it to
+live. If we want a story that was archived before being deleted to be
+restored to the archive, the archive flag must not be cleared. In this
+case the find() method has also to be modified.
+
+=cut
+
+sub trash {
+    my ($self, %args) = @_;
+    unless(ref $self) {
+        my $story_id = $args{story_id};
+        ($self) = pkg('Story')->find(story_id => $story_id);
+        croak("Unable to load story '$story_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
+        unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # unpublish
+    pkg('Publisher')->new->unpublish_story(story => $self);
+
+    # archive the story
+    my $dbh = dbh();
+    $dbh->do("UPDATE story
+              SET    trashed  = 1, desk_id = ?
+              WHERE  story_id = ?", undef,
+	     undef, $self->{story_id});
+
+    # update some fields
+    $self->{trashed}      = 1;
+    $self->{last_desk_id} = $self->{desk_id} if $self->{desk_id};
+    $self->{desk_id}      = undef;
+
+    $self->checkin();
+
+    add_history(
+        object => $self,
+        action => 'archive'
+    );
+
+}
+
+=item C<< $story->untrash() >>
+
+=item C<< Krang::Story->untrash(story_id => $story_id) >>
+
+Restore the story from the trashbin, i.e. show it again on the Find
+Story screen.  Throws a Krang::Story::NoEditAccess exception if user
+may not edit this story. Croaks if the story is checked out by another
+user.
+
+=cut
+
+sub untrash {
+    my ($self, %args) = @_;
+    unless(ref $self) {
+        my $story_id = $args{story_id};
+        ($self) = pkg('Story')->find(story_id => $story_id);
+        croak("Unable to load story '$story_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
+        unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # untrash the story
+    my $dbh = dbh();
+    $dbh->do('UPDATE story
+              SET trashed = ?
+              WHERE story_id = ?', undef,
+	     0, $self->{story_id});
+
+    # update some fields
+    $self->{trashed} = 0;
+
+    # check back in
+    $self->checkin();
+
+    add_history(
+        object => $self,
+        action => 'untrash',
+    );
+
+    # make sure no other story occupies our initial place (URL)
+    $self->_verify_unique();
+}
+
+=item C<< $story->wont_publish() >>
+
+Convenience method returning true if story has been archived or
+trashed.
+
+=cut
+
+sub wont_publish { return $_[0]->archived || $_[0]->trashed }
+
+
+=back
+
+=cut
 
 1;
