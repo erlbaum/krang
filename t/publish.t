@@ -831,6 +831,26 @@ sub test_linked_assets {
     # clear asset lists to not interfere with tests.
     $publisher->_clear_asset_lists();
 
+    # test linked $story that has been archived (should not publish)
+    $story->archive();
+    delete $expected{story}{$story->story_id};
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
+    test_publish_list($publish_list, \%expected);
+
+    # clear asset lists to not interfere with tests, unarchive and 'expect' $story again
+    $publisher->_clear_asset_lists();
+
+    # test linked $story that has been trashed (should not publish)
+    $story->trash();
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
+    test_publish_list($publish_list, \%expected);
+
+    # clear asset lists to not interfere with tests, also untrash, unarchive and 'expect' $story again
+    $publisher->_clear_asset_lists();
+    $story->untrash();
+    $story->unarchive();
+    $expected{story}{$story->story_id} = $story;
+
     # mark @media as published - they too should no longer show up.
     foreach (@media) {
         $_->mark_as_published();

@@ -1868,6 +1868,7 @@ sub _build_asset_list {
 
     if (ref $object eq 'ARRAY') {
         foreach my $o (@$object) {
+            next if $o->can('wont_publish') && $o->wont_publish();
             my ($publish_ok, $check_links) = $self->_check_asset_status(
                 object         => $o,
                 version_check  => $version_check,
@@ -1881,6 +1882,7 @@ sub _build_asset_list {
         }
 
     } else {
+        return () if $object->can('wont_publish') && $object->wont_publish();
         my ($publish_ok, $check_links) = $self->_check_asset_status(
             object         => $object,
             version_check  => $version_check,
