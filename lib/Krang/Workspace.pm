@@ -122,7 +122,7 @@ sub find {
         s.title AS title,
         class
  FROM story AS s LEFT JOIN story_category AS sc USING (story_id) 
- WHERE s.checked_out_by = ? AND sc.ord = 0) 
+ WHERE s.checked_out_by = ? AND sc.ord = 0 AND s.archived = 0 AND s.trashed = 0)
 
 UNION 
 
@@ -133,7 +133,7 @@ UNION
         title,
         '' as class
  FROM media
- WHERE checked_out_by = ?) 
+ WHERE checked_out_by = ?)
 
 UNION 
 
@@ -144,7 +144,7 @@ UNION
         filename AS title,
         '' as class
  FROM template
- WHERE checked_out_by = ?) 
+ WHERE checked_out_by = ?)
 SQL
 
     # mix in order_by
