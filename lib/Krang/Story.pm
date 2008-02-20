@@ -1086,6 +1086,10 @@ Only return archived stories.
 
 Only return stories that have been moved to the trashbin.
 
+=item live
+
+Only return stories that are neither archived nor trashed.
+
 =item show_hidden
 
 Returns all stories, not just those where C<< Krang::Story->hidden() >>
@@ -1138,6 +1142,7 @@ sub find {
     # archived and trashed flags
     my $archived_only = delete $args{archived};
     my $trashed_only  = delete $args{trashed};
+    my $live_only     = delete $args{live};
 
     # check for invalid argument sets
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
@@ -1145,9 +1150,9 @@ sub find {
       if $count and $ids_only;
     croak(__PACKAGE__ . "->find(): can't use 'version' without 'story_id'.")
       if $args{version} and not $args{story_id};
-    croak(__PACKAGE__ . "->find(): 'archived' and 'trashed' were supplied. " .
+    croak(__PACKAGE__ . "->find(): 'live' and 'archived' and 'trashed' were supplied. " .
 	  "Only one can be present.")
-      if $archived_only and $trashed_only;
+      if $archived_only and $trashed_only and $live_only;
 
     # loading a past version is handled by _load_version()
     return $pkg->_load_version($args{story_id}, $args{version})
@@ -1461,9 +1466,7 @@ sub find {
     push(@where, 'sc_p.ord = 0');
 
     # only live stories?
-    unless ($archived_only or $trashed_only) {
-	push(@where, 's.archived = 0 AND s.trashed = 0');
-    }
+    push(@where, 's.archived = 0 AND s.trashed = 0') if $live_only;
 
     # only archived stories?
     push(@where, 's.archived = 1 AND s.trashed = 0') if $archived_only;
@@ -2035,6 +2038,9 @@ sub clone {
     # get a new UUID
     $copy->{story_uuid} = pkg('UUID')->new;
 
+    # unset archived flag
+    $copy->{archived} = 0;
+
     # returns 1 if there is a dup, 0 otherwise
     my $is_dup = sub {  
         eval { shift->_verify_unique; };
@@ -2444,14 +2450,12 @@ sub archive {
     # archive the story
     my $dbh = dbh();
     $dbh->do("UPDATE story
-              SET    archived = 1, desk_id = ?
+              SET    archived = 1
               WHERE  story_id = ?", undef,
-	     undef, $self->{story_id});
+	     $self->{story_id});
 
-    # update some fields
+    # living in archive
     $self->{archived} = 1;
-    $self->{last_desk_id} = $self->{desk_id};
-    $self->{desk_id}      = undef;
 
     $self->checkin();
 
@@ -2494,7 +2498,7 @@ sub unarchive {
               WHERE  story_id = ?', undef,
 	     $self->{story_id});
 
-    # update some fields
+    # alive again
     $self->{archived} = 0;
 
     # check back in
@@ -2552,14 +2556,12 @@ sub trash {
     # archive the story
     my $dbh = dbh();
     $dbh->do("UPDATE story
-              SET    trashed  = 1, desk_id = ?
+              SET    trashed  = 1
               WHERE  story_id = ?", undef,
-	     undef, $self->{story_id});
+	     $self->{story_id});
 
-    # update some fields
-    $self->{trashed}      = 1;
-    $self->{last_desk_id} = $self->{desk_id} if $self->{desk_id};
-    $self->{desk_id}      = undef;
+    # living in trashbin
+    $self->{trashed} = 1;
 
     $self->checkin();
 
@@ -2603,7 +2605,7 @@ sub untrash {
               WHERE story_id = ?', undef,
 	     0, $self->{story_id});
 
-    # update some fields
+    # maybe in archive, maybe alive again
     $self->{trashed} = 0;
 
     # check back in

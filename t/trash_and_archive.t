@@ -67,7 +67,7 @@ $s0->archive();
 is($s0->archived, 1, "Story 1 is archived");
 is($s0->trashed,  0, "Story 1 is not trashed");
 
-@live = pkg('Story')->find();
+@live = pkg('Story')->find(live => 1);
 is(scalar(@live), 4, "Four stories alive");
 
 my @archived = pkg('Story')->find(archived => 1);
@@ -81,7 +81,7 @@ $s0->unarchive();
 is($s0->archived, 0, "Story 1 is not archived");
 is($s0->trashed,  0, "Story 1 is not trashed");
 
-@live = pkg('Story')->find();
+@live = pkg('Story')->find(live => 1);
 is(scalar(@live), 5, "Five stories alive");
 
 my $count = pkg('Story')->find(count => 1);
@@ -104,7 +104,7 @@ $s0->trash();
 is($s0->trashed,  1, "Story 1 is not trashed");
 is($s0->archived, 0, "Story 1 is archived");
 
-@live = pkg('Story')->find();
+@live = pkg('Story')->find(live => 1);
 is(scalar(@live), 4, "Four stories alive");
 
 @trashed = pkg('Story')->find(trashed => 1);
@@ -124,7 +124,7 @@ $s0->untrash();
 is($s0->archived, 0, "Story 1 is not archived");
 is($s0->trashed,  0, "Story 1 is not trashed");
 
-@live = pkg('Story')->find();
+@live = pkg('Story')->find(live => 1);
 is(scalar(@live), 5, "Five stories alive");
 
 @trashed = pkg('Story')->find(trashed => 1);
@@ -147,7 +147,7 @@ $s2->trash();
 is($s0->archived, 1, "Story 1 is archived");
 is($s1->archived, 1, "Story 2 is archived");
 
-@live = pkg('Story')->find();
+@live = pkg('Story')->find(live => 1);
 is(scalar(@live), 2, "Two stories alive");
 
 @archived = pkg('Story')->find(archived => 1);
@@ -162,7 +162,7 @@ $s1->trash();
 is($s1->trashed,  1, "Story 2 is trashed");
 is($s1->archived, 1, "Story 2 still has archived flag (to restore it later to archive)");
 
-@live = pkg('Story')->find();
+@live = pkg('Story')->find(live => 1);
 is(scalar(@live), 2, "Two stories alive");
 
 @archived = pkg('Story')->find(archived => 1);
@@ -177,7 +177,7 @@ $s1->untrash();
 is($s1->trashed,  0, "Story 2 no longer trashed");
 is($s1->archived, 1, "Story 2 again archived");
 
-@live = pkg('Story')->find();
+@live = pkg('Story')->find(live => 1);
 is(scalar(@live), 2, "Two stories alive");
 
 @archived = pkg('Story')->find(archived => 1);
@@ -192,7 +192,7 @@ $s1->unarchive();
 is($s1->trashed,  0, "Story 2 not trashed");
 is($s1->archived, 0, "Story 2 not archived");
 
-@live = pkg('Story')->find();
+@live = pkg('Story')->find(live => 1);
 is(scalar(@live), 3, "Three stories alive");
 
 @archived = pkg('Story')->find(archived => 1);
