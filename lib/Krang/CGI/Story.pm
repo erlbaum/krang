@@ -1976,6 +1976,8 @@ sub find_story_row_handler {
     my %user_permissions = (pkg('Group')->user_asset_permissions);
     my $read_only = ( $user_permissions{story} eq 'read-only' );
 
+    my $archived = $args{archived};
+
     # Columns:
     $row->{story_id}   = $story->story_id();
     $row->{title}      = $story->title;
@@ -1996,7 +1998,7 @@ sub find_story_row_handler {
         . $story->story_id 
         . qq|')" type="button" class="button">|;
 
-    unless ($args{archived}) {
+    unless ($archived) {
 	if (($story->checked_out) and 
 	    ($story->checked_out_by ne $ENV{REMOTE_USER})
 	    or not $story->may_edit) {
@@ -2012,18 +2014,23 @@ sub find_story_row_handler {
         $row->{commands_column} .= ' '
           . qq|<input value="Copy" onclick="copy_story('| . $story->story_id 
           . qq|')" type="button" class="button">|;
-	if ($args{archived}) {
+	if ($archived) {
             $row->{commands_column} .= ' '
               . qq|<input value="Unarchive" onclick="unarchive_story('| . $story->story_id 
               . qq|')" type="button" class="button">|;
 	}
     }
 
-    unless ($args{archived}) {
-	$row->{commands_column} .= ' '
-            . qq|<input value="Archive" onclick="archive_story('|
-            . $story->story_id
-            . qq|')" type="button" class="button">|;
+    unless ($archived) {
+	unless (($story->checked_out) and 
+		($story->checked_out_by ne $ENV{REMOTE_USER})
+		or not $story->may_edit
+	       ) {
+	    $row->{commands_column} .= ' '
+	      . qq|<input value="Archive" onclick="archive_story('|
+	      . $story->story_id
+	      . qq|')" type="button" class="button">|;
+	}
     }
 
     if( $show_type_and_version ) {
@@ -2032,7 +2039,11 @@ sub find_story_row_handler {
         $row->{story_version} = $story->version;
     }
 
-    return if $args{archived};
+    if ($read_only and $archived) {
+	$row->{checkbox_column} = "&nbsp;";
+    }
+
+    return if $archived;
 
     # status 
     if ($story->checked_out) {
@@ -2288,10 +2299,32 @@ sub make_sure_story_is_still_ours {
     return 0;
 }
 
+=item archive
+
+Move story to the archive and return to the Find Story screen
+
+=cut
+
 sub archive {
+    my $self = shift;
+    my $q = $self->query;
 
-    return "TODO archive()"
+    my $story_id = $q->param('story_id');
 
+    croak("No story_id found in CGI params when archiving story.")
+      unless $story_id;
+
+    # load story from DB and archive it
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+
+    croak("Unable to load story '" . $story_id . "'.")
+      unless $story;
+
+    $story->archive();
+
+    $q->delete('story_id');
+
+    return $self->find();
 }
 
 sub unarchive {
