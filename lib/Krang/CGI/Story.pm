@@ -60,6 +60,7 @@ sub setup {
         revert                        => 'revert',
         find                          => 'find',
         list_active                   => 'list_active',
+        list_archived                 => 'list_archived',
         cancel                        => 'cancel',
         delete                        => 'delete',
         delete_selected               => 'delete_selected',
@@ -89,6 +90,8 @@ sub setup {
         save_and_find_story_link      => 'save_and_find_story_link',
         save_and_find_media_link      => 'save_and_find_media_link',
         autocomplete                  => 'autocomplete',
+        archive                       => 'archive',
+        unarchive                     => 'unarchive',
     );
 
     $self->tmpl_path('Story/');
@@ -576,9 +579,10 @@ sub view {
     my $story_id = $query->param('story_id') ? $query->param('story_id') :
                    $session{story}->story_id;
     croak("Unable to get story_id!") unless $story_id;
-    
+
     # load story from DB
     my ($story) = pkg('Story')->find(story_id => $story_id);
+
     croak("Unable to load latest version of story $story_id")
         unless $story;
 
@@ -643,9 +647,9 @@ sub view {
                      [ map { { name => $_, value => $return_params{$_} } } keys %return_params ]);
     $template->param( was_edit => 1 ) if ($return_params{rm} eq 'edit');
     $template->param ( prevent_edit => 1)
-      if ( $story->checked_out and 
+      if ( $story->checked_out and
             ($story->checked_out_by ne $ENV{REMOTE_USER})) or 
-          not $story->may_edit;
+          not $story->may_edit or $story->archived;
 
     return $template->output();
 }
@@ -688,6 +692,7 @@ sub copy {
 
     # load story from DB
     my ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
+
     croak("Unable to load story '" . $query->param('story_id') . "'.")
       unless $story;
 
@@ -1499,7 +1504,7 @@ sub delete {
     # check to make sure a story_id exists - the UI allows you to
     # delete a story that has not been saved yet.
     if ($story->story_id) {
-        $story->delete();
+        $story->trash();
     }
 
     delete $session{story};
@@ -1512,7 +1517,7 @@ sub delete {
 
 =item find
 
-List all stories which match the search criteria.  Provide links to 
+List live stories which match the search criteria.  Provide links to
 edit or view each story.  Provide a link to view the log for a story.
 
 Also, provide checkboxes next to each story through which the user may 
@@ -1522,9 +1527,32 @@ select a set of stories to be deleted or checked out to Workplace.
 
 sub find {
     my $self = shift;
+    return $self->_do_find(tmpl_file     => 'find.tmpl',
+                           find_position => 'live');
+}
+
+=item list_archived
+
+List archived stories which match the search criteria.  Provide links to
+view, copy or unarchive each story.
+
+Also, provide checkboxes next to each story through which the user may
+select a set of stories to be deleted.
+
+=cut
+
+sub list_archived {
+    my $self = shift;
+    return $self->_do_find(tmpl_file     => 'list_archived.tmpl',
+			   find_position => 'archived');
+}
+
+sub _do_find {
+    my ($self, %args) = @_;
 
     my $q = $self->query();
-    my $template = $self->load_tmpl('find.tmpl', associate=>$q);
+
+    my $template = $self->load_tmpl($args{tmpl_file}, associate=>$q);
     my %tmpl_data = ();
 
     # read-only users don't see everything....
@@ -1551,14 +1579,17 @@ sub find {
       $q->param('do_advanced_search') : $session{KRANG_PERSIST}{pkg('Story')}{do_advanced_search};
     $template->param('do_advanced_search' => $do_advanced_search);
 
+    my $find_position = $args{find_position};
+
     # Set up persist_vars for pager
     my %persist_vars = (
-                        rm => 'find',
+                        rm => $q->param('rm'),
                         do_advanced_search => $do_advanced_search,
+                        $find_position => 1,
                        );
 
     # Set up find_params for pager
-    my %find_params = (may_see => 1, show_hidden => 1);
+    my %find_params = (may_see => 1, show_hidden => 1, $find_position => 1);
 
     if ($do_advanced_search) {
         # Set up advanced search
@@ -1665,6 +1696,9 @@ sub find {
         $template->param(search_filter => $search_filter);
     }
 
+    # list archived stories?
+    my $archived = $find_position eq 'archived' ? 1 : 0;
+
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => \%persist_vars,
@@ -1676,9 +1710,9 @@ sub find {
                                                      title 
                                                      url 
                                                      cover_date 
-                                                     commands_column 
-                                                     status),
-                                                  ($read_only ? () : 'checkbox_column')
+                                                     commands_column),
+                                                     ($archived ? () : 'status'),
+                                                     ($read_only      ? () : 'checkbox_column')
                                                  ],
                                       column_labels => {
                                                         pub_status => '',
@@ -1687,10 +1721,10 @@ sub find {
                                                         url => 'URL',
                                                         commands_column => '',
                                                         cover_date => 'Date',
-                                                        status => 'Status',
+                                                        ($archived ? () : (status => 'Status')),
                                                        },
                                       columns_sortable => [qw( story_id title url cover_date )],
-                                      row_handler => sub { $self->find_story_row_handler(@_); },
+                                      row_handler => sub { $self->find_story_row_handler(@_, archived => $archived); },
                                       id_handler => sub { return $_[0]->story_id },
                                      );
 
@@ -1787,11 +1821,11 @@ sub delete_selected {
     return $self->find() unless (@story_delete_list);
 
     foreach my $story_id (@story_delete_list) {
-        pkg('Story')->delete($story_id);
+        pkg('Story')->trash(story_id => $story_id);
     }
 
     add_message('selected_stories_deleted');
-    return $self->find();
+    return $q->param('archived') ? $self->list_archived : $self->find();
 }
 
 
@@ -1934,7 +1968,7 @@ sub steal_selected {
 # Pager row handler for story find run-mode
 sub find_story_row_handler {
     my $self = shift;
-    my ($row, $story) = @_;
+    my ($row, $story, %args) = @_;
     my $q = $self->query;
     my $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
 
@@ -1960,26 +1994,45 @@ sub find_story_row_handler {
     # command column
     $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| 
         . $story->story_id 
-        . qq|')" type="button" class="button">|
-        . ' '
-        . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id 
         . qq|')" type="button" class="button">|;
+
+    unless ($args{archived}) {
+	if (($story->checked_out) and 
+	    ($story->checked_out_by ne $ENV{REMOTE_USER})
+	    or not $story->may_edit) {
+	    $row->{checkbox_column} = "&nbsp;";
+	} else {
+	    $row->{commands_column} .= qq| <input value="Edit" onclick="edit_story('|
+	      . $story->story_id
+	      . qq|')" type="button" class="button">|;
+	}
+    }
 
     unless ($read_only) {
         $row->{commands_column} .= ' '
           . qq|<input value="Copy" onclick="copy_story('| . $story->story_id 
           . qq|')" type="button" class="button">|;
+	if ($args{archived}) {
+            $row->{commands_column} .= ' '
+              . qq|<input value="Unarchive" onclick="unarchive_story('| . $story->story_id 
+              . qq|')" type="button" class="button">|;
+	}
     }
 
-    if (($story->checked_out) and 
-        ($story->checked_out_by ne $ENV{REMOTE_USER})
-        or not $story->may_edit ) {
-        $row->{checkbox_column} = "&nbsp;";
-    } else {
-        $row->{commands_column} .= qq| <input value="Edit" onclick="edit_story('| 
-            . $story->story_id 
+    unless ($args{archived}) {
+	$row->{commands_column} .= ' '
+            . qq|<input value="Archive" onclick="archive_story('|
+            . $story->story_id
             . qq|')" type="button" class="button">|;
     }
+
+    if( $show_type_and_version ) {
+        # story type
+        $row->{story_type}    = $story->class->display_name;
+        $row->{story_version} = $story->version;
+    }
+
+    return if $args{archived};
 
     # status 
     if ($story->checked_out) {
@@ -1992,12 +2045,6 @@ sub find_story_row_handler {
             . '</b> Desk';
     } else {
         $row->{status} = '&nbsp;';
-    }
-
-    if( $show_type_and_version ) {
-        # story type
-        $row->{story_type}    = $story->class->display_name;
-        $row->{story_version} = $story->version;
     }
 }
 
@@ -2239,6 +2286,18 @@ sub make_sure_story_is_still_ours {
     $self->header_props(-uri=>"workspace.pl");
     $self->header_type('redirect');
     return 0;
+}
+
+sub archive {
+
+    return "TODO archive()"
+
+}
+
+sub unarchive {
+
+    return "TODO unarchive()"
+
 }
 
 1;

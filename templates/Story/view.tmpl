@@ -35,6 +35,7 @@ view_log = function()
 <input name="version" value="<tmpl_var escape=html version>" type="hidden">
 <input name="prevent_edit" value="<tmpl_var escape=html prevent_edit>" type="hidden">
 <input name="return_script" value="<tmpl_var escape=html return_script>" type="hidden">
+<input name="archived" value="<tmpl_var escape=html archived>" type="hidden">
 <tmpl_loop return_params_loop>
   <input name="return_params" value="<tmpl_var escape=html name>" type="hidden">
   <input name="return_params" value="<tmpl_var escape=html value>" type="hidden">
@@ -149,6 +150,7 @@ View Story
 
 <form name="view_log_form" action="history.pl" method="post">
 <input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="archived" value="<tmpl_var escape=html archived>" type="hidden">
 <input name="history_return_script" value="story.pl" type="hidden">
 <input name="history_return_script" value="return_script" type="hidden">
 <input name="history_return_script" value="story.pl" type="hidden">
@@ -164,6 +166,8 @@ View Story
 <input name="history_return_params" value="<tmpl_var escape=html path>" type="hidden">
 <input name="history_return_params" value="return_script" type="hidden">
 <input name="history_return_params" value="<tmpl_var escape=html return_script>" type="hidden">
+<input name="history_return_params" value="archived" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html archived>" type="hidden">
 <tmpl_loop return_params_loop>
   <input name="history_return_params" value="return_params" type="hidden">
   <input name="history_return_params" value="<tmpl_var escape=html name>" type="hidden">

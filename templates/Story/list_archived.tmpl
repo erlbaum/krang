@@ -2,16 +2,12 @@
 
 <script type="text/javascript">
 Krang.onload( function() {
-  Krang.Help.set( 'story_find' );
+  Krang.Help.set( 'story_archived' );
 } );
 
 show_advanced_search = function( show_advanced )
 {
   Krang.Form.submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
-}
-
-add_story = function() {
-  Krang.Form.submit('search_form', { rm: 'new_story' });
 }
 
 do_search = function() {
@@ -21,72 +17,42 @@ do_search = function() {
 <tmpl_if do_advanced_search>
   clear_advanced_search = function()
   {
-    Krang.Form.submit( 'clear_advanced_search_form', {}, { to_top: false } );
+    Krang.Form.submit('clear_advanced_search_form', {}, { to_top: false });
   }
 </tmpl_if>
 
 <tmpl_if row_count>
-  edit_story = function( id )
-  {
-    Krang.Form.submit( 'find_story', { rm: 'checkout_and_edit', story_id: id } );
-  }
-
   view_story = function( id )
   {
-    Krang.Form.submit( 'find_story', { rm: 'view', story_id: id } );
+    Krang.Form.submit('find_story', { rm: 'view', story_id: id, archived: 1 });
   }
 
-//  view_story_log = function( id )
-//  {
-//    Krang.Form.submit( 'view_story_log_form', { story_id: id } );
-//  }
-
   copy_story = function(id) {
-    Krang.Form.submit('find_story', { rm: 'copy', story_id: id });
+    Krang.Form.submit('find_story', { rm: 'copy', story_id: id, archived: 1 });
   }
 
   delete_selected = function()
   {
     if ( !Krang.pager_row_checked() )
-      alert( 'Nothing selected to delete!' );
-    else if ( confirm( 'Are you SURE you want to delete the checked Stories?' ) )
+      alert('Nothing selected to delete!');
+    else if (confirm('Are you SURE you want to delete the checked Stories?'))
       Krang.Form.submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
   }
 
-  checkout_selected = function()
+  unarchive_story = function(id)
   {
-    if ( !Krang.pager_row_checked() )
-      alert( 'Nothing selected to check out!' );
-    else
-      Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_selected' } );
-  }
-
-  publish_selected = function()
-  {
-    if ( !Krang.pager_row_checked() )
-      alert( 'Nothing selected to publish!' );
-    else if ( confirm( 'Are you SURE you want to publish these items?' ) )
-    {
-      document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
-      Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
-    }
-  }
-
-  archive_story = function(id)
-  {
-    if (confirm('Are you SURE you want to archive this item?'))
-      Krang.Form.submit('find_story', { rm: 'archive', story_id: id });
+    Krang.Form.submit('find_story', { rm: 'unarchive', story_id: id });
   }
 </tmpl_if>
 </script>
 
 <h2>
-Find Stories
+Archived Stories
 </h2>
 
 <form name="search_form" method="post" action="story.pl">
 
-<input name="rm" value="find" type="hidden">
+<input name="rm" value="list_archived" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
@@ -205,14 +171,11 @@ Search Results
 
 <tmpl_unless read_only>
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
-  <input value="Add Story" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="Check Out" onclick="checkout_selected()" type="button">
-    <input value="Publish" onclick="publish_selected()" type="button">
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
-</tmpl_unless read_only>
+</tmpl_unless>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
@@ -220,18 +183,15 @@ Search Results
 
 <tmpl_unless read_only>
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
-  <input value="Add Story" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="Check Out" onclick="checkout_selected()" type="button">
-    <input value="Publish" onclick="publish_selected()" type="button">
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
-</tmpl_unless read_only>
+</tmpl_unless>
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" method="post" action="story.pl">
-  <input name="rm" value="find" type="hidden">
+  <input name="rm" value="list_archived" type="hidden">
   <input name="do_advanced_search" value="1" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
   </form>
@@ -242,7 +202,7 @@ Search Results
   <input name="story_id" type="hidden">
   <input name="history_return_script" value="story.pl" type="hidden">
   <input name="history_return_params" value="rm" type="hidden">
-  <input name="history_return_params" value="find" type="hidden">
+  <input name="history_return_params" value="list_archived" type="hidden">
   <tmpl_if do_advanced_search>
     <input name="history_return_params" value="search_title" type="hidden">
     <input name="history_return_params" value="<tmpl_var escape=html search_title>" type="hidden">
@@ -282,9 +242,13 @@ Search Results
     <input name="history_return_params" value="<tmpl_var escape=html search_creator_simple>" type="hidden">
     <input name="history_return_params" value="search_below_primary_category_id" type="hidden">
     <input name="history_return_params" value="<tmpl_var escape=html search_below_primary_category_id>" type="hidden">
+    <input name="history_return_params" value="search_full_text_string" type="hidden">
+    <input name="history_return_params" value="<tmpl_var escape=html search_full_text_string>" type="hidden">
   <tmpl_else>
     <input name="history_return_params" value="search_filter" type="hidden">
     <input name="history_return_params" value="<tmpl_var escape=html search_filter>" type="hidden">
+    <input name="history_return_params" value="search_filter_check_full_text" type="hidden">
+    <input name="history_return_params" value="<tmpl_var escape=html search_filter_check_full_text>" type="hidden">
   </tmpl_if>
   <input name="history_return_params" value="do_advanced_search" type="hidden">
   <input name="history_return_params" value="<tmpl_var escape=html do_advanced_search>" type="hidden">
@@ -299,11 +263,14 @@ Search Results
   </form>
 
   <form name="find_story" method="post" action="story.pl">
-  <input name="rm" value="find" type="hidden">
+  <input name="rm" value="list_archived" type="hidden">
   <input name="story_id" type="hidden">
+  <input name="archived" value="1" type="hidden">
   <input name="return_script" value="story.pl" type="hidden">
   <input name="return_params" value="rm" type="hidden">
-  <input name="return_params" value="find" type="hidden">
+  <input name="return_params" value="list_archived" type="hidden">
+  <input name="return_params" value="archived" type="hidden">
+  <input name="return_params" value="1" type="hidden">
   <tmpl_if do_advanced_search>
     <input name="return_params" value="search_title" type="hidden">
     <input name="return_params" value="<tmpl_var escape=html search_title>" type="hidden">
@@ -343,9 +310,13 @@ Search Results
     <input name="return_params" value="<tmpl_var escape=html search_creator_simple>" type="hidden">
     <input name="return_params" value="search_below_primary_category_id" type="hidden">
     <input name="return_params" value="<tmpl_var escape=html search_below_primary_category_id>" type="hidden">
+    <input name="return_params" value="search_full_text_string" type="hidden">
+    <input name="return_params" value="<tmpl_var escape=html search_full_text_string>" type="hidden">
   <tmpl_else>
     <input name="return_params" value="search_filter" type="hidden">
     <input name="return_params" value="<tmpl_var escape=html search_filter>" type="hidden">
+    <input name="return_params" value="search_filter_check_full_text" type="hidden">
+    <input name="return_params" value="<tmpl_var escape=html search_filter_check_full_text>" type="hidden">
   </tmpl_if>
   <input name="return_params" value="do_advanced_search" type="hidden">
   <input name="return_params" value="<tmpl_var escape=html do_advanced_search>" type="hidden">

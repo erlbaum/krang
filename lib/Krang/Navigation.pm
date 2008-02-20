@@ -186,6 +186,10 @@ sub default_tree {
     $sub->name('Active Stories');
     $sub->link('story.pl?rm=list_active');
 
+    $sub  = $node->new_daughter();
+    $sub->name('Archived Stories');
+    $sub->link('story.pl?rm=list_archived');
+
     my @desks = pkg('Desk')->find(order_by => 'order');
     my $user_desk_permissions = $perms->{desk};
     my $show_desk_section = grep { $user_desk_permissions->{$_->desk_id} ne 'hide' } @desks;
