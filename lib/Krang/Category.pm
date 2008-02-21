@@ -597,7 +597,15 @@ SQL
         if $category_id;
 
     # 2) check for story that has our URL
-    $query = 'SELECT story_id FROM story_category WHERE url = ?';
+    $query = <<SQL;
+SELECT s.story_id, archived, trashed
+FROM   story s
+LEFT   JOIN story_category as sc
+ON     s.story_id = sc.story_id
+WHERE  archived = 0 AND trashed = 0
+AND    url = ?
+SQL
+
     my ($url_without_trailing_slash) = ($self->{url} =~ /^(.+)\/$/);
     my ($story_id) = $dbh->selectrow_array($query, undef, $url_without_trailing_slash);
 
