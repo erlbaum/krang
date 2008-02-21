@@ -1089,6 +1089,7 @@ sub get_pager_view {
                       prev_page_number   => $prev_page_number,
                       next_page_number   => $next_page_number,
                       krang_pager_rows   => \@krang_pager_rows,
+                      other_search_place => $q->param('other_search_place'),
                      );
 
     return \%pager_view;

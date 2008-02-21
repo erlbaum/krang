@@ -18,6 +18,10 @@ do_search = function() {
   Krang.Form.submit('search_form');
 }
 
+other_search_rm = function() {
+  Krang.Form.submit('search_form', { rm: 'list_archived', other_search_place: 'Live' });
+}
+
 <tmpl_if do_advanced_search>
   clear_advanced_search = function()
   {
@@ -92,6 +96,7 @@ Find Stories
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 <input name="do_advanced_search" value="<tmpl_if do_advanced_search>1<tmpl_else>0</tmpl_if>" type="hidden">
+<input name="other_search_place" value="Archive" type="hidden">
 
 <div class="tabset finder">
 
