@@ -2327,10 +2327,52 @@ sub archive {
     return $self->find();
 }
 
+=item unarchive
+
+Move story from archive back to live. Clone the story if it conflicts
+with a live story.
+
+=cut
+
 sub unarchive {
+    my $self = shift;
+    my $q = $self->query;
 
-    return "TODO unarchive()"
+    my $story_id = $q->param('story_id');
 
+    croak("No story_id found in CGI params when trying to unarchive story.")
+      unless $story_id;
+
+    # load story from DB and archive it
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+
+    croak("Unable to load story '" . $story_id . "'.")
+      unless $story;
+
+    eval { $story->unarchive() }; # may through a Krang::Story::DuplicateURL exception
+
+    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+	if ($@->categories) {
+	    my @cats = @{$@->categories};
+	    # story has slug, its URL conflicts with existing categories
+	    add_alert('duplicate_cat_url_on_unarchive',
+                      s => (scalar(@cats) == 1 ? '' : 's'),
+		      category_list => join('<br/>', map { "Category $_->{id} &ndash; $_->{url}" } @cats));
+	} elsif ($@->stories) {
+	    my @stories = @{$@->stories};
+	    add_alert('duplicate_story_url_on_unarchive',
+		      s => (scalar(@stories) == 1 ? '' : 's'),
+		      story_list => join('<br/>', map { "Story $_->{id} &ndash; $_->{url}" } @stories));
+	} else {
+	    croak "Krang::Story::DuplicateURL exception didn't include neither stories nor categories.";
+	}
+
+	return $self->copy();
+    }
+
+    add_message('story_unarchived', id => $story_id, url => $story->url);
+
+    return $self->checkout_and_edit();
 }
 
 1;

@@ -2488,6 +2488,9 @@ sub unarchive {
     Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
         unless ($self->may_edit);
 
+    # make sure no other story occupies our initial place (URL)
+    $self->_verify_unique;
+
     # make sure we are the one
     $self->checkout;
 
@@ -2509,8 +2512,6 @@ sub unarchive {
         action => 'unarchive',
     );
 
-    # make sure no other story occupies our initial place (URL)
-    $self->_verify_unique;
 }
 
 =item C<< $story->trash() >>
