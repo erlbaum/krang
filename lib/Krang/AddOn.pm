@@ -309,7 +309,7 @@ sub install {
             die "This addon requires the '$req_name' addon version '$req_ver' ".
               "or greater, but only version '" . $req->version . 
                 "' is installed.\n"
-                  if $req_ver > $req->version;
+                  if $pkg->_compare_versions($req_ver, '>', $req->version);
         }
     }
 
