@@ -359,7 +359,10 @@ sub _upgrade {
     
     # get list of potential upgrades
     opendir(UDIR, 'upgrade') or die $!;
-    my @mod = grep { /^V(\d+)\_(\d+)\.pm$/ and $pkg->_compare_versions("$1.$2", '>', $old_version) } 
+    my @mod = grep {
+        /^V(\d+)\_(\d+)(?:_(\d+))\.pm$/
+          and $pkg->_compare_versions("$1.$2" . ($3 ? ".$3" : ''), '>', $old_version)
+      }
       sort readdir(UDIR);
     closedir(UDIR);
 
