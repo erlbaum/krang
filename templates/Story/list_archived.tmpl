@@ -10,8 +10,8 @@ show_advanced_search = function( show_advanced )
   Krang.Form.submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
 }
 
-do_search = function(rm) {
-  Krang.Form.submit('search_form', { rm: rm });
+do_search = function() {
+  Krang.Form.submit('search_form');
 }
 
 other_search_rm = function() {
@@ -68,7 +68,7 @@ Archived Stories
 
 <p class="tab-option">
 <input name="show_type_and_version" value="1" type="checkbox"
-  onclick="do_search('find')" <tmpl_if show_type_and_version> checked="checked"</tmpl_if>>
+  onclick="do_search()" <tmpl_if show_type_and_version> checked="checked"</tmpl_if>>
 <label>Show Story Type and Version.</label></p>
 
 <ul class="tabs"><li>
