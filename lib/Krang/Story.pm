@@ -1078,17 +1078,25 @@ Output field to sort by.  Defaults to 'story_id'.
 Results will be in sorted in ascending order unless this is set to 1
 (making them descending).
 
-=item archived
+=item include_live
 
-Only return archived stories.
+Include live stories in the search result. Live stories are stories
+that are neither archived nor have been moved to the trashbin. Set
+this option to 0, if find() should not return live stories.  The
+default is 1.
 
-=item trashed
+=item include_archived
 
-Only return stories that have been moved to the trashbin.
+Set this option to 1 if you want include archived stories in the
+search result. The default is 0.
 
-=item live
+=item include_trashed
 
-Only return stories that are neither archived nor trashed.
+Set this option to 1 if you want include trashed stories in the search
+result. Trashed stories live in the trashbin. The default is 0.
+
+B<NOTE:>When searching for story_id, these flags are not taken into
+account!
 
 =item show_hidden
 
@@ -1128,6 +1136,10 @@ sub find {
     my $offset      = delete $args{offset}      || 0;
     my $count       = delete $args{count}       || 0;
     my $ids_only    = delete $args{ids_only}    || 0;
+    my $include_archived = delete $args{include_archived} || 0;
+    my $include_trashed  = delete $args{include_trashed}  || 0;
+    my $include_live     = delete $args{include_live};
+    $include_live = 1 unless defined($include_live);
 
     # determine whether or not to display hidden stories.
     my $show_hidden = delete $args{show_hidden} || 0;
@@ -1139,20 +1151,12 @@ sub find {
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
 
-    # archived and trashed flags
-    my $archived_only = delete $args{archived};
-    my $trashed_only  = delete $args{trashed};
-    my $live_only     = delete $args{live};
-
     # check for invalid argument sets
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.")
       if $count and $ids_only;
     croak(__PACKAGE__ . "->find(): can't use 'version' without 'story_id'.")
       if $args{version} and not $args{story_id};
-    croak(__PACKAGE__ . "->find(): 'live' and 'archived' and 'trashed' were supplied. " .
-	  "Only one can be present.")
-      if $archived_only and $trashed_only and $live_only;
 
     # loading a past version is handled by _load_version()
     return $pkg->_load_version($args{story_id}, $args{version})
@@ -1465,14 +1469,23 @@ sub find {
     # always restrict perm checking to primary category
     push(@where, 'sc_p.ord = 0');
 
-    # only live stories?
-    push(@where, 's.archived = 0 AND s.trashed = 0') if $live_only;
-
-    # only archived stories?
-    push(@where, 's.archived = 1 AND s.trashed = 0') if $archived_only;
-
-    # only trashed stories?
-    push(@where, 's.trashed = 1') if $trashed_only;
+    # include live/archived/trashed
+    unless ($args{story_id}) {
+	if ($include_live) {
+	    push(@where, 's.archived = 0') unless $include_archived;
+	    push(@where, 's.trashed  = 0') unless $include_trashed;
+	} else {
+	    if ($include_archived) {
+		if ($include_trashed) {
+		    push(@where, 's.archived = 1 AND s.trashed = 1');
+		} else {
+		    push(@where, 's.archived = 1 AND s.trashed = 0');
+		}
+	    } else {
+		push(@where, 's.trashed = 1') if $include_trashed;
+	    }
+	}
+    }
 
     # construct base query
     my $query;
@@ -2041,6 +2054,27 @@ sub clone {
     # unset archived flag
     $copy->{archived} = 0;
 
+    # resolve URL conflict
+    $copy->resolve_url_conflict(append => 'copy');
+
+    return $copy;
+}
+
+=item C<< $story->resolve_url_conflict(append => 'copy') >>
+
+Resolves a URL conflict between $story and another live story.
+
+If the story has a slug, the string specified in C<append> will be
+appended to the story's slug.
+
+Otherwise, the story's category_ids, category_cache and url_cache
+lists will be cleared.
+
+=cut
+
+sub resolve_url_conflict {
+    my ($self, %args) = @_;
+
     # returns 1 if there is a dup, 0 otherwise
     my $is_dup = sub {  
         eval { shift->_verify_unique; };
@@ -2050,22 +2084,21 @@ sub clone {
     };
 
     # if changing the slug will help, do that until it works
-    my @url_attributes = $copy->element->class->url_attributes;
+    my @url_attributes = $self->element->class->url_attributes;
     if (grep { $_ eq 'slug' } @url_attributes) {
         # find a slug that works
+        my $slug = $self->slug;
         my $x = 1;
         do {
-            $copy->slug("$self->{slug}_copy" . ($x > 1 ? $x : ""));
+            $self->slug("${slug}_$args{append}" . ($x > 1 ? $x : ""));
             $x++;
-        } while ($is_dup->($copy));
+        } while ($is_dup->($self));
     } else {
         # erase category associations
-        $copy->{category_ids} = [];
-        $copy->{category_cache} = [];
-        $copy->{url_cache} = [];
+        $self->{category_ids}   = [];
+        $self->{category_cache} = [];
+        $self->{url_cache}      = [];
     }
-
-    return $copy;
 }
 
 =item C<< @linked_stories = $story->linked_stories >>
@@ -2488,11 +2521,11 @@ sub unarchive {
     Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
         unless ($self->may_edit);
 
-    # make sure no other story occupies our initial place (URL)
-    $self->_verify_unique;
-
     # make sure we are the one
     $self->checkout;
+
+    # alive again
+    $self->{archived} = 0;
 
     # unarchive the story
     my $dbh = dbh();
@@ -2501,8 +2534,8 @@ sub unarchive {
               WHERE  story_id = ?', undef,
 	     $self->{story_id});
 
-    # alive again
-    $self->{archived} = 0;
+    # make sure no other story occupies our initial place (URL)
+    $self->_verify_unique;
 
     # check back in
     $self->checkin();

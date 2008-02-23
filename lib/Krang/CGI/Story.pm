@@ -1421,7 +1421,30 @@ sub replace_category {
 
 	add_message('replaced_category', old_url => $old_category->url, new_url => $new_category->url);
 	$query->param('category_to_replace_id' => $new_category->category_id); # so radio-button remains!
-    } 
+
+	# get rid of old category if it has been created while handling a DuplicateURL conflict
+	# that had occured when unarchive()'ing a category index story [ see unarchive() case 3 ]
+	if ($old_category->dir eq $story->story_uuid) {
+
+	    # Save the story with its new category here...
+	    eval { $story->save };
+
+	    # ... in order to be able to delete its temporary category
+	    eval { $old_category->delete };
+	    if ($@ and ref $@ and $@->isa('Krang::Category::Dependent')) {
+		add_alert('dependancy_check_on_uuid_category_failed',
+			  id         => $old_category->category_id,
+			  story_uuid => $story->story_uuid);
+	    }
+
+	    add_message('tmp_category_on_unarchived_category_index_deleted',
+			id  => $old_category->category_id,
+			url => $old_category->url);
+
+	} elsif ($@) {
+	    die $@;
+	}
+    }
 
     return $self->edit();
 }
@@ -1528,8 +1551,8 @@ select a set of stories to be deleted or checked out to Workplace.
 sub find {
     my $self = shift;
     $self->query->param('other_search_place' => 'Archive');
-    return $self->_do_find(tmpl_file     => 'find.tmpl',
-                           find_position => 'live');
+    return $self->_do_find(tmpl_file         => 'find.tmpl',
+                           include_in_search => 'live');
 }
 
 =item list_archived
@@ -1545,8 +1568,8 @@ select a set of stories to be deleted.
 sub list_archived {
     my $self = shift;
     $self->query->param('other_search_place' => 'Live');
-    return $self->_do_find(tmpl_file     => 'list_archived.tmpl',
-			   find_position => 'archived');
+    return $self->_do_find(tmpl_file         => 'list_archived.tmpl',
+                           include_in_search => 'archived');
 }
 
 sub _do_find {
@@ -1581,17 +1604,20 @@ sub _do_find {
       $q->param('do_advanced_search') : $session{KRANG_PERSIST}{pkg('Story')}{do_advanced_search};
     $template->param('do_advanced_search' => $do_advanced_search);
 
-    my $find_position = $args{find_position};
+    my $include = $args{include_in_search};
+
+    # find live or archived stories?
+    my %include_options = $include eq 'archived' ? (include_live => 0, include_archived => 1) : ();
 
     # Set up persist_vars for pager
     my %persist_vars = (
                         rm => $q->param('rm'),
                         do_advanced_search => $do_advanced_search,
-                        $find_position => 1,
+                        $include => 1,
                        );
 
     # Set up find_params for pager
-    my %find_params = (may_see => 1, show_hidden => 1, $find_position => 1);
+    my %find_params = (may_see => 1, show_hidden => 1, %include_options);
 
     if ($do_advanced_search) {
         # Set up advanced search
@@ -1698,8 +1724,8 @@ sub _do_find {
         $template->param(search_filter => $search_filter);
     }
 
-    # list archived stories?
-    my $archived = $find_position eq 'archived' ? 1 : 0;
+    # find archived stories?
+    my $archived = $include eq 'archived' ? 1 : 0;
 
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
@@ -2324,6 +2350,8 @@ sub archive {
 
     $story->archive();
 
+    add_message('story_archived', id => $story_id, url => $story->url);
+
     $q->delete('story_id');
 
     return $self->find();
@@ -2331,8 +2359,11 @@ sub archive {
 
 =item unarchive
 
-Move story from archive back to live. Clone the story if it conflicts
-with a live story.
+Move story from archive back to live. Modify the story's slug or clear
+its categories if it conflicts with a live story or category.
+
+If a URL conflict occures, return to Edit Story, otherwise return to
+the Archived Stories.
 
 =cut
 
@@ -2345,7 +2376,7 @@ sub unarchive {
     croak("No story_id found in CGI params when trying to unarchive story.")
       unless $story_id;
 
-    # load story from DB and archive it
+    # load story from DB and unarchive it
     my ($story) = pkg('Story')->find(story_id => $story_id);
 
     croak("Unable to load story '" . $story_id . "'.")
@@ -2353,33 +2384,79 @@ sub unarchive {
 
     eval { $story->unarchive() }; # may through a Krang::Story::DuplicateURL exception
 
+    my @conflict_cats = ();
+    my @conflict_stories = ();
+
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
 	if ($@->categories) {
-	    my @cats = @{$@->categories};
-	    # story has slug, its URL conflicts with existing categories
-	    add_alert('duplicate_cat_url_on_unarchive',
-                      s => (scalar(@cats) == 1 ? '' : 's'),
-		      category_list => join('<br/>', map { "Category $_->{id} &ndash; $_->{url}" } @cats));
-	} elsif ($@->stories) {
-	    my @stories = @{$@->stories};
-	    add_alert('duplicate_story_url_on_unarchive',
-		      s => (scalar(@stories) == 1 ? '' : 's'),
-		      story_list => join('<br/>', map { "Story $_->{id} &ndash; $_->{url}" } @stories));
+	    @conflict_cats = @{$@->categories};
+        } elsif ($@->stories) {
+	    @conflict_stories = @{$@->stories};
 	} else {
 	    croak "Krang::Story::DuplicateURL exception didn't include neither stories nor categories.";
 	}
 
-	return $self->copy();
+	# maybe we need it after resolve_url_conflict() removed categories
+	my $site_id = $story->category->site_id;
+
+	# resolve the conflict
+        $story->resolve_url_conflict(story => $story, append => 'unarchived');
+
+	# find the user message for the three possible conflict cases
+	if (@conflict_cats) { # case 1: slug has been modified
+	    add_alert('duplicate_cat_url_on_unarchive',
+                      id            => $story->story_id,
+                      new_slug      => $story->slug,
+                      s             => (scalar(@conflict_cats) == 1 ? '' : 's'),
+                      category_list => join('<br/>', map { "Category $_->{id} &ndash; $_->{url}" }
+					    @conflict_cats));
+	} else {
+	    if (@{$story->{category_ids}}) { # case 2: slug has been modified
+		add_alert('duplicate_url_of_slugstory_on_unarchive',
+			  id         => $story->story_id,
+                          new_slug   => $story->slug,
+			  s          => (scalar(@conflict_stories) == 1 ? '' : 's'),
+			  story_list => join('<br/>', map { "Story $_->{id} &ndash; $_->{url}" }
+					     @conflict_stories));
+	    } else { # case 3: slugless story: clearing the category_*[] slots and url_cache[]
+		add_alert('duplicate_url_of_slugless_story_on_unarchive',
+			  id         => $story->story_id,
+			  story_list => join('<br/>', map { "Story $_->{id} &ndash; $_->{url}" }
+					     @conflict_stories));
+
+                # make sure the story has a category even if the user goes away before saving
+                my ($default_cat) = pkg('Category')->find(dir => $story->story_uuid,
+                                                          site_id => $site_id);
+
+                $default_cat ||= pkg('Category')->new(dir => $story->story_uuid,
+                                                      site_id => $site_id);
+                if ($default_cat) {
+                    $default_cat->save();
+                    $story->categories($default_cat);
+                }
+            }
+
+        }
+
+        # story is still checked out, story object has been modified, don't fetch it from DB
+        $story->save();
+        $q->delete('story_id');
+        $session{story} = $story;
+
+        return $self->edit;
+
     }
 
     add_message('story_unarchived', id => $story_id, url => $story->url);
 
-    return $self->checkout_and_edit();
+    return $self->list_archived;
+
 }
 
 1;
 
 =back
+
 
 =cut
 
