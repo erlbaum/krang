@@ -323,7 +323,10 @@ sub default_tree {
                 && pkg('AddOn')->find(condition => 'EnableAdminSchedulerActions')
         }
     );
-    
+
+##    my $trashbin = $root->new_daughter();
+##    $trashbin->name('Trash');
+##    $trashbin->link('trash.pl');
 
     return $root;
 }
