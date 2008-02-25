@@ -6,13 +6,18 @@
 Showing
 <tmpl_var start_row> &ndash; <tmpl_var end_row>
 of <tmpl_var found_count>
-Results <a href="javascript:other_search_rm()">Search in <tmpl_var other_search_place></a>
+Results 
 
 <tmpl_if show_big_view>
   <a href="javascript:Krang.Pager.show_big_view(0)">Show <tmpl_var user_page_size> Per Page</a>
 <tmpl_else><tmpl_if page_numbers>
   <a href="javascript:Krang.Pager.show_big_view(1)">Show <tmpl_var big_view_page_size default="100"> Per Page</a>
 </tmpl_if></tmpl_if>
+
+<tmpl_if other_search_place>
+  <a href="javascript:other_search_rm()">Search in <tmpl_var other_search_place></a>
+</tmpl_if>
+
 </p>
 
 <ul>
