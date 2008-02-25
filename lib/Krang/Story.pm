@@ -1095,8 +1095,8 @@ search result. The default is 0.
 Set this option to 1 if you want include trashed stories in the search
 result. Trashed stories live in the trashbin. The default is 0.
 
-B<NOTE:>When searching for story_id, these flags are not taken into
-account!
+B<NOTE:>When searching for story_id, these three include_* flags are
+not taken into account!
 
 =item show_hidden
 
@@ -2662,7 +2662,6 @@ trashed.
 =cut
 
 sub wont_publish { return $_[0]->archived || $_[0]->trashed }
-
 
 =back
 
