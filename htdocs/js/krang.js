@@ -886,13 +886,17 @@ Krang.to_top = function() {
 Krang.row_checked = function( form, inputName ) {
     form = typeof form == 'object' ? form : document.forms[form];
 
+    var num = 0;
+
     for ( var i = 0; i < form.elements.length; i++ ) {
         var el = form.elements[ i ];
-        if ( el.type == 'checkbox' && el.checked && el.name == inputName ) 
-            return true;  // db2: this should be a substring match, cf. ElementEditor/edit.tmpl
+        if ( el.type == 'checkbox' && el.checked && el.name == inputName ) {
+	    num++;   // db2: this should be a substring match, cf. ElementEditor/edit.tmpl
+	    if (num > 1) return num;
+	}
     }
 
-    return false;
+    return num;
 };
 
 Krang.pager_row_checked = function() {
