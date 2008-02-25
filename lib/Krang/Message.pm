@@ -76,7 +76,7 @@ like:
 
 This allows different modules to define the same name differently.
 
-Addons can include their own F<conf/messages.conf> file which will be
+AddOns can include their own F<conf/messages.conf> file which will be
 read in after the standard Krang file, overriding any duplicated
 entries.
 

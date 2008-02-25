@@ -1728,7 +1728,7 @@ compilation issues with MacOSX. [Peter]
 
 =item *
 
-C<About Krang> now reports server IP address, Addons are now
+C<About Krang> now reports server IP address, AddOns are now
 alphabetized properly. [Peter]
 
 =item *

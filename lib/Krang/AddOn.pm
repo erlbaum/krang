@@ -99,7 +99,7 @@ NavigationHandler is triggered using:
 
 =back
 
-=head1 Scheduler Addons
+=head1 Scheduler AddOns
 
 Two types of scheduler addons are supported.  They are configured with the following directives in krang_addon.conf.
 
