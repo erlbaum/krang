@@ -185,7 +185,7 @@ sub delete_checked {
     foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
         $obj->delete;
     }
-    return $self->show;
+    return $self->find;
 }
 
 =item restore_checked
@@ -213,16 +213,18 @@ sub _id2obj {
     croak("Unable to find type and id in '$_[0]'")
       unless $type and $id;
 
-    my $obj;
-    if ($type eq 'story') {
-        ($obj) = pkg('Story')->find(story_id => $id);
-    } elsif ($type eq 'media') {
-        ($obj) = pkg('Media')->find(media_id => $id);
-    } else {
-        ($obj) = pkg('Template')->find(template_id => $id);
-    }
+    # get package to handle type
+    my $pkg = pkg(ucfirst($type));
+
+    croak("No Krang package for type '$type' found")
+      unless $pkg;
+
+    # get object with this id
+    my ($obj) = $pkg->find($type.'_id' => $id);
+
     croak("Unable to load $type $id")
       unless $obj;
+
     return $obj;
 }
 

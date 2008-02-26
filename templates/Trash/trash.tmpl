@@ -46,8 +46,7 @@ alert("TODO");
 	  question = 'Are you SURE you want to permanently delete this item?';
         }
         if (confirm(question)) {
-//        Krang.Form.submit( 'krang_pager_form', { rm : 'delete_checked' }, { to_top : false } );
-alert("TODO");
+          Krang.Form.submit( 'krang_pager_form', { rm : 'delete_checked' }, { to_top : false } );
         }
       }
     }
@@ -76,7 +75,7 @@ Trash
   <form name="krang_pager_form" method="post" action="trash.pl">
 
   <input name="rm"    type="hidden">
-  <input name="type" type="hidden">
+  <input name="type"  type="hidden">
   <input name="id"    type="hidden">
   <tmpl_include HTMLPager/pager-internals.tmpl>
 
