@@ -23,8 +23,7 @@ This application manages Krang' trashbin.
 
 =cut
 
-use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Log     => qw(debug assert affirm ASSERT);
+use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget  => qw(format_url);
 use Krang::ClassLoader Message => qw(add_message add_alert);
@@ -94,13 +93,11 @@ sub find {
         cgi_query  => $query,
         use_module => pkg('Trash'),
         columns =>
-          ['id', 'type', 'title', 'url', 'date', 'thumbnail', 'command_column', 'checkbox_column'],
+          ['id', 'type', 'title', 'url', 'date', 'thumbnail', 'checkbox_column'],
         column_labels           => \%col_labels,
         columns_sortable        => [qw(id type title url date)],
-        command_column_commands => ['view'],
-        command_column_labels   => {view => 'View Detail'},
-        id_handler              => sub { $self->_obj2id(@_) },
-        row_handler             => sub { $self->_row_handler(@_) },
+        id_handler              => sub { $self->_id_handler(@_)  },
+        row_handler             => sub { $self->_row_handler(@_, \%asset_permissions) },
     );
 
     # Run the pager
@@ -108,55 +105,43 @@ sub find {
     return $template->output;
 }
 
+sub _id_handler { return $_[1]->{type} . '_' . $_[1]->{id} }
+
 sub _row_handler {
-    my ($self, $row, $obj) = @_;
+    my ($self, $row, $obj, $asset_permissions_for) = @_;
 
-    my $date;
-    if ($obj->isa('Krang::Story')) {
-        $row->{story_id}   = $obj->story_id;
-        $row->{id}         = $self->_obj2id($obj);
-        $row->{title}      = $obj->title;
-        $row->{story_type} = $obj->class->display_name;
-        $row->{is_story}   = 1;
-        $row->{url}        = format_url(
-            url    => $obj->url,
-            linkto => "javascript:Krang.preview('story'," . $obj->story_id . ")",
-            length => 50
-        );
+    # do the clone
+    $row->{$_} = $obj->{$_} for keys %$obj;
 
-        $date = $obj->cover_date();
-    } elsif ($obj->isa('Krang::Media')) {
-        $row->{media_id}  = $obj->media_id;
-        $row->{id}        = $self->_obj2id($obj);
-        $row->{title}     = $obj->title;
-        $row->{thumbnail} = $obj->thumbnail_path(relative => 1);
-        $row->{is_media}  = 1;
-        $row->{url}       = format_url(
-            url    => $obj->url,
-            linkto => "javascript:Krang.preview('media', " . $obj->media_id . ")",
-            length => 50
-        );
-        $date = $obj->creation_date();
+    # cumulate user category permission with user asset permission
+    $row->{may_edit} = 0
+      unless $asset_permissions_for->{$obj->{type}} eq 'edit';
+
+    # format date
+    my $date = $obj->{date};
+    if ($date and $date ne '0000-00-00 00:00:00') {
+        $date = Time::Piece->from_mysql_datetime($date);
+        $row->{date} = $date->strftime('%m/%d/%Y %I:%M %p');
     } else {
-        $row->{template_id} = $obj->template_id;
-        $row->{id}          = $self->_obj2id($obj);
-        $row->{title}       = $obj->filename;
-        $row->{is_template} = 1;
-        $row->{url}         = format_url(
-            url    => $obj->url,
-            length => 50
-        );
-        $date = $obj->creation_date();
+        $row->{date} = '[n/a]';
     }
 
-    # format the date
-    $row->{date} = ref $date ? $date->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
+    # format URL
+    if ($obj->{linkto}) {
+        $row->{url} = format_url(
+            url    => $obj->{url},
+            linkto => "javascript:Krang.preview('story'," . $obj->{id} . ")",
+            length => 50
+        );
+    } else {
+        $row->{url} = format_url(
+            url    => $obj->{url},
+            length => 50
+        );
+    }
 
-    # setup version, used by all type
-    $row->{version} = $obj->version;
-
-    # permissions, used by everyone
-    $row->{may_edit} = $obj->may_edit;
+    # finally the asset type
+    $row->{asset_type} = ucfirst($obj->{type});
 }
 
 =item goto_view
@@ -166,9 +151,24 @@ Redirects to the view detail screen for this object.
 =cut
 
 sub goto_view {
+    my $self  = shift;
+    my $query = $self->query;
 
-    return "TODO (see Workspace's implementation of goto_log()"
+    my $id      = $query->param('id');
+    my $type    = $query->param('type');
+    my $script  = $type . '.pl';
+    my $type_id = $type . '_id';
 
+    my $uri = "$script?rm=view&$type_id=$id&return_script=trash.pl";
+
+    # mix in pager params for return
+    foreach my $name (grep { /^krang_pager/ } $query->param) {
+        $uri .= "&return_params=${name}&return_params=" . $query->param($name);
+    }
+
+    $self->header_props(-uri => $uri);
+    $self->header_type('redirect');
+    return "";
 }
 
 =item delete_checked
@@ -204,16 +204,6 @@ sub restore_checked {
 #
 # Utility functions
 #
-
-# transform object into a type_id pair
-sub _obj2id {
-    my $self = shift;
-
-    my $obj = shift;
-    return "story_" . $obj->story_id if $obj->isa('Krang::Story');
-    return "media_" . $obj->media_id if $obj->isa('Krang::Media');
-    return "template_" . $obj->template_id;
-}
 
 # transform type_id into an object
 sub _id2obj {

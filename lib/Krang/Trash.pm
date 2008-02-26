@@ -9,7 +9,23 @@ use Krang::ClassLoader Log     => qw(debug);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Template';
+
+use Time::Piece::MySQL;
 use Carp qw(croak);
+
+use constant TRASH_OBJECT_FIELDS => qw(
+  id
+  type
+  title
+  class
+  url
+  date
+  version
+  may_see
+  may_edit
+  forth_col
+  linkto
+);
 
 # static part of SQL query
 our $QUERY;
@@ -134,46 +150,35 @@ sub find {
     my $results = $sth->fetchall_arrayref();
     $sth->finish;
 
-    # build lists of IDs for each class to load
-    my %object_ids_for = ();
-    for my $row (@$results) {
-        my ($id, $type) = @$row;
-        debug("StoryID: $id");
-        push @{$object_ids_for{$type}}, $id;
-    }
-
-    # load objects
-    my %objects_for = ();
-    for my $type (keys %object_ids_for) {
-        if (@{$object_ids_for{$type}}) {
-            my $pkg = ucfirst($type);
-            my $id  = $type . '_id';
-
-            $objects_for{$type} =
-              {map { ($_->$id => $_) } pkg($pkg)->find($id => $object_ids_for{$type})};
-        }
-    }
-
-    # put them into the desired order
+    # return a list of hashrefs
     my @objects = ();
+
     for my $row (@$results) {
-        my ($id, $type) = @$row;
-        push @objects, $objects_for{$type}{$id};
+        my $obj = {};
+
+        @{$obj}{(TRASH_OBJECT_FIELDS)} = @$row;
+
+        push @objects, $obj;
     }
 
     return @objects;
 }
 
 # Default query for Krang's core objects
+# Order matters since this forms our Trash object fassade
 $QUERY = <<SQL;
 (
-SELECT s.story_id AS id,
-       'story' AS type,
-       sc.url,
-       s.cover_date AS date,
-       s.title AS title,
+SELECT s.story_id    AS id,
+       'story'       AS type,
+       title,
        class,
-       ucpc.may_see
+       sc.url        AS url,
+       s.cover_date  AS date,
+       version,
+       ucpc.may_see  AS may_see,
+       ucpc.may_edit AS may_edit,
+       ''            AS forth_col,
+       1             AS linkto
  FROM  story AS s
  LEFT JOIN story_category AS sc
         ON s.story_id = sc.story_id
@@ -214,17 +219,19 @@ This class method allows custom objects other than Krang's core
 objects Story, Media and Template to register with the trashbin's
 find() method.  It should be called in a BEGIN block!
 
-The only argument C<sql> takes the SQL query required for finding
-those objects in the trashbin.
+The only argument C<sql> represents the SQL query to find those
+objects in the trashbin.
 
 B<Example for a custom object named "Mailing">
 
-This example follows the usual naming convention, the moniker of the
-objects' class being the name of the table holding these objects, and
-the ID name being the concatenation of the table name plus one
-underscore plus the string 'id'.  We also assume the presence of a
-boolean column named 'trashed', which is supposed to be set to true if
-the object currently lives in the trashbin.
+The SQL select command forms a fassade, mapping asset fields to trash
+object fields.  Order matters!  All fields must be present, though
+they might contain the empty string (as the 'class' field in the
+example below.
+
+Also assumed is the presence of a boolean column named 'trashed',
+which is supposed to be set to true if the object currently lives in
+the trashbin.
 
  Class:   Krang::Mailing
  Table:   mailing
@@ -232,12 +239,17 @@ the object currently lives in the trashbin.
  BEGIN {
 
      pkg('Trash')->register_find_sql(sql => <<SQL);
- SELECT mailing_id AS id,
-        'mailing' AS type,
-        url
-        mailing_date as date,
-        subject AS title
-        '' as class
+ SELECT mailing_id   AS id,
+        'mailing'    AS type,
+        subject      AS title,
+        ''           AS class,
+        url          AS url,
+        mailing_date AS date,
+        ''           AS version,
+        someperm     AS may_see,
+        otherperm    AS may_edit,
+        ''           AS forth_col,  # this is media's thumbnail column
+        1            AS linkto      # format the URL as a link
  FROM mailing
  WHERE trashed = 1
  SQL

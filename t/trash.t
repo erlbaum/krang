@@ -65,14 +65,12 @@ SKIP: {
     my @trash = pkg('Trash')->find();
     ok(not grep { not defined $_ } @trash);
     foreach my $story (@stories) {
-        ok(grep { $_->isa('Krang::Story') and
-                  $_->story_id == $story->story_id } @trash);
+        ok(grep{ $story->story_id == $_->{id} } @trash);
     }
 
     # restore a story and make sure it's gone from the trashbin
     $stories[0]->untrash;
     @trash = pkg('Trash')->find();
-    ok(not grep { $_->isa('Krang::Story') and
-                  $_->story_id == $stories[0]->story_id } @trash);
+    ok(not grep { $_->{id} == $stories[0]->story_id } @trash);
 };
 
