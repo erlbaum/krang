@@ -173,7 +173,8 @@ sub goto_view {
 
 =item delete_checked
 
-Deletes a list of checked objects.  Requires an 'id' parameter of the form
+Deletes a list of checked objects.  Requires the param
+krang_pager_rows_checked to be set to a list of values of the form
 'type_id'.
 
 =cut
@@ -181,10 +182,31 @@ Deletes a list of checked objects.  Requires an 'id' parameter of the form
 sub delete_checked {
     my $self  = shift;
     my $query = $self->query;
-    add_message('deleted_checked');
-    foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
-        $obj->delete;
+
+    my @alerts = ();
+
+    # try to delete
+    foreach my $the (map { $self->_id2the($_) } $query->param('krang_pager_rows_checked')) {
+
+	# this should always succeed as long as delete permission is global
+	# because the UI does not show the Delete button if user has no admin_delete perm
+        eval { $the->{object}->delete };
+
+	if ($@ and ref($@) and ref($@) =~ m[.+::NoDeleteAccess$]) { # cannot know the exact package, can we?
+	    push @alerts,
+	      ucfirst($the->{type}) . ' ' . $the->{id} . ': ' . $the->{object}->url;
+	}
     }
+
+    # inform user of what happened
+    if (@alerts) {
+	add_alert('no_delete_permission',
+		  s => (scalar(@alerts) > 1 ? 's' : ''),
+                  item_list => join '<br/>', @alerts);
+    } else {
+	add_message('deleted_checked');
+    }
+
     return $self->find;
 }
 
@@ -206,7 +228,7 @@ sub restore_checked {
 #
 
 # transform type_id into an object
-sub _id2obj {
+sub _id2the {
     my $self = shift;
 
     my ($type, $id) = $_[0] =~ /^([^_]+)_(.*)$/;
@@ -225,8 +247,9 @@ sub _id2obj {
     croak("Unable to load $type $id")
       unless $obj;
 
-    return $obj;
+    return {type => $type, id => $id, object => $obj};
 }
+
 
 1;
 
