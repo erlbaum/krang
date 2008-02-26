@@ -66,11 +66,12 @@ sub find {
         global_vars       => 1
     );
 
-    # global delete permission
-    my $admin_may_delete = pkg('Group')->user_admin_permissions('admin_delete');
+    # admin delete permission
+    my %admin_permissions = pkg('Group')->user_admin_permissions();
+    my $admin_may_delete = $admin_permissions{admin_delete};
     $template->param(admin_may_delete => $admin_may_delete);
 
-    # global restore permission
+    # category-specific restore permission
     my %asset_permissions = pkg('Group')->user_asset_permissions();
     my $asset_may_restore = grep { $asset_permissions{$_} eq 'edit' }
       keys %asset_permissions;
@@ -97,7 +98,7 @@ sub find {
         column_labels           => \%col_labels,
         columns_sortable        => [qw(id type title url date)],
         id_handler              => sub { $self->_id_handler(@_)  },
-        row_handler             => sub { $self->_row_handler(@_, \%asset_permissions) },
+        row_handler             => sub { $self->_row_handler(@_, \%asset_permissions, \%admin_permissions) },
     );
 
     # Run the pager
@@ -108,14 +109,21 @@ sub find {
 sub _id_handler { return $_[1]->{type} . '_' . $_[1]->{id} }
 
 sub _row_handler {
-    my ($self, $row, $obj, $asset_permissions_for) = @_;
+    my ($self, $row, $obj, $asset_permission_for, $admin_permission) = @_;
 
     # do the clone
     $row->{$_} = $obj->{$_} for keys %$obj;
 
-    # cumulate user category permission with user asset permission
-    $row->{may_edit} = 0
-      unless $asset_permissions_for->{$obj->{type}} eq 'edit';
+    # show the item's checkbox (determined by user's category permissions)
+    $row->{show_checkbox} = $obj->{may_edit};
+
+    # mix in user asset permission
+    $row->{show_checkbox} = 0
+      unless $asset_permission_for->{$obj->{type}} eq 'edit';
+
+    # anyway, show the checkbox if we have admin_delete permission
+    $row->{show_checkbox} = 1
+      if $admin_permission->{admin_delete};
 
     # format date
     my $date = $obj->{date};
