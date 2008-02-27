@@ -2259,16 +2259,16 @@ Serialize as XML.  See Krang::DataSet for details.
 =cut
 
 sub serialize_xml {
-    my ($self, %args) = @_;
-    my ($writer, $set) = @args{qw(writer set)};
+    my ($self,   %args) = @_;
+    my ($writer, $set)  = @args{qw(writer set)};
     local $_;
 
     # open up <story> linked to schema/story.xsd
-    $writer->startTag('story',
-                      "xmlns:xsi" => 
-                        "http://www.w3.org/2001/XMLSchema-instance",
-                      "xsi:noNamespaceSchemaLocation" =>
-                        'story.xsd');
+    $writer->startTag(
+        'story',
+        "xmlns:xsi"                     => "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation" => 'story.xsd'
+    );
 
     # basic fields
     $writer->dataElement(story_id   => $self->story_id);
@@ -2296,23 +2296,25 @@ sub serialize_xml {
     my %contrib_type = pkg('Pref')->get('contrib_type');
     for my $contrib ($self->contribs) {
         $writer->startTag('contrib');
-        $writer->dataElement(contrib_id => $contrib->contrib_id);
-        $writer->dataElement(contrib_type => 
-                             $contrib_type{$contrib->selected_contrib_type()});
+        $writer->dataElement(contrib_id   => $contrib->contrib_id);
+        $writer->dataElement(contrib_type => $contrib_type{$contrib->selected_contrib_type()});
         $writer->endTag('contrib');
 
         $set->add(object => $contrib, from => $self);
     }
 
     # schedules
-    foreach my $schedule ( pkg('Schedule')->find( object_type => 'story', object_id => $self->story_id ) ) {
+    my @schedules = pkg('Schedule')->find(object_type => 'story', object_id => $self->story_id);
+    foreach my $schedule (@schedules) {
         $set->add(object => $schedule, from => $self);
     }
-    
+
     # serialize elements
-    $self->element->serialize_xml(writer => $writer,
-                                  set    => $set);
-    
+    $self->element->serialize_xml(
+        writer => $writer,
+        set    => $set
+    );
+
     # all done
     $writer->endTag('story');
 }
