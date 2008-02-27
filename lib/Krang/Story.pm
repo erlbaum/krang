@@ -654,27 +654,26 @@ sub prune_versions {
 
 =item C<< $story->save() >>
 
-=item C<< $story->save(keep_version => 1) >>
+=item C<< $story->save(keep_version => 1, no_history => 1) >>
 
-Save the story to the database.  This is the only call which will make
-permanent changes in the database (checkin/checkout make transient
-changes).  Increments the version number unless called with
-'keep_version' set to 1.
+Save the story to the database.  This is the only call which
+will make permanent changes in the database (checkin/checkout make
+transient changes).  Increments the version number unless called with
+C<keep_version> is true. Add appropriate entries to the C<history>
+and C<story_version> tables unless C<no_history> is true.
 
-Will throw a Krang::Story::DuplicateURL exception with a story_id
-field if saving this story would conflict with an existing story
-or category.
+Will throw a Krang::Story::DuplicateURL exception with a story_id field
+if saving this story would conflict with an existing story or category.
 
 Will throw a Krang::Story::MissingCategory exception if this story
 doesn't have at least one category.  This can happen when a clone()
 results in a story with no categories.
 
-Will throw a Krang::Story::NoCategoryEditAccess exception if the
-current user doesn't have edit access to the primary category set for
-the story.
+Will throw a Krang::Story::NoCategoryEditAccess exception if the current
+user doesn't have edit access to the primary category set for the story.
 
-Will throw a Krang::Story::NoEditAccess exception if the
-current user doesn't have edit access to the story.
+Will throw a Krang::Story::NoEditAccess exception if the current user
+doesn't have edit access to the story.
 
 =cut
 
@@ -687,25 +686,27 @@ sub save {
 
     # make sure we've got at least one category
     Krang::Story::MissingCategory->throw(message => "missing category")
-        unless $self->category;
+      unless $self->category;
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
-        unless ($self->may_edit);
+    Krang::Story::NoEditAccess->throw(
+        message  => "Not allowed to edit story",
+        story_id => $self->story_id
+    ) unless ($self->may_edit);
 
     # make sure we have edit access to the primary category
-    Krang::Story::NoCategoryEditAccess->throw( 
-       message => "Not allowed to edit story in this category",
-       category_id => $self->category->category_id)
-        unless ($self->category->may_edit);
+    Krang::Story::NoCategoryEditAccess->throw(
+        message     => "Not allowed to edit story in this category",
+        category_id => $self->category->category_id
+    ) unless ($self->category->may_edit);
 
     # unless we're halfway through a category-index conversion...
     unless ($self->{slug} eq '_TEMP_SLUG_FOR_CONVERSION_') {
-      # make sure it's got a unique URL
-      $self->_verify_unique();
-      
-      # update the version number
-      $self->{version}++ unless $args{keep_version};
+        # make sure it's got a unique URL
+        $self->_verify_unique();
+
+        # update the version number
+        $self->{version}++ unless $args{keep_version};
     }
 
     # save element tree, populating $self->{element_id}
@@ -725,20 +726,21 @@ sub save {
 
     # save a serialized copy in the version table
     $self->_save_version;
-    
+
     # prune previous versions from the version table (see TopLevel.pm::versions_to_keep)
     $self->prune_versions(number_to_keep => $self->class->versions_to_keep);
 
     # register creation if is the first version
-    add_history(    object => $self, 
-                    action => 'new',
-               )
-      if $self->{version} == 1 and not $args{keep_version};
+    add_history(
+        object => $self,
+        action => 'new',
+    ) if ($self->{version} == 1) && !$args{keep_version} && !$args{no_history};
 
     # register the save
-    add_history(    object => $self, 
-                    action => 'save',
-               );
+    add_history(
+        object => $self,
+        action => 'save',
+    ) unless $args{no_history};
 }
 
 # save core Story data
@@ -1607,6 +1609,40 @@ sub find {
 
     return @stories;
 }}
+
+sub transform_stories {
+    my ($pkg, %args) = @_;
+    my $callback = delete $args{callback} or croak('You must provide a callback for transform_stories()');
+    my $past_versions = delete $args{past_versions};
+
+    # make find() do all the hard stuff
+    my @stories = $pkg->find(%args);
+    foreach my $story (@stories) {
+        my $story_id = $story->story_id;
+
+        # transform and save the live story
+        $story = $callback->({ story => $story, live => 1 });
+        $story->save(keep_version => 1, no_history => 1);
+
+        if( $past_versions ) {
+            my $dbh  = dbh;
+            foreach my $v ($story->all_versions) {
+                next unless $v == $story->version;
+                my $old_story = $pkg->_load_version($story_id, $v);
+                $old_story = $callback->({ story => $story, live => 0 });
+
+                # re-save version
+                $dbh->do(
+                    'REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)', 
+                    undef,
+                    $old_story->{story_id}, 
+                    $old_story->{version}, 
+                    nfreeze($old_story)
+                );
+            }
+        }
+    }
+}
 
 sub _load_version {
     my ($pkg, $story_id, $version) = @_;
