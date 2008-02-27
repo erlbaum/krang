@@ -229,14 +229,130 @@ Requires an 'id' parameter of the form 'type_id'.
 =cut
 
 sub restore_checked {
+    my $self  = shift;
+    my $query = $self->query;
 
-    return "TODO"
+    my @restored = ();
+    my @failed   = ();
 
+    # try to restore
+    foreach my $object (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
+
+        my $type    = $object->moniker;
+        my $id_meth = $object->id_meth;
+        my $id      = $object->$id_meth;
+
+        eval { pkg('Trash')->restore(object => $object) };
+
+        if ($@ and ref($@)) {
+            my $exception = $@;    # save it away
+            push @failed, $self->_format_msg(object => $object, exception => $exception);
+        } else {
+            push @restored, $self->_format_msg(object => $object);
+        }
+    }
+
+    # inform user of what happened
+    $self->_register_msg(\@restored, \@failed);
+
+    return $self->find;
 }
 
 #
 # Utility functions
 #
+
+# pass the messages to add_message() or add_alert()
+sub _register_msg {
+    my ($self, $restored, $failed) = @_;
+
+    my @restored = @$restored;
+    my @failed   = @$failed;
+
+    if (@failed) {
+        if (@restored) {
+            add_alert(
+                'restored_with_some_exceptions',
+                restored_phrase => (scalar(@restored) > 1 ? 'These items were' : 'This item was'),
+                restored_list => join('<br/>', @restored),
+                failed_phrase => (scalar(@failed) > 1 ? 'These items were' : 'This item was'),
+                failed_list => join('<br/>', @failed),
+            );
+        } else {
+            add_alert(
+                'restored_with_exceptions_only',
+                failed_phrase => (scalar(@failed) > 1 ? 'These items were' : 'This item was'),
+                failed_list => join '<br/>',
+                @failed,
+            );
+        }
+    } else {
+        add_message(
+            'restored_without_exceptions',
+            restored_phrase => (scalar(@restored) > 1 ? 'These items were' : 'This item was'),
+            restored_list => join '<br/>',
+            @restored,
+        );
+    }
+}
+
+# format a message/alert
+sub _format_msg {
+    my ($self, %args) = @_;
+
+    my $ex      = $args{exception};    # in case of conflict
+    my $object  = $args{object};
+    my $type    = $object->moniker;
+    my $id_meth = $object->id_meth;
+    my $id      = $object->$id_meth;
+
+    my $msg =
+        ucfirst($type) . ' ' 
+      . $id . ' '
+      . $object->url
+      . '(restored to '
+      . ($object->archived ? 'Archive' : 'Live') . ')';
+
+    # sucess
+    return $msg unless $ex;
+
+    my $ex_type = $ex->moniker;
+
+    # missing restore permission
+    return $msg . " (no restore permission)"
+      if $ex_type eq 'norestoreaccess';
+
+    # URL conflict
+    if ($ex_type eq 'duplicateurl') {
+        if ($ex->categories) {
+            my @cats = @{$ex->categories};
+            my $reason =
+              scalar(@cats) > 1
+              ? ' URL conflict with <br/>'
+              : ' URL conflict with <br/>';
+            return $msg 
+              . '<br/>(' 
+              . $reason
+              . join('<br/>', map { "Category $_->{id} &ndash; $_->{url}" } @cats) . ' )';
+        } elsif ($ex->stories) {
+            my @stories = @{$ex->stories};
+            my $reason =
+              scalar(@stories) > 1
+              ? ' URL conflict with <br/>'
+              : ' URL conflict with <br/>';
+            return $msg 
+              . '<br/>(' 
+              . $reason
+              . join('<br/>', map { "Story $_->{id} &ndash; $_->{url}" } @stories) . ' )';
+        } elsif (my $id = $ex->id_meth) {
+            return $msg . ' (URL conflict with ' . ucfirst($type) . ' ' . $id;
+        } else {
+            return $msg . '(URL conflict - no further information)';
+        }
+    }
+
+    return $msg . '(unknown reason)';
+}
 
 # transform type_id into an object
 sub _id2obj {

@@ -28,6 +28,7 @@ use Exception::Class
   'Krang::Story::CheckedOut'           => { fields => [ 'desk_id'     ] },
   'Krang::Story::NoDesk'               => { fields => [ 'desk_id'     ] },
   'Krang::Story::NoDeleteAccess'       => { fields => [ 'story_id'    ] },
+  'Krang::Story::NoRestoreAccess'      => { fields => [ 'story_id'    ] },
   ;
   
 # create accessors for object fields
@@ -2536,17 +2537,16 @@ sub unarchive {
               WHERE  story_id = ?', undef,
 	     $self->{story_id});
 
-    # make sure no other story occupies our initial place (URL)
-    $self->_verify_unique;
-
-    # check back in
-    $self->checkin();
-
     add_history(
         object => $self,
         action => 'unarchive',
     );
 
+    # make sure no other story occupies our initial place (URL)
+    $self->_verify_unique;
+
+    # check it back in
+    $self->checkin();
 }
 
 =item C<< $story->trash() >>
@@ -2585,8 +2585,11 @@ sub trash {
     # update object
     $self->{trashed} = 1;
 
-    # release
+    # release it
     $self->checkin();
+
+    # and log it
+    add_history(object => $self, action => 'trash');
 }
 
 =item C<< $story->untrash() >>
@@ -2596,7 +2599,7 @@ sub trash {
 Restore the story from the trashbin, i.e. show it again on the Find
 Story screen.  Throws a Krang::Story::NoEditAccess exception if user
 may not edit this story. Croaks if the story is checked out by another
-user.
+user. This method is called by Krang::Trash->restore().
 
 =cut
 
@@ -2609,8 +2612,11 @@ sub untrash {
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
+    Krang::Story::NoRestoreAccess->throw( message => "Not allowed to restore story", story_id => $self->story_id )
         unless ($self->may_edit);
+
+    # make sure no other story occupies our initial place (URL)
+    $self->_verify_unique;
 
     # make sure we are the one
     $self->checkout;
@@ -2632,9 +2638,6 @@ sub untrash {
         object => $self,
         action => 'untrash',
     );
-
-    # make sure no other story occupies our initial place (URL)
-    $self->_verify_unique();
 }
 
 =item C<< $story->wont_publish() >>

@@ -22,9 +22,7 @@ Krang.onload( function() {
 	  question = 'Are you SURE you want to restore this item?';
         }
         if (confirm(question)) {
-alert("TODO");
-//          document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
-//          Krang.Form.submit( 'krang_pager_form', { rm : 'publish_story_list' } );
+          Krang.Form.submit( 'krang_pager_form', { rm : 'restore_checked' }, { to_top : false } );
         }
       }
     }

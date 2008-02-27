@@ -306,9 +306,6 @@ SQL
 
     $dbh->do($query, undef, $type, $id, $time);
 
-    # log it
-    add_history(object => $object, action => 'trash');
-
     # prune the trash
     $self->prune();
 }
@@ -392,16 +389,56 @@ sub prune {
     }
 }
 
+=item C<< pkg('Trash')->delete(object => $story) >>
+
+=item C<< pkg('Trash')->delete(object => $media) >>
+
+=item C<< pkg('Trash')->delete(object => $template) >>
+
+=item C<< pkg('Trash')->delete(object => $other) >>
+
+Deletes the specified object from the trashbin, i.e. deletes it
+permanently from the database.  The object must implement a method
+named C<delete()>.
+
+=cut
+
 sub delete {
+    my ($self, %args) = @_;
+
+    $args{object}->delete;
+
+    $self->_delete_from_trash_table(%args);
+}
+
+=item C<< pkg('Trash')->restore(object => $story) >>
+
+=item C<< pkg('Trash')->restore(object => $media) >>
+
+=item C<< pkg('Trash')->restore(object => $template) >>
+
+=item C<< pkg('Trash')->restore(object => $other) >>
+
+Restores the specified object from the trashbin back to live.  The
+object must implement a method named C<untrash()>.
+
+=cut
+
+sub restore {
+    my ($self, %args) = @_;
+
+    $args{object}->untrash;
+
+    $self->_delete_from_trash_table(%args);
+}
+
+sub _delete_from_trash_table {
     my ($self, %args) = @_;
 
     my $object  = $args{object};
     my $id_meth = $object->id_meth;
     my $id      = $object->$id_meth;
-
-    $object->delete;
-
-    my $dbh = dbh();
+    my $dbh     = dbh();
 
     my $query = "DELETE FROM trash WHERE object_type = ? AND object_id = ?";
 
@@ -413,7 +450,6 @@ sub delete {
           . $object->$id_meth);
 
     $dbh->do($query, undef, $object->moniker, $object->$id_meth);
-
 }
 
 1;
