@@ -27,6 +27,8 @@ use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget  => qw(format_url);
 use Krang::ClassLoader Message => qw(add_message add_alert);
+
+use UNIVERSAL::moniker;
 use Carp qw(croak);
 
 use Krang::ClassLoader base => 'CGI';
@@ -68,7 +70,7 @@ sub find {
 
     # admin delete permission
     my %admin_permissions = pkg('Group')->user_admin_permissions();
-    my $admin_may_delete = $admin_permissions{admin_delete};
+    my $admin_may_delete  = $admin_permissions{admin_delete};
     $template->param(admin_may_delete => $admin_may_delete);
 
     # category-specific restore permission
@@ -91,14 +93,13 @@ sub find {
 
     # setup paging list of objects
     my $pager = pkg('HTMLPager')->new(
-        cgi_query  => $query,
-        use_module => pkg('Trash'),
-        columns =>
-          ['id', 'type', 'title', 'url', 'date', 'thumbnail', 'checkbox_column'],
-        column_labels           => \%col_labels,
-        columns_sortable        => [qw(id type title url date)],
-        id_handler              => sub { $self->_id_handler(@_)  },
-        row_handler             => sub { $self->_row_handler(@_, \%asset_permissions, \%admin_permissions) },
+        cgi_query        => $query,
+        use_module       => pkg('Trash'),
+        columns          => ['id', 'type', 'title', 'url', 'date', 'thumbnail', 'checkbox_column'],
+        column_labels    => \%col_labels,
+        columns_sortable => [qw(id type title url date)],
+        id_handler  => sub { $self->_id_handler(@_) },
+        row_handler => sub { $self->_row_handler(@_, \%asset_permissions, \%admin_permissions) },
     );
 
     # Run the pager
@@ -194,25 +195,27 @@ sub delete_checked {
     my @alerts = ();
 
     # try to delete
-    foreach my $the (map { $self->_id2the($_) } $query->param('krang_pager_rows_checked')) {
+    foreach my $object (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
 
-	# this should always succeed as long as delete permission is global
-	# because the UI does not show the Delete button if user has no admin_delete perm
-        eval { $the->{object}->delete };
+        eval { pkg('Trash')->delete(object => $object) };
 
-	if ($@ and ref($@) and ref($@) =~ m[.+::NoDeleteAccess$]) { # cannot know the exact package, can we?
-	    push @alerts,
-	      ucfirst($the->{type}) . ' ' . $the->{id} . ': ' . $the->{object}->url;
-	}
+        if ($@ and ref($@) and ref($@) =~ m[.+::NoDeleteAccess$])
+        {    # cannot know the exact package, can we?
+            my $id_meth = $object->id_meth;
+            push @alerts, ucfirst($object->moniker) . ' ' . $object->$id_meth . ': ' . $object->url;
+        }
     }
 
     # inform user of what happened
     if (@alerts) {
-	add_alert('no_delete_permission',
-		  s => (scalar(@alerts) > 1 ? 's' : ''),
-                  item_list => join '<br/>', @alerts);
+        add_alert(
+            'no_delete_permission',
+            s => (scalar(@alerts) > 1 ? 's' : ''),
+            item_list => join '<br/>',
+            @alerts
+        );
     } else {
-	add_message('deleted_checked');
+        add_message('deleted_checked');
     }
 
     return $self->find;
@@ -236,7 +239,7 @@ sub restore_checked {
 #
 
 # transform type_id into an object
-sub _id2the {
+sub _id2obj {
     my $self = shift;
 
     my ($type, $id) = $_[0] =~ /^([^_]+)_(.*)$/;
@@ -250,14 +253,13 @@ sub _id2the {
       unless $pkg;
 
     # get object with this id
-    my ($obj) = $pkg->find($type.'_id' => $id);
+    my ($obj) = $pkg->find($type . '_id' => $id);
 
     croak("Unable to load $type $id")
       unless $obj;
 
-    return {type => $type, id => $id, object => $obj};
+    return $obj;
 }
-
 
 1;
 
