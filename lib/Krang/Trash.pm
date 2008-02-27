@@ -6,11 +6,12 @@ use warnings;
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Log     => qw(debug);
-use Krang::ClassLoader 'Story';
-use Krang::ClassLoader 'Media';
-use Krang::ClassLoader 'Template';
+use Krang::ClassLoader History => qw(add_history);
+use Krang::ClassLoader Conf    => qw(TrashMaxItems);
 
+use Time::Piece;
 use Time::Piece::MySQL;
+use UNIVERSAL::moniker;
 use Carp qw(croak);
 
 use constant TRASH_OBJECT_FIELDS => qw(
@@ -138,17 +139,11 @@ sub find {
     # execute the search
     my $sth = $dbh->prepare($query);
     $sth->execute($user_id);
-
-    # return just a count if requested
-    if ($count) {
-        my $results = $sth->fetchall_arrayref;
-        $sth->finish;
-        return scalar @$results;
-    }
-
-    # get results
-    my $results = $sth->fetchall_arrayref();
+    my $results = $sth->fetchall_arrayref;
     $sth->finish;
+
+    # maybe return the count
+    return scalar @$results if $count;
 
     # return a list of hashrefs
     my @objects = ();
@@ -262,6 +257,163 @@ sub register_find_sql {
     my ($pkg, %args) = @_;
 
     $QUERY .= 'UNION (' . $args{sql} . ')';
+}
+
+=item C<< pkg('Trash')->store(object => $story) >>
+
+=item C<< pkg('Trash')->store(object => $media) >>
+
+=item C<< pkg('Trash')->store(object => $template) >>
+
+=item C<< pkg('Trash')->store(object => $other) >>
+
+This method moves object to the trash on the database level.  It is
+called by the object's trash() method.
+
+=cut
+
+sub store {
+    my ($self, %args) = @_;
+
+    my $object  = $args{object};
+    my $type    = $object->moniker;
+    my $id_meth = $object->id_meth;
+    my $id      = $object->$id_meth;
+
+    my $dbh = dbh();
+
+    # set object's trashed flag
+    my $query = <<SQL;
+UPDATE $type
+SET    trashed  = 1
+WHERE  $id_meth = ?
+SQL
+
+    debug(__PACKAGE__ . "::store() SQL: " . $query . " ARGS: $id");
+
+    $dbh->do($query, undef, $id);
+
+    # memo in trash table
+    $query = <<SQL;
+REPLACE INTO trash (object_type, object_id, timestamp)
+VALUES (?,?,?)
+SQL
+
+    my $t    = localtime();
+    my $time = $t->mysql_datetime();
+
+    debug(__PACKAGE__ . "::store() SQL: " . $query . " ARGS: $type, $id, " . $time);
+
+    $dbh->do($query, undef, $type, $id, $time);
+
+    # log it
+    add_history(object => $object, action => 'trash');
+
+    # prune the trash
+    $self->prune();
+}
+
+=item C<< pkg('Trash')->prune() >>
+
+Prune the trash, deleting the oldest entries, leaving TrashMaxItems.
+
+This class method is currently called at the end of each object delete
+(i.e. when moving an object into the trash).
+
+=over
+
+=item Potential Security Hole
+
+Users without admin_delete permission may delete assets by creating
+bogus objects and pushing them into the trash, thus causing prune() to
+permanently delete trashed objects!
+
+=back
+
+=cut
+
+sub prune {
+    my ($self) = @_;
+
+    return unless TrashMaxItems;
+
+    my $max = TrashMaxItems;
+    my $dbh = dbh();
+
+    # did we reach the limit
+    my $query = "SELECT * from trash ORDER BY timestamp ASC LIMIT ?";
+
+    debug(__PACKAGE__ . "::prune() SQL: " . $query . " ARGS: " . ($max + 1));
+
+    my $sth = $dbh->prepare($query);
+    $sth->execute($max + 1);
+    my $result = $sth->fetchall_arrayref;
+    $sth->finish;
+
+    return unless $result;
+
+    return if scalar(@$result) < $max + 1;
+
+    # second item is the oldest we will keep so we have at least one item to delete
+    my $datelimit = $result->[1][2];
+
+    # get object_type and object_id of items to be deleted
+    $query = "SELECT object_type, object_id from trash WHERE timestamp < ?";
+
+    debug(__PACKAGE__ . "::prune() SQL: " . $query . " ARGS: $datelimit");
+
+    $sth = $dbh->prepare($query);
+    $sth->execute($datelimit);
+    $result = $sth->fetchall_arrayref;
+
+    return unless $result;
+
+    # delete from object table
+    for my $item (@$result) {
+        my $type = $item->[0];
+        my $id   = $item->[1];
+        my $pkg  = pkg(ucfirst($type));
+
+        # potential security hole!
+        eval {
+
+            # delete from object table
+            my ($object) = $pkg->find($type . '_id' => $id);
+            $object->checkin if $object->checked_out;
+            local $ENV{REMOTE_USER} = 1;
+            $pkg->delete($id);
+
+            # delete from trash
+            my $query = "DELETE FROM trash WHERE object_type = ? AND object_id = ?";
+            debug(__PACKAGE__ . "::prune() SQL: " . $query . " ARGS: $type, $id");
+            $dbh->do($query, undef, $type, $id);
+        };
+        debug(__PACKAGE__ . "::prune() - ERROR: " . $@) if $@;
+    }
+}
+
+sub delete {
+    my ($self, %args) = @_;
+
+    my $object  = $args{object};
+    my $id_meth = $object->id_meth;
+    my $id      = $object->$id_meth;
+
+    $object->delete;
+
+    my $dbh = dbh();
+
+    my $query = "DELETE FROM trash WHERE object_type = ? AND object_id = ?";
+
+    debug(  __PACKAGE__
+          . "::delete() SQL: "
+          . $query
+          . " ARGS: "
+          . $object->moniker . ', '
+          . $object->$id_meth);
+
+    $dbh->do($query, undef, $object->moniker, $object->$id_meth);
+
 }
 
 1;
