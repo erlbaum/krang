@@ -76,6 +76,7 @@ SSLCipherSuite
 SSLVerifyClient
 SSLVerifyDepth
 SSLLogLevel
+TrashMaxItems
 );
 
 our @REQUIRED_DIRECTIVES = qw(

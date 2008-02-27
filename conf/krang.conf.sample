@@ -128,6 +128,12 @@ Secret 'ad0243-1j!@LdaAWEOIGFa-39021-:skj'
 # of session cookies. (When absent, the default is 10.)
 MaxConcurrentKrangSessions 10
 
+#
+# This directive determines the maximum number of items allowed to
+# live in the trashbin.  When this limit is reached and exceeded, the
+# oldest items get deleted.
+TrashMaxItems 20
+
 ###########################################################################
 #
 # Instance Configuration
