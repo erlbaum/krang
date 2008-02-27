@@ -7,13 +7,22 @@ use warnings;
 
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Conf    => qw(KrangRoot InstanceElementSet);
+use Krang::ClassLoader DB      => qw(dbh);
+
 use File::Spec::Functions;
-use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet);
 use Time::Piece;
 
 use Krang::ClassLoader 'Test::Content';
 
 BEGIN { use_ok(pkg('Story')) }
+
+# make sure we don't fail because TrashMaxItems is too low
+BEGIN {
+    my $trash = qq{TrashMaxItems "1000"\n};
+    my $fh    = IO::Scalar->new(\$trash);
+    $Krang::Conf::CONF->read($fh);
+}
 
 # use the TestSet1 instance, if there is one
 foreach my $instance (pkg('Conf')->instances) {
@@ -23,7 +32,6 @@ foreach my $instance (pkg('Conf')->instances) {
     }
 }
 
-
 # use Krang::Test::Content to create sites.
 my $creator = pkg('Test::Content')->new;
 
@@ -32,11 +40,11 @@ END {
 }
 
 my $site = $creator->create_site(
-                                 preview_url  => 'storytest.preview.com',
-                                 publish_url  => 'storytest.com',
-                                 preview_path => '/tmp/storytest_preview',
-                                 publish_path => '/tmp/storytest_publish'
-                                );
+    preview_url  => 'storytest.preview.com',
+    publish_url  => 'storytest.com',
+    preview_path => '/tmp/storytest_preview',
+    publish_path => '/tmp/storytest_publish'
+);
 
 isa_ok($site, 'Krang::Site');
 
@@ -53,7 +61,7 @@ my $s4 = $creator->create_story();
 
 my @stories = ($s0, $s1, $s2, $s3, $s4);
 my ($sid0,  $sid1,  $sid2,  $sid3,  $sid4)  = map { $_->story_id } @stories;
-my ($slug0, $slug1, $slug2, $slug3, $slug4) = map { $_->slug     } @stories;
+my ($slug0, $slug1, $slug2, $slug3, $slug4) = map { $_->slug } @stories;
 
 # initially neither archived nor trashed
 is($_->archived, 0, "Story is not archived") for @stories;
@@ -64,8 +72,8 @@ is(scalar(@live), 5, "Five stories alive");
 
 # test archiving
 $s0->archive();
-is($s0->archived, 1, "Story 1 is archived");
-is($s0->trashed,  0, "Story 1 is not trashed");
+is($s0->archived, 1, "Story $sid0 is archived");
+is($s0->trashed,  0, "Story $sid0 is not trashed");
 
 @live = pkg('Story')->find();
 is(scalar(@live), 4, "Four stories alive");
@@ -82,8 +90,8 @@ my @found_by_id = pkg('Story')->find(story_id => $sid0);
 is(scalar(@found_by_id), 1, "Archived Story found by ID without include_archived search option");
 
 $s0->unarchive();
-is($s0->archived, 0, "Story 1 is not archived");
-is($s0->trashed,  0, "Story 1 is not trashed");
+is($s0->archived, 0, "Story $sid0 is not archived");
+is($s0->trashed,  0, "Story $sid0 is not trashed");
 
 @live = pkg('Story')->find();
 is(scalar(@live), 5, "Five stories alive");
@@ -105,8 +113,8 @@ is($count, 0, "No stories trashed (with count option)");
 
 # test trashing
 $s0->trash();
-is($s0->trashed,  1, "Story 1 is trashed");
-is($s0->archived, 0, "Story 1 is not archived");
+is($s0->trashed,  1, "Story $sid0 is trashed");
+is($s0->archived, 0, "Story $sid0 is not archived");
 
 @live = pkg('Story')->find();
 is(scalar(@live), 4, "Four stories alive");
@@ -129,8 +137,8 @@ is($count, 0, "No stories archived (with count option)");
 is(scalar(@found_by_id), 1, "Trashed Story found by ID without include_trashed search option");
 
 $s0->untrash();
-is($s0->archived, 0, "Story 1 is not archived");
-is($s0->trashed,  0, "Story 1 is not trashed");
+is($s0->archived, 0, "Story $sid0 is not archived");
+is($s0->trashed,  0, "Story $sid0 is not trashed");
 
 @live = pkg('Story')->find();
 is(scalar(@live), 5, "Five stories alive");
@@ -152,8 +160,8 @@ $s0->archive();
 $s1->archive();
 $s2->trash();
 
-is($s0->archived, 1, "Story 1 is archived");
-is($s1->archived, 1, "Story 2 is archived");
+is($s0->archived, 1, "Story $sid0 is archived");
+is($s1->archived, 1, "Story $sid1 is archived");
 
 @live = pkg('Story')->find();
 is(scalar(@live), 2, "Two stories alive");
@@ -167,8 +175,8 @@ is($trashed[0]->story_id, $sid2, "Found correct trashed story");
 
 $s1->trash();
 
-is($s1->trashed,  1, "Story 2 is trashed");
-is($s1->archived, 1, "Story 2 still has archived flag (to restore it later to archive)");
+is($s1->trashed,  1, "Story $sid1 is trashed");
+is($s1->archived, 1, "Story $sid1 still has archived flag (to restore it later to archive)");
 
 @live = pkg('Story')->find();
 is(scalar(@live), 2, "Two stories alive");
@@ -182,8 +190,8 @@ is(scalar(@trashed), 2, "Two stories trashed");
 
 $s1->untrash();
 
-is($s1->trashed,  0, "Story 2 no longer trashed");
-is($s1->archived, 1, "Story 2 again archived");
+is($s1->trashed,  0, "Story $sid1 no longer trashed");
+is($s1->archived, 1, "Story $sid1 again archived");
 
 @live = pkg('Story')->find();
 is(scalar(@live), 2, "Two stories alive");
@@ -197,8 +205,8 @@ is($trashed[0]->story_id, $sid2, "Found correct trashed story");
 
 $s1->unarchive();
 
-is($s1->trashed,  0, "Story 2 not trashed");
-is($s1->archived, 0, "Story 2 not archived");
+is($s1->trashed,  0, "Story $sid1 not trashed");
+is($s1->archived, 0, "Story $sid1 not archived");
 
 @live = pkg('Story')->find();
 is(scalar(@live), 3, "Three stories alive");
@@ -212,19 +220,19 @@ is(scalar(@trashed), 1, "One story trashed");
 
 # test creation of story with same URL as archived story
 $s0->archive();
-is($s0->archived, 1, "Story 1 is archived");
+is($s0->archived, 1, "Story $sid0 is archived");
 
 my $dup00 = '';
 eval { $dup00 = $creator->create_story(slug => $slug0) };
-ok(not($@), "Dup 1 of Story 1 created");
+ok(not($@), "Dup 1 of Story $sid0 created");
 
 # archive dup00 and try to create dup01
 $dup00->archive();
-is($dup00->archived, 1, "Dup 1 of Story 1 archived");
+is($dup00->archived, 1, "Dup 1 of Story $sid0 archived");
 
 my $dup01 = '';
 eval { $dup01 = $creator->create_story(slug => $slug0) };
-ok(not($@), "Dup 2 of Story 1 created");
+ok(not($@), "Dup 2 of Story $sid0 created");
 
 eval { $s0->unarchive() };
 isa_ok($@, 'Krang::Story::DuplicateURL');
@@ -232,3 +240,4 @@ isa_ok($@, 'Krang::Story::DuplicateURL');
 eval { $dup00->unarchive() };
 isa_ok($@, 'Krang::Story::DuplicateURL');
 
+END { my $dbh = dbh; $dbh->do("DELETE FROM trash") }
