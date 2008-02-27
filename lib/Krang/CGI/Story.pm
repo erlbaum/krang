@@ -1550,7 +1550,7 @@ select a set of stories to be deleted or checked out to Workplace.
 
 sub find {
     my $self = shift;
-    $self->query->param('other_search_place' => 'Archive');
+    $self->query->param('other_search_place' => 'Search in Archive');
     return $self->_do_find(tmpl_file         => 'find.tmpl',
                            include_in_search => 'live');
 }
@@ -1567,7 +1567,7 @@ select a set of stories to be deleted.
 
 sub list_archived {
     my $self = shift;
-    $self->query->param('other_search_place' => 'Live');
+    $self->query->param('other_search_place' => 'Search in Live');
     return $self->_do_find(tmpl_file         => 'list_archived.tmpl',
                            include_in_search => 'archived');
 }
