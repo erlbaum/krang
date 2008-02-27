@@ -12,6 +12,8 @@ use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'UUID';
+use Krang::ClassLoader 'Trash';
+
 use Carp           qw(croak);
 use Storable       qw(nfreeze thaw);
 use Time::Piece::MySQL;
@@ -2555,17 +2557,7 @@ Move the story to the trashbin, i.e. remove it from its
 publish/preview location and don't show it on the Find Story screen.
 Throws a Krang::Story::NoEditAccess exception if user may not edit
 this story. Croaks if the story is checked out by another
-user. Remembers the story's last desk ID.
-
-=cut
-
-=for Development:
-
-The current implementation clears the 'archived' flag when moving a
-story to the trashbin.  Untrashing it, then, will restore it to
-live. If we want a story that was archived before being deleted to be
-restored to the archive, the archive flag must not be cleared. In this
-case the find() method has also to be modified.
+user.
 
 =cut
 
@@ -2587,23 +2579,14 @@ sub trash {
     # unpublish
     pkg('Publisher')->new->unpublish_story(story => $self);
 
-    # archive the story
-    my $dbh = dbh();
-    $dbh->do("UPDATE story
-              SET    trashed  = 1
-              WHERE  story_id = ?", undef,
-	     $self->{story_id});
+    # store in trash
+    pkg('Trash')->store(object => $self);
 
-    # living in trashbin
+    # update object
     $self->{trashed} = 1;
 
+    # release
     $self->checkin();
-
-    add_history(
-        object => $self,
-        action => 'archive'
-    );
-
 }
 
 =item C<< $story->untrash() >>
