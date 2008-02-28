@@ -137,8 +137,8 @@ if (system ("$bin/krang_charset_convert_data --all-instances --from $old_charset
     exit;
 }
 
-print "\nCONVERING SQL TABLES TO UTF8\n\n";  # skip history - it's huge and only has ASCII anyway
-if (system("$bin/krang_charset_convert_tables --all-instances --to utf8 --skip-table history $verbose")) {
+print "\nCONVERTING TABLE DEFINITIONS TO UTF8\n\n";  # skip history - it's huge and only has ASCII anyway
+if (system ("$bin/krang_charset_convert_tables --all-instances --to utf8 --skip-table history $verbose")) {
     print "\nTABLE-CONVERSION FAILED: UTF8 UPGRADE INCOMPLETE (YOU MAY NEED TO RESTORE BACKUP!)\n\n";
     exit;
 }
