@@ -509,7 +509,7 @@ sub edit {
 	my ($replace_button, $replace_chooser)
 	  = category_chooser(name        => 'category_replacement_id',
 			     query       => $query,
-			     label       => 'Replace This Category',
+			     label       => 'Replace Category',
 			     display     => 0,
 			     onchange    => 'replace_category',
 			     may_edit    => 1,
