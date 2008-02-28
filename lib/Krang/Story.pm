@@ -654,7 +654,7 @@ sub prune_versions {
 
 =item C<< $story->save() >>
 
-=item C<< $story->save(keep_version => 1, no_history => 1) >>
+=item C<< $story->save(keep_version => 1, no_history => 1, no_verify_checkout => 1) >>
 
 Save the story to the database.  This is the only call which
 will make permanent changes in the database (checkin/checkout make
@@ -662,17 +662,21 @@ transient changes).  Increments the version number unless called with
 C<keep_version> is true. Add appropriate entries to the C<history>
 and C<story_version> tables unless C<no_history> is true.
 
-Will throw a Krang::Story::DuplicateURL exception with a story_id field
+If the story is not checked out by the user attempting the save, then
+an error will be thrown unless C<no_verify_checkout> is true.
+
+Will throw a C<Krang::Story::DuplicateURL> exception with a story_id field
 if saving this story would conflict with an existing story or category.
 
-Will throw a Krang::Story::MissingCategory exception if this story
+Will throw a C<Krang::Story::MissingCategory> exception if this story
 doesn't have at least one category.  This can happen when a clone()
 results in a story with no categories.
 
-Will throw a Krang::Story::NoCategoryEditAccess exception if the current
-user doesn't have edit access to the primary category set for the story.
+Will throw a C<Krang::Story::NoCategoryEditAccess> exception if the
+current user doesn't have edit access to the primary category set for
+the story.
 
-Will throw a Krang::Story::NoEditAccess exception if the current user
+Will throw a C<Krang::Story::NoEditAccess> exception if the current user
 doesn't have edit access to the story.
 
 =cut
@@ -682,7 +686,7 @@ sub save {
     my %args = @_;
 
     # make sure it's ok to save
-    $self->_verify_checkout();
+    $self->_verify_checkout() unless $args{no_verify_checkout};
 
     # make sure we've got at least one category
     Krang::Story::MissingCategory->throw(message => "missing category")
@@ -1621,7 +1625,50 @@ sub transform_stories {
         my $story_id = $story->story_id;
 
         # transform and save the live story
-        $story = $callback->({ story => $story, live => 1 });
+        $story = $callback->(story => $story, live => 1);
+        $story->save(keep_version => 1, no_history => 1, no_verify_checkout => 1);
+
+        if( $past_versions ) {
+            my $dbh  = dbh;
+            foreach my $v ($story->all_versions) {
+                next unless $v == $story->version;
+                my $old_story = $pkg->_load_version($story_id, $v);
+                $old_story = $callback->({ story => $story, live => 0 });
+
+                # re-save version
+                $dbh->do(
+                    'REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)', 
+                    undef,
+                    $old_story->{story_id}, 
+                    $old_story->{version}, 
+                    nfreeze($old_story)
+                );
+            }
+        }
+    }
+}
+
+sub transform_stories_xml {
+    my ($pkg, %args) = @_;
+    my $callback = delete $args{callback} or croak('You must provide a callback for transform_stories()');
+    my $past_versions = delete $args{past_versions};
+
+    # make find() do all the hard stuff
+    my @stories = $pkg->find(%args);
+    foreach my $story (@stories) {
+        my $story_id = $story->story_id;
+
+        # turn this story into XML
+        my $xml = '';
+        my $writer = pkg('XML')->writer(string => \$xml);
+        $writer->xmlDecl();
+        $story->serialize_xml(no_elements => 1, writer => $writer);
+        $writer->end();
+
+        # transform the XML via callback
+        $xml = $callback->({ xml => $xml, live => 1 });
+
+        # now flip the XML back into a Story
         $story->save(keep_version => 1, no_history => 1);
 
         if( $past_versions ) {
@@ -2252,7 +2299,7 @@ sub STORABLE_thaw {
     return $self;
 }
 
-=item C<< $story->serialize_xml(writer => $writer, set => $set) >>
+=item C<< $story->serialize_xml(writer => $writer, [set => $set, no_elements => 1]) >>
 
 Serialize as XML.  See Krang::DataSet for details.
 
@@ -2260,7 +2307,7 @@ Serialize as XML.  See Krang::DataSet for details.
 
 sub serialize_xml {
     my ($self,   %args) = @_;
-    my ($writer, $set)  = @args{qw(writer set)};
+    my ($writer, $set, $no_elements)  = @args{qw(writer set no_elements)};
     local $_;
 
     # open up <story> linked to schema/story.xsd
@@ -2286,7 +2333,7 @@ sub serialize_xml {
     for my $category ($self->categories) {
         $writer->dataElement(category_id => $category->category_id);
 
-        $set->add(object => $category, from => $self);
+        $set->add(object => $category, from => $self) if $set;
     }
 
     # urls
@@ -2300,20 +2347,22 @@ sub serialize_xml {
         $writer->dataElement(contrib_type => $contrib_type{$contrib->selected_contrib_type()});
         $writer->endTag('contrib');
 
-        $set->add(object => $contrib, from => $self);
+        $set->add(object => $contrib, from => $self) if $set;
     }
 
     # schedules
     my @schedules = pkg('Schedule')->find(object_type => 'story', object_id => $self->story_id);
     foreach my $schedule (@schedules) {
-        $set->add(object => $schedule, from => $self);
+        $set->add(object => $schedule, from => $self) if $set;
     }
 
     # serialize elements
-    $self->element->serialize_xml(
-        writer => $writer,
-        set    => $set
-    );
+    unless($no_elements) {
+        $self->element->serialize_xml(
+            writer => $writer,
+            set    => $set,
+        );
+    }
 
     # all done
     $writer->endTag('story');
@@ -2334,67 +2383,65 @@ sub deserialize_xml {
     local $_;
 
     # parse it up
-    my $data = pkg('XML')->simple(xml           => $xml, 
-                                  forcearray    => ['contrib',
-                                                    'category_id',
-                                                    'url',
-                                                    'element',
-                                                    'data',
-                                                   ],
-                                  suppressempty => 1);
+    my $data = pkg('XML')->simple(
+        xml           => $xml,
+        forcearray    => ['contrib', 'category_id', 'url', 'element', 'data',],
+        suppressempty => 1
+    );
 
     # is there an existing object?
     my $story;
-    
+
     # start with a UUID lookup
     my $match_type;
     if (not $args{no_uuid} and $data->{story_uuid}) {
-        ($story) =
-          $pkg->find(story_uuid  => $data->{story_uuid},
-                     show_hidden => 1);
-
-        # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(message =>
-                  "A story object with the UUID '$data->{story_uuid}' already"
-                  . " exists and no_update is set.")
-          if $story and $no_update;
-    }
-    
-    # proceed to URL lookup if no dice
-    unless ($story or $args{uuid_only}) {
-        ($story) =
-          pkg('Story')->find(url => $data->{url}[0], show_hidden => 1);
+        ($story) = $pkg->find(
+            story_uuid  => $data->{story_uuid},
+            show_hidden => 1
+        );
 
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
-            message => "A story object with the url '$data->{url}[0]' already".
-                       " exists and no_update is set.")
-            if $story and $no_update;
+            message => "A story object with the UUID '$data->{story_uuid}' already"
+              . " exists and no_update is set.")
+          if $story and $no_update;
+    }
+
+    # proceed to URL lookup if no dice
+    unless ($story or $args{uuid_only}) {
+        ($story) = pkg('Story')->find(url => $data->{url}[0], show_hidden => 1);
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A story object with the url '$data->{url}[0]' already"
+              . " exists and no_update is set.")
+          if $story and $no_update;
     }
 
     if ($story) {
+
         # if primary url of this imported story matches a non-primary
         # url of an existing story, reject
-        my ($fail) =
-          $pkg->find(non_primary_url => $data->{url}[0],
-                     ids_only        => 1);
+        my ($fail) = $pkg->find(
+            non_primary_url => $data->{url}[0],
+            ids_only        => 1
+        );
         Krang::DataSet::DeserializationFailed->throw(
-                           message => "A story object with a non-primary url "
-                             . "'$data->{url}[0]' already exists.")
+            message => "A story object with a non-primary url "
+              . "'$data->{url}[0]' already exists.")
           if $fail;
 
         # check it out to make changes
         $story->checkout;
 
         # update slug and title
-        $story->slug($data->{slug} || "");
+        $story->slug($data->{slug}   || "");
         $story->title($data->{title} || "");
 
         # get category objects for story
-        my @category_ids = map { $set->map_id(class => pkg('Category'),
-                                              id    => $_) }
-                             @{$data->{category_id}};
-        
+        my @category_ids =
+          map { $set->map_id(class => pkg('Category'), id => $_) } @{$data->{category_id}};
+
         # set categories, which might have changed if this was a match
         # by UUID
         $story->categories(\@category_ids);
@@ -2402,47 +2449,47 @@ sub deserialize_xml {
     } else {
 
         # check primary URL for conflict - can happen with uuid_only on
-        my ($fail) =
-          $pkg->find(primary_url => $data->{url}[0],
-                     ids_only    => 1);
+        my ($fail) = $pkg->find(
+            primary_url => $data->{url}[0],
+            ids_only    => 1
+        );
         Krang::DataSet::DeserializationFailed->throw(
-                           message => "A story object with a primary url "
-                             . "'$data->{url}[0]' already exists.")
+            message => "A story object with a primary url " . "'$data->{url}[0]' already exists.")
           if $fail;
 
         # check if any of the secondary urls match existing stories
         # and fail if so
-        for (my $count = 1; $count < @{$data->{url}}; $count++) {
+        for (my $count = 1 ; $count < @{$data->{url}} ; $count++) {
             my ($found) = pkg('Story')->find(url => $data->{url}[$count], show_hidden => 1);
-            Krang::DataSet::DeserializationFailed->throw(
-                message => "A story object with url '$data->{url}[$count]' already exists, which conflicts with one of this story's secondary URLs.") if $found;
+            Krang::DataSet::DeserializationFailed->throw(message =>
+                  "A story object with url '$data->{url}[$count]' already exists, which conflicts with one of this story's secondary URLs."
+            ) if $found;
         }
- 
+
         # get category objects for story
         my @categories = map { pkg('Category')->find(category_id => $_) }
-                           map { $set->map_id(class => pkg('Category'),
-                                              id    => $_) }
-                             @{$data->{category_id}};
+          map { $set->map_id(class => pkg('Category'), id => $_) } @{$data->{category_id}};
 
         # this might have caused this Story to get completed via a
         # circular link, end early if it did
         my ($dup) = pkg('Story')->find(url => $data->{url});
-        return $dup if( $dup );
+        return $dup if ($dup);
 
         # create a new story object using categories, slug, title,
         # and class
-        $story = pkg('Story')->new(categories => \@categories,
-                                   slug       => $data->{slug} || "",
-                                   title      => $data->{title} || "",
-                                   class      => $data->{class});
+        $story = pkg('Story')->new(
+            categories => \@categories,
+            slug       => $data->{slug} || "",
+            title      => $data->{title} || "",
+            class      => $data->{class}
+        );
     }
-    
+
     # preserve UUID if available
-    $story->{story_uuid} = $data->{story_uuid} 
+    $story->{story_uuid} = $data->{story_uuid}
       if $data->{story_uuid} and not $args{no_uuid};
 
-    $story->cover_date(Time::Piece->strptime($data->{cover_date},
-                                             '%Y-%m-%dT%T'))
+    $story->cover_date(Time::Piece->strptime($data->{cover_date}, '%Y-%m-%dT%T'))
       if exists $data->{cover_date};
     $story->notes($data->{notes})
       if exists $data->{notes};
@@ -2452,35 +2499,45 @@ sub deserialize_xml {
 
     # register id before deserializing elements, since they may
     # contain circular references
-    $set->register_id(class     => pkg('Story'),
-                      id        => $data->{story_id},
-                      import_id => $story->story_id);
+    $set->register_id(
+        class     => pkg('Story'),
+        id        => $data->{story_id},
+        import_id => $story->story_id
+    );
 
     # deserialize elements, may contain circular references
-    my $element = pkg('Element')->deserialize_xml(data => $data->{element}[0],
-                                                  set       => $set,
-                                                  no_update => $no_update,
-                                                  object    => $story);
+    my $element = pkg('Element')->deserialize_xml(
+        data      => $data->{element}[0],
+        set       => $set,
+        no_update => $no_update,
+        object    => $story
+    );
 
     # update element
-    $story->{element}->delete(skip_delete_hook => 1) if $story->{element};   
+    $story->{element}->delete(skip_delete_hook => 1) if $story->{element};
     $story->{element} = $element;
 
     # get hash of contrib type names to ids
     my %contrib_types = reverse pkg('Pref')->get('contrib_type');
-                                                                              
+
     # handle contrib association
     if ($data->{contrib}) {
         my @contribs = @{$data->{contrib}};
         my @altered_contribs;
         foreach my $c (@contribs) {
-            my $contrib_type_id = $contrib_types{$c->{contrib_type}} ||
-                            Krang::DataSet::DeserializationFailed->throw(
-                                 "Unknown contrib_type '".$c->{contrib_type}."'.");
+            my $contrib_type_id = $contrib_types{$c->{contrib_type}}
+              || Krang::DataSet::DeserializationFailed->throw(
+                "Unknown contrib_type '" . $c->{contrib_type} . "'.");
 
-            push (@altered_contribs, { contrib_id => $set->map_id(class => pkg('Contrib'), id => $c->{contrib_id}), contrib_type_id => $contrib_type_id });
+            push(
+                @altered_contribs,
+                {
+                    contrib_id => $set->map_id(class => pkg('Contrib'), id => $c->{contrib_id}),
+                    contrib_type_id => $contrib_type_id
+                }
+            );
         }
-                                                                              
+
         $story->contribs(@altered_contribs);
     }
 
