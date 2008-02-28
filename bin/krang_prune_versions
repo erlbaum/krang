@@ -148,10 +148,25 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             foreach my $object_id (pkg($pkg_name)->find(ids_only => 1)) {
                 my ($object) = pkg($pkg_name)->find($type.'_id' => $object_id);
 		if ($first_resave) {
-		    $object->checkin if ($object->checked_out);
+		    # before modifying current version of object, record its location
+		    my $checked_out_by = $object->checked_out  && $object->checked_out_by;
+		    my $desk_id        = $type->can('desk_id') && $object->desk_id;
+		    $object->checkin if $object->checked_out;
 		    $object->checkout;
 		    $object->save(keep_version => 1);
 		    $object->checkin;
+
+		    # if object was checked out to a user, return it to him/her
+		    if ($checked_out_by) {
+			my $me = $ENV{REMOTE_USER};
+			$ENV{REMOTE_USER} = $checked_out_by; # need to trick API!
+			$object->checkout;
+			$ENV{REMOTE_USER} = $me;
+		    }
+		    # and if it was on a desk, return it to that desk
+		    if ($desk_id) {
+			$object->move_to_desk($desk_id);
+		    }
 		}
                 my $number_deleted = $object->prune_versions(%args);
                 if ($verbose and ($number_deleted or $verbose > 1)) {
