@@ -1616,7 +1616,8 @@ sub find {
 
 sub transform_stories {
     my ($pkg, %args) = @_;
-    my $callback = delete $args{callback} or croak('You must provide a callback for transform_stories()');
+    my $callback = delete $args{callback} 
+        or croak('You must provide a callback for transform_stories()');
     my $past_versions = delete $args{past_versions};
 
     # make find() do all the hard stuff
@@ -1630,17 +1631,18 @@ sub transform_stories {
 
         if( $past_versions ) {
             my $dbh  = dbh;
-            foreach my $v ($story->all_versions) {
-                next unless $v == $story->version;
+            # load each old version, give it to the callback and then replace what's in the db
+            foreach my $v (@{$story->all_versions}) {
+                next if $v == $story->version;
                 my $old_story = $pkg->_load_version($story_id, $v);
-                $old_story = $callback->({ story => $story, live => 0 });
+                $old_story = $callback->(story => $story, live => 0);
 
                 # re-save version
                 $dbh->do(
                     'REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)', 
                     undef,
-                    $old_story->{story_id}, 
-                    $old_story->{version}, 
+                    $story_id, 
+                    $v, 
                     nfreeze($old_story)
                 );
             }
