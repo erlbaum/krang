@@ -98,14 +98,16 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Charset';
 use Krang::ClassLoader 'Script';
 
+print "\nkrang_to_utf8\n-------------\n";
+
+if (pkg('Charset')->is_utf8) {
+    print "\nYour krang.conf file already specifies UTF8 as the character set.\n\nIf this is a recent change and you haven't actually converted or saved any data since making it, please revert the change and re-run krang_to_utf8.\n\n";
+    exit;
+}
+
 unless ($no_prompt) {
     exit 1      
     unless prompt("y", "\nThis program will stop krang, convert the entire database of every instance to UTF-8, and update krang.conf\n\nAre you sure you want to proceed?", "y/n", "y");
-}
-
-if (pkg('Charset')->is_utf8) {
-    print "\nI'm confused: your krang.conf file already specifies UTF8 as the character set.\n\nIf this is a recent change and you haven't actually converted or saved any data since making it, please revert the change and re-run this script.\n\n";
-    exit;
 }
 
 my $verbose = ($v ? '--verbose' : '');
