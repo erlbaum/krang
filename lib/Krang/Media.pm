@@ -490,7 +490,7 @@ sub prune_versions {
     my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
     $dbh->do('DELETE FROM media_version WHERE media_id = ? AND version IN ('.
              join(',', ("?") x @versions_to_delete) . ')',
-             undef, $self->media_id, @versions_to_delete);
+             undef, $self->media_id, @versions_to_delete) unless $args{test_mode};;
     return $number_to_delete;
 }
 

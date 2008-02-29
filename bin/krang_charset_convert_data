@@ -70,6 +70,10 @@ run only for a specific story (and no non-story data). This can be specified mul
 This parameter (which is mutually exclusive with --only-story-id) will convert all
 tables and all stories except the given one. This can be specified multiple times.
 
+=item --test-mode
+
+This is a mode in which actions will be displayed but not performed.
+
 =item --verbose
 
 Show more information about what is being converted.
@@ -135,16 +139,18 @@ use Storable qw(nfreeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
 
 # options
-my ($from, $to, $help, $man, $all_instances, @only_site_ids, @only_story_ids, @skip_story_ids, $v);
+my ($from, $to, $help, $man, $all_instances, @only_site_ids, @only_story_ids, @skip_story_ids, $test_mode, $v);
 GetOptions(
     'from=s'          => \$from,
     'to=s'            => \$to,
     'help'            => \$help,
     'man'             => \$man,
+    'test_mode'       => \$test_mode,
     'all-instances'   => \$all_instances,
     'site-id=s'       => \@only_site_ids,
     'only-story-id=s' => \@only_story_ids,
     'skip-story-id=s' => \@skip_story_ids,
+    'test-mode'       => \$test_mode,
     'verbose'         => \$v,
 ) or pod2usage(2);
 pod2usage(1) if $help;
@@ -158,6 +164,9 @@ die "You can't use both --all-instances and a specific story ID!\n"
   if $all_instances and (@only_story_ids or @skip_story_ids);
 die "You can't use both --only-story-id and --skip-story-id at the same time!\n"
   if @only_story_ids and @skip_story_ids;
+
+print "* * * TEST MODE - NO ACTUAL CHANGES WILL BE WRITTEN TO THE DATABASE * * *\n\n" 
+    if $test_mode;
 
 # figure out which instances we're going to use, and loop through them
 foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
@@ -249,7 +258,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           . " WHERE "
           . join(' AND ', map { " $_ = ? " } @id_fields);
         my $update_sth = $dbh->prepare_cached($update_sql);
-        $sth->execute(@binds);
+        $sth->execute(@binds) unless $test_mode;
         my $count = 0;
         while(my $row = $sth->fetchrow_hashref) {
             my @data = map { $row->{$_} } @fields;
@@ -259,7 +268,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             @data = map { convert_scalar($_) || '' } @data;
 
             # now put the data back
-            $update_sth->execute(@data, @ids);
+            $update_sth->execute(@data, @ids) unless $test_mode;
             $count++;
         }
         print "    Updated $count rows in $name\n" if $v;
@@ -270,7 +279,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         foreach my $template_id (pkg('Template')->find(ids_only => 1)) {
             my ($template) = pkg('Template')->find(template_id => $template_id);
             if ($template->deployed) {
-                $template->deploy;
+                $template->deploy unless $test_mode;
                 print "  Re-deployed template $template_id\n" if $v;
             }
         } 
@@ -310,7 +319,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           ));
 
     my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
-    $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids);
+    $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids) unless $test_mode;
 
     my $count = 0;
     while(my $row = $fetch_sth->fetchrow_hashref) {
@@ -334,7 +343,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             if ($frozen) {
                 $data = encode_base64(nfreeze($data));
             }
-            $update_sth->execute($data, $id);
+            $update_sth->execute($data, $id) unless $test_mode;
             $count++;
         } else {
             warn "  !Could not convert element #$id which is a "
@@ -342,6 +351,8 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         }
     }
     print "    Converted $count elements\n" if $v;
+    print "\n* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\nn" 
+	if ($test_mode && $v);
 }
 
 # restore original instance (in case we were called by another Krang script)
