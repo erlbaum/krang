@@ -518,10 +518,11 @@ sub edit {
         $template->param(replace_category_chooser => $replace_chooser,
                          replace_category_button  => $replace_button);
 
+warn "\nV: " . ($query->param('version') || $story->version) . "\n";
         $template->param(version_selector => scalar
                          $query->popup_menu(-name    => 'version',
                                             -values  => $story->all_versions,
-                                            -default => $story->version,
+                                            -default => ($query->param('version') || $story->version),
                                             -override => 1));
 
         # permissions
@@ -676,6 +677,7 @@ sub revert {
     add_message('reverted_story', version => $version);
 
     $query->delete_all();
+    $query->param(version => $version); # persist to the edit screen
     return $self->edit();
 }
 
