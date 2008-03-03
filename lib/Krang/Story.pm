@@ -1634,8 +1634,8 @@ sub transform_stories {
             # load each old version, give it to the callback and then replace what's in the db
             foreach my $v (@{$story->all_versions}) {
                 next if $v == $story->version;
-                my $old_story = $pkg->_load_version($story_id, $v);
-                $old_story = $callback->(story => $story, live => 0);
+                my ($old_story) = $pkg->_load_version($story_id, $v);
+                $old_story = $callback->(story => $old_story, live => 0);
 
                 # re-save version
                 $dbh->do(
