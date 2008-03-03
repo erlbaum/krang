@@ -518,7 +518,6 @@ sub edit {
         $template->param(replace_category_chooser => $replace_chooser,
                          replace_category_button  => $replace_button);
 
-warn "\nV: " . ($query->param('version') || $story->version) . "\n";
         $template->param(version_selector => scalar
                          $query->popup_menu(-name    => 'version',
                                             -values  => $story->all_versions,
@@ -909,12 +908,12 @@ sub db_save_and_stay {
         die($@);
     }
 
-    
     add_message('story_save', story_id => $story->story_id,
                 url      => $story->url,
                 version  => $story->version);
 
     # return to edit
+    $self->query->delete('version'); # it doesn't matter what version it was before the save
     return $self->edit();
 }
 
