@@ -471,6 +471,7 @@ sub publish_frontend_app_stub {
         my $dumper = Data::Dumper->new([$app_params]);
         $dumper->Terse(1);
         $dumper->Indent(0);
+        $dumper->Sortkeys(1);
         $params_string = "PARAMS => " . $dumper->Dump;
     }
 
