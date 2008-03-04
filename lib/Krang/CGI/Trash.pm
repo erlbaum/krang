@@ -199,8 +199,8 @@ sub delete_checked {
 
         eval { pkg('Trash')->delete(object => $object) };
 
-        if ($@ and ref($@) and ref($@) =~ m[.+::NoDeleteAccess$])
-        {    # cannot know the exact package, can we?
+        if ($@ and ref($@) and $@->moniker eq 'nodeleteaccess')
+        {
             my $id_meth = $object->id_meth;
             push @alerts, ucfirst($object->moniker) . ' ' . $object->$id_meth . ': ' . $object->url;
         }
@@ -237,10 +237,6 @@ sub restore_checked {
 
     # try to restore
     foreach my $object (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
-
-        my $type    = $object->moniker;
-        my $id_meth = $object->id_meth;
-        my $id      = $object->$id_meth;
 
         eval { pkg('Trash')->restore(object => $object) };
 
@@ -369,7 +365,7 @@ sub _id2obj {
       unless $pkg;
 
     # get object with this id
-    my ($obj) = $pkg->find($type . '_id' => $id);
+    my ($obj) = $pkg->find($pkg->id_meth => $id);
 
     croak("Unable to load $type $id")
       unless $obj;
