@@ -208,15 +208,8 @@ returned to the "edit" run-mode of Krang::CGI::Story, e.g.:
 sub associate_story {
     my $self = shift;
 
-    my $q = $self->query();
-    my $new_url = $q->url();
-    $new_url .= "?associate_mode=story";
-
-    # Redirect back to search
-    $self->header_type('redirect');
-    $self->header_props(-uri => $new_url);
-
-    return "Redirect: <a href=\"$new_url\">$new_url</a>";
+    $self->query->param(associate_mode => 'story');
+    return $self->search();
 }
 
 
@@ -240,15 +233,8 @@ returned to the "edit" run-mode of Krang::CGI::Media, e.g.:
 sub associate_media {
     my $self = shift;
 
-    my $q = $self->query();
-    my $new_url = $q->url();
-    $new_url .= "?associate_mode=media";
-
-    # Redirect back to search
-    $self->header_type('redirect');
-    $self->header_props(-uri => $new_url);
-
-    return "Redirect: <a href=\"$new_url\">$new_url</a>";
+    $self->query->param(associate_mode => 'media');
+    return $self->search();
 }
 
 
