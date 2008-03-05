@@ -258,7 +258,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           . " WHERE "
           . join(' AND ', map { " $_ = ? " } @id_fields);
         my $update_sth = $dbh->prepare_cached($update_sql);
-        $sth->execute(@binds) unless $test_mode;
+        $sth->execute(@binds);
         my $count = 0;
         while(my $row = $sth->fetchrow_hashref) {
             my @data = map { $row->{$_} } @fields;
@@ -319,7 +319,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           ));
 
     my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
-    $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids) unless $test_mode;
+    $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids);
 
     my $count = 0;
     while(my $row = $fetch_sth->fetchrow_hashref) {
