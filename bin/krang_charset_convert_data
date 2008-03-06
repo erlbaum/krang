@@ -332,8 +332,11 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         my $frozen;
         eval {
             no warnings;
+	    # if data is valid base64...
 	    if ($data =~ /^[A-Za-z0-9\+\/\=]+$/) {
+		# and thawing its decoded value returns an object reference...
 		if (ref (my $thawed = thaw(decode_base64($data)))) {
+		    # then this eval will succeed and we can assume object was frozen
 		    $data = $thawed;
 		    $frozen = 1;
 		}
