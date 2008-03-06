@@ -6,14 +6,18 @@ use warnings;
 
 # readable labels for Krang::History actions
 our %ACTION_LABELS = (
-                      new      => 'Created',
-                      save     => 'Saved',
-                      checkin  => 'Checked In',
-                      checkout => 'Checked Out',
-                      publish  => 'Published',
-                      deploy   => 'Deployed',
-                      move     => 'Moved',
-                      revert   => 'Reverted',
+                      new       => 'Created',
+                      save      => 'Saved',
+                      checkin   => 'Checked In',
+                      checkout  => 'Checked Out',
+                      publish   => 'Published',
+                      deploy    => 'Deployed',
+                      move      => 'Moved',
+                      revert    => 'Reverted',
+                      archive   => 'Archived',
+                      unarchive => 'Unarchived',
+                      trash     => 'Trashed',
+                      untrash   => 'Untrashed'
                      );
 
 use Carp qw(croak);
