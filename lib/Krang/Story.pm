@@ -1096,13 +1096,13 @@ default is 1.
 
 =item include_archived
 
-Set this option to 1 if you want include archived stories in the
+Set this option to 1 if you want to include archived stories in the
 search result. The default is 0.
 
 =item include_trashed
 
-Set this option to 1 if you want include trashed stories in the search
-result. Trashed stories live in the trashbin. The default is 0.
+Set this option to 1 if you want to include trashed stories in the
+search result. Trashed stories live in the trashbin. The default is 0.
 
 B<NOTE:>When searching for story_id, these three include_* flags are
 not taken into account!
@@ -2713,7 +2713,7 @@ sub untrash {
         unless ($self->may_edit);
 
     # make sure no other story occupies our initial place (URL)
-    $self->_verify_unique;
+    $self->_verify_unique unless $self->archived;
 
     # make sure we are the one
     $self->checkout;
