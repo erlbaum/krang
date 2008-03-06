@@ -828,18 +828,15 @@ sub save {
         );
     }
 
-    unless ($args{keep_version}) {
-
-        # save a copy in the version table
-        my $serialized;
-        eval { $serialized = nfreeze($self); };
-        croak("Unable to serialize object: $@") if $@;
-        $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)',
-            undef, $media_id, $self->{version}, $serialized);
-
-        # prune previous versions from the version table
-        $self->prune_versions();
-    }
+    # save a copy in the version table
+    my $serialized;
+    eval { $serialized = nfreeze($self); };
+    croak("Unable to serialize object: $@") if $@;
+    $dbh->do('REPLACE INTO media_version (media_id, version, data) values (?,?,?)',
+	     undef, $media_id, $self->{version}, $serialized);
+    
+    # prune previous versions from the version table
+    $self->prune_versions();
 
     add_history(
         object => $self,

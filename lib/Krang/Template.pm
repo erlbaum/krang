@@ -1204,26 +1204,24 @@ sub save {
     # get template_id for new objects
     $self->{template_id} = $dbh->{mysql_insertid} unless $id;
 
-    unless ($args{keep_version}) {
-	# save a copy in the version table
-	my $frozen;
-	eval {$frozen = nfreeze($self)};
-	
-	# catch any exception thrown by Storable
-	croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object " .
-	      "template id '$id' - $@") if $@;
-	
-	# do the insert
-	$dbh->do("INSERT INTO template_version (data, template_id, version) " .
-		 "VALUES (?,?,?)",
-		 undef,
-		 $frozen,
-		 $self->{template_id},
-		 $self->{version});
-
-	# prune previous versions from the version table
-	$self->prune_versions();
-    }
+    # save a copy in the version table
+    my $frozen;
+    eval {$frozen = nfreeze($self)};
+    
+    # catch any exception thrown by Storable
+    croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object " .
+	  "template id '$id' - $@") if $@;
+    
+    # do the insert
+    $dbh->do("REPLACE INTO template_version (data, template_id, version) " .
+	     "VALUES (?,?,?)",
+	     undef,
+	     $frozen,
+	     $self->{template_id},
+	     $self->{version});
+    
+    # prune previous versions from the version table
+    $self->prune_versions();
 
     add_history(object => $self, action => 'new') if $self->{version} == 1;
     add_history(object => $self, action => 'save',);
