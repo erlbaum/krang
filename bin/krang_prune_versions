@@ -136,16 +136,24 @@ pod2usage(2) unless
 pod2usage(1) if $help or $man or not($per_story or $per_media or $per_template);
 my %versions_to_keep = (story => $per_story, media => $per_media, template => $per_template);
 
+# make sure we have at least one instance
+unless ($all_instances || $ENV{KRANG_INSTANCE}) {
+    print "\nYou must either set the KRANG_INSTANCE environment variable or use the --all-instances argument.\n\n";
+    exit 1;
+}
+
 # make sure we weren't passed anything strange for arguments
 foreach my $type ('story', 'media', 'template') {
     if (my $versions = $versions_to_keep{$type}) {
-        die "\nversions-per-$type must be an integer or 'default'\n\n" 
-            unless $versions =~ /^\d+$/ || $versions eq 'default';
+	unless ($versions =~ /^\d+$/ || $versions eq 'default') {
+	    print "\nversions-per-$type must be an integer or 'default'\n\n";
+	    exit 1;
+	}
     }
 }
 
 # begin actual work
-foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE})) {
+foreach my $instance ($all_instances ? pkg('Conf')->instances() : $ENV{KRANG_INSTANCE}) {
     print "\n$instance:\n";
     pkg('Conf')->instance($instance);
     foreach my $type ('story', 'media', 'template') {
