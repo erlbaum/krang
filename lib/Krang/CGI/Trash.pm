@@ -223,8 +223,8 @@ sub delete_checked {
 
 =item restore_checked
 
-Restore a list of checked ojects, bringing them back to live.
-Requires an 'id' parameter of the form 'type_id'.
+Restore a list of checked ojects, bringing them back to Live or to the
+Archive.  Requires an 'id' parameter of the form 'type_id'.
 
 =cut
 
@@ -269,15 +269,15 @@ sub _register_msg {
         if (@restored) {
             add_alert(
                 'restored_with_some_exceptions',
-                restored_phrase => (scalar(@restored) > 1 ? 'These items were' : 'This item was'),
+                restored_phrase => (scalar(@restored) > 1 ? 'These items have been' : 'This item has been'),
                 restored_list => join('<br/>', @restored),
-                failed_phrase => (scalar(@failed) > 1 ? 'These items were' : 'This item was'),
+                failed_phrase => (scalar(@failed) > 1 ? 'These items' : 'This item'),
                 failed_list => join('<br/>', @failed),
             );
         } else {
             add_alert(
                 'restored_with_exceptions_only',
-                failed_phrase => (scalar(@failed) > 1 ? 'These items were' : 'This item was'),
+                failed_phrase => (scalar(@failed) > 1 ? 'These items' : 'This item'),
                 failed_list => join '<br/>',
                 @failed,
             );
@@ -285,7 +285,7 @@ sub _register_msg {
     } else {
         add_message(
             'restored_without_exceptions',
-            restored_phrase => (scalar(@restored) > 1 ? 'These items were' : 'This item was'),
+            restored_phrase => (scalar(@restored) > 1 ? 'These items have been' : 'This item has been'),
             restored_list => join '<br/>',
             @restored,
         );
@@ -305,12 +305,13 @@ sub _format_msg {
     my $msg =
         ucfirst($type) . ' ' 
       . $id . ' '
-      . $object->url
-      . '(restored to '
-      . ($object->archived ? 'Archive' : 'Live') . ')';
+      . $object->url;
 
     # sucess
-    return $msg unless $ex;
+    return $msg 
+      . ' (restored to '
+      . ($object->archived ? 'Archive' : 'Live') . ')'
+	unless $ex;
 
     my $ex_type = $ex->moniker;
 
@@ -320,7 +321,7 @@ sub _format_msg {
 
     # URL conflict
     if ($ex_type eq 'duplicateurl') {
-        if ($ex->categories) {
+        if ($ex->can('categories') and $ex->categories) {
             my @cats = @{$ex->categories};
             my $reason =
               scalar(@cats) > 1
@@ -330,7 +331,7 @@ sub _format_msg {
               . '<br/>(' 
               . $reason
               . join('<br/>', map { "Category $_->{id} &ndash; $_->{url}" } @cats) . ' )';
-        } elsif ($ex->stories) {
+        } elsif ($ex->can('stories') and $ex->stories) {
             my @stories = @{$ex->stories};
             my $reason =
               scalar(@stories) > 1
@@ -340,10 +341,10 @@ sub _format_msg {
               . '<br/>(' 
               . $reason
               . join('<br/>', map { "Story $_->{id} &ndash; $_->{url}" } @stories) . ' )';
-        } elsif (my $id = $ex->id_meth) {
-            return $msg . ' (URL conflict with ' . ucfirst($type) . ' ' . $id;
+        } elsif (my $id = $ex->$id_meth) {
+            return $msg . '<br/>(URL conflict with ' . ucfirst($type) . ' ' . $id . ')';
         } else {
-            return $msg . '(URL conflict - no further information)';
+            return $msg . '<br/>(URL conflict - no further information)';
         }
     }
 
