@@ -649,7 +649,7 @@ sub view {
     $template->param ( prevent_edit => 1)
       if ( $story->checked_out and
             ($story->checked_out_by ne $ENV{REMOTE_USER})) or 
-          not $story->may_edit or $story->archived;
+          not $story->may_edit or $story->archived or $story->trashed;
 
     return $template->output();
 }
@@ -1733,18 +1733,20 @@ sub _do_find {
                                       persist_vars => \%persist_vars,
                                       use_module => pkg('Story'),
                                       find_params => \%find_params,
-                                      columns => [qw(
-                                                     pub_status 
+                                      columns => [
+						  ($archived ? () : 'pub_status'),
+						  qw(
                                                      story_id 
                                                      title 
                                                      url 
                                                      cover_date 
-                                                     commands_column),
-                                                     ($archived ? () : 'status'),
-                                                     ($read_only      ? () : 'checkbox_column')
+                                                     commands_column
+                                                     ),
+						  ($archived ? () : 'status'),
+						  ($read_only      ? () : 'checkbox_column')
                                                  ],
                                       column_labels => {
-                                                        pub_status => '',
+                                                        ($archived ? () : (pub_status => '')),
                                                         story_id => 'ID',
                                                         title => 'Title',
                                                         url => 'URL',
@@ -1764,8 +1766,7 @@ sub _do_find {
         associate         => $q,
     );
     $pager->fill_template($pager_tmpl);
-    $pager_tmpl->param(show_type_and_version => $show_type_and_version);
-    
+
     # Set up output
     $template->param(
         %tmpl_data,
@@ -2010,7 +2011,6 @@ sub find_story_row_handler {
     # Columns:
     $row->{story_id}   = $story->story_id();
     $row->{title}      = $story->title;
-    $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
@@ -2075,6 +2075,8 @@ sub find_story_row_handler {
     return if $archived;
 
     # status 
+    $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
+
     if ($story->checked_out) {
         $row->{status} = "Checked out by <b>"
             . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login
