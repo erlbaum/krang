@@ -225,6 +225,10 @@ sub default_tree {
     $sub->link('media.pl?rm=list_active');    
 
     $sub  = $node->new_daughter();
+    $sub->name('Archived Media');
+    $sub->link('media.pl?rm=list_archived');
+
+    $sub  = $node->new_daughter();
     $sub->name('Bulk Upload');
     $sub->link('media_bulk_upload.pl');
     $sub->condition(sub { shift->{asset}{media} ne 'read-only' });
@@ -323,10 +327,6 @@ sub default_tree {
                 && pkg('AddOn')->find(condition => 'EnableAdminSchedulerActions')
         }
     );
-
-##    my $trashbin = $root->new_daughter();
-##    $trashbin->name('Trash');
-##    $trashbin->link('trash.pl');
 
     return $root;
 }
