@@ -1115,7 +1115,8 @@ SQL
 Saves template data in memory to the database.
 
 Stores a copy of the objects current contents to the template table. The
-version field is incremented on each save.
+version field is incremented on each save unless called with 'keep_version'
+ set to 1.
 
 duplicate_check() throws an exception if the template's url isn't unique.
 verify_checkout() throws an exception if the template isn't checked out or if
@@ -1131,7 +1132,7 @@ to the specified category.
 =cut
 
 sub save {
-    my $self = shift;
+    my ($self, %args) = @_;
     my $user_id = $ENV{REMOTE_USER};
     my $id = $self->{template_id} || 0;
 
@@ -1165,7 +1166,7 @@ sub save {
     $self->verify_checkout() if $id;
 
     # increment version number
-    $self->{version} = $self->{version} + 1;
+    $self->{version} = $self->{version} + 1 unless $args{keep_version};
 
     # set up query
     my ($query, @tmpl_params);
@@ -1203,24 +1204,26 @@ sub save {
     # get template_id for new objects
     $self->{template_id} = $dbh->{mysql_insertid} unless $id;
 
-    # save a copy in the version table
-    my $frozen;
-    eval {$frozen = nfreeze($self)};
+    unless ($args{keep_version}) {
+	# save a copy in the version table
+	my $frozen;
+	eval {$frozen = nfreeze($self)};
+	
+	# catch any exception thrown by Storable
+	croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object " .
+	      "template id '$id' - $@") if $@;
+	
+	# do the insert
+	$dbh->do("INSERT INTO template_version (data, template_id, version) " .
+		 "VALUES (?,?,?)",
+		 undef,
+		 $frozen,
+		 $self->{template_id},
+		 $self->{version});
 
-    # catch any exception thrown by Storable
-    croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object " .
-          "template id '$id' - $@") if $@;
-
-    # do the insert
-    $dbh->do("INSERT INTO template_version (data, template_id, version) " .
-             "VALUES (?,?,?)",
-             undef,
-             $frozen,
-             $self->{template_id},
-             $self->{version});
-
-    # prune previous versions from the version table
-    $self->prune_versions();
+	# prune previous versions from the version table
+	$self->prune_versions();
+    }
 
     add_history(object => $self, action => 'new') if $self->{version} == 1;
     add_history(object => $self, action => 'save',);
