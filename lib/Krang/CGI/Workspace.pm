@@ -203,7 +203,7 @@ sub delete {
                           'Template')));
 
 # TODO: Change this when trashbin is implemented for all assets
-    $obj->isa('Krang::Story') ? $obj->trash : $obj->delete;
+    ($obj->isa('Krang::Story') || $obj->isa('Krang::Media')) ? $obj->trash : $obj->delete;
 
     return $self->show;
 }
@@ -268,7 +268,7 @@ sub delete_checked {
     foreach my $obj (map { $self->_id2obj($_) }
                      $query->param('krang_pager_rows_checked')) {
 # TODO: Change this when trashbin is implemented for all assets
-        $obj->isa('Krang::Story') ? $obj->trash : $obj->delete;
+        ($obj->isa('Krang::Story') || $obj->isa('Krang::Media')) ? $obj->trash : $obj->delete;
     }
     return $self->show;
 }

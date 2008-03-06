@@ -2,12 +2,8 @@
 
 <script type="text/javascript">
 Krang.onload( function() {
-  Krang.Help.set( 'media_find' );
+  Krang.Help.set( 'media_archived' );
 } );
-
-add_media = function() {
-    Krang.Form.submit('search_form', { rm: 'add' });
-}
 
 do_search = function(chbx) {
     var val = chbx.checked ? '1' : '0';
@@ -20,7 +16,7 @@ show_advanced_search = function( show_advanced )
 }
 
 other_search_rm = function() {
-  Krang.Form.submit('search_form', { rm: 'list_archived', other_search_place: 'Search in Live' });
+  Krang.Form.submit('search_form', { rm: 'find', other_search_place: 'Search in Archive' });
 }
 
 <tmpl_if do_advanced_search>
@@ -31,14 +27,9 @@ other_search_rm = function() {
 </tmpl_if>
 
 <tmpl_if row_count>
-  edit_media = function( id )
-  {
-    Krang.Form.submit( 'find_media', { rm: 'checkout_and_edit', media_id: id } );
-  }
-
   view_media = function( id )
   {
-    Krang.Form.submit( 'find_media', { rm: 'view', media_id: id } );
+    Krang.Form.submit( 'find_media', { rm: 'view', media_id: id, archived: 1 } );
   }
 
   delete_selected = function()
@@ -60,49 +51,21 @@ other_search_rm = function() {
       }
   }
 
-  checkout_selected = function()
+  unarchive_media = function(id)
   {
-    if ( !Krang.pager_row_checked() )
-      alert( 'Nothing selected to check out!' );
-    else
-      Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_selected' } );
-  }
-
-  publish_selected = function()
-  {
-      var question = '';
-      var num_rows_checked = Krang.pager_row_checked();
-
-      if (!num_rows_checked) {
-        alert( 'Nothing selected to publish!' );
-      } else {
-        if (num_rows_checked > 1) {
-	  question = 'Are you SURE you want to publish the checked Media?';
-        } else {
-	  question = 'Are you SURE you want to publish the checked Media?';
-        }
-        if (confirm(question)) {
-	  document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
-          Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
-        }
-      }
-  }
-
-  archive_media = function(id)
-  {
-    if (confirm('Are you SURE you want to archive this Media?'))
-      Krang.Form.submit('find_media', { rm: 'archive', media_id: id });
+    if (confirm('Are you SURE you want to unarchive this Media?'))
+      Krang.Form.submit('find_media', { rm: 'unarchive', media_id: id });
   }
 </tmpl_if>
 </script>
 
 <h2>
-Find Media
+Archived Media
 </h2>
 
-<form name="search_form" action="media.pl" method="post">
+<form id="search_form" name="search_form" action="media.pl" method="post">
 
-<input name="rm" value="find" type="hidden">
+<input name="rm" value="list_archived" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
@@ -111,7 +74,7 @@ Find Media
 <tmpl_if do_advanced_search>
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
 </tmpl_if>
-<input name="other_search_place" value="Search in Archive" type="hidden">
+<input name="other_search_place" value="Search in Live" type="hidden">
 
 <div class="tabset finder">
 
@@ -216,10 +179,7 @@ Search Results
 
 <tmpl_unless read_only>
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
-  <input value="Add Media" onclick="add_media()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="Publish" onclick="publish_selected()" type="button">
-    <input value="Check Out" onclick="checkout_selected()" type="button">
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
@@ -231,10 +191,7 @@ Search Results
 
 <tmpl_unless read_only>
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
-  <input value="Add Media" onclick="add_media()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="Publish" onclick="publish_selected()" type="button">
-    <input value="Check Out" onclick="checkout_selected()" type="button">
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
@@ -242,7 +199,7 @@ Search Results
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" action="media.pl" method="post">
-  <input name="rm" value="find" type="hidden">
+  <input name="rm" value="list_archived" type="hidden">
   <input name="do_advanced_search" value="1" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
@@ -254,6 +211,7 @@ Search Results
   <form name="find_media" action="media.pl" method="post">
   <input name="rm" value="view" type="hidden">
   <input name="media_id" type="hidden">
+  <input name="archived" value="1" type="hidden">
   <input name="return_script" value="media.pl" type="hidden">
   <tmpl_var return_params>
   </form>

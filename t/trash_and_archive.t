@@ -15,7 +15,10 @@ use Time::Piece;
 
 use Krang::ClassLoader 'Test::Content';
 
-BEGIN { use_ok(pkg('Story')) }
+BEGIN {
+    use_ok(pkg('Story'));
+    use_ok(pkg('Media'));
+}
 
 # make sure we don't fail because TrashMaxItems is too low
 BEGIN {
@@ -40,10 +43,10 @@ END {
 }
 
 my $site = $creator->create_site(
-    preview_url  => 'storytest.preview.com',
-    publish_url  => 'storytest.com',
-    preview_path => '/tmp/storytest_preview',
-    publish_path => '/tmp/storytest_publish'
+    preview_url  => 'trash_and_archive_test.preview.com',
+    publish_url  => 'trash_and_archive_test.com',
+    preview_path => '/tmp/trash_and_archive_test_preview',
+    publish_path => '/tmp/trash_and_archive_test_publish'
 );
 
 isa_ok($site, 'Krang::Site');
@@ -52,192 +55,214 @@ isa_ok($site, 'Krang::Site');
 my $category = $creator->create_category();
 isa_ok($category, 'Krang::Category');
 
-# create some stories
-my $s0 = $creator->create_story();
-my $s1 = $creator->create_story();
-my $s2 = $creator->create_story();
-my $s3 = $creator->create_story();
-my $s4 = $creator->create_story();
+for my $object (
+		[qw(story stories slug)  , {}               ],
+		[qw(media media filename), {format => 'png'}],
+	       ) {
+    test_this($object);
+}
 
-my @stories = ($s0, $s1, $s2, $s3, $s4);
-my ($sid0,  $sid1,  $sid2,  $sid3,  $sid4)  = map { $_->story_id } @stories;
-my ($slug0, $slug1, $slug2, $slug3, $slug4) = map { $_->slug } @stories;
+sub test_this {
+    my $spec = shift;
 
-# initially neither archived nor trashed
-is($_->archived, 0, "Story is not archived") for @stories;
-is($_->trashed,  0, "Story is not trashed")  for @stories;
+    my $object      = $spec->[0];
+    my $objects     = $spec->[1];
+    my $fn          = $spec->[2];
+    my $args        = $spec->[3];
+    my $Object      = ucfirst($object);
 
-my @live = pkg('Story')->find();
-is(scalar(@live), 5, "Five stories alive");
+    my $create_meth = 'create_' . $object;
+    my $obj_id      = $object   . '_id';
 
-# test archiving
-$s0->archive();
-is($s0->archived, 1, "Story $sid0 is archived");
-is($s0->trashed,  0, "Story $sid0 is not trashed");
+    # create some objects
+    my %args = %$args;
+    my $obj0 = $creator->$create_meth(%args);
+    my $obj1 = $creator->$create_meth(%args);
+    my $obj2 = $creator->$create_meth(%args);
+    my $obj3 = $creator->$create_meth(%args);
+    my $obj4 = $creator->$create_meth(%args);
 
-@live = pkg('Story')->find();
-is(scalar(@live), 4, "Four stories alive");
+    my @objects = ($obj0, $obj1, $obj2, $obj3, $obj4);
+    my ($oid0,  $oid1,  $oid2,  $oid3,  $oid4)  = map { $_->$obj_id } @objects;
+    my ($fn0,   $fn1,   $fn2,   $fn3,   $fn4 )  = map { $_->$fn     } @objects;
 
-my @archived = pkg('Story')->find(include_live => 0, include_archived => 1);
-is(scalar(@archived), 1, "One story archived");
-is($archived[0]->story_id, $sid0, "Found correct archived story");
+    # initially neither archived nor trashed
+    is($_->archived, 0, "$Object is not archived") for @objects;
+    is($_->trashed,  0, "$Object is not trashed")  for @objects;
 
-my @trashed = pkg('Story')->find(include_live => 0, include_trashed => 1);
-is(scalar(@trashed), 0, "No stories trashed");
+    my @live = pkg($Object)->find();
+    is(scalar(@live), 5, "Five $objects alive");
 
-# find archived story by ID does not need the include_archived search option
-my @found_by_id = pkg('Story')->find(story_id => $sid0);
-is(scalar(@found_by_id), 1, "Archived Story found by ID without include_archived search option");
+    # test archiving
+    $obj0->archive();
+    is($obj0->archived, 1, "$Object $oid0 is archived");
+    is($obj0->trashed,  0, "$Object $oid0 is not trashed");
 
-$s0->unarchive();
-is($s0->archived, 0, "Story $sid0 is not archived");
-is($s0->trashed,  0, "Story $sid0 is not trashed");
+    @live = pkg($Object)->find();
+    is(scalar(@live), 4, "Four $objects alive");
 
-@live = pkg('Story')->find();
-is(scalar(@live), 5, "Five stories alive");
+    my @archived = pkg($Object)->find(include_live => 0, include_archived => 1);
+    is(scalar(@archived), 1, "One $object archived");
+    is($archived[0]->$obj_id, $oid0, "Found correct archived $object");
 
-my $count = pkg('Story')->find(count => 1);
-is($count, 5, "Five stories alive (with count option)");
+    my @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
+    is(scalar(@trashed), 0, "No $objects trashed");
 
-@archived = pkg('Story')->find(include_live => 0, include_archived => 1);
-is(scalar(@archived), 0, "No stories archived");
+    # find archived $object by ID does not need the include_archived search option
+    my @found_by_id = pkg($Object)->find($obj_id => $oid0);
+    is(scalar(@found_by_id), 1, "Archived $Object found by ID without include_archived search option");
 
-$count = pkg('Story')->find(include_live => 0, include_archived => 1, count => 1);
-is($count, 0, "No stories archived (with count option)");
+    $obj0->unarchive();
+    is($obj0->archived, 0, "$Object $oid0 is not archived");
+    is($obj0->trashed,  0, "$Object $oid0 is not trashed");
 
-@trashed = pkg('Story')->find(include_live => 0, include_trashed => 1);
-is(scalar(@trashed), 0, "No stories trashed");
+    @live = pkg($Object)->find();
+    is(scalar(@live), 5, "Five $objects alive");
 
-$count = pkg('Story')->find(include_live => 0, include_trashed => 1, count => 1);
-is($count, 0, "No stories trashed (with count option)");
+    my $count = pkg($Object)->find(count => 1);
+    is($count, 5, "Five $objects alive (with count option)");
 
-# test trashing
-$s0->trash();
-is($s0->trashed,  1, "Story $sid0 is trashed");
-is($s0->archived, 0, "Story $sid0 is not archived");
+    @archived = pkg($Object)->find(include_live => 0, include_archived => 1);
+    is(scalar(@archived), 0, "No $objects archived");
 
-@live = pkg('Story')->find();
-is(scalar(@live), 4, "Four stories alive");
+    $count = pkg($Object)->find(include_live => 0, include_archived => 1, count => 1);
+    is($count, 0, "No $objects archived (with count option)");
 
-@trashed = pkg('Story')->find(include_live => 0, include_trashed => 1);
-is(scalar(@trashed), 1, "One story trashed");
-is($trashed[0]->story_id, $sid0, "Found correct trashed story");
+    @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
+    is(scalar(@trashed), 0, "No $objects trashed");
 
-$count = pkg('Story')->find(include_live => 0, include_trashed => 1, count => 1);
-is($count, 1, "One story trashed (found with count option)");
+    $count = pkg($Object)->find(include_live => 0, include_trashed => 1, count => 1);
+    is($count, 0, "No $objects trashed (with count option)");
 
-@archived = pkg('Story')->find(include_live => 0, include_archived => 1);
-is(scalar(@archived), 0, "No stories archived");
+    # test trashing
+    $obj0->trash();
+    is($obj0->trashed,  1, "$Object $oid0 is trashed");
+    is($obj0->archived, 0, "$Object $oid0 is not archived");
 
-$count = pkg('Story')->find(include_live => 0, include_archived => 1, count => 1);
-is($count, 0, "No stories archived (with count option)");
+    @live = pkg($Object)->find();
+    is(scalar(@live), 4, "Four $objects alive");
 
-# find trashed story by ID does not need the include_trashed search option
-@found_by_id = pkg('Story')->find(story_id => $sid0);
-is(scalar(@found_by_id), 1, "Trashed Story found by ID without include_trashed search option");
+    @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
+    is(scalar(@trashed), 1, "One $object trashed");
+    is($trashed[0]->$obj_id, $oid0, "Found correct trashed $object");
 
-$s0->untrash();
-is($s0->archived, 0, "Story $sid0 is not archived");
-is($s0->trashed,  0, "Story $sid0 is not trashed");
+    $count = pkg($Object)->find(include_live => 0, include_trashed => 1, count => 1);
+    is($count, 1, "One $object trashed (found with count option)");
 
-@live = pkg('Story')->find();
-is(scalar(@live), 5, "Five stories alive");
+    @archived = pkg($Object)->find(include_live => 0, include_archived => 1);
+    is(scalar(@archived), 0, "No $objects archived");
 
-@trashed = pkg('Story')->find(include_live => 0, include_trashed => 1);
-is(scalar(@trashed), 0, "No stories trashed");
+    $count = pkg($Object)->find(include_live => 0, include_archived => 1, count => 1);
+    is($count, 0, "No $objects archived (with count option)");
 
-@archived = pkg('Story')->find(include_live => 0, include_archived => 1);
-is(scalar(@archived), 0, "No stories archived");
+    # find trashed $object by ID does not need the include_trashed search option
+    @found_by_id = pkg($Object)->find($obj_id => $oid0);
+    is(scalar(@found_by_id), 1, "Trashed $Object found by ID without include_trashed search option");
 
-@trashed = pkg('Story')->find(include_live => 0, include_trashed => 1, ids_only => 1);
-is(scalar(@trashed), 0, "No stories trashed (with ids_only option)");
+    $obj0->untrash();
+    is($obj0->archived, 0, "$Object $oid0 is not archived");
+    is($obj0->trashed,  0, "$Object $oid0 is not trashed");
 
-@archived = pkg('Story')->find(include_live => 0, include_archived => 1, ids_only => 1);
-is(scalar(@archived), 0, "No stories archived (with ids_only option)");
+    @live = pkg($Object)->find();
+    is(scalar(@live), 5, "Five $objects alive");
 
-# test trashing of previously archived story
-$s0->archive();
-$s1->archive();
-$s2->trash();
+    @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
+    is(scalar(@trashed), 0, "No $objects trashed");
 
-is($s0->archived, 1, "Story $sid0 is archived");
-is($s1->archived, 1, "Story $sid1 is archived");
+    @archived = pkg($Object)->find(include_live => 0, include_archived => 1);
+    is(scalar(@archived), 0, "No $objects archived");
 
-@live = pkg('Story')->find();
-is(scalar(@live), 2, "Two stories alive");
+    @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1, ids_only => 1);
+    is(scalar(@trashed), 0, "No $objects trashed (with ids_only option)");
 
-@archived = pkg('Story')->find(include_live => 0, include_archived => 1);
-is(scalar(@archived), 2, "Two stories archived");
+    @archived = pkg($Object)->find(include_live => 0, include_archived => 1, ids_only => 1);
+    is(scalar(@archived), 0, "No $objects archived (with ids_only option)");
 
-@trashed = pkg('Story')->find(include_live => 0, include_trashed => 1);
-is(scalar(@trashed), 1, "One story trashed");
-is($trashed[0]->story_id, $sid2, "Found correct trashed story");
+    # test trashing of previously archived $object
+    $obj0->archive();
+    $obj1->archive();
+    $obj2->trash();
 
-$s1->trash();
+    is($obj0->archived, 1, "$Object $oid0 is archived");
+    is($obj1->archived, 1, "$Object $oid1 is archived");
 
-is($s1->trashed,  1, "Story $sid1 is trashed");
-is($s1->archived, 1, "Story $sid1 still has archived flag (to restore it later to archive)");
+    @live = pkg($Object)->find();
+    is(scalar(@live), 2, "Two $objects alive");
 
-@live = pkg('Story')->find();
-is(scalar(@live), 2, "Two stories alive");
+    @archived = pkg($Object)->find(include_live => 0, include_archived => 1);
+    is(scalar(@archived), 2, "Two $objects archived");
 
-@archived = pkg('Story')->find(include_live => 0, include_archived => 1);
-is(scalar(@archived), 1, "One story archived");
-is($archived[0]->story_id, $sid0, "Found correct archived story");
+    @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
+    is(scalar(@trashed), 1, "One $object trashed");
+    is($trashed[0]->$obj_id, $oid2, "Found correct trashed $object");
 
-@trashed = pkg('Story')->find(include_live => 0, include_trashed => 1);
-is(scalar(@trashed), 2, "Two stories trashed");
+    $obj1->trash();
 
-$s1->untrash();
+    is($obj1->trashed,  1, "$Object $oid1 is trashed");
+    is($obj1->archived, 1, "$Object $oid1 still has archived flag (to restore it later to archive)");
 
-is($s1->trashed,  0, "Story $sid1 no longer trashed");
-is($s1->archived, 1, "Story $sid1 again archived");
+    @live = pkg($Object)->find();
+    is(scalar(@live), 2, "Two $objects alive");
 
-@live = pkg('Story')->find();
-is(scalar(@live), 2, "Two stories alive");
+    @archived = pkg($Object)->find(include_live => 0, include_archived => 1);
+    is(scalar(@archived), 1, "One $object archived");
+    is($archived[0]->$obj_id, $oid0, "Found correct archived $object");
 
-@archived = pkg('Story')->find(include_live => 0, include_archived => 1);
-is(scalar(@archived), 2, "Two stories archived");
+    @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
+    is(scalar(@trashed), 2, "Two $objects trashed");
 
-@trashed = pkg('Story')->find(include_live => 0, include_trashed => 1);
-is(scalar(@trashed), 1, "One story trashed");
-is($trashed[0]->story_id, $sid2, "Found correct trashed story");
+    $obj1->untrash();
 
-$s1->unarchive();
+    is($obj1->trashed,  0, "$Object $oid1 no longer trashed");
+    is($obj1->archived, 1, "$Object $oid1 again archived");
 
-is($s1->trashed,  0, "Story $sid1 not trashed");
-is($s1->archived, 0, "Story $sid1 not archived");
+    @live = pkg($Object)->find();
+    is(scalar(@live), 2, "Two $objects alive");
 
-@live = pkg('Story')->find();
-is(scalar(@live), 3, "Three stories alive");
+    @archived = pkg($Object)->find(include_live => 0, include_archived => 1);
+    is(scalar(@archived), 2, "Two $objects archived");
 
-@archived = pkg('Story')->find(include_live => 0, include_archived => 1);
-is(scalar(@archived), 1, "One story archived");
-is($archived[0]->story_id, $sid0, "Found correct archived story");
+    @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
+    is(scalar(@trashed), 1, "One $object trashed");
+    is($trashed[0]->$obj_id, $oid2, "Found correct trashed $object");
 
-@trashed = pkg('Story')->find(include_live => 0, include_trashed => 1);
-is(scalar(@trashed), 1, "One story trashed");
+    $obj1->unarchive();
 
-# test creation of story with same URL as archived story
-$s0->archive();
-is($s0->archived, 1, "Story $sid0 is archived");
+    is($obj1->trashed,  0, "$Object $oid1 not trashed");
+    is($obj1->archived, 0, "$Object $oid1 not archived");
 
-my $dup00 = '';
-eval { $dup00 = $creator->create_story(slug => $slug0) };
-ok(not($@), "Dup 1 of Story $sid0 created");
+    @live = pkg($Object)->find();
+    is(scalar(@live), 3, "Three $objects alive");
 
-# archive dup00 and try to create dup01
-$dup00->archive();
-is($dup00->archived, 1, "Dup 1 of Story $sid0 archived");
+    @archived = pkg($Object)->find(include_live => 0, include_archived => 1);
+    is(scalar(@archived), 1, "One $object archived");
+    is($archived[0]->$obj_id, $oid0, "Found correct archived $object");
 
-my $dup01 = '';
-eval { $dup01 = $creator->create_story(slug => $slug0) };
-ok(not($@), "Dup 2 of Story $sid0 created");
+    @trashed = pkg($Object)->find(include_live => 0, include_trashed => 1);
+    is(scalar(@trashed), 1, "One $object trashed");
 
-eval { $s0->unarchive() };
-isa_ok($@, 'Krang::Story::DuplicateURL');
+    # test creation of $object with same URL as archived $object
+    $obj0->archive();
+    is($obj0->archived, 1, "$Object $oid0 is archived");
 
-eval { $dup00->unarchive() };
-isa_ok($@, 'Krang::Story::DuplicateURL');
+    my $dup00 = '';
+    $fn0 =~ s/\.png$//; # special for Media: strip the file extension
+    eval { $dup00 = $creator->$create_meth($fn => $fn0, %args) };
+    ok(not($@), "Dup 1 of $Object $oid0 created");
 
-END { my $dbh = dbh; $dbh->do("DELETE FROM trash") }
+    # archive dup00 and try to create dup01
+    $dup00->archive();
+    is($dup00->archived, 1, "Dup 1 of $Object $oid0 archived");
+
+    my $dup01 = '';
+    eval { $dup01 = $creator->$create_meth($fn => $fn0, %args) };
+    ok(not($@), "Dup 2 of $Object $oid0 created");
+
+    eval { $obj0->unarchive() };
+    isa_ok($@, "Krang::${Object}::DuplicateURL");
+
+    eval { $dup00->unarchive() };
+    isa_ok($@, "Krang::${Object}::DuplicateURL");
+
+    END { my $dbh = dbh; $dbh->do("DELETE FROM trash") }
+}

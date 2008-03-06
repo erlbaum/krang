@@ -15,8 +15,12 @@ sub per_instance {
     my $dbh = dbh();
 
     # add 'archived' and 'trashed' columns to STORY
-    $dbh->do('ALTER TABLE story ADD COLUMN archived BOOL NOT NULL');
-    $dbh->do('ALTER TABLE story ADD COLUMN trashed  BOOL NOT NULL');
+    $dbh->do('ALTER TABLE story ADD COLUMN archived BOOL NOT NULL DEFAULT 0');
+    $dbh->do('ALTER TABLE story ADD COLUMN trashed  BOOL NOT NULL DEFAULT 0');
+
+    # add 'archived' and 'trashed' columns to MEDIA
+    $dbh->do('ALTER TABLE media ADD COLUMN archived BOOL NOT NULL DEFAULT 0');
+    $dbh->do('ALTER TABLE media ADD COLUMN trashed  BOOL NOT NULL DEFAULT 0');
 
     # add admin permission 'admin_delete' and give it to admin and editor group
     $dbh->do('Alter TABLE group_permission ADD COLUMN admin_delete BOOL NOT NULL DEFAULT 0');

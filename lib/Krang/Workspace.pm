@@ -132,8 +132,8 @@ UNION
         creation_date AS date, 
         title,
         '' as class
- FROM media
- WHERE checked_out_by = ?)
+ FROM media AS m
+ WHERE checked_out_by = ? AND m.archived = 0 AND m.trashed = 0)
 
 UNION 
 
