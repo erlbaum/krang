@@ -37,10 +37,21 @@ other_search_rm = function() {
 
   delete_selected = function()
   {
-    if ( !Krang.pager_row_checked() )
-      alert('Nothing selected to delete!');
-    else if (confirm('Are you SURE you want to delete the checked Stories?'))
-      Krang.Form.submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
+      var question = '';
+      var num_rows_checked = Krang.pager_row_checked();
+
+      if (!num_rows_checked) {
+        alert( 'Nothing selected to delete!' );
+      } else {
+        if (num_rows_checked > 1) {
+	  question = 'Are you SURE you want to delete the checked Stories?';
+        } else {
+	  question = 'Are you SURE you want to delete the checked Story?';
+        }
+        if (confirm(question)) {
+          Krang.Form.submit( 'krang_pager_form', { rm : 'delete_selected' }, { to_top : false } );
+        }
+      }
   }
 
   unarchive_story = function(id)
@@ -62,7 +73,7 @@ Archived Stories
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 <input name="do_advanced_search" value="<tmpl_if do_advanced_search>1<tmpl_else>0</tmpl_if>" type="hidden">
-<input name="other_search_place" value="Live" type="hidden">
+<input name="other_search_place" value="Search in Live" type="hidden">
 
 <div class="tabset finder">
 
@@ -135,16 +146,6 @@ Advanced Search
   <tmpl_var date_chooser_cover_from>
   To
   <tmpl_var date_chooser_cover_to>
-  </td>
-  </tr>
-
-  <tr>
-  <th>Publish Date</th>
-  <td colspan="3">
-  From
-  <tmpl_var date_chooser_publish_from>
-  To
-  <tmpl_var date_chooser_publish_to>
   </td>
   </tr>
 

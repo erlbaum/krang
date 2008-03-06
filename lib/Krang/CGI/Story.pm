@@ -2,7 +2,7 @@ package Krang::CGI::Story;
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-
+use Apache::Reload;
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
@@ -1607,8 +1607,11 @@ sub _do_find {
 
     my $include = $args{include_in_search};
 
+    # find archived stories?
+    my $archived = $include eq 'archived' ? 1 : 0;
+
     # find live or archived stories?
-    my %include_options = $include eq 'archived' ? (include_live => 0, include_archived => 1) : ();
+    my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
 
     # Set up persist_vars for pager
     my %persist_vars = (
@@ -1660,13 +1663,16 @@ sub _do_find {
         for my $datetype (qw/cover publish/) {
             my $from = decode_datetime(query=>$q, name => $datetype .'_from');
             my $to =   decode_datetime(no_time_is_end => 1, query=>$q, name => $datetype .'_to');
-            if ($from || $to) {
-                my $key = $datetype .'_date';
-                my $val = [$from, $to];
-            
-                # Set up search in pager
-                $find_params{$key} = $val;
-            }
+
+	    unless ($archived) {
+		if ($from || $to) {
+		    my $key = $datetype .'_date';
+		    my $val = [$from, $to];
+
+		    # Set up search in pager
+		    $find_params{$key} = $val;
+		}
+	    }
 
             # Persist parameter
             for my $interval (qw/month day year hour minute ampm/) {
@@ -1704,8 +1710,11 @@ sub _do_find {
         # Date choosers
         $tmpl_data{date_chooser_cover_from}   = datetime_chooser(query=>$q, name=>'cover_from', nochoice=>1);
         $tmpl_data{date_chooser_cover_to}     = datetime_chooser(query=>$q, name=>'cover_to', nochoice=>1);
-        $tmpl_data{date_chooser_publish_from} = datetime_chooser(query=>$q, name=>'publish_from', nochoice=>1);
-        $tmpl_data{date_chooser_publish_to}   = datetime_chooser(query=>$q, name=>'publish_to', nochoice=>1);
+
+	unless ($archived) {
+	    $tmpl_data{date_chooser_publish_from} = datetime_chooser(query=>$q, name=>'publish_from', nochoice=>1);
+	    $tmpl_data{date_chooser_publish_to}   = datetime_chooser(query=>$q, name=>'publish_to', nochoice=>1);
+	}
 
         # Story class
         my @classes = sort { lc $a->display_name cmp lc $b->display_name }
@@ -1724,9 +1733,6 @@ sub _do_find {
         $persist_vars{search_filter} = $search_filter;
         $template->param(search_filter => $search_filter);
     }
-
-    # find archived stories?
-    my $archived = $include eq 'archived' ? 1 : 0;
 
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
