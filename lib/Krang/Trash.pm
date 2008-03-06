@@ -30,6 +30,7 @@ use constant TRASH_OBJECT_FIELDS => qw(
 
 # static part of SQL query
 our $QUERY;
+our $num_user_id = 2;
 
 =head1 NAME
 
@@ -115,17 +116,22 @@ sub find {
     my $offset = delete $args{offset} || 0;
     my $count  = delete $args{count}  || 0;
 
-    # an order_by of type really means type,class,id.  Go figure.
-    $order_by = "type $order_dir,class,id" if $order_by eq 'type';
+    # massage order_by clause
+    if ($order_by eq 'type') {
+	$order_by = " type $order_dir, class ASC, id ASC ";
+    } elsif ($order_by eq 'title') {
+	$order_by = " title $order_dir, id ASC ";
+    } elsif ($order_by eq 'date') {
+	$order_by = " date $order_dir, type ASC, id ASC ";
+    } else {
+	$order_by .= " $order_dir ";
+    }
 
     # built at INIT time
     my $query = $QUERY;
 
     # mix in order_by
-    $query .= " ORDER BY $order_by $order_dir " if $order_by and not $count;
-
-    # default secondary order_by to ID
-    $query .= ",id ASC" unless $order_by eq 'id' or $order_by =~ /,/;
+    $query .= " ORDER BY $order_by " if $order_by and not $count;
 
     # add LIMIT clause, if any
     if ($limit) {
@@ -138,7 +144,7 @@ sub find {
 
     # execute the search
     my $sth = $dbh->prepare($query);
-    $sth->execute($user_id);
+    $sth->execute(($user_id) x $num_user_id);
     my $results = $sth->fetchall_arrayref;
     $sth->finish;
 
@@ -172,7 +178,7 @@ SELECT s.story_id    AS id,
        version,
        ucpc.may_see  AS may_see,
        ucpc.may_edit AS may_edit,
-       ''            AS forth_col,
+       0             AS forth_col,
        1             AS linkto
  FROM  story AS s
  LEFT JOIN story_category AS sc
@@ -184,18 +190,29 @@ SELECT s.story_id    AS id,
  AND   s.trashed = 1
  AND   ucpc.may_see = 1
 )
+
+UNION
+
+(
+ SELECT media_id      AS id,
+        'media'       AS type,
+        title         AS title,
+        ''            AS class,
+        url           AS url,
+        creation_date AS date,
+        version       AS version,
+        ucpc.may_see  AS may_see,
+        ucpc.may_edit AS may_edit,
+        0             AS forth_col,
+        1             AS linkto
+ FROM media AS m
+ LEFT JOIN user_category_permission_cache AS ucpc
+        ON m.category_id = ucpc.category_id
+ WHERE ucpc.user_id = ?
+ AND   ucpc.may_see = 1
+ AND   m.trashed    = 1
+)
 SQL
-##UNION
-##
-##(SELECT media_id AS id,
-##        'media' AS type,
-##        url,
-##        creation_date AS date,
-##        title,
-##        '' as class
-## FROM media
-## WHERE checked_out_by = ?)
-##
 ##UNION
 ##
 ##(SELECT template_id AS id,
@@ -243,7 +260,7 @@ the trashbin.
         ''           AS version,
         someperm     AS may_see,
         otherperm    AS may_edit,
-        ''           AS forth_col,  # this is media's thumbnail column
+        0            AS forth_col,  # boolean: this is media's thumbnail column
         1            AS linkto      # format the URL as a link
  FROM mailing
  WHERE trashed = 1
@@ -257,6 +274,8 @@ sub register_find_sql {
     my ($pkg, %args) = @_;
 
     $QUERY .= 'UNION (' . $args{sql} . ')';
+
+    $num_user_id++;
 }
 
 =item C<< pkg('Trash')->store(object => $story) >>
