@@ -1696,7 +1696,7 @@ sub untrash {
     # check back in
     $self->checkin();
 
-    add_hitemplate(
+    add_history(
         object => $self,
         action => 'untrash',
     );
