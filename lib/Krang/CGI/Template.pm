@@ -83,6 +83,7 @@ sub setup {
               edit_checkin
               edit_save_stay
               list_active
+              list_archived
               revert_version
               save_and_view_log
               search
@@ -91,6 +92,8 @@ sub setup {
               view_version
               autocomplete
               template_chooser_node
+              archive
+              unarchive
               /
         ]
     );
@@ -281,99 +284,16 @@ media objects, which will be listed on a paging view.
 From this paging view the user may choose to edit or view
 an object, or select a set of objects to be deleted.
 
+This method is deperecated, left here for backwards compatibility.
+
 =cut
 
 sub advanced_search {
     my $self = shift;
 
-    my $q = $self->query();
-    my $t = $self->load_tmpl('list_view.tmpl', associate => $q);
+    $self->query->param('do_advanced_search' => 1);
 
-    my %user_permissions = (pkg('Group')->user_asset_permissions);
-    $t->param(read_only => ($user_permissions{template} eq 'read-only'));
-
-    # if the user clicked 'clear', nuke the cached params in the session.
-    if (defined($q->param('clear_search_form'))) {
-        delete $session{KRANG_PERSIST}{pkg('Template')};
-    }
-
-    $t->param(do_advanced_search    => 1);
-    $t->param(history_return_params => $self->make_history_return_params(@history_param_list));
-
-    my $persist_vars = {rm => 'advanced_search'};
-    my $find_params = {};
-
-    # Build find params
-    my $search_below_category_id =
-      defined($q->param('search_below_category_id'))
-      ? $q->param('search_below_category_id')
-      : $session{KRANG_PERSIST}{pkg('Template')}
-      {cat_chooser_id_template_search_form_search_below_category_id};
-    if ($search_below_category_id) {
-        $persist_vars->{search_below_category_id} = $search_below_category_id;
-        $find_params->{below_category_id}         = $search_below_category_id;
-    }
-
-    # search_element
-    my $search_element =
-      defined($q->param('search_element'))
-      ? $q->param('search_element')
-      : $session{KRANG_PERSIST}{pkg('Template')}{search_element};
-
-    if ($search_element) {
-        $find_params->{filename}        = "$search_element.tmpl";
-        $persist_vars->{search_element} = $q->param('search_element');
-    }
-
-    # search_template_id
-    my $search_template_id =
-      defined($q->param('search_template_id'))
-      ? $q->param('search_template_id')
-      : $session{KRANG_PERSIST}{pkg('Template')}{search_template_id};
-
-    if ($search_template_id) {
-        $find_params->{template_id}         = $search_template_id;
-        $persist_vars->{search_template_id} = $q->param('search_template_id');
-        $t->param(search_template_id => $search_template_id);
-    }
-
-    # search_url
-    my $search_url =
-      defined($q->param('search_url'))
-      ? $q->param('search_url')
-      : $session{KRANG_PERSIST}{pkg('Template')}{search_url};
-
-    if ($search_url) {
-        $find_params->{url_like}    = "%$search_url%";
-        $persist_vars->{search_url} = $q->param('search_url');
-        $t->param(search_url => $search_url);
-    }
-
-    # Run pager
-    my $pager = $self->make_pager($persist_vars, $find_params);
-    $t->param(pager_html => $pager->output());
-    $t->param(row_count  => $pager->row_count());
-
-    # Set up element chooser
-    $t->param(
-        element_chooser => scalar template_chooser(
-            query      => $q,
-            name       => 'search_element',
-            formname   => 'template_search_form',
-            persistkey => 'Element',
-        )
-    );
-
-    # Set up category chooser
-    $t->param(
-        category_chooser => scalar category_chooser(
-            query      => $q,
-            formname   => 'template_search_form',
-            persistkey => pkg('Template'),
-            name       => 'search_below_category_id',
-        )
-    );
-    return $t->output();
+    return $self->search;
 }
 
 =item checkin_selected
@@ -472,7 +392,7 @@ sub delete_selected {
     my @bad_ids;
     for my $t (@template_ids) {
         debug(__PACKAGE__ . ": attempting to delete template id '$t'.");
-        eval { pkg('Template')->delete($t); };
+        eval { pkg('Template')->trash(template_id => $t); };
         if ($@) {
             if (ref $@ && $@->isa('Krang::Template::Checkout')) {
                 critical("Unable to delete template id '$t': $@");
@@ -488,7 +408,8 @@ sub delete_selected {
     } else {
         add_message('message_selected_deleted');
     }
-    return $self->search;
+
+    return $q->param('archived') ? $self->list_archived : $self->search;
 }
 
 =item deploy
@@ -779,18 +700,61 @@ simple searches.
 
 sub search {
     my $self = shift;
+
+    $self->query->param('other_search_place' => 'Search in Archive');
+
+    my %args = (
+        tmpl_file         => 'list_view.tmpl',
+        include_in_search => 'live'
+    );
+
+    $self->_do_search(%args);
+}
+
+=item list_archived
+
+List archived media which match the search criteria.  Provide links to
+view and unarchive each media.
+
+Also, provide checkboxes next to each story through which the user may
+select a set of stories to be deleted.
+
+=cut
+
+sub list_archived {
+    my $self = shift;
+
+    $self->query->param('other_search_place' => 'Search in Live');
+
+    my %args = (
+        tmpl_file         => 'list_archived.tmpl',
+        include_in_search => 'archived'
+    );
+
+    $self->_do_search(%args);
+}
+
+sub _do_search {
+    my ($self, %args) = @_;
+
+    my $q = $self->query;
+
+    # Search mode
+    my $do_advanced_search = defined($q->param('do_advanced_search'))
+      ? $q->param('do_advanced_search')
+      : $session{KRANG_PERSIST}{pkg('Template')}{do_advanced_search};
+
+    return $do_advanced_search
+      ? $self->_do_advanced_search(%args)
+      : $self->_do_simple_search(%args);
+}
+
+sub _do_simple_search {
+    my ($self, %args) = @_;
     my $q    = $self->query();
 
-    # if no runmode, and last search was advanced, do advanced.
-    return $self->advanced_search()
-      if (
-        not $q->param('rm')
-        and ($session{KRANG_PERSIST}{pkg('Template')}{rm}
-            and ($session{KRANG_PERSIST}{pkg('Template')}{rm} eq 'advanced_search'))
-      );
-
     my $t = $self->load_tmpl(
-        "list_view.tmpl",
+        $args{tmpl_file},
         associate         => $q,
         loop_context_vars => 1
     );
@@ -808,14 +772,25 @@ sub search {
     # ensure that $search_filter is at the very least defined.
     $search_filter = '' unless ($search_filter);
 
-    my $find_params = {simple_search => $search_filter, may_see => 1};
+    # search in Archive or in Live?
+    my $include = $args{include_in_search};
+
+    # find archived stories?
+    my $archived = $include eq 'archived' ? 1 : 0;
+
+    # find live or archived stories?
+    my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
+
+    my $find_params = {simple_search => $search_filter, may_see => 1, %include_options};
     my $persist_vars = {
-        rm            => 'search',
-        search_filter => $search_filter
+        rm            => ($archived ? 'list_archived' : 'search'),
+        search_filter => $search_filter,
+        $include      => 1,
+        do_advanced_search => 0,
     };
 
     # setup pager
-    my $pager = $self->make_pager($persist_vars, $find_params);
+    my $pager = $self->make_pager($persist_vars, $find_params, $archived);
 
     # get pager output
     $t->param(pager_html => $pager->output());
@@ -825,6 +800,113 @@ sub search {
 
     $t->param(search_filter => $search_filter);
 
+    return $t->output();
+}
+
+sub _do_advanced_search {
+    my ($self, %args) = @_;
+
+    my $q = $self->query();
+    my $t = $self->load_tmpl($args{tmpl_file}, associate => $q);
+
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    $t->param(read_only => ($user_permissions{template} eq 'read-only'));
+
+    # if the user clicked 'clear', nuke the cached params in the session.
+    if (defined($q->param('clear_search_form'))) {
+        delete $session{KRANG_PERSIST}{pkg('Template')};
+    }
+
+    $t->param(do_advanced_search    => 1);
+    $t->param(history_return_params => $self->make_history_return_params(@history_param_list));
+
+    # search in Archive or in Live?
+    my $include = $args{include_in_search};
+
+    # find archived stories?
+    my $archived = $include eq 'archived' ? 1 : 0;
+
+    # find live or archived stories?
+    my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
+
+    my $find_params = \%include_options;
+
+    my $persist_vars = {
+			rm => ($archived ? 'list_archived' : 'search'),
+			do_advanced_search => 1,
+			$include => 1,
+		       };
+
+    # Build find params
+    my $search_below_category_id =
+      defined($q->param('search_below_category_id'))
+      ? $q->param('search_below_category_id')
+      : $session{KRANG_PERSIST}{pkg('Template')}
+      {cat_chooser_id_template_search_form_search_below_category_id};
+    if ($search_below_category_id) {
+        $persist_vars->{search_below_category_id} = $search_below_category_id;
+        $find_params->{below_category_id}         = $search_below_category_id;
+    }
+
+    # search_element
+    my $search_element =
+      defined($q->param('search_element'))
+      ? $q->param('search_element')
+      : $session{KRANG_PERSIST}{pkg('Template')}{search_element};
+
+    if ($search_element) {
+        $find_params->{filename}        = "$search_element.tmpl";
+        $persist_vars->{search_element} = $q->param('search_element');
+    }
+
+    # search_template_id
+    my $search_template_id =
+      defined($q->param('search_template_id'))
+      ? $q->param('search_template_id')
+      : $session{KRANG_PERSIST}{pkg('Template')}{search_template_id};
+
+    if ($search_template_id) {
+        $find_params->{template_id}         = $search_template_id;
+        $persist_vars->{search_template_id} = $q->param('search_template_id');
+        $t->param(search_template_id => $search_template_id);
+    }
+
+    # search_url
+    my $search_url =
+      defined($q->param('search_url'))
+      ? $q->param('search_url')
+      : $session{KRANG_PERSIST}{pkg('Template')}{search_url};
+
+    if ($search_url) {
+        $find_params->{url_like}    = "%$search_url%";
+        $persist_vars->{search_url} = $q->param('search_url');
+        $t->param(search_url => $search_url);
+    }
+
+    # Run pager
+    my $pager = $self->make_pager($persist_vars, $find_params, $archived);
+    $t->param(pager_html => $pager->output());
+    $t->param(row_count  => $pager->row_count());
+
+    # Set up element chooser
+    $t->param(
+        element_chooser => scalar template_chooser(
+            query      => $q,
+            name       => 'search_element',
+            formname   => 'template_search_form',
+            persistkey => 'Element',
+        )
+    );
+
+    # Set up category chooser
+    $t->param(
+        category_chooser => scalar category_chooser(
+            query      => $q,
+            formname   => 'template_search_form',
+            persistkey => pkg('Template'),
+            name       => 'search_below_category_id',
+        )
+    );
     return $t->output();
 }
 
@@ -1012,13 +1094,16 @@ sub get_tmpl_params {
               if (($k eq 'rm') && ($v eq 'checkout_and_edit'));
         }
         $tmpl_params{history_return_params} = join("\n", @history_params);
-
+       
         $tmpl_params{can_edit} = 1
           unless (
             not($template->may_edit)
             or ($template->checked_out
                 and ($template->checked_out_by ne $ENV{REMOTE_USER}))
-          );
+	    or $template->archived
+            or $template->trashed);
+
+	$tmpl_params{return_script} = $q->param('return_script');
     }
 
     return \%tmpl_params;
@@ -1065,7 +1150,7 @@ sub make_history_return_params {
 # Given a persist_vars and find_params, return the pager object
 sub make_pager {
     my $self = shift;
-    my ($persist_vars, $find_params) = @_;
+    my ($persist_vars, $find_params, $archived) = @_;
 
     my %user_permissions = (pkg('Group')->user_asset_permissions);
 
@@ -1073,8 +1158,8 @@ sub make_pager {
       template_id
       filename
       url
-      commands_column
-      status);
+      commands_column);
+    push @columns, 'status' unless $archived;
     push @columns, 'checkbox_column'
       unless ($user_permissions{template} eq 'read-only');
 
@@ -1084,7 +1169,7 @@ sub make_pager {
         filename        => 'File Name',
         url             => 'URL',
         commands_column => '',
-        status          => 'Status',
+        ($archived ? () : (status => 'Status')),
     );
 
     my $q     = $self->query();
@@ -1096,7 +1181,7 @@ sub make_pager {
         columns          => \@columns,
         column_labels    => \%column_labels,
         columns_sortable => ['template_id', 'filename', 'url',],
-        row_handler => sub { $self->search_row_handler(@_) },
+        row_handler => sub { $self->search_row_handler(@_, archived => $archived) },
         id_handler  => sub { return $_[0]->template_id },
     );
 
@@ -1105,8 +1190,10 @@ sub make_pager {
 
 # Handles rows for search run mode
 sub search_row_handler {
-    my ($self, $row, $template) = @_;
-    $row->{deployed}    = $template->deployed ? '<b>D</b>' : '&nbsp;';
+    my ($self, $row, $template, %args) = @_;
+
+    my $archived = $args{archived};
+
     $row->{filename}    = $template->filename;
     $row->{template_id} = $template->template_id;
     $row->{url}         = format_url(url => $template->url, length => 30);
@@ -1126,18 +1213,33 @@ sub search_row_handler {
         $row->{commands_column} =
             qq|<input value="View Detail" onclick="view_template('|
           . $template->template_id
-          . qq|')" type="button" class="button">| . ' '
-          . qq|<input value="Edit" onclick="edit_template('|
-          . $template->template_id
-          . qq|')" type="button" class="button">|;
+          . qq|')" type="button" class="button"> |;
+        if ($archived) {
+            $row->{commands_column} .=
+                qq|<input value="Unarchive" onclick="unarchive_template('|
+              . $template->template_id
+              . qq|')" type="button" class="button">|;
+        } else {
+            $row->{commands_column} .=
+                qq|<input value="Edit" onclick="edit_template('|
+              . $template->template_id
+              . qq|')" type="button" class="button">| . ' '
+              . qq|<input value="Archive" onclick="archive_template('|
+              . $template->template_id
+              . qq|')" type="button" class="button">|;
+        }
     }
 
-    # status
-    if ($template->checked_out) {
-        $row->{status} = "Checked out by <b>"
-          . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
-    } else {
-        $row->{status} = '&nbsp;';
+    # deployed status and status
+    unless ($archived) {
+	$row->{deployed} = $template->deployed ? '<b>D</b>' : '&nbsp;';
+
+	if ($template->checked_out) {
+	    $row->{status} = "Checked out by <b>"
+	      . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
+	} else {
+	    $row->{status} = '&nbsp;';
+	}
     }
 }
 
@@ -1307,6 +1409,79 @@ sub template_chooser_node {
     my $query   = $self->query();
     my $chooser = template_chooser_object(query => $query,);
     return $chooser->handle_get_node(query => $query);
+}
+
+=item archive
+
+Move template to the archive and return to the Find Template screen
+
+=cut
+
+sub archive {
+    my $self = shift;
+    my $q    = $self->query;
+
+    my $template_id = $q->param('template_id');
+
+    croak("No template_id found in CGI params when archiving template.")
+      unless $template_id;
+
+    # load template from DB and archive it
+    my ($template) = pkg('Template')->find(template_id => $template_id);
+
+    croak("Unable to load Template '" . $template_id . "'.")
+      unless $template;
+
+    $template->archive();
+
+    add_message('template_archived', id => $template_id, url => $template->url);
+
+    $q->delete('template_id');
+
+    return $self->search();
+}
+
+=item unarchive
+
+Move template from archive back to live. If a DuplicateURL conflict
+occurs, leave the media archived and alert the user.
+
+=cut
+
+sub unarchive {
+    my $self = shift;
+    my $q    = $self->query;
+
+    my $template_id = $q->param('template_id');
+
+    croak("No template_id found in CGI params when trying to unarchive template.")
+      unless $template_id;
+
+    # load template from DB and unarchive it
+    my ($template) = pkg('Template')->find(template_id => $template_id);
+
+    croak("Unable to load template '" . $template_id . "'.")
+      unless $template;
+
+    eval { $template->unarchive() };
+
+    if ($@ and ref($@)) {
+	if ($@->isa('Krang::Template::DuplicateURL')) {
+	    add_alert('duplicate_url_on_unarchive', id => $template_id,
+		      other_id => $@->template_id, url => $template->url);
+	} elsif ($@->isa('Krang::Template::NoEditAccess')) {
+	    # param tampering
+##	    return $self->access_forbidden();
+	    # or perhaps a permission change
+	    add_alert('access_denied_on_unarchive', id => $template_id, url => $template->url);
+	}
+	return $self->list_archived;
+    }
+
+    add_message('template_unarchived', id => $template_id, url => $template->url);
+
+    return $self->list_archived;
+
 }
 
 =back

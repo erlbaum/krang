@@ -330,7 +330,7 @@ END
 <tmpl_else>
 
 <p class="naught">
-None found
+None found<tmpl_if other_search_place> <a href="javascript:other_search_rm()"><tmpl_var other_search_place></a></tmpl_if>
 </p>
 
 </tmpl_if>

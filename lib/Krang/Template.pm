@@ -87,6 +87,8 @@ use Exception::Class (
     'Krang::Template::DuplicateURL'         => {fields => 'template_id'},
     'Krang::Template::NoCategoryEditAccess' => {fields => 'category_id'},
     'Krang::Template::NoEditAccess'         => {fields => 'template_id'},
+    'Krang::Template::NoDeleteAccess'       => { fields => [ 'template_id'    ] },
+    'Krang::Template::NoRestoreAccess'      => { fields => [ 'template_id'    ] },
 );
 use Storable qw(nfreeze thaw);
 use Time::Piece;
@@ -120,7 +122,9 @@ use constant TEMPLATE_RO => qw(template_id
   deployed_version
   testing
   url
-  version);
+  version
+  archived
+  trashed);
 
 # Read-write fields
 use constant TEMPLATE_RW => qw(category_id
@@ -518,8 +522,10 @@ sub duplicate_check {
 
     my $query = <<SQL;
 SELECT template_id
-FROM template
-WHERE url = '$self->{url}'
+FROM   template
+WHERE  url = '$self->{url}'
+AND    archived = 0
+AND    trashed  = 0
 SQL
     $query .= "AND template_id != $id" if $id;
     my $dbh = dbh();
@@ -694,6 +700,26 @@ results are sorted with the 'template_id' field.
 Set this flag to '1' to sort results relative to the 'order_by' field in
 descending order, by default results sort in ascending order
 
+=item * include_live
+
+Include live templates in the search result. Live templates are
+templates that are neither archived nor have been moved to the
+trashbin. Set this option to 0, if find() should not return live
+templates.  The default is 1.
+
+=item * include_archived
+
+Set this option to 1 if you want to include archived templates in the
+search result. The default is 0.
+
+=item  * include_trashed
+
+Set this option to 1 if you want to include trashed templates in the
+search result. Trashed templates live in the trashbin. The default is 0.
+
+B<NOTE:>When searching for template_id, these three include_* flags are
+not taken into account!
+
 =back
 
 The method croaks if an invalid search criteria is provided or if both the
@@ -712,6 +738,12 @@ sub find {
     my $limit   = delete $args{limit}   || '';
     my $offset  = delete $args{offset}  || '';
     my $order_by = "t." . (delete $args{order_by} || 'template_id');
+
+    # set search includes
+    my $include_archived = delete $args{include_archived} || 0;
+    my $include_trashed  = delete $args{include_trashed}  || 0;
+    my $include_live     = delete $args{include_live};
+    $include_live = 1 unless defined($include_live);
 
     # set search fields
     my $count    = delete $args{count}    || '';
@@ -843,6 +875,35 @@ sub find {
         $fields .= ", " . join(", ", @may_fields);
     }
 
+    # include live/archived/trashed
+    unless ($args{template_id}) {
+	if ($include_live) {
+	    unless ($include_archived) {
+		$where_clause .= ' and ' if $where_clause;
+		$where_clause .= ' t.archived = 0';
+	    }
+	    unless ($include_trashed) {
+		$where_clause .= ' and ' if $where_clause;
+		$where_clause .= ' t.trashed  = 0';
+	    }
+	} else {
+	    if ($include_archived) {
+		if ($include_trashed) {
+		    $where_clause .= ' and 'if $where_clause;
+		    $where_clause .= ' t.archived = 1 AND t.trashed = 1';
+		} else {
+		    $where_clause .= ' and 'if $where_clause;
+		    $where_clause .= ' t.archived = 1 AND t.trashed = 0';
+		}
+	    } else {
+		if ($include_trashed) {
+		    $where_clause .= ' and 'if $where_clause;
+		    $where_clause .= ' t.trashed = 1';
+		}
+	    }
+	}
+    }
+
     # construct base query
     my $query = qq( SELECT $fields FROM template t 
                     left join user_category_permission_cache as ucpc
@@ -968,6 +1029,8 @@ sub init {
     $self->{testing}        = 0;
     $self->{creation_date}  = localtime();
     $self->{template_uuid}  = pkg('UUID')->new();
+    $self->{archived}       = 0;
+    $self->{trashed}        = 0;
 
     $self->hash_init(%args);
 
@@ -1299,6 +1362,8 @@ sub serialize_xml {
     $writer->dataElement(version       => $self->{version});
     $writer->dataElement(deployed_version => $self->{deployed_version})
       if $self->{deployed_version};
+    $writer->dataElement(archived      => $self->archived);
+    $writer->dataElement(trashed       => $self->trashed);
 
     # add category to set
     $set->add(object => $self->category, from => $self)
@@ -1422,8 +1487,6 @@ out to the current user.
 A Krang::Template::Checkout exception is thrown if the template isn't checked
 out or is checked out by another user, otherwise, '1' is returned.
 
-=back
-
 =cut
 
 sub verify_checkout {
@@ -1448,6 +1511,196 @@ sub verify_checkout {
 }
 
 sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url; }
+
+=item C<< $template->archive() >>
+
+=item C<< Krang::Template->archive(template_id => $template_id) >>
+
+Archive the template, i.e. undeploy it and don't show it on the Find
+Template screen.  Throws a Krang::Template::NoEditAccess exception if
+user may not edit this template. Croaks if the template is checked out
+by another user.
+
+=cut
+
+sub archive {
+    my ($self, %args) = @_;
+    unless(ref $self) {
+        my $template_id = $args{template_id};
+        ($self) = pkg('Template')->find(template_id => $template_id);
+        croak("Unable to load template '$template_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Template::NoEditAccess->throw( message => "Not allowed to edit template", template_id => $self->template_id )
+        unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # undeploy
+    pkg('Publisher')->new->undeploy_template(template => $self);
+
+    # archive the template
+    my $dbh = dbh();
+    $dbh->do("UPDATE template
+              SET    archived = 1
+              WHERE  template_id = ?", undef,
+	     $self->{template_id});
+
+    # living in archive
+    $self->{archived} = 1;
+
+    $self->checkin();
+
+    add_history(
+        object => $self,
+        action => 'archive'
+    );
+}
+
+=item C<< $template->unarchive() >>
+
+=item C<< Krang::Template->unarchive(template_id => $template_id) >>
+
+Unarchive the template, i.e. show it again on the Find Template screen, but
+don't redeploy it. Throws a Krang::Template::NoEditAccess exception if
+user may not edit this template. Croaks if the template is checked out by
+another user.
+
+=cut
+
+sub unarchive {
+    my ($self, %args) = @_;
+    unless(ref $self) {
+        my $template_id = $args{template_id};
+        ($self) = pkg('Template')->find(template_id => $template_id);
+        croak("Unable to load template '$template_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Template::NoEditAccess->throw( message => "Not allowed to edit template", template_id => $self->template_id )
+        unless ($self->may_edit);
+
+    # make sure no other template occupies our initial place (URL)
+    $self->duplicate_check();
+
+    # make sure we are the one
+    $self->checkout;
+
+    # alive again
+    $self->{archived} = 0;
+
+    # unarchive the template
+    my $dbh = dbh();
+    $dbh->do('UPDATE template
+              SET    archived = 0
+              WHERE  template_id = ?', undef,
+	     $self->{template_id});
+
+    add_history(
+        object => $self,
+        action => 'unarchive',
+    );
+
+    # check it back in
+    $self->checkin();
+}
+
+=item C<< $template->trash() >>
+
+=item C<< Krang::Template->trash(template_id => $template_id) >>
+
+Move the template to the trashbin, i.e. undeploy it and don't show it
+on the Find Template screen.  Throws a Krang::Template::NoEditAccess
+exception if user may not edit this template. Croaks if the template
+is checked out by another user.
+
+=cut
+
+sub trash {
+    my ($self, %args) = @_;
+    unless(ref $self) {
+        my $template_id = $args{template_id};
+        ($self) = pkg('Template')->find(template_id => $template_id);
+        croak("Unable to load template '$template_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Template::NoEditAccess->throw( message => "Not allowed to edit template", template_id => $self->template_id )
+        unless ($self->may_edit);
+
+    # make sure we are the one
+    $self->checkout;
+
+    # undeploy
+    pkg('Publisher')->new->undeploy_template(template => $self);
+
+    # store in trash
+    pkg('Trash')->store(object => $self);
+
+    # update object
+    $self->{trashed} = 1;
+
+    # release it
+    $self->checkin();
+
+    # and log it
+    add_history(object => $self, action => 'trash');
+}
+
+=item C<< $template->untrash() >>
+
+=item C<< Krang::Template->untrash(template_id => $template_id) >>
+
+Restore the template from the trashbin, i.e. show it again on the Find
+Template or Archived Templates screens (depending on the location from
+where it was deleted).  Throws a Krang::Template::NoRestoreAccess
+exception if user may not edit this template. Croaks if the template
+is checked out by another user. This method is called by
+Krang::Trash->restore().
+
+=back
+
+=cut
+
+sub untrash {
+    my ($self, %args) = @_;
+    unless(ref $self) {
+        my $template_id = $args{template_id};
+        ($self) = pkg('Template')->find(template_id => $template_id);
+        croak("Unable to load template '$template_id'.") unless $self;
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Template::NoRestoreAccess->throw(message => "Not allowed to restore template",
+					    template_id => $self->template_id)
+        unless ($self->may_edit);
+
+    # make sure no other template occupies our initial place (URL)
+    $self->duplicate_check unless $self->archived;
+
+    # make sure we are the one
+    $self->checkout;
+
+    # untrash the template
+    my $dbh = dbh();
+    $dbh->do('UPDATE template
+              SET trashed = ?
+              WHERE template_id = ?', undef,
+	     0, $self->{template_id});
+
+    # maybe in archive, maybe alive again
+    $self->{trashed} = 0;
+
+    # check back in
+    $self->checkin();
+
+    add_hitemplate(
+        object => $self,
+        action => 'untrash',
+    );
+}
 
 =head1 TO DO
 

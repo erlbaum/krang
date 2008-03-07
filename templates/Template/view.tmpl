@@ -32,10 +32,11 @@ Krang.onload( function() {
 View Template
 </h2>
 
-<form name="return_form" action="template.pl" method="post">
+<form name="return_form" action="<tmpl_var escape=html return_script>" method="post">
 
 <tmpl_var history_return_params>
 <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+<input name="archived" value="<tmpl_var escape=html archived>" type="hidden">
 
 <h3>
 Properties

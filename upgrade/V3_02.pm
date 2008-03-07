@@ -22,6 +22,10 @@ sub per_instance {
     $dbh->do('ALTER TABLE media ADD COLUMN archived BOOL NOT NULL DEFAULT 0');
     $dbh->do('ALTER TABLE media ADD COLUMN trashed  BOOL NOT NULL DEFAULT 0');
 
+    # add 'archived' and 'trashed' columns to Template
+    $dbh->do('ALTER TABLE template ADD COLUMN archived BOOL NOT NULL DEFAULT 0');
+    $dbh->do('ALTER TABLE template ADD COLUMN trashed  BOOL NOT NULL DEFAULT 0');
+
     # add admin permission 'admin_delete' and give it to admin and editor group
     $dbh->do('Alter TABLE group_permission ADD COLUMN admin_delete BOOL NOT NULL DEFAULT 0');
     $dbh->do('Update group_permission SET admin_delete = 1 WHERE group_id = 1');

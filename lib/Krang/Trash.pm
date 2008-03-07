@@ -30,7 +30,7 @@ use constant TRASH_OBJECT_FIELDS => qw(
 
 # static part of SQL query
 our $QUERY;
-our $num_user_id = 2;
+our $num_user_id = 3;
 
 =head1 NAME
 
@@ -212,18 +212,29 @@ UNION
  AND   ucpc.may_see = 1
  AND   m.trashed    = 1
 )
+
+UNION
+
+(
+ SELECT template_id   AS id,
+        'template'    AS type,
+        filename      AS title,
+        ''            AS class,
+        url           AS url,
+        creation_date AS date,
+        version       AS version,
+        ucpc.may_see  AS may_see,
+        ucpc.may_edit AS may_edit,
+        0             AS forth_col,
+        0             AS linkto
+ FROM template AS t
+ LEFT JOIN user_category_permission_cache AS ucpc
+        ON t.category_id = ucpc.category_id
+ WHERE (ucpc.user_id = ? OR t.category_id IS NULL)
+ AND   (ucpc.may_see = 1 OR ucpc.may_see IS NULL)
+ AND   t.trashed    = 1
+)
 SQL
-##UNION
-##
-##(SELECT template_id AS id,
-##        'template' as type,
-##        url,
-##        creation_date AS date,
-##        filename AS title,
-##        '' as class
-## FROM template
-## WHERE checked_out_by = ?)
-##SQL
 
 =item C<< pkg('Trash')->register_find_sql(sql => $sql) >>
 

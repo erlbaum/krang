@@ -251,6 +251,10 @@ sub default_tree {
     $sub->name('Active Templates');
     $sub->link('template.pl?rm=list_active');
 
+    $sub  = $node->new_daughter();
+    $sub->name('Archived Templates');
+    $sub->link('template.pl?rm=list_archived');
+
     # setup template FTP link (which is dynamic) unless it's disabled
     if( EnableFTP ) {
         $sub  = $node->new_daughter();

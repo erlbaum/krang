@@ -2,20 +2,16 @@
 
 <script type="text/javascript">
 Krang.onload( function() {
-  Krang.Help.set( 'template_find' );
+  Krang.Help.set( 'template_archived' );
 } );
 
-add_template = function() {
-    Krang.Form.submit('template_search_form', { rm: 'add'});
+other_search_rm = function() {
+  Krang.Form.submit('template_search_form', { rm: 'search', other_search_place: 'Search in Archive' });
 }
 
 show_advanced_search = function( show_advanced )
 {
   Krang.Form.submit( 'template_search_form', { do_advanced_search: show_advanced }, { to_top: false } );
-}
-
-other_search_rm = function() {
-  Krang.Form.submit('template_search_form', { rm: 'list_archived', other_search_place: 'Search in Live' });
 }
 
 <tmpl_if do_advanced_search>
@@ -26,11 +22,6 @@ other_search_rm = function() {
 </tmpl_if>
 
 <tmpl_if row_count>
-  edit_template = function( id )
-  {
-    Krang.Form.submit('find_template', { rm: 'checkout_and_edit', template_id: id });
-  }
-
   view_template = function( id )
   {
     Krang.Form.submit('find_template', { rm: 'view', template_id: id });
@@ -38,44 +29,47 @@ other_search_rm = function() {
 
   delete_selected = function()
   {
-    if ( !Krang.pager_row_checked() )
-      alert( 'Nothing selected to delete!' );
-    else if ( confirm( 'Are you SURE you want to delete the checked Templates?' ) )
-      Krang.Form.submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
+      var question = '';
+      var num_rows_checked = Krang.pager_row_checked();
+
+      if (!num_rows_checked) {
+        alert( 'Nothing selected to delete!' );
+      } else {
+        if (num_rows_checked > 1) {
+	  question = 'Are you SURE you want to delete the checked Templates?';
+        } else {
+	  question = 'Are you SURE you want to delete the checked Template';
+        }
+        if (confirm(question)) {
+          Krang.Form.submit( 'krang_pager_form', { rm : 'delete_selected' }, { to_top : false } );
+        }
+      }
+  }
+  unarchive_template = function(id)
+  {
+    Krang.Form.submit('find_template', { rm: 'unarchive', template_id: id });
   }
 
-  do_deploy = function()
-  {
-    if ( !Krang.pager_row_checked() )
-      alert( 'Nothing selected to deploy!' );
-    else if ( confirm( 'Are you SURE you want to deploy the checked Templates?' ) )
-      Krang.Form.submit('krang_pager_form', { rm: 'deploy_selected' }, { to_top: false });
-  }
-
-  archive_template = function(id)
-  {
-    if (confirm('Are you SURE you want to archive this Template?'))
-      Krang.Form.submit('find_template', { rm: 'archive', template_id: id });
-  }
 </tmpl_if>
 </script>
 
 <h2>
-Find Templates
+Archived Templates
 </h2>
 
 <form name="template_search_form" method="post" action="template.pl">
 
-<input name="rm" value="search" type="hidden">
+<input name="rm" value="list_archived" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 <input name="do_advanced_search" value="<tmpl_if do_advanced_search>1<tmpl_else>0</tmpl_if>" type="hidden">
+<input name="other_search_place" value="Search in Live" type="hidden">
+
 <tmpl_if do_advanced_search>
   <input name="search_filter" value="" type="hidden">
 </tmpl_if>
-<input name="other_search_place" value="Search in Archive" type="hidden">
 
 <div class="tabset finder">
 
@@ -155,9 +149,7 @@ Search Results
 
 <tmpl_unless read_only>
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
-  <input value="Add Template" onclick="add_template()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="Deploy" onclick="do_deploy()" type="button">
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
@@ -169,9 +161,7 @@ Search Results
 
 <tmpl_unless read_only>
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
-  <input value="Add Template" onclick="add_template()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="Deploy" onclick="do_deploy()" type="button">
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
@@ -179,10 +169,10 @@ Search Results
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" method="post" action="template.pl">
-  <input name="rm" value="search" type="hidden">
-  <input name="do_advanced_search" value="1" type="hidden">
+  <input name="rm" value="list_archived" type="hidden">
   <input name="search_filter" value="" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
+  <input name="do_advanced_search" value="1" type="hidden">
   </form>
 </tmpl_if>
 
@@ -190,6 +180,7 @@ Search Results
   <form name="find_template" method="post" action="template.pl">
   <input name="rm" value="view" type="hidden">
   <input name="template_id" type="hidden">
+  <input name="archived" value="1" type="hidden">
   <input name="return_script" value="template.pl" type="hidden">
   <tmpl_var history_return_params>
   </form>
