@@ -282,6 +282,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
                 $template->deploy unless $test_mode;
                 print "  Re-deployed template $template_id\n" if $v;
             }
+	    print "\n(DIDN'T ACTUALLY RE-DEPLOY TEMPLATES - RUNNING IN TEST-MODE)\n\n" if $v;
         } 
     }
 
