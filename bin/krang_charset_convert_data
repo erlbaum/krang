@@ -138,6 +138,11 @@ use Encode qw(from_to);
 use Storable qw(nfreeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
 
+
+# Hot pipes
+local($|) = 1;
+
+
 # options
 my ($from, $to, $help, $man, $all_instances, @only_site_ids, @only_story_ids, @skip_story_ids, $test_mode, $v);
 GetOptions(
@@ -249,7 +254,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             $sql .= $table->{extra_sql};
             @binds = @{$table->{binds}};
         }
-        my $sth = $dbh->prepare_cached($sql, { "mysql_use_result" => 1});
+        my $sth = $dbh->prepare_cached($sql);
 
         # what we need to update the info
         my $update_sql =
@@ -257,7 +262,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           . join(', ', map { " $_ = ? " } @fields)
           . " WHERE "
           . join(' AND ', map { " $_ = ? " } @id_fields);
-        my $update_sth = $dbh->prepare_cached($update_sql, { "mysql_use_result" => 1});
+        my $update_sth = $dbh->prepare_cached($update_sql);
         $sth->execute(@binds);
         my $count = 0;
         while(my $row = $sth->fetchrow_hashref) {
@@ -267,11 +272,13 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             # convert each data field
             @data = map { convert_scalar($_) || '' } @data;
 
+            print "    Updated $count rows in $name                \r" if $v;
+
             # now put the data back
             $update_sth->execute(@data, @ids) unless $test_mode;
             $count++;
         }
-        print "    Updated $count rows in $name\n" if $v;
+        print "    Updated $count rows in $name              \n" if $v;
     }
 
     # now that template contents have changed, redeploy all deployed templates
@@ -283,7 +290,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
                 print "  Re-deployed template $template_id\n" if $v;
             }
         } 
-	print "\n(DIDN'T ACTUALLY RE-DEPLOY TEMPLATES - RUNNING IN TEST-MODE)\n\n" if $v;
+	print "\n(DIDN'T ACTUALLY RE-DEPLOY TEMPLATES - RUNNING IN TEST-MODE)\n\n" if ($test_mode and $v);
     }
 
     # if there are no stories, no need to convert element table
@@ -317,9 +324,9 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           JOIN category c ON (c.element_id = e.root_id)
           WHERE c.site_id IN ($site_ph)
           /
-          ), { "mysql_use_result" => 1});
+          ));
 
-    my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?', { "mysql_use_result" => 1});
+    my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
     $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids);
 
     my $count = 0;
@@ -362,7 +369,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
         }
     }
     print "    Converted $count elements\n" if $v;
-    print "\n* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\nn" 
+    print "\n* * * TEST MODE - NO ACTUAL CHANGES WERE WRITTEN TO THE DATABASE * * *\n\n" 
 	if ($test_mode && $v);
 }
 
