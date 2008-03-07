@@ -2,7 +2,6 @@ package Krang::CGI::Story;
 use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Apache::Reload;
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
