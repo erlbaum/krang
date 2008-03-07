@@ -249,7 +249,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
             $sql .= $table->{extra_sql};
             @binds = @{$table->{binds}};
         }
-        my $sth = $dbh->prepare_cached($sql);
+        my $sth = $dbh->prepare_cached($sql, { "mysql_use_result" => 1});
 
         # what we need to update the info
         my $update_sql =
@@ -257,7 +257,7 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           . join(', ', map { " $_ = ? " } @fields)
           . " WHERE "
           . join(' AND ', map { " $_ = ? " } @id_fields);
-        my $update_sth = $dbh->prepare_cached($update_sql);
+        my $update_sth = $dbh->prepare_cached($update_sql, { "mysql_use_result" => 1});
         $sth->execute(@binds);
         my $count = 0;
         while(my $row = $sth->fetchrow_hashref) {
@@ -282,8 +282,8 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
                 $template->deploy unless $test_mode;
                 print "  Re-deployed template $template_id\n" if $v;
             }
-	    print "\n(DIDN'T ACTUALLY RE-DEPLOY TEMPLATES - RUNNING IN TEST-MODE)\n\n" if $v;
         } 
+	print "\n(DIDN'T ACTUALLY RE-DEPLOY TEMPLATES - RUNNING IN TEST-MODE)\n\n" if $v;
     }
 
     # if there are no stories, no need to convert element table
@@ -317,9 +317,9 @@ foreach my $instance ($all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_IN
           JOIN category c ON (c.element_id = e.root_id)
           WHERE c.site_id IN ($site_ph)
           /
-          ));
+          ), { "mysql_use_result" => 1});
 
-    my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
+    my $update_sth = $dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?', { "mysql_use_result" => 1});
     $fetch_sth->execute(@story_ids, @only_story_ids ? () : @site_ids);
 
     my $count = 0;
