@@ -2011,7 +2011,7 @@ sub deserialize_xml {
     my (%complex, %simple);
     @complex{
         qw(media_id filename publish_date creation_date checked_out_by
-          version url published_version category_id media_uuid)
+          version url published_version category_id media_uuid trashed archived)
       }
       = ();
     %simple = map { ($_, 1) } grep { not exists $complex{$_} } (FIELDS);

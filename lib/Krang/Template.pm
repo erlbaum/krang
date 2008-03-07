@@ -1398,7 +1398,7 @@ sub deserialize_xml {
     @complex{
         qw(template_id deploy_date creation_date url
           checked_out checked_out_by version deployed testing
-          deployed_version category_id template_uuid)
+          deployed_version category_id template_uuid trashed archived)
       }
       = ();
     %simple = map { ($_, 1) } grep { not exists $complex{$_} } (TEMPLATE_RO, TEMPLATE_RW);
