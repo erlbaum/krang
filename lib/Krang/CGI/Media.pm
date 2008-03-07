@@ -326,7 +326,7 @@ sub _do_advanced_find {
     my $find_params = \%include_options;
 
     my $persist_vars = {
-        rm => ($archived ? 'list_archived' : 'advanced_find'),
+        rm => ($archived ? 'list_archived' : 'find'),
         asset_type => 'media',
         do_advanced_search => 1,
 	$include => 1,
@@ -1986,7 +1986,7 @@ sub autocomplete {
 
 =item archive
 
-Move media to the archive and return to the Find Media screen
+Move media to the archive and return to the Find Media screen.
 
 =cut
 
@@ -2016,11 +2016,8 @@ sub archive {
 
 =item unarchive
 
-Move media from archive back to live. Modify the media's filename if
-it conflicts with a live media or category.
-
-If a URL conflict occures, return to Edit Media, otherwise return to
-the Archived Stories.
+Move media from archive back to live. If a DuplicateURL conflict
+occurs, leave the media archived and alert the user.
 
 =cut
 
