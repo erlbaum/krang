@@ -2694,9 +2694,11 @@ sub trash {
 =item C<< Krang::Story->untrash(story_id => $story_id) >>
 
 Restore the story from the trashbin, i.e. show it again on the Find
-Story screen.  Throws a Krang::Story::NoEditAccess exception if user
-may not edit this story. Croaks if the story is checked out by another
-user. This method is called by Krang::Trash->restore().
+Story screen or Archived Stories screens (depending on the location
+from where it was deleted).  Throws a Krang::Story::NoRestoreAccess
+exception if user may not edit this story. Croaks if the story is
+checked out by another user. This method is called by
+Krang::Trash->restore().
 
 =cut
 
