@@ -354,8 +354,10 @@ sub categories {
     # invalidate url cache
     $self->{url_cache} = [];
 
-    # make sure this change didn't cause a conflict
-    $self->_verify_unique();
+    unless ($self->{slug} eq '_TEMP_SLUG_FOR_CONVERSION_') {
+        # make sure this change didn't cause a conflict
+        $self->_verify_unique();
+    }
 }
 
 =item C<urls> (readonly)
