@@ -25,6 +25,10 @@ The script takes the following options:
 
 =over
 
+=item --verbose
+
+Show additional progress reports during conversion.
+
 =item --no-prompt
 
 Do not prompt user for any confirmation.
