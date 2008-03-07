@@ -55,12 +55,25 @@ isa_ok($site, 'Krang::Site');
 my $category = $creator->create_category();
 isa_ok($category, 'Krang::Category');
 
-for my $object (
-		[qw(story stories slug)  , {}               ],
-		[qw(media media filename), {format => 'png'}],
-	       ) {
-    test_this($object);
-}
+my @cats = ();
+push @cats, $creator->create_category() for 1..5;
+
+# test objects Story, Media and Template
+test_this($_) for
+  (
+   [qw(story    stories   slug    ), [ {}, {}, {}, {}, {} ] ],
+   [qw(media    media     filename), [ {format => 'png'}, {format => 'png'},
+				       {format => 'png'}, {format => 'png'},{format => 'png'}
+				     ]
+   ],
+   [qw(template templates filename), [ {element_name => 'element', content => 'x', category => $cats[0] },
+				       {element_name => 'element', content => 'x', category => $cats[1] },
+				       {element_name => 'element', content => 'x', category => $cats[2] },
+				       {element_name => 'element', content => 'x', category => $cats[3] },
+				       {element_name => 'element', content => 'x', category => $cats[4] },
+				     ]
+   ],
+  );
 
 sub test_this {
     my $spec = shift;
@@ -75,12 +88,12 @@ sub test_this {
     my $obj_id      = $object   . '_id';
 
     # create some objects
-    my %args = %$args;
-    my $obj0 = $creator->$create_meth(%args);
-    my $obj1 = $creator->$create_meth(%args);
-    my $obj2 = $creator->$create_meth(%args);
-    my $obj3 = $creator->$create_meth(%args);
-    my $obj4 = $creator->$create_meth(%args);
+    my @args = @$args;
+    my $obj0 = $creator->$create_meth(%{$args->[0]});
+    my $obj1 = $creator->$create_meth(%{$args->[1]});
+    my $obj2 = $creator->$create_meth(%{$args->[2]});
+    my $obj3 = $creator->$create_meth(%{$args->[3]});
+    my $obj4 = $creator->$create_meth(%{$args->[4]});
 
     my @objects = ($obj0, $obj1, $obj2, $obj3, $obj4);
     my ($oid0,  $oid1,  $oid2,  $oid3,  $oid4)  = map { $_->$obj_id } @objects;
@@ -247,7 +260,7 @@ sub test_this {
 
     my $dup00 = '';
     $fn0 =~ s/\.png$//; # special for Media: strip the file extension
-    eval { $dup00 = $creator->$create_meth($fn => $fn0, %args) };
+    eval { $dup00 = $creator->$create_meth($fn => $fn0, %{$args->[0]}) };
     ok(not($@), "Dup 1 of $Object $oid0 created");
 
     # archive dup00 and try to create dup01
@@ -255,14 +268,51 @@ sub test_this {
     is($dup00->archived, 1, "Dup 1 of $Object $oid0 archived");
 
     my $dup01 = '';
-    eval { $dup01 = $creator->$create_meth($fn => $fn0, %args) };
+    eval { $dup01 = $creator->$create_meth($fn => $fn0, %{$args->[0]}) };
     ok(not($@), "Dup 2 of $Object $oid0 created");
 
+    # try to unarchive $obj0 and $dup00 - should throw an error
     eval { $obj0->unarchive() };
     isa_ok($@, "Krang::${Object}::DuplicateURL");
+    $obj0->archive();
 
     eval { $dup00->unarchive() };
     isa_ok($@, "Krang::${Object}::DuplicateURL");
+    $dup00->archive();
+
+    # test DuplicateURL throwing when untrashing
+    $dup01->trash;
+    my $dup01_id = $dup01->$obj_id;
+    is($dup01->trashed,  1, "Dup 2 of $Object $oid0 is trashed");
+    is($dup01->archived, 0, "Dup 2 of $Object $oid0 is not archived");
+
+    # create another dupe
+    my $dup03 = '';
+    eval { $dup03 = $creator->$create_meth($fn => $fn0, %{$args->[0]}) };
+    ok(not($@), "Dup 3 of $Object $oid0 created");
+
+    # try to untrash $dup01 - should throw exception
+    eval { $dup01->untrash };
+    isa_ok($@, "Krang::${Object}::DuplicateURL");
+
+    # now trash archived objects
+    $obj0->trash;
+    is($obj0->trashed,  1, "$Object $oid0 is trashed");
+    is($obj0->archived, 1, "$Object $oid0 still has archived flag set");
+
+    $dup00->trash;
+    is($dup00->trashed,  1, "Dup 1 of $Object $oid0 is trashed");
+    is($dup00->archived, 1, "Dup 1 of $Object $oid0 still has archived flag set");
+
+    # ... and untrash them - should both land in Archive without DuplicateURL error
+    $obj0->untrash;
+    is($obj0->trashed,  0, "$Object $oid0 is untrashed");
+    is($obj0->archived, 1, "$Object $oid0 lives in archive again");
+
+    $dup00->untrash;
+    is($dup00->trashed,  0, "Dup 1 of $Object $oid0 is untrashed");
+    is($dup00->archived, 1, "Dup 1 of $Object $oid0 lives in archive again");
 
     END { my $dbh = dbh; $dbh->do("DELETE FROM trash") }
 }
+use Data::Dumper;
