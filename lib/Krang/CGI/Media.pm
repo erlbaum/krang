@@ -149,7 +149,8 @@ sub _do_find {
     my $q = $self->query;
 
     # Search mode
-    my $do_advanced_search = defined($q->param('do_advanced_search'))
+    my $do_advanced_search =
+      defined($q->param('do_advanced_search'))
       ? $q->param('do_advanced_search')
       : $session{KRANG_PERSIST}{pkg('Media')}{do_advanced_search};
 
@@ -202,6 +203,7 @@ sub _do_simple_find {
     $session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails} = $show_thumbnails;
 
     unless (defined($search_filter)) {
+
         # Define search_filter
         $search_filter = '';
     }
@@ -217,11 +219,11 @@ sub _do_simple_find {
 
     my $persist_vars = {
         rm => ($archived ? 'list_archived' : 'find'),
-        search_filter   => $search_filter,
-        show_thumbnails => $show_thumbnails,
-        asset_type      => 'media',
-	$include        => 1,
-	do_advanced_search => 0,
+        search_filter      => $search_filter,
+        show_thumbnails    => $show_thumbnails,
+        asset_type         => 'media',
+        $include           => 1,
+        do_advanced_search => 0,
     };
 
     my $find_params = {
@@ -327,9 +329,9 @@ sub _do_advanced_find {
 
     my $persist_vars = {
         rm => ($archived ? 'list_archived' : 'find'),
-        asset_type => 'media',
+        asset_type         => 'media',
         do_advanced_search => 1,
-	$include => 1,
+        $include           => 1,
     };
 
     my $show_thumbnails;
@@ -487,9 +489,9 @@ sub _do_advanced_find {
             nochoice => 1,
         ),
         date_to_chooser => datetime_chooser(
-            query => $q,
-            name => 'search_creation_date_to',
-            nochoice =>1,
+            query    => $q,
+            name     => 'search_creation_date_to',
+            nochoice => 1,
         )
     );
 
@@ -1787,8 +1789,8 @@ sub make_return_params {
         # set the value either to a CGI param, what was previously in the
         # session, or nothing.
         my $pval = $q->param($hrp);
-	$pval = $session{KRANG_PERSIST}{pkg('Media')}{$hrp} unless defined($pval);
-	$pval = '' unless defined($pval);
+        $pval = $session{KRANG_PERSIST}{pkg('Media')}{$hrp} unless defined($pval);
+        $pval = '' unless defined($pval);
 
         push(
             @return_params_hidden,
@@ -1821,9 +1823,9 @@ sub make_pager {
       url
       creation_date
       commands_column
+      status
     );
 
-    push @columns, 'status'          unless $archived;
     push @columns, 'checkbox_column' unless $read_only;
 
     my %column_labels = (
@@ -1834,7 +1836,7 @@ sub make_pager {
         url             => 'URL',
         creation_date   => 'Date',
         commands_column => '',
-        ($archived ? () : (status => 'Status')),
+        status          => 'Status',
     );
 
     # Hide thumbnails
@@ -1865,7 +1867,16 @@ sub find_media_row_handler {
     my $self = shift;
     my ($show_thumbnails, $row, $media, %args) = @_;
 
-    my $archived = $args{archived};
+    # Read-only users don't see everything....
+    my %user_permissions = (pkg('Group')->user_asset_permissions);
+    my $read_only = ($user_permissions{story} eq 'read-only');
+
+    my $list_archived        = $args{archived};
+    my $may_edit_and_archive = (
+        not($media->may_edit)
+          or (  ($media->checked_out)
+            and ($media->checked_out_by ne $ENV{REMOTE_USER}))
+    ) ? 0 : 1;
 
     # media_id
     my $media_id = $media->media_id();
@@ -1895,48 +1906,72 @@ sub find_media_row_handler {
     my $tp = $media->creation_date();
     $row->{creation_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 
-    # buttons
-    if (not($media->may_edit)
-        or (($media->checked_out) and ($media->checked_out_by ne $ENV{REMOTE_USER})))
-    {
+    # Buttons: all may view
+    $row->{commands_column} =
+        qq|<input value="View Detail" onclick="view_media('|
+      . $media->media_id
+      . qq|')" type="button" class="button">|;
+
+    # short-circuit for trashed media
+    if ($media->trashed) {
+        $row->{status}          = 'Trash';
         $row->{checkbox_column} = "&nbsp;";
-        $row->{commands_column} =
-            qq|<input value="View Detail" onclick="view_media('|
-          . $media->media_id
-          . qq|')" type="button" class="button">|;
+        return 1;
+    }
+
+    # Buttons and status continued
+    unless ($read_only) {
+        if ($list_archived) {
+
+            # Archived Media screen
+            if ($media->archived) {
+                $row->{commands_column} .= ' '
+                  . qq|<input value="Unarchive" onclick="unarchive_media('|
+                  . $media->media_id
+                  . qq|')" type="button" class="button">|;
+                $row->{pub_status} = '';
+                $row->{status}     = '&nbsp;';
+            } else {
+                if ($media->checked_out) {
+                    $row->{status} = "Live <br/> Checked out by <b>"
+                      . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
+                } else {
+                    $row->{status} = 'Live';
+                }
+                $row->{pub_status} = $media->published ? '<b>P</b>' : '&nbsp;';
+            }
+        } else {
+
+            # Find Media screen
+            if ($media->archived) {
+
+                # Media is archived
+                $row->{pub_status}      = '';
+                $row->{status}          = 'Archive';
+                $row->{checkbox_column} = "&nbsp;";
+            } else {
+
+                # Media is not archived: Maybe we may edit and archive
+                $row->{commands_column} .= ' '
+                  . qq|<input value="Edit" onclick="edit_media('|
+                  . $media->media_id
+                  . qq|')" type="button" class="button">| . ' '
+                  . qq|<input value="Archive" onclick="archive_media('|
+                  . $media->media_id
+                  . qq|')" type="button" class="button">|
+                  if $may_edit_and_archive;
+                if ($media->checked_out) {
+                    $row->{status} = "Checked out by <b>"
+                      . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
+                } else {
+                    $row->{status} = '&nbsp;';
+                }
+                $row->{pub_status} = $media->published ? '<b>P</b>' : '&nbsp;';
+            }
+        }
     } else {
-        $row->{commands_column} =
-            qq|<input value="View Detail" onclick="view_media('|
-          . $media->media_id
-          . qq|')" type="button" class="button"> |;
-        if ($archived) {
-            $row->{commands_column} .=
-                qq|<input value="Unarchive" onclick="unarchive_media('|
-              . $media->media_id
-              . qq|')" type="button" class="button">|;
-        } else {
-            $row->{commands_column} .=
-                qq|<input value="Edit" onclick="edit_media('|
-              . $media->media_id
-              . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="Archive" onclick="archive_media('|
-              . $media->media_id
-              . qq|')" type="button" class="button">|;
-        }
+        $row->{checkbox_column} = "&nbsp;";
     }
-
-    # pub_status and status
-    unless ($archived) {
-        $row->{pub_status} = $media->published() ? '<b>P</b>' : '&nbsp;';
-
-        if ($media->checked_out) {
-            $row->{status} = "Checked out by <b>"
-              . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
-        } else {
-            $row->{status} = '&nbsp;';
-        }
-    }
-
 }
 
 # Actually save the media.  Catch exceptions
@@ -2039,15 +2074,21 @@ sub unarchive {
     eval { $media->unarchive() };
 
     if ($@ and ref($@)) {
-	if ($@->isa('Krang::Media::DuplicateURL')) {
-	    add_alert('duplicate_url_on_unarchive', id => $media_id, other_id => $@->media_id, url => $media->url);
-	} elsif ($@->isa('Krang::Media::NoEditAccess')) {
-	    # param tampering
+        if ($@->isa('Krang::Media::DuplicateURL')) {
+            add_alert(
+                'duplicate_url_on_unarchive',
+                id       => $media_id,
+                other_id => $@->media_id,
+                url      => $media->url
+            );
+        } elsif ($@->isa('Krang::Media::NoEditAccess')) {
+
+            # param tampering
 ##	    return $self->access_forbidden();
-	    # or perhaps a permission change
-	    add_alert('access_denied_on_unarchive', id => $media_id, url => $media->url);
-	}
-	return $self->list_archived;
+            # or perhaps a permission change
+            add_alert('access_denied_on_unarchive', id => $media_id, url => $media->url);
+        }
+        return $self->list_archived;
     }
 
     add_message('media_unarchived', id => $media_id, url => $media->url);
