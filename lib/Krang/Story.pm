@@ -2587,6 +2587,9 @@ sub archive {
               WHERE  story_id = ?", undef,
 	     $self->{story_id});
 
+    # delete schedules for this story
+    $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?', undef, 'story', $self->{story_id});
+
     # living in archive
     $self->{archived} = 1;
 

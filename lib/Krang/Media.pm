@@ -1904,7 +1904,7 @@ sub delete {
 
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
 
-    # delete schedules for this story
+    # delete schedules for this media
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
         undef, 'media', $self->{media_id});
 
@@ -2154,7 +2154,7 @@ sub deserialize_xml {
     return $media;
 }
 
-=item C<< $data = Storable::freeze($story) >>
+=item C<< $data = Storable::freeze($media) >>
 
 Serialize media.  Krang::Media implements STORABLE_freeze() to
 ensure this works correctly.
@@ -2166,13 +2166,13 @@ sub STORABLE_freeze {
     return if $cloning;
 
     # avoid serializing category cache since they contain objects not
-    # owned by the story
+    # owned by the media
     my $category_cache = delete $self->{cat_cache};
 
     # serialize data in $self with Storable
     my $data;
     eval { $data = nfreeze({%$self}) };
-    croak("Unable to freeze story: $@") if $@;
+    croak("Unable to freeze media: $@") if $@;
 
     # reconnect cache
     $self->{cat_cache} = $category_cache if defined $category_cache;
@@ -2191,7 +2191,7 @@ sub STORABLE_thaw {
 
     # retrieve object
     eval { %$self = %{thaw($data)} };
-    croak("Unable to thaw story: $@") if $@;
+    croak("Unable to thaw media: $@") if $@;
 
     return $self;
 }
@@ -2235,6 +2235,10 @@ sub archive {
               WHERE  media_id = ?", undef,
         $self->{media_id}
     );
+
+    # delete schedules for this media
+    $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
+        undef, 'media', $self->{media_id});
 
     # living in archive
     $self->{archived} = 1;
