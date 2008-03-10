@@ -40,11 +40,6 @@ other_search_rm = function() {
     Krang.Form.submit( 'find_story', { rm: 'view', story_id: id } );
   }
 
-//  view_story_log = function( id )
-//  {
-//    Krang.Form.submit( 'view_story_log_form', { story_id: id } );
-//  }
-
   copy_story = function(id) {
     Krang.Form.submit('find_story', { rm: 'copy', story_id: id });
   }
@@ -76,6 +71,7 @@ other_search_rm = function() {
       Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_selected' } );
   }
 
+  <tmpl_if may_publish>
   publish_selected = function()
   {
       var question = '';
@@ -95,6 +91,7 @@ other_search_rm = function() {
         }
       }
   }
+  </tmpl_if>
 
   archive_story = function(id)
   {
@@ -233,7 +230,7 @@ Search Results
   <input value="Add Story" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
     <input value="Check Out" onclick="checkout_selected()" type="button">
-    <input value="Publish" onclick="publish_selected()" type="button">
+    <tmpl_if may_publish><input value="Publish" onclick="publish_selected()" type="button"></tmpl_if>
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
@@ -248,7 +245,7 @@ Search Results
   <input value="Add Story" onclick="add_story()" type="button" class="west">
   <tmpl_if row_count>
     <input value="Check Out" onclick="checkout_selected()" type="button">
-    <input value="Publish" onclick="publish_selected()" type="button">
+    <tmpl_if may_publish><input value="Publish" onclick="publish_selected()" type="button"></tmpl_if>
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>

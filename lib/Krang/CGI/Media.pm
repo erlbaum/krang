@@ -125,7 +125,7 @@ sub find {
 List archived media which match the search criteria.  Provide links to
 view and unarchive each media.
 
-Also, provide checkboxes next to each story through which the user may
+Also, provide checkboxes next to each media through which the user may
 select a set of stories to be deleted.
 
 =cut
@@ -170,6 +170,10 @@ sub _do_simple_find {
     # figure out if user should see add, publish, checkin, delete
     my %user_permissions = (pkg('Group')->user_asset_permissions);
     $t->param(read_only => ($user_permissions{media} eq 'read-only'));
+
+    # admin perms to determine appearance of Publish button and row checkbox
+    my %user_admin_permissions = pkg('Group')->user_admin_permissions;
+    $t->param(may_publish => $user_admin_permissions{may_publish});
 
     # Persist data for return from view in "return_params"
     my @return_param_list = qw(
@@ -285,6 +289,10 @@ sub _do_advanced_find {
     # figure out if user should see add, publish, checkin, delete
     my %user_permissions = (pkg('Group')->user_asset_permissions);
     $t->param(read_only => ($user_permissions{media} eq 'read-only'));
+
+    # admin perms to determine appearance of Publish button and row checkbox
+    my %user_admin_permissions = pkg('Group')->user_admin_permissions;
+    $t->param(may_publish => $user_admin_permissions{may_publish});
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
@@ -1011,7 +1019,7 @@ sub delete_selected {
 =item save_and_edit_schedule
 
 This mode saves the current data to the session and passes control to
-edit schedule for story.
+edit schedule for media.
 
 =cut
 
@@ -1867,10 +1875,6 @@ sub find_media_row_handler {
     my $self = shift;
     my ($show_thumbnails, $row, $media, %args) = @_;
 
-    # Read-only users don't see everything....
-    my %user_permissions = (pkg('Group')->user_asset_permissions);
-    my $read_only = ($user_permissions{story} eq 'read-only');
-
     my $list_archived        = $args{archived};
     my $may_edit_and_archive = (
         not($media->may_edit)
@@ -1920,56 +1924,57 @@ sub find_media_row_handler {
     }
 
     # Buttons and status continued
-    unless ($read_only) {
-        if ($list_archived) {
+    if ($list_archived) {
 
-            # Archived Media screen
-            if ($media->archived) {
-                $row->{commands_column} .= ' '
-                  . qq|<input value="Unarchive" onclick="unarchive_media('|
-                  . $media->media_id
-                  . qq|')" type="button" class="button">|;
-                $row->{pub_status} = '';
-                $row->{status}     = '&nbsp;';
-            } else {
-                if ($media->checked_out) {
-                    $row->{status} = "Live <br/> Checked out by <b>"
-                      . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
-                } else {
-                    $row->{status} = 'Live';
-                }
-                $row->{pub_status} = $media->published ? '<b>P</b>' : '&nbsp;';
-            }
+        # Archived Media screen
+        if ($media->archived) {
+            $row->{commands_column} .= ' '
+              . qq|<input value="Unarchive" onclick="unarchive_media('|
+              . $media->media_id
+              . qq|')" type="button" class="button">|
+              if $may_edit_and_archive;
+            $row->{pub_status} = '';
+            $row->{status}     = '&nbsp;';
         } else {
-
-            # Find Media screen
-            if ($media->archived) {
-
-                # Media is archived
-                $row->{pub_status}      = '';
-                $row->{status}          = 'Archive';
-                $row->{checkbox_column} = "&nbsp;";
+            if ($media->checked_out) {
+                $row->{status} = "Live <br/> Checked out by <b>"
+                  . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
             } else {
-
-                # Media is not archived: Maybe we may edit and archive
-                $row->{commands_column} .= ' '
-                  . qq|<input value="Edit" onclick="edit_media('|
-                  . $media->media_id
-                  . qq|')" type="button" class="button">| . ' '
-                  . qq|<input value="Archive" onclick="archive_media('|
-                  . $media->media_id
-                  . qq|')" type="button" class="button">|
-                  if $may_edit_and_archive;
-                if ($media->checked_out) {
-                    $row->{status} = "Checked out by <b>"
-                      . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
-                } else {
-                    $row->{status} = '&nbsp;';
-                }
-                $row->{pub_status} = $media->published ? '<b>P</b>' : '&nbsp;';
+                $row->{status} = 'Live';
             }
+            $row->{pub_status} = $media->published ? '<b>P</b>' : '&nbsp;';
         }
     } else {
+
+        # Find Media screen
+        if ($media->archived) {
+
+            # Media is archived
+            $row->{pub_status}      = '';
+            $row->{status}          = 'Archive';
+            $row->{checkbox_column} = "&nbsp;";
+        } else {
+
+            # Media is not archived: Maybe we may edit and archive
+            $row->{commands_column} .= ' '
+              . qq|<input value="Edit" onclick="edit_media('|
+              . $media->media_id
+              . qq|')" type="button" class="button">| . ' '
+              . qq|<input value="Archive" onclick="archive_media('|
+              . $media->media_id
+              . qq|')" type="button" class="button">|
+              if $may_edit_and_archive;
+            if ($media->checked_out) {
+                $row->{status} = "Checked out by <b>"
+                  . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
+            } else {
+                $row->{status} = '&nbsp;';
+            }
+            $row->{pub_status} = $media->published ? '<b>P</b>' : '&nbsp;';
+        }
+    }
+
+    unless ($may_edit_and_archive) {
         $row->{checkbox_column} = "&nbsp;";
     }
 }

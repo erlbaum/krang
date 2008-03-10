@@ -68,6 +68,7 @@ other_search_rm = function() {
       Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_selected' } );
   }
 
+  <tmpl_if may_publish>
   publish_selected = function()
   {
       var question = '';
@@ -87,6 +88,7 @@ other_search_rm = function() {
         }
       }
   }
+  </tmpl_if>
 
   archive_media = function(id)
   {
@@ -218,8 +220,8 @@ Search Results
 <div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="Add Media" onclick="add_media()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="Publish" onclick="publish_selected()" type="button">
     <input value="Check Out" onclick="checkout_selected()" type="button">
+    <tmpl_if may_publish><input value="Publish" onclick="publish_selected()" type="button"></tmpl_if>
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>
@@ -233,8 +235,8 @@ Search Results
 <div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
   <input value="Add Media" onclick="add_media()" type="button" class="west">
   <tmpl_if row_count>
-    <input value="Publish" onclick="publish_selected()" type="button">
     <input value="Check Out" onclick="checkout_selected()" type="button">
+    <tmpl_if may_publish><input value="Publish" onclick="publish_selected()" type="button"></tmpl_if>
     <input value="Delete" onclick="delete_selected()" type="button">
   </tmpl_if>
 </form></div>

@@ -1732,9 +1732,13 @@ sub _do_find {
     my %tmpl_data = ();
 
     # read-only users don't see everything....
-    my %user_permissions = (pkg('Group')->user_asset_permissions);
-    my $read_only = ($user_permissions{story} eq 'read-only');
+    my %user_asset_permissions = (pkg('Group')->user_asset_permissions);
+    my $read_only = ($user_asset_permissions{story} eq 'read-only');
     $tmpl_data{read_only} = $read_only;
+
+    # admin perms to determine appearance of Publish button and row checkbox
+    my %user_admin_permissions = pkg('Group')->user_admin_permissions;
+    $tmpl_data{may_publish} = $user_admin_permissions{may_publish};
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
@@ -2185,10 +2189,6 @@ sub find_story_row_handler {
     my $q                     = $self->query;
     my $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
 
-    # Read-only users don't see everything....
-    my %user_permissions = (pkg('Group')->user_asset_permissions);
-    my $read_only = ($user_permissions{story} eq 'read-only');
-
     my $list_archived        = $args{archived};
     my $may_edit_and_archive = (
         ($story->checked_out) and ($story->checked_out_by ne $ENV{REMOTE_USER})
@@ -2209,6 +2209,12 @@ sub find_story_row_handler {
     my $tp = $story->cover_date();
     $row->{cover_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 
+    # type and version
+    if ($show_type_and_version) {
+        $row->{story_type}    = $story->class->display_name;
+        $row->{story_version} = $story->version;
+    }
+
     # command column
     $row->{commands_column} =
         qq|<input value="View Detail" onclick="view_story('|
@@ -2222,86 +2228,70 @@ sub find_story_row_handler {
         return 1;
     }
 
-    # commands column
-    unless ($read_only) {
+    # Maybe we may copy
+    $row->{commands_column} .= ' '
+      . qq|<input value="Copy" onclick="copy_story('|
+      . $story->story_id
+      . qq|')" type="button" class="button">|
+      if $story->may_edit;
 
-        # We may copy
-        $row->{commands_column} .= ' '
-          . qq|<input value="Copy" onclick="copy_story('|
-          . $story->story_id
-          . qq|')" type="button" class="button">|;
-        if ($list_archived) {
+    # other buttons and status cols
+    if ($list_archived) {
 
-            # Archived Stories screen
-            if ($story->archived) {
-
-                # Story is archived: We may unarchive
-                $row->{commands_column} .= ' '
-                  . qq|<input value="Unarchive" onclick="unarchive_story('|
-                  . $story->story_id
-                  . qq|')" type="button" class="button">|;
-                $row->{pub_status} = '';
-                $row->{status}     = '&nbsp;';
-            } else {
-
-                # Story is not archived
-                if ($story->checked_out) {
-                    $row->{status} = "Live <br/> Checked out by <b>"
-                      . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
-                } elsif ($story->desk_id) {
-                    $row->{status} =
-                        "Live <br/> On <b>"
-                      . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
-                      . '</b> Desk';
-                } else {
-                    $row->{status} = 'Live';
-                }
-                $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
-            }
+        # Archived Stories screen
+        if ($story->archived) {
+            $row->{commands_column} .= ' '
+              . qq|<input value="Unarchive" onclick="unarchive_story('|
+              . $story->story_id
+              . qq|')" type="button" class="button">|
+              if $may_edit_and_archive;
+            $row->{pub_status} = '';
+            $row->{status}     = '&nbsp;';
         } else {
-
-            # Find Story screen
-            if ($story->archived) {
-
-                # Story is archived
-                $row->{pub_status}      = '';
-                $row->{status}          = 'Archive';
-                $row->{checkbox_column} = "&nbsp;";
+            if ($story->checked_out) {
+                $row->{status} = "Live <br/> Checked out by <b>"
+                  . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
+            } elsif ($story->desk_id) {
+                $row->{status} =
+                    "Live <br/> On <b>"
+                  . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
+                  . '</b> Desk';
             } else {
-
-                # Story is not archived: Maybe we may edit and archive
-                $row->{commands_column} .= ' '
-                  . qq|<input value="Edit" onclick="edit_story('|
-                  . $story->story_id
-                  . qq|')" type="button" class="button">| . ' '
-                  . qq|<input value="Archive" onclick="archive_story('|
-                  . $story->story_id
-                  . qq|')" type="button" class="button">|
-                  if $may_edit_and_archive;
-                if ($story->checked_out) {
-                    $row->{status} = "Checked out by <b>"
-                      . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
-                } elsif ($story->desk_id) {
-                    $row->{status} =
-                        "On <b>"
-                      . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
-                      . '</b> Desk';
-                } else {
-                    $row->{status} = '&nbsp;';
-                }
-                $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
+                $row->{status} = 'Live';
             }
+            $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
         }
     } else {
-        $row->{checkbox_column} = "&nbsp;";
+
+        # Find Story screen
+        if ($story->archived) {
+            $row->{pub_status}      = '';
+            $row->{status}          = 'Archive';
+            $row->{checkbox_column} = "&nbsp;";
+        } else {
+            $row->{commands_column} .= ' '
+              . qq|<input value="Edit" onclick="edit_story('|
+              . $story->story_id
+              . qq|')" type="button" class="button">| . ' '
+              . qq|<input value="Archive" onclick="archive_story('|
+              . $story->story_id
+              . qq|')" type="button" class="button">|
+              if $may_edit_and_archive;
+            if ($story->checked_out) {
+                $row->{status} = "Checked out by <b>"
+                  . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
+            } elsif ($story->desk_id) {
+                $row->{status} =
+                  "On <b>" . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . '</b> Desk';
+            } else {
+                $row->{status} = '&nbsp;';
+            }
+            $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
+        }
     }
 
-    # type and version
-    if ($show_type_and_version) {
-
-        # story type
-        $row->{story_type}    = $story->class->display_name;
-        $row->{story_version} = $story->version;
+    unless ($may_edit_and_archive) {
+        $row->{checkbox_column} = "&nbsp;";
     }
 }
 

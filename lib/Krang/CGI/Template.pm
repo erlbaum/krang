@@ -279,7 +279,7 @@ sub add_save_stay {
 =item advanced_search
 
 The find mode allows the user to run an "advanced search" on
-media objects, which will be listed on a paging view.
+template objects, which will be listed on a paging view.
 
 From this paging view the user may choose to edit or view
 an object, or select a set of objects to be deleted.
@@ -663,7 +663,7 @@ sub revert_version {
 =item save_and_view_log
 
 The purpose of this mode is to hand the user off to the log viewng
-screen.  This mode writes changes back to the media object without
+screen.  This mode writes changes back to the template object without
 calling save().  When done, it performs an HTTP redirect to
 history.pl.
 
@@ -674,7 +674,7 @@ sub save_and_view_log {
 
     my $q = $self->query();
 
-    # Update media object
+    # Update template object
     my $template = $session{template};
     $self->update_template($template) || return $self->redirect_to_workspace;
 
@@ -713,8 +713,8 @@ sub search {
 
 =item list_archived
 
-List archived media which match the search criteria.  Provide links to
-view and unarchive each media.
+List archived template which match the search criteria.  Provide links to
+view and unarchive each template.
 
 Also, provide checkboxes next to each story through which the user may
 select a set of stories to be deleted.
@@ -740,7 +740,8 @@ sub _do_search {
     my $q = $self->query;
 
     # Search mode
-    my $do_advanced_search = defined($q->param('do_advanced_search'))
+    my $do_advanced_search =
+      defined($q->param('do_advanced_search'))
       ? $q->param('do_advanced_search')
       : $session{KRANG_PERSIST}{pkg('Template')}{do_advanced_search};
 
@@ -751,7 +752,7 @@ sub _do_search {
 
 sub _do_simple_search {
     my ($self, %args) = @_;
-    my $q    = $self->query();
+    my $q = $self->query();
 
     my $t = $self->load_tmpl(
         $args{tmpl_file},
@@ -783,9 +784,9 @@ sub _do_simple_search {
 
     my $find_params = {simple_search => $search_filter, may_see => 1, %include_options};
     my $persist_vars = {
-        rm            => ($archived ? 'list_archived' : 'search'),
-        search_filter => $search_filter,
-        $include      => 1,
+        rm => ($archived ? 'list_archived' : 'search'),
+        search_filter      => $search_filter,
+        $include           => 1,
         do_advanced_search => 0,
     };
 
@@ -840,10 +841,10 @@ sub _do_advanced_search {
     my $find_params = \%include_options;
 
     my $persist_vars = {
-			rm => ($archived ? 'list_archived' : 'search'),
-			do_advanced_search => 1,
-			$include => 1,
-		       };
+        rm => ($archived ? 'list_archived' : 'search'),
+        do_advanced_search => 1,
+        $include           => 1,
+    };
 
     # Build find params
     my $search_below_category_id =
@@ -971,7 +972,7 @@ sub view_version {
     die("Invalid selected version '$selected_version'")
       unless ($selected_version and $selected_version =~ /^\d+$/);
 
-    # Update media object
+    # Update template object
     my $template = $session{template};
     $self->update_template($template) || return $self->redirect_to_workspace;
 
@@ -1111,16 +1112,17 @@ sub get_tmpl_params {
               if (($k eq 'rm') && ($v eq 'checkout_and_edit'));
         }
         $tmpl_params{history_return_params} = join("\n", @history_params);
-       
+
         $tmpl_params{can_edit} = 1
           unless (
             not($template->may_edit)
             or ($template->checked_out
                 and ($template->checked_out_by ne $ENV{REMOTE_USER}))
-	    or $template->archived
-            or $template->trashed);
+            or $template->archived
+            or $template->trashed
+          );
 
-	$tmpl_params{return_script} = $q->param('return_script');
+        $tmpl_params{return_script} = $q->param('return_script');
     }
 
     return \%tmpl_params;
@@ -1198,8 +1200,8 @@ sub make_pager {
         columns          => \@columns,
         column_labels    => \%column_labels,
         columns_sortable => ['template_id', 'filename', 'url',],
-        row_handler => sub { $self->search_row_handler(@_, archived => $archived) },
-        id_handler  => sub { return $_[0]->template_id },
+        row_handler      => sub { $self->search_row_handler(@_, archived => $archived) },
+        id_handler => sub { return $_[0]->template_id },
     );
 
     return $pager;
@@ -1209,54 +1211,83 @@ sub make_pager {
 sub search_row_handler {
     my ($self, $row, $template, %args) = @_;
 
-    my $archived = $args{archived};
+    my $list_archived        = $args{archived};
+    my $may_edit_and_archive = (
+        not($template->may_edit)
+          or (  ($template->checked_out)
+            and ($template->checked_out_by ne $ENV{REMOTE_USER}))
+    ) ? 0 : 1;
 
     $row->{filename}    = $template->filename;
     $row->{template_id} = $template->template_id;
     $row->{url}         = format_url(url => $template->url, length => 30);
 
-    if (
-        not($template->may_edit())
-        or (    ($template->checked_out)
-            and ($template->checked_out_by ne $ENV{REMOTE_USER}))
-      )
-    {
-        $row->{commands_column} =
-            qq|<input value="View Detail" onclick="view_template('|
-          . $template->template_id
-          . qq|')" type="button" class="button">|;
-        $row->{checkbox_column} = "&nbsp;" if defined $row->{checkbox_column};
-    } else {
-        $row->{commands_column} =
-            qq|<input value="View Detail" onclick="view_template('|
-          . $template->template_id
-          . qq|')" type="button" class="button"> |;
-        if ($archived) {
-            $row->{commands_column} .=
-                qq|<input value="Unarchive" onclick="unarchive_template('|
+    # Buttons: all may view
+    $row->{commands_column} =
+        qq|<input value="View Detail" onclick="view_template('|
+      . $template->template_id
+      . qq|')" type="button" class="button">|;
+
+    # short-circuit for trashed template
+    if ($template->trashed) {
+        $row->{status}          = 'Trash';
+        $row->{checkbox_column} = "&nbsp;";
+        return 1;
+    }
+
+    # Buttons and status continued
+    if ($list_archived) {
+
+        # Archived Template screen
+        if ($template->archived) {
+            $row->{commands_column} .= ' '
+              . qq|<input value="Unarchive" onclick="unarchive_template('|
               . $template->template_id
-              . qq|')" type="button" class="button">|;
+              . qq|')" type="button" class="button">|
+              if $may_edit_and_archive;
+            $row->{deployed} = '';
+            $row->{status}   = '&nbsp;';
         } else {
-            $row->{commands_column} .=
-                qq|<input value="Edit" onclick="edit_template('|
+            if ($template->checked_out) {
+                $row->{status} = "Live <br/> Checked out by <b>"
+                  . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
+            } else {
+                $row->{status} = 'Live';
+            }
+            $row->{deployed} = $template->deployed ? '<b>D</b>' : '&nbsp;';
+        }
+    } else {
+
+        # Find Template screen
+        if ($template->archived) {
+
+            # Template is archived
+            $row->{deployed}        = '';
+            $row->{status}          = 'Archive';
+            $row->{checkbox_column} = "&nbsp;";
+        } else {
+
+            # Template is not archived: Maybe we may edit and archive
+            $row->{commands_column} .= ' '
+              . qq|<input value="Edit" onclick="edit_template('|
               . $template->template_id
               . qq|')" type="button" class="button">| . ' '
               . qq|<input value="Archive" onclick="archive_template('|
               . $template->template_id
-              . qq|')" type="button" class="button">|;
+              . qq|')" type="button" class="button">|
+              if $may_edit_and_archive;
+            if ($template->checked_out) {
+                $row->{status} = "Checked out by <b>"
+                  . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
+            } else {
+                $row->{status} = '&nbsp;';
+            }
+            $row->{deployed} = $template->deployed ? '<b>D</b>' : '&nbsp;';
         }
     }
 
-    # deployed status and status
-    unless ($archived) {
-	$row->{deployed} = $template->deployed ? '<b>D</b>' : '&nbsp;';
-
-	if ($template->checked_out) {
-	    $row->{status} = "Checked out by <b>"
-	      . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
-	} else {
-	    $row->{status} = '&nbsp;';
-	}
+    unless ($may_edit_and_archive) {
+        $row->{checkbox_column} = "&nbsp;";
     }
 }
 
@@ -1461,7 +1492,7 @@ sub archive {
 =item unarchive
 
 Move template from archive back to live. If a DuplicateURL conflict
-occurs, leave the media archived and alert the user.
+occurs, leave the template archived and alert the user.
 
 =cut
 
@@ -1483,16 +1514,21 @@ sub unarchive {
     eval { $template->unarchive() };
 
     if ($@ and ref($@)) {
-	if ($@->isa('Krang::Template::DuplicateURL')) {
-	    add_alert('duplicate_url_on_unarchive', id => $template_id,
-		      other_id => $@->template_id, url => $template->url);
-	} elsif ($@->isa('Krang::Template::NoEditAccess')) {
-	    # param tampering
+        if ($@->isa('Krang::Template::DuplicateURL')) {
+            add_alert(
+                'duplicate_url_on_unarchive',
+                id       => $template_id,
+                other_id => $@->template_id,
+                url      => $template->url
+            );
+        } elsif ($@->isa('Krang::Template::NoEditAccess')) {
+
+            # param tampering
 ##	    return $self->access_forbidden();
-	    # or perhaps a permission change
-	    add_alert('access_denied_on_unarchive', id => $template_id, url => $template->url);
-	}
-	return $self->list_archived;
+            # or perhaps a permission change
+            add_alert('access_denied_on_unarchive', id => $template_id, url => $template->url);
+        }
+        return $self->list_archived;
     }
 
     add_message('template_unarchived', id => $template_id, url => $template->url);
