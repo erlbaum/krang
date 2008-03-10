@@ -791,9 +791,17 @@ sub _do_simple_search {
 
     # setup pager
     my $pager = $self->make_pager($persist_vars, $find_params, $archived);
+    my $pager_tmpl = $self->load_tmpl(
+        'list_view_pager.tmpl',
+        associate         => $q,
+        loop_context_vars => 1,
+        global_vars       => 1,
+        die_on_bad_params => 0,
+    );
+    $pager->fill_template($pager_tmpl);
 
     # get pager output
-    $t->param(pager_html => $pager->output());
+    $t->param(pager_html => $pager_tmpl->output());
 
     # get counter params
     $t->param(row_count => $pager->row_count());
@@ -885,7 +893,16 @@ sub _do_advanced_search {
 
     # Run pager
     my $pager = $self->make_pager($persist_vars, $find_params, $archived);
-    $t->param(pager_html => $pager->output());
+    my $pager_tmpl = $self->load_tmpl(
+        'list_view_pager.tmpl',
+        associate         => $q,
+        loop_context_vars => 1,
+        global_vars       => 1,
+        die_on_bad_params => 0,
+    );
+    $pager->fill_template($pager_tmpl);
+
+    $t->param(pager_html => $pager_tmpl->output());
     $t->param(row_count  => $pager->row_count());
 
     # Set up element chooser
@@ -1158,8 +1175,8 @@ sub make_pager {
       template_id
       filename
       url
-      commands_column);
-    push @columns, 'status' unless $archived;
+      commands_column
+      status);
     push @columns, 'checkbox_column'
       unless ($user_permissions{template} eq 'read-only');
 
@@ -1169,7 +1186,7 @@ sub make_pager {
         filename        => 'File Name',
         url             => 'URL',
         commands_column => '',
-        ($archived ? () : (status => 'Status')),
+        status          => 'Status',
     );
 
     my $q     = $self->query();
