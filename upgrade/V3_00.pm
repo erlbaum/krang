@@ -95,6 +95,7 @@ sub _fix_slugs_that_duplicate_categories {
     my $query = 'select sc.story_id from category c, story_category sc where c.url=concat(sc.url, "/")';
     my $result = $dbh->selectall_arrayref($query, undef);
 
+    my @failed_ids;
     if ($result && @$result) {
         print "Found " . @$result . "\n\n";
     
@@ -116,6 +117,7 @@ sub _fix_slugs_that_duplicate_categories {
                 eval { $story->checkin; };
                 if ($@) {
                     print " FAILED (skipping)\n\n";
+		    push @failed_ids, $story_id;
                 }
                 print " Done\n";
             }
@@ -146,12 +148,23 @@ sub _fix_slugs_that_duplicate_categories {
             $story->slug('');
 	    
             # save changes
-            $story->categories(@new_cats);
-            $story->save; 
-            $story->checkin;
+	    eval {
+		$story->categories(@new_cats);
+		$story->save; 
+		$story->checkin;
+	    };
+	    if ($@) {
+		$story->checkout unless $story->checked_out;
+		push @failed_ids, $story_id;
+	    }
         }
     } else {
         print "None found.\n\n";
+    }
+    if (@failed_ids) {
+        warn ("\n\n* * * * !!! WARNING !!! * * * *".
+              "\n\n* * * * STORY ID ".join(', ',@failed_ids) . " COULD NOT BE CONVERTED TO A CATEGORY COVER * * * *".
+              "\n\n* * * * LEAVING STORY ".join(', ',@failed_ids)." CHECKED-OUT: FIND WITH 'ACTIVE STORIES' AND FIX SLUG BY HAND * * * *\n\n\n");
     }
 }
 
