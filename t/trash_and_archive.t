@@ -274,11 +274,9 @@ sub test_this {
     # try to unarchive $obj0 and $dup00 - should throw an error
     eval { $obj0->unarchive() };
     isa_ok($@, "Krang::${Object}::DuplicateURL");
-    $obj0->archive();
 
     eval { $dup00->unarchive() };
     isa_ok($@, "Krang::${Object}::DuplicateURL");
-    $dup00->archive();
 
     # test DuplicateURL throwing when untrashing
     $dup01->trash;

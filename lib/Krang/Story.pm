@@ -2627,8 +2627,8 @@ sub unarchive {
     # make sure we are the one
     $self->checkout;
 
-    # alive again
-    $self->{archived} = 0;
+    # make sure no other story occupies our initial place (URL)
+    $self->_verify_unique;
 
     # unarchive the story
     my $dbh = dbh();
@@ -2637,16 +2637,16 @@ sub unarchive {
               WHERE  story_id = ?', undef,
 	     $self->{story_id});
 
+    # alive again
+    $self->{archived} = 0;
+
+    # check it back in
+    $self->checkin() unless $args{dont_checkin};
+
     add_history(
         object => $self,
         action => 'unarchive',
     );
-
-    # make sure no other story occupies our initial place (URL)
-    $self->_verify_unique;
-
-    # check it back in
-    $self->checkin();
 }
 
 =item C<< $story->trash() >>

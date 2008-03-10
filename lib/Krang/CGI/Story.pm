@@ -1731,6 +1731,12 @@ sub _do_find {
     my $template = $self->load_tmpl($args{tmpl_file}, associate => $q);
     my %tmpl_data = ();
 
+    # finding in Live or in Archive?
+    my $include = $args{include_in_search};
+
+    # find archived stories?
+    my $archived = $include eq 'archived' ? 1 : 0;
+
     # read-only users don't see everything....
     my %user_asset_permissions = (pkg('Group')->user_asset_permissions);
     my $read_only = ($user_asset_permissions{story} eq 'read-only');
@@ -1738,7 +1744,7 @@ sub _do_find {
 
     # admin perms to determine appearance of Publish button and row checkbox
     my %user_admin_permissions = pkg('Group')->user_admin_permissions;
-    $tmpl_data{may_publish} = $user_admin_permissions{may_publish};
+    $tmpl_data{may_publish} = $user_admin_permissions{may_publish} unless $archived;
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
@@ -1761,11 +1767,6 @@ sub _do_find {
       ? $q->param('do_advanced_search')
       : $session{KRANG_PERSIST}{pkg('Story')}{do_advanced_search};
     $template->param('do_advanced_search' => $do_advanced_search);
-
-    my $include = $args{include_in_search};
-
-    # find archived stories?
-    my $archived = $include eq 'archived' ? 1 : 0;
 
     # find live or archived stories?
     my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
@@ -2603,7 +2604,7 @@ Move story from archive back to live. Modify the story's slug or clear
 its categories if it conflicts with a live story or category.
 
 If a URL conflict occures, return to Edit Story, otherwise return to
-the Archived Stories.
+Archived Stories.
 
 =cut
 
@@ -2689,19 +2690,22 @@ sub unarchive {
 
         }
 
-        # story is still checked out, story object has been modified, don't fetch it from DB
+        # save the modified URL
         $story->save();
+
+        # unarchive again to unset the archived flag and add history entry
+        eval { $story->unarchive(dont_checkin => 1) };
+
+        # goto Edit screen
         $q->delete('story_id');
         $session{story} = $story;
 
         return $self->edit;
-
     }
 
     add_message('story_unarchived', id => $story_id, url => $story->url);
 
     return $self->list_archived;
-
 }
 
 1;
