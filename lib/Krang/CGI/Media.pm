@@ -164,6 +164,12 @@ sub _do_simple_find {
 
     my $q = $self->query;
 
+    # search in Archive or in Live?
+    my $include = $args{include_in_search};
+
+    # find archived stories?
+    my $archived = $include eq 'archived' ? 1 : 0;
+
     my $t = $self->load_tmpl($args{tmpl_file}, associate => $q);
     $t->param(do_advanced_search => 0);
 
@@ -173,7 +179,7 @@ sub _do_simple_find {
 
     # admin perms to determine appearance of Publish button and row checkbox
     my %user_admin_permissions = pkg('Group')->user_admin_permissions;
-    $t->param(may_publish => $user_admin_permissions{may_publish});
+    $t->param(may_publish => $user_admin_permissions{may_publish}) unless $archived;
 
     # Persist data for return from view in "return_params"
     my @return_param_list = qw(
@@ -211,12 +217,6 @@ sub _do_simple_find {
         # Define search_filter
         $search_filter = '';
     }
-
-    # search in Archive or in Live?
-    my $include = $args{include_in_search};
-
-    # find archived stories?
-    my $archived = $include eq 'archived' ? 1 : 0;
 
     # find live or archived stories?
     my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
@@ -283,6 +283,12 @@ sub _do_advanced_find {
 
     my $q = $self->query();
 
+    # search in Archive or in Live?
+    my $include = $args{include_in_search};
+
+    # find archived stories?
+    my $archived = $include eq 'archived' ? 1 : 0;
+
     my $t = $self->load_tmpl($args{tmpl_file}, associate => $q);
     $t->param(do_advanced_search => 1);
 
@@ -292,7 +298,7 @@ sub _do_advanced_find {
 
     # admin perms to determine appearance of Publish button and row checkbox
     my %user_admin_permissions = pkg('Group')->user_admin_permissions;
-    $t->param(may_publish => $user_admin_permissions{may_publish});
+    $t->param(may_publish => $user_admin_permissions{may_publish}) unless $archived;
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
@@ -323,12 +329,6 @@ sub _do_advanced_find {
     );
 
     $t->param(return_params => $self->make_return_params(@return_param_list));
-
-    # search in Archive or in Live?
-    my $include = $args{include_in_search};
-
-    # find archived stories?
-    my $archived = $include eq 'archived' ? 1 : 0;
 
     # find live or archived stories?
     my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
