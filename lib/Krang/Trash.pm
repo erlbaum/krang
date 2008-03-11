@@ -437,8 +437,6 @@ sub delete {
     my ($self, %args) = @_;
 
     $args{object}->delete;
-
-    $self->_delete_from_trash_table(%args);
 }
 
 =item C<< pkg('Trash')->restore(object => $story) >>
@@ -450,7 +448,8 @@ sub delete {
 =item C<< pkg('Trash')->restore(object => $other) >>
 
 Restores the specified object from the trashbin back to live.  The
-object must implement a method named C<untrash()>.
+object must implement a method named C<untrash()> that does the heavy
+lifting.
 
 =cut
 
@@ -458,11 +457,17 @@ sub restore {
     my ($self, %args) = @_;
 
     $args{object}->untrash;
-
-    $self->_delete_from_trash_table(%args);
 }
 
-sub _delete_from_trash_table {
+=item C<< pkg('Trash')->remove(object => $object) >>
+
+This method removes an object from the trash table.  Objects wishing
+to implement the trash functionality should call this method in their
+C<untrash()> and C<delete()> methods.
+
+=cut
+
+sub remove {
     my ($self, %args) = @_;
 
     my $object  = $args{object};

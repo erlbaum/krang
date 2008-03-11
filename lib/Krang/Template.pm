@@ -486,6 +486,9 @@ sub delete {
     $dbh->do($t_query, undef, ($id));
     $dbh->do($v_query, undef, ($id));
 
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
+
     add_history(
         object => $self,
         action => 'delete',
@@ -1683,12 +1686,15 @@ sub untrash {
     # make sure we are the one
     $self->checkout;
 
-    # untrash the template
+    # unset trash flag in template table
     my $dbh = dbh();
     $dbh->do('UPDATE template
               SET trashed = ?
               WHERE template_id = ?', undef,
 	     0, $self->{template_id});
+
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
 
     # maybe in archive, maybe alive again
     $self->{trashed} = 0;

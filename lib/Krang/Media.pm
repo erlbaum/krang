@@ -1908,6 +1908,9 @@ sub delete {
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
         undef, 'media', $self->{media_id});
 
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
+
     add_history(
         object => $self,
         action => 'delete',
@@ -2382,7 +2385,7 @@ sub untrash {
     # make sure we are the one
     $self->checkout;
 
-    # untrash the media
+    # unset trashed flag in media table
     my $dbh = dbh();
     $dbh->do(
         'UPDATE media
@@ -2390,6 +2393,9 @@ sub untrash {
               WHERE media_id = ?', undef,
         0,                         $self->{media_id}
     );
+
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
 
     # maybe in archive, maybe alive again
     $self->{trashed} = 0;

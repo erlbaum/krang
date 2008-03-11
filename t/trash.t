@@ -147,7 +147,7 @@ SQL
 	pkg('Trash')->restore(object => $_) for @stories;
 
 	# stories' trashed flag should be 0
-	is($_->trashed, 0, "Story's trashed flag is zero after restore") for @stories;
+	is($_->trashed, 0, "Story ".$_->story_id." trashed flag is zero after restore") for @stories;
 
 	### test exceptions on restore
 	#
@@ -449,7 +449,3 @@ sub _verify_flag_status {
     isnt($object->checked_out_by, 1, "$Object $oid flag checked_out_by 0");
     is($object->trashed, ($trashed ? 1 : 0), "$Object $oid flag trashed        " . ($trashed ? 1 : 0));
 }
-
-END { $dbh->do("DELETE FROM trash") }
-
-

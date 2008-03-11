@@ -2095,6 +2095,9 @@ sub delete {
              undef, $self->{story_id});
     $self->element->delete;
 
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
+
     # delete schedules for this story
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?', undef, 'story', $self->{story_id});
 
@@ -2723,12 +2726,15 @@ sub untrash {
     # make sure we are the one
     $self->checkout;
 
-    # untrash the story
+    # unset trash flag in story table
     my $dbh = dbh();
     $dbh->do('UPDATE story
               SET trashed = ?
               WHERE story_id = ?', undef,
 	     0, $self->{story_id});
+
+    # remove from trash
+    pkg('Trash')->remove(object => $self);
 
     # maybe in archive, maybe alive again
     $self->{trashed} = 0;
