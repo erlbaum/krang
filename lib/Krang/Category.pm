@@ -100,6 +100,7 @@ use Exception::Class (
     'Krang::Category::DuplicateURL' => {fields => ['category_id', 'story_id', 'url']},
     'Krang::Category::NoEditAccess' => {fields => 'category_id'},
     'Krang::Category::RootDeletion',
+    'Krang::Category::CopyAssetConflict',
 );
 
 use File::Spec;
@@ -660,11 +661,12 @@ sub ancestors {
     return @ancestors;
 }
 
-=item * @categories = Krang::Category->descendants()
+=item * @categories = $category->descendants()
 
-=item * @category_ids = Krang::Category->descendants( ids_only => 1 )
+=item * @category_ids = $category->descendants( ids_only => 1 )
 
-
+Returns a list of Krang::Category objects or category_ids of all
+descendants of $category;
 
 =cut
 
@@ -1439,6 +1441,121 @@ sub STORABLE_thaw {
 
     return $self;
 }
+
+sub can_copy_test {
+    my ($self, %args) = @_;
+
+    my $src_cat_url = $self->url;
+    my $src_cat_dir = $self->dir;
+    my $dst_cat     = $args{dst_category};
+    my $dst_cat_url = $dst_cat->url;
+
+    my @assets = qw(story media template);
+
+    #
+    # First verify that we can create the category subtree below destination category
+    #
+    my @src_cat_descendants = $self->descendants;
+    my %dst_cat_urls        = ();
+
+    # build URL collection of would-be-created categories below destination category
+    for my $descendant (@src_cat_descendants) {
+
+        # collect URLs of would-be-created categories
+        (my $rel_src_url = $descendant->url) =~ s!^$src_cat_url!!;
+
+        my $dst_child_cat_url = $dst_cat_url . $rel_src_url;
+
+        $dst_child_cat_url =~ s!/$!!;
+
+        debug(__PACKAGE__ . "::can_copy_test() destination category URL: " . $dst_child_cat_url);
+
+        $dst_cat_urls{$dst_child_cat_url} = 1;
+    }
+
+    # collect stories living below our destination category
+    my @stories_below_dst_cat = pkg('Story')->find(below_category_id => $dst_cat->category_id);
+
+    # collect conflicts between would-be-created categories and existing story URLs
+    my @conflicting_stories =
+      grep { $dst_cat_urls{$_->url} and $_ } @stories_below_dst_cat;
+
+    debug(  __PACKAGE__
+          . "::can_copy_test() conflicting URLs: "
+          . join("\n", @conflicting_stories));
+
+    # success if no conflicting story URLs and overwrite
+    return 1 if scalar(@conflicting_stories) == 0 && $args{overwrite};
+
+    #
+    # Now see if we can resolve URL conflicts between stories existing
+    # below the destination category and would-be-created categories
+    #
+    my $cant_checkout_stories   = 0;
+    my @not_checked_out_stories = ();
+    my @checked_out_stories     = ();
+
+    if (@conflicting_stories) {
+        for my $story (@conflicting_stories) {
+            eval { $story->checkout };
+            if ($@) {
+                $cant_checkout_stories = 1;
+                push @not_checked_out_stories, $story;
+            } else {
+                push @checked_out_stories, $story;
+            }
+        }
+
+        if ($cant_checkout_stories) {
+            # we won't be able to resolve URL conflicts by turning a
+            # slug-provided story into a category index (see Krang::CGI::Category->create()
+            $_->checkin for @checked_out_stories;
+            Krang::Story::CantCheckOut->throw(
+                message => "Can't check out Stories",
+                stories => [map { {id => $_->story_id, url => $_->url} } @not_checked_out_stories],
+            );
+        }
+    }
+
+    # so we can create our source category subtree below the destination category
+    return 1 if $args{overwrite};
+
+    #
+    # We may not overwrite: throw error (ask user) if at least one
+    # source asset' URL would conflict with the URL of an asset
+    # already existing below the destination category
+    #
+    for my $asset (@assets) {
+
+        # do nothing if $asset should not be copied
+        next unless $args{$asset};
+
+        my $pkg = pkg(ucfirst($asset));
+
+        # collect the URLs of all asset objects existing in destination category...
+        my %existing_asset_has =
+          map { ($_->url => 1) } $pkg->find(below_category_id => $dst_cat->category_id);
+
+        # ...and test this list against would be copied asset objects
+        for my $src_asset ($pkg->find(below_category_id => $self->category_id)) {
+            (my $rel_asset_url = $src_asset->url) =~ s!^$src_cat_url!!;
+
+            my $dst_asset_url = $dst_cat_url . $rel_asset_url;
+
+            debug(__PACKAGE__ . "::can_copy_test() destination $asset URL: " . $dst_asset_url);
+            if ($existing_asset_has{$dst_asset_url}) {
+
+                # ask user
+                Krang::Category::CopyAssetConflict->throw(message =>
+                      "At least one asset below source category would cause a DuplicateURL conflict with an asset existing below the destination category."
+                );
+            }
+        }
+    }
+}
+
+
+sub copy {return "copy() stub" }
 
 =back
 

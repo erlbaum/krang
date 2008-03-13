@@ -29,6 +29,7 @@ use Exception::Class
   'Krang::Story::NoDesk'               => { fields => [ 'desk_id'     ] },
   'Krang::Story::NoDeleteAccess'       => { fields => [ 'story_id'    ] },
   'Krang::Story::NoRestoreAccess'      => { fields => [ 'story_id'    ] },
+  'Krang::Story::CantCheckOut'         => { fields => [ 'stories'     ] },
   ;
   
 # create accessors for object fields
