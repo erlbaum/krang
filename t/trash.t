@@ -54,7 +54,7 @@ isa_ok($site, 'Krang::Site');
 my $category = $creator->create_category();
 isa_ok($category, 'Krang::Category');
 
-# setup group with desk permissions
+# setup group with asset permissions
 my $group = pkg('Group')->new(
 			      name           => 'Has no restore permissions',
 			      asset_story    => 'read-only',
