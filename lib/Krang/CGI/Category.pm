@@ -70,6 +70,8 @@ sub setup {
         save_and_find_story_link      => 'save_and_find_story_link',
         save_and_find_media_link      => 'save_and_find_media_link',
         autocomplete                  => 'autocomplete',
+        prepare_copy                  => 'prepare_copy',
+        execute_copy                  => 'execute_copy',
     );
 
     $self->tmpl_path('Category/');
@@ -108,10 +110,10 @@ sub find {
         columns                 => [qw(url command_column checkbox_column)],
         column_labels           => {url => 'URL',},
         columns_sortable        => [qw( url )],
-        command_column_commands => [qw( edit_category )],
-        command_column_labels   => {edit_category => 'Edit'},
-        row_handler             => sub { $self->find_row_handler(@_) },
-        id_handler              => sub { return $_[0]->category_id },
+        command_column_commands => [qw( edit_category copy_category )],
+        command_column_labels   => {edit_category => 'Edit', copy_category => 'Copy'},
+        row_handler => sub { $self->find_row_handler(@_) },
+        id_handler  => sub { return $_[0]->category_id },
     );
 
     # fill the template
@@ -321,21 +323,8 @@ sub edit {
     );
     my %args = @_;
 
-    my $category;
-    if ($query->param('category_id')) {
-
-        # load category from DB
-        ($category) = pkg('Category')->find(category_id => $query->param('category_id'));
-        croak("Unable to load category '" . $query->param('category_id') . "'.")
-          unless $category;
-
-        $query->delete('category_id');
-        $session{category} = $category;
-    } else {
-        $category = $session{category};
-        croak("Unable to load category from session!")
-          unless $category;
-    }
+    # load category from query or sessions
+    my $category = $self->_load_category(param => 'category_id');
 
     # run the element editor edit
     $self->element_edit(
@@ -708,6 +697,208 @@ sub autocomplete {
         table  => 'category',
         fields => [qw(category_id url)],
     );
+}
+
+sub _load_category {
+    my ($self, %args) = @_;
+    my $query = $self->query;
+
+    my $category;
+
+    # load category from database or session
+    if (my $id = $query->param($args{param})) {
+
+        # load category from DB
+        ($category) = pkg('Category')->find(category_id => $id);
+        croak("Unable to load Category $id.")
+          unless $category;
+
+        $query->delete('category_id');
+        $session{category} = $category;
+    } else {
+        $category = $session{category};
+        croak("Unable to load category from session!")
+          unless $category;
+    }
+
+    return $category;
+}
+
+sub prepare_copy {
+    my $self = shift;
+
+    my $q = $self->query;
+
+    my $t = $self->load_tmpl('copy.tmpl', associate => $q);
+
+    # get URL of source category and put into template
+    my $src_cat = $self->_load_category(param => 'src_category_id');
+    $t->param(src_category_url => $src_cat->url);
+
+    # confirm after conflict?
+    if ($q->param('confirm_copy')) {
+        $t->param(confirm_copy => $q->param('confirm_copy'));
+        $q->delete('confirm_copy');
+    }
+
+    # remember destination category
+    my $dst_cat = $q->param('dst_category');
+    $session{KRANG_PERSIST}{pkg('Category')}{category_copy_dst} = $dst_cat
+      if $dst_cat;
+
+    # copy assets? overwrite exististing files?
+    for my $checkbox (qw(copy_story copy_media copy_template overwrite)) {
+        my $param       = $q->param($checkbox);
+        my $session_val = $session{KRANG_PERSIST}{pkg('Category')}{$checkbox};
+
+        my $final_val =
+            defined($param)       ? $param
+          : defined($session_val) ? $session_val
+          : $checkbox eq 'overwrite' ? 0
+          :                            1;
+
+        $session{KRANG_PERSIST}{pkg('Category')}{$checkbox} = $final_val;
+        $t->param($checkbox => $final_val);
+    }
+
+    # destination category chooser
+    my ($cat_chooser_button, $cat_chooser_logic) = category_chooser(
+        name        => 'dst_category_id',
+        query       => $q,
+        label       => 'Choose',
+        may_edit    => 1,
+        allow_clear => 1,
+        persistkey  => 'category_copy_dst',
+        formname    => 'copy_category',
+    );
+    $t->param(
+        category_chooser_button => $cat_chooser_button,
+        category_chooser_logic  => $cat_chooser_logic
+    );
+
+    return $t->output;
+}
+
+sub execute_copy {
+    my $self  = shift;
+    my $query = $self->query;
+
+    my $src_category_id = $query->param('src_category_id');
+    my $dst_category_id = $query->param('dst_category_id');
+
+    # validate the copy form
+    return $self->prepare_copy
+      unless $self->_validate_copy_form;
+
+    # load template
+    my $t = $self->load_tmpl('copy.tmpl', associate => $query);
+
+    # load source category
+    my $src_cat = $self->_load_category(param => 'src_category_id');
+    my $dst_cat = $self->_load_category(param => 'dst_category_id');
+
+    # we asked the user after some conflict had occured
+    if (defined($query->param('non_conflicting'))
+        and $query->param('non_conflicting'))
+    {
+        $self->_do_execute_copy(message => 'copied_category_with_some_conflicts');
+
+        return $self->find;
+    }
+
+    # see if we can copy the category subtree and if asset URL conflicts occur
+    eval {
+        $src_cat->can_copy_test(
+            dst_category => $dst_cat,
+            story        => $query->param('copy_story'),
+            media        => $query->param('copy_media'),
+            template     => $query->param('copy_template'),
+            overwrite    => $query->param('overwrite')
+        );
+    };
+
+    # handle conflicts
+    if ($@ and ref($@)) {
+        if ($@->isa('Krang::Story::CantCheckOut')) {
+            if (my @stories = @{$@->stories}) {    # can't copy category subtree
+                add_alert(
+                    'cant_checkout_stories_to_resolve_url_conflict',
+                    stories => join('<br/>', map { "Story $_->{id} ($_->{url})" } @stories),
+                    story_sp => (scalar(@stories) == 1 ? 'story' : 'stories')
+                );
+                return $self->prepare_copy;
+            }
+        } elsif ($@->isa('Krang::Category::CopyAssetConflict')) {
+            $query->param(confirm_copy => 1);
+            return $self->prepare_copy;
+        } else {
+            croak("Unknow error: " . $@);
+        }
+    } elsif ($@) {
+        croak $@;
+    }
+
+    # we may copy, maybe overwriting existing files
+    $self->_do_execute_copy(message => 'copied_category');
+
+    return $self->find;
+}
+
+sub _validate_copy_form {
+    my $self  = shift;
+    my $query = $self->query;
+
+    my $src_category_id = $query->param('src_category_id');
+    my $dst_category_id = $query->param('dst_category_id');
+
+    my $src_cat = $self->_load_category(param => 'src_category_id');
+
+    # do we have a destination category
+    unless ($dst_category_id) {
+        add_alert('missing_copy_destination', id => $src_category_id, url => $src_cat->url);
+        $query->param(bad_dst_category => 1);
+        return;
+    }
+
+    # is it different from the source category
+    if ($src_category_id eq $dst_category_id) {
+        add_alert(
+            'destination_category_equals_source_category',
+            id  => $src_category_id,
+            url => $src_cat->url
+        );
+        $query->param(bad_dst_category => 1);
+        return;
+    }
+
+    return 1;
+}
+
+sub _do_execute_copy {
+    my ($self, %args) = @_;
+
+    my $query = $self->query;
+
+    my $src_cat = $self->_load_category(param => 'src_category_id');
+    my $dst_cat = $self->_load_category(param => 'dst_category_id');
+
+    $src_cat->copy(
+        dst_category_id => $query->param('dst_category_id'),
+        story           => $query->param('copy_story'),
+        media           => $query->param('copy_media'),
+        template        => $query->param('copy_template'),
+        overwrite       => $query->param('overwrite'),
+    );
+
+    add_message(
+        $args{message},
+        src_id  => $src_cat->category_id,
+        src_url => $src_cat->url,
+        dst_id  => $dst_cat->category_id,
+        dst_url => $dst_cat->url
+    );
+
+    add_message('msg', msg => "This is a stub: The Copying has not be done!");
 }
 
 1;
