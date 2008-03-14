@@ -6,95 +6,98 @@ use warnings;
 use Krang::ClassLoader Element => qw(foreach_element);
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader History => qw( add_history );
-use Krang::ClassLoader Log => qw(assert ASSERT affirm debug info critical);
-use Krang::ClassLoader Conf => qw(SavedVersionsPerStory);
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Log     => qw(assert ASSERT affirm debug info critical);
+use Krang::ClassLoader Conf    => qw(SavedVersionsPerStory);
+use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'UUID';
 use Krang::ClassLoader 'Trash';
 
-use Carp           qw(croak);
-use Storable       qw(nfreeze thaw);
+use Carp qw(croak);
+use Storable qw(nfreeze thaw);
 use Time::Piece::MySQL;
 use File::Spec::Functions qw(catdir canonpath);
 
 # setup exceptions
-use Exception::Class 
-  'Krang::Story::DuplicateURL'         => { fields => [ 'stories', 'categories' ] },
-  'Krang::Story::MissingCategory'      => { fields => [               ] },
-  'Krang::Story::NoCategoryEditAccess' => { fields => [ 'category_id' ] },
-  'Krang::Story::NoEditAccess'         => { fields => [ 'story_id'    ] },
-  'Krang::Story::CheckedOut'           => { fields => [ 'desk_id'     ] },
-  'Krang::Story::NoDesk'               => { fields => [ 'desk_id'     ] },
-  'Krang::Story::NoDeleteAccess'       => { fields => [ 'story_id'    ] },
-  'Krang::Story::NoRestoreAccess'      => { fields => [ 'story_id'    ] },
-  'Krang::Story::CantCheckOut'         => { fields => [ 'stories'     ] },
+use Exception::Class
+  'Krang::Story::DuplicateURL'         => {fields => ['stories', 'categories']},
+  'Krang::Story::MissingCategory'      => {fields => []},
+  'Krang::Story::NoCategoryEditAccess' => {fields => ['category_id']},
+  'Krang::Story::NoEditAccess'         => {fields => ['story_id']},
+  'Krang::Story::CheckedOut'           => {fields => ['desk_id']},
+  'Krang::Story::NoDesk'               => {fields => ['desk_id']},
+  'Krang::Story::NoDeleteAccess'       => {fields => ['story_id']},
+  'Krang::Story::NoRestoreAccess'      => {fields => ['story_id']},
+  'Krang::Story::CantCheckOut'         => {fields => ['stories']},
   ;
-  
-# create accessors for object fields
-use Krang::ClassLoader MethodMaker => 
-  new_with_init => 'new',
-  new_hash_init => 'hash_init',
-  get           => [ qw(
-                        story_id
-                        story_uuid
-                        version
-                        checked_out
-                        checked_out_by
-                        may_see
-                        may_edit
-                        hidden
-                        archived
-                        trashed
-                       ) ],
-  get_set_with_notify => [ { 
-                            method => '_notify',
-                            attr => [ qw(
-                                         title
-                                         slug
-                                         notes
-                                         cover_date
-                                         publish_date
-                                         published_version
-                                         preview_version
-                                         desk_id
-                                         last_desk_id
-                                        ) ]
-                           } ];
 
-# fields in the story table, aside from story_id
-use constant STORY_FIELDS =>
-  qw( story_id
+# create accessors for object fields
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
+  new_hash_init                    => 'hash_init',
+  get                              => [
+    qw(
+      story_id
       story_uuid
       version
-      title
-      slug
-      cover_date
-      publish_date
-      published_version
-      preview_version
-      notes
-      element_id
-      class
       checked_out
       checked_out_by
-      desk_id
-      last_desk_id
+      may_see
+      may_edit
       hidden
       archived
       trashed
-    );
+      )
+  ],
+  get_set_with_notify => [
+    {
+        method => '_notify',
+        attr   => [
+            qw(
+              title
+              slug
+              notes
+              cover_date
+              publish_date
+              published_version
+              preview_version
+              desk_id
+              last_desk_id
+              )
+        ]
+    }
+  ];
 
-sub id_meth { 'story_id' }
+# fields in the story table, aside from story_id
+use constant STORY_FIELDS => qw( story_id
+  story_uuid
+  version
+  title
+  slug
+  cover_date
+  publish_date
+  published_version
+  preview_version
+  notes
+  element_id
+  class
+  checked_out
+  checked_out_by
+  desk_id
+  last_desk_id
+  hidden
+  archived
+  trashed
+);
+
+sub id_meth   { 'story_id' }
 sub uuid_meth { 'story_uuid' }
 
 # called by get_set_with_notify attibutes.  Catches changes that must
 # invalidate the URL cache.
 sub _notify {
     my ($self, $which, $old, $new) = @_;
-    $self->{url_attributes} ||=
-      { map { $_ => 1 } $self->class->url_attributes };
+    $self->{url_attributes} ||= {map { $_ => 1 } $self->class->url_attributes};
     return unless exists $self->{url_attributes}{$which};
     return if defined $old and defined $new and $old eq $new;
     return if not defined $old and not defined $new;
@@ -253,8 +256,7 @@ sub category {
       if $self->{category_cache} and $self->{category_cache}[0];
 
     # otherwise, lookup from id list
-    my ($category) = 
-      pkg('Category')->find(category_id => $self->{category_ids}[0]);
+    my ($category) = pkg('Category')->find(category_id => $self->{category_ids}[0]);
     $self->{category_cache}[0] = $category;
 
     return $category;
@@ -277,9 +279,11 @@ sub url {
     return $self->{url_cache}[0]
       if $self->{url_cache} and $self->{url_cache}[0];
 
-    # otherwise, compute using element 
-    my $url = $self->class->build_url(story => $self,
-                                      category => $self->category);
+    # otherwise, compute using element
+    my $url = $self->class->build_url(
+        story    => $self,
+        category => $self->category
+    );
     $self->{url_cache}[0] = $url;
 
     return $url;
@@ -296,9 +300,9 @@ sub preview_url {
     my $self = shift;
     croak "illegal attempt to set readonly attribute 'preview_url'.\n"
       if @_;
-    my $url = $self->url;
-    my $site = $self->category->site;
-    my $site_url = $site->url;
+    my $url              = $self->url;
+    my $site             = $self->category->site;
+    my $site_url         = $site->url;
     my $site_preview_url = $site->preview_url;
     $url =~ s/^\Q$site_url\E/$site_preview_url/;
 
@@ -336,9 +340,10 @@ sub categories {
 
     # get
     unless (@_) {
+
         # load the cache as necessary
         for (0 .. $#{$self->{category_ids}}) {
-            next if  $self->{category_cache}[$_];
+            next if $self->{category_cache}[$_];
             ($self->{category_cache}[$_]) =
               pkg('Category')->find(category_id => $self->{category_ids}[$_]);
             croak("Unable to load category '$self->{category_ids}[$_]'")
@@ -351,14 +356,12 @@ sub categories {
 
     # transform array ref to list
     @_ = @{$_[0]} if @_ == 1 and ref($_[0]) and ref($_[0]) eq 'ARRAY';
-    
+
     # fill in category_id list
-    $self->{category_ids} = 
-      [ map { ref $_ ? $_->category_id : $_ } @_ ];
-    
+    $self->{category_ids} = [map { ref $_ ? $_->category_id : $_ } @_];
+
     # fill cache with objects passed in, delay loading if just passed IDs
-    $self->{category_cache} = 
-      [ map { ref $_ ? $_ : undef } @_ ];
+    $self->{category_cache} = [map { ref $_ ? $_ : undef } @_];
 
     # invalidate url cache
     $self->{url_cache} = [];
@@ -389,9 +392,10 @@ sub urls {
         }
 
         # build url
-        $self->{url_cache}[$_] = 
-          $self->element->build_url(story => $self,
-                                    category => $self->{category_cache}[$_]);
+        $self->{url_cache}[$_] = $self->element->build_url(
+            story    => $self,
+            category => $self->{category_cache}[$_]
+        );
     }
     return @{$self->{url_cache}};
 }
@@ -409,7 +413,7 @@ sub preview_urls {
     my @urls = $self->urls;
     my @cats = $self->categories;
 
-    for (my $i = 0; $i <= $#urls; $i++) {
+    for (my $i = 0 ; $i <= $#urls ; $i++) {
         my $url         = $cats[$i]->url;
         my $preview_url = $cats[$i]->preview_url;
 
@@ -431,11 +435,10 @@ the content for the story.
 
 =cut
 
-sub element { 
+sub element {
     my $self = shift;
     return $self->{element} if $self->{element};
-    ($self->{element}) = 
-      pkg('Element')->load(element_id => $self->{element_id}, object => $self);
+    ($self->{element}) = pkg('Element')->load(element_id => $self->{element_id}, object => $self);
     return $self->{element};
 }
 
@@ -489,25 +492,27 @@ existing story or category.
 
 sub init {
     my ($self, %args) = @_;
-    exists $args{$_} or croak("Missing required parameter '$_'.")
+    exists $args{$_}
+      or croak("Missing required parameter '$_'.")
       for ('class', 'categories', 'slug', 'title');
     croak("categories parameter must be an ARRAY ref.")
       unless ref $args{categories} and ref $args{categories} eq 'ARRAY';
     croak("categories parameter must contain at least one catgeory")
-      unless @{$args{categories}} and 
-        ( UNIVERSAL::isa($args{categories}[0], 'Krang::Category') or
-          ( defined $args{categories}[0] and $args{categories}[0] =~ /^\d+$/));
+      unless @{$args{categories}}
+          and (UNIVERSAL::isa($args{categories}[0], 'Krang::Category')
+              or (defined $args{categories}[0] and $args{categories}[0] =~ /^\d+$/));
 
     # create a new element based on class
     $self->{class} = delete $args{class};
     croak("Missing required 'class' parameter to pkg('Story')->new()")
       unless $self->{class};
-    $self->{element} = pkg('Element')->new(class => $self->{class}, 
-                                           object => $self);
+    $self->{element} = pkg('Element')->new(
+        class  => $self->{class},
+        object => $self
+    );
 
     # get hash of url_attributes
-    $self->{url_attributes} = 
-      { map { $_ => 1 } $self->class->url_attributes };
+    $self->{url_attributes} = {map { $_ => 1 } $self->class->url_attributes};
 
     # determine if this story should be hidden or not
     $self->{hidden} = $self->class->hidden;
@@ -524,7 +529,7 @@ sub init {
     $self->{trashed}           = 0;
 
     # Set up temporary permissions
-    $self->{may_see} = 1;
+    $self->{may_see}  = 1;
     $self->{may_edit} = 1;
 
     # handle categories setup specially since it needs to call
@@ -568,37 +573,45 @@ sub contribs {
 
     unless (@_) {
         my $contrib;
+
         # return contributor objects
         foreach my $id (@{$self->{contrib_ids}}) {
             ($contrib) = pkg('Contrib')->find(contrib_id => $id->{contrib_id});
-            croak("No contributor found with contrib_id ". $id->{contrib_id})
+            croak("No contributor found with contrib_id " . $id->{contrib_id})
               unless $contrib;
             $contrib->selected_contrib_type($id->{contrib_type_id});
             push @contribs, $contrib;
         }
-        return @contribs; 
+        return @contribs;
     }
 
     # store list of contributors, passed as either objects or hashes
     foreach my $rec (@_) {
         if (ref($rec) and ref($rec) eq 'HASH') {
-            croak("invalid data passed to contribs: hashes must contain contrib_id and contrib_type_id.")
-              unless $rec->{contrib_id} and $rec->{contrib_type_id};
+            croak(
+                "invalid data passed to contribs: hashes must contain contrib_id and contrib_type_id."
+            ) unless $rec->{contrib_id} and $rec->{contrib_type_id};
 
             push(@contribs, $rec);
         } elsif (ref($rec) and $rec->isa(pkg('Contrib'))) {
-            croak("invalid data passed to contrib: contributor objects must have contrib_id and selected_contrib_type set.")
-              unless $rec->contrib_id and $rec->selected_contrib_type;
+            croak(
+                "invalid data passed to contrib: contributor objects must have contrib_id and selected_contrib_type set."
+            ) unless $rec->contrib_id and $rec->selected_contrib_type;
 
-            push(@contribs, { contrib_id     => $rec->contrib_id,
-                              contrib_type_id=> $rec->selected_contrib_type });
+            push(
+                @contribs,
+                {
+                    contrib_id      => $rec->contrib_id,
+                    contrib_type_id => $rec->selected_contrib_type
+                }
+            );
 
         } else {
             croak("invalid data passed to contribs");
         }
 
         $self->{contrib_ids} = \@contribs;
-    }    
+    }
 }
 
 =item $story->clear_contribs()
@@ -617,11 +630,10 @@ Returns an arrayref containing all the existing version numbers for this story.
 
 sub all_versions {
     my $self = shift;
-    my $dbh = dbh;
-    return $dbh->selectcol_arrayref('SELECT version FROM story_version WHERE story_id=?', 
-                                    undef, $self->story_id);
+    my $dbh  = dbh;
+    return $dbh->selectcol_arrayref('SELECT version FROM story_version WHERE story_id=?',
+        undef, $self->story_id);
 }
-
 
 =item C<< $story->prune_versions(number_to_keep => 10); >>
 
@@ -644,12 +656,14 @@ sub prune_versions {
     my @all_versions     = @{$self->all_versions};
     my $number_to_delete = @all_versions - $number_to_keep;
     return 0 unless $number_to_delete > 0;
-    
+
     # delete the oldest ones (which will be first since the list is ascending)
     my @versions_to_delete = splice(@all_versions, 0, $number_to_delete);
-    $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version IN ('.
-             join(',', ("?") x @versions_to_delete) . ')',
-             undef, $self->story_id, @versions_to_delete) unless $args{test_mode};
+    $dbh->do(
+        'DELETE FROM story_version WHERE story_id = ? AND version IN ('
+          . join(',', ("?") x @versions_to_delete) . ')',
+        undef, $self->story_id, @versions_to_delete
+    ) unless $args{test_mode};
     return $number_to_delete;
 }
 
@@ -707,6 +721,7 @@ sub save {
 
     # unless we're halfway through a category-index conversion...
     unless ($self->{slug} eq '_TEMP_SLUG_FOR_CONVERSION_') {
+
         # make sure it's got a unique URL
         $self->_verify_unique();
 
@@ -757,12 +772,16 @@ sub _save_core {
     # write an insert or update query for the story
     my $query;
     if ($update) {
+
         # update version
-        $query = 'UPDATE story SET ' . 
-          join(', ', map { "$_ = ?" } STORY_FIELDS) . ' WHERE story_id = ?';
+        $query =
+          'UPDATE story SET ' . join(', ', map { "$_ = ?" } STORY_FIELDS) . ' WHERE story_id = ?';
     } else {
-        $query = 'INSERT INTO story (' . join(', ', STORY_FIELDS) .
-          ') VALUES (' . join(',', ("?") x STORY_FIELDS) . ')';
+        $query =
+            'INSERT INTO story ('
+          . join(', ', STORY_FIELDS)
+          . ') VALUES ('
+          . join(',', ("?") x STORY_FIELDS) . ')';
     }
 
     my @data;
@@ -775,29 +794,27 @@ sub _save_core {
     }
 
     # do the insert or update
-    $dbh->do($query, undef, @data,
-             ($update ? $self->{story_id} : ()));
+    $dbh->do($query, undef, @data, ($update ? $self->{story_id} : ()));
 
     # extract the ID on insert
     $self->{story_id} = $dbh->{mysql_insertid}
       unless $update;
 }
 
-
 # save the element tree
 sub _save_element {
     my $self = shift;
-    return unless $self->{element}; # if the element tree was never
-                                    # loaded, it can't have changed
+    return unless $self->{element};    # if the element tree was never
+                                       # loaded, it can't have changed
     $self->{element}->save();
     $self->{element_id} = $self->{element}->element_id;
 }
 
 # save schedules
 sub _save_schedules {
-    my $self = shift;
+    my $self         = shift;
     my $keep_version = shift;
-    
+
     # if this is the first save, save default schedules with story
     return unless $self->{version} == 1 and not $keep_version;
     foreach my $sched ($self->element->default_schedules) {
@@ -808,37 +825,38 @@ sub _save_schedules {
 # save category assignments
 sub _save_cat {
     my $self = shift;
-    my $dbh = dbh();
+    my $dbh  = dbh();
 
     # delete existing relations
-    $dbh->do('DELETE FROM story_category WHERE story_id = ?',
-             undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_category WHERE story_id = ?', undef, $self->{story_id});
 
     # insert category relations, including urls
-    my @urls       = $self->urls;
-    my @cat_ids    = @{$self->{category_ids}};
+    my @urls    = $self->urls;
+    my @cat_ids = @{$self->{category_ids}};
     for (0 .. $#cat_ids) {
-        $dbh->do('INSERT INTO story_category (story_id, category_id, ord, url)
+        $dbh->do(
+            'INSERT INTO story_category (story_id, category_id, ord, url)
                   VALUES (?,?,?,?)', undef,
-                 $self->{story_id}, $cat_ids[$_], $_, $urls[$_]);
+            $self->{story_id}, $cat_ids[$_], $_, $urls[$_]
+        );
     }
 }
 
 # save contributors
 sub _save_contrib {
     my $self = shift;
-    my $dbh = dbh();
+    my $dbh  = dbh();
 
-    $dbh->do('DELETE FROM story_contrib WHERE story_id = ?',
-             undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_contrib WHERE story_id = ?', undef, $self->{story_id});
 
     my $ord = 0;
-    $dbh->do('INSERT INTO story_contrib 
+    $dbh->do(
+        'INSERT INTO story_contrib 
                     (story_id, contrib_id, contrib_type_id, ord)
                   VALUES (?,?,?,?)', undef,
-             $self->{story_id}, $_->{contrib_id}, 
-             $_->{contrib_type_id}, ++$ord)
-      for @{$self->{contrib_ids}};
+        $self->{story_id},           $_->{contrib_id},
+        $_->{contrib_type_id},       ++$ord
+    ) for @{$self->{contrib_ids}};
 }
 
 # save to the version table
@@ -847,48 +865,55 @@ sub _save_version {
     my $dbh  = dbh;
 
     # save version
-    $dbh->do('REPLACE INTO story_version (story_id, version, data) 
-              VALUES (?,?,?)', undef, 
-            $self->{story_id}, $self->{version}, nfreeze($self));
+    $dbh->do(
+        'REPLACE INTO story_version (story_id, version, data) 
+              VALUES (?,?,?)', undef,
+        $self->{story_id}, $self->{version}, nfreeze($self)
+    );
 
 }
 
 # check for duplicate URLs
 sub _verify_unique {
-    my $self   = shift;
-    my $dbh    = dbh;
-    
-    my @urls   = $self->urls;
+    my $self = shift;
+    my $dbh  = dbh;
+
+    my @urls = $self->urls;
     return unless @urls;
 
     # first - unless we're a category index - make sure no categories have one of our URLs
     if ($self->{slug}) {
-      my $query = 'SELECT category_id, url FROM category WHERE ('.
-	join(' OR ', ('url = ?') x @urls) . ')';
-      my $result = $dbh->selectall_arrayref($query, undef, map { $_.'/' } $self->urls);
-      if ($result && @$result) {
-	my @dupes = map { { id => $_->[0], url => $_->[1] } } @$result;
-	Krang::Story::DuplicateURL->throw(message    => "Category has our URL",
-					  categories => \@dupes);
-      }
+        my $query =
+          'SELECT category_id, url FROM category WHERE (' . join(' OR ', ('url = ?') x @urls) . ')';
+        my $result = $dbh->selectall_arrayref($query, undef, map { $_ . '/' } $self->urls);
+        if ($result && @$result) {
+            my @dupes = map { {id => $_->[0], url => $_->[1]} } @$result;
+            Krang::Story::DuplicateURL->throw(
+                message    => "Category has our URL",
+                categories => \@dupes
+            );
+        }
     }
 
     # then look for stories that have one of our URLs without being archived
-    my $query = 'SELECT s.story_id, url, archived, trashed '
-              . 'FROM   story s '
-              . 'LEFT   JOIN story_category as sc '
-              . 'ON     s.story_id = sc.story_id '
-              . 'WHERE  archived = 0 AND trashed = 0 AND ('
-              . join(' OR ', ('url = ?') x @urls) . ')'
-	      . ($self->{story_id} ? ' AND s.story_id != ?' : '');
-    my $result = $dbh->selectall_arrayref($query, undef, $self->urls, 
-					  ($self->{story_id} ? 
-					   ($self->{story_id}) : ()));
+    my $query =
+        'SELECT s.story_id, url, archived, trashed '
+      . 'FROM   story s '
+      . 'LEFT   JOIN story_category as sc '
+      . 'ON     s.story_id = sc.story_id '
+      . 'WHERE  archived = 0 AND trashed = 0 AND ('
+      . join(' OR ', ('url = ?') x @urls) . ')'
+      . ($self->{story_id} ? ' AND s.story_id != ?' : '');
+    my $result =
+      $dbh->selectall_arrayref($query, undef, $self->urls,
+        ($self->{story_id} ? ($self->{story_id}) : ()));
     if ($result && @$result) {
-      my @dupes = map { { id => $_->[0], url => $_->[1] } } @$result;
-      @dupes = sort { $a->{id} > $b->{id} ? 1 : # sort dupes by ID and then URL
-			($a->{id} < $b->{id} ? -1 : $a->{url} cmp $b->{url}) } @dupes;
-      Krang::Story::DuplicateURL->throw(message => "Duplicate URL", stories => \@dupes);
+        my @dupes = map { {id => $_->[0], url => $_->[1]} } @$result;
+        @dupes = sort {
+            $a->{id} > $b->{id} ? 1 :    # sort dupes by ID and then URL
+              ($a->{id} < $b->{id} ? -1 : $a->{url} cmp $b->{url})
+        } @dupes;
+        Krang::Story::DuplicateURL->throw(message => "Duplicate URL", stories => \@dupes);
     }
 }
 
@@ -1131,494 +1156,502 @@ or bin/ scripts make calls to C<find()>!
 
 {
 
-# used to detect normal story fields versus more exotic searches
-my %simple_fields = map { $_ => 1 } grep { $_ !~ /_date$/ } STORY_FIELDS;
+    # used to detect normal story fields versus more exotic searches
+    my %simple_fields = map { $_ => 1 } grep { $_ !~ /_date$/ } STORY_FIELDS;
 
-sub find {
-    my $pkg = shift;
-    my %args = @_;
-    my $dbh = dbh();
+    sub find {
+        my $pkg  = shift;
+        my %args = @_;
+        my $dbh  = dbh();
 
-    # get search parameters out of args, leaving just field specifiers
-    my $order_by    = delete $args{order_by}    || 's.story_id';
-    my $order_dir   = delete $args{order_desc}  ? 'DESC' : 'ASC';
-    my $limit       = delete $args{limit}       || 0;
-    my $offset      = delete $args{offset}      || 0;
-    my $count       = delete $args{count}       || 0;
-    my $ids_only    = delete $args{ids_only}    || 0;
-    my $include_archived = delete $args{include_archived} || 0;
-    my $include_trashed  = delete $args{include_trashed}  || 0;
-    my $include_live     = delete $args{include_live};
-    $include_live = 1 unless defined($include_live);
+        # get search parameters out of args, leaving just field specifiers
+        my $order_by = delete $args{order_by} || 's.story_id';
+        my $order_dir = delete $args{order_desc} ? 'DESC' : 'ASC';
+        my $limit            = delete $args{limit}            || 0;
+        my $offset           = delete $args{offset}           || 0;
+        my $count            = delete $args{count}            || 0;
+        my $ids_only         = delete $args{ids_only}         || 0;
+        my $include_archived = delete $args{include_archived} || 0;
+        my $include_trashed  = delete $args{include_trashed}  || 0;
+        my $include_live     = delete $args{include_live};
+        $include_live = 1 unless defined($include_live);
 
-    # determine whether or not to display hidden stories.
-    my $show_hidden = delete $args{show_hidden} || 0;
+        # determine whether or not to display hidden stories.
+        my $show_hidden = delete $args{show_hidden} || 0;
 
-    foreach (qw/story_id checked_out checked_out_by class desk_id may_see may_edit/) {
-        if (exists($args{$_})) { $show_hidden = 1; last; }
-    }
-
-    # set bool to determine whether to use $row or %row for binding below
-    my $single_column = $ids_only || $count ? 1 : 0;
-
-    # check for invalid argument sets
-    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
-          "Only one can be present.")
-      if $count and $ids_only;
-    croak(__PACKAGE__ . "->find(): can't use 'version' without 'story_id'.")
-      if $args{version} and not $args{story_id};
-
-    # loading a past version is handled by _load_version()
-    return $pkg->_load_version($args{story_id}, $args{version})
-      if $args{version};
-
-    my (@where, @param, %from, $like);
-    while (my ($key, $value) = each %args) {
-        # strip off and remember _like specifier
-        $like = ($key =~ s/_like$//) ? 1 : 0;
-
-        # handle story_id => [1, 2, 3]
-        if ($key eq 'story_id' and ref($value) and ref($value) eq 'ARRAY') {
-            # an array of IDs selects a list of stories by ID
-            push @where, 's.story_id IN (' . 
-              join(',', ("?") x @$value) . ')';
-            push @param, @$value;
-            next;
+        foreach (qw/story_id checked_out checked_out_by class desk_id may_see may_edit/) {
+            if (exists($args{$_})) { $show_hidden = 1; last; }
         }
 
-        # handle class => ['article', 'cover']
-        if ($key eq 'class' and ref($value) and ref($value) eq 'ARRAY') {
-            # an array of classes selects a list of stories by class
-            push @where, 's.class IN (' . 
-              join(',', ("?") x @$value) . ')';
-            push @param, @$value;
-            next;
-        }
+        # set bool to determine whether to use $row or %row for binding below
+        my $single_column = $ids_only || $count ? 1 : 0;
 
-        # handle simple fields
-        if (exists $simple_fields{$key}) {
-            if (defined $value) {
-                push @where, $like ? "s.$key LIKE ?" : "s.$key = ?";
-                push @param, $value;
-            } else {
-                push @where, "s.$key IS NULL";
+        # check for invalid argument sets
+        croak(  __PACKAGE__
+              . "->find(): 'count' and 'ids_only' were supplied. "
+              . "Only one can be present.")
+          if $count and $ids_only;
+        croak(__PACKAGE__ . "->find(): can't use 'version' without 'story_id'.")
+          if $args{version} and not $args{story_id};
+
+        # loading a past version is handled by _load_version()
+        return $pkg->_load_version($args{story_id}, $args{version})
+          if $args{version};
+
+        my (@where, @param, %from, $like);
+        while (my ($key, $value) = each %args) {
+
+            # strip off and remember _like specifier
+            $like = ($key =~ s/_like$//) ? 1 : 0;
+
+            # handle story_id => [1, 2, 3]
+            if ($key eq 'story_id' and ref($value) and ref($value) eq 'ARRAY') {
+
+                # an array of IDs selects a list of stories by ID
+                push @where, 's.story_id IN (' . join(',', ("?") x @$value) . ')';
+                push @param, @$value;
+                next;
             }
-            next;
-        }
 
-        # handle search by category_id
-        if ($key eq 'category_id') {
-            $from{"story_category as sc"} = 1;
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, 'sc.category_id = ?');
-            push(@param, $value);
-            next;
-        }
+            # handle class => ['article', 'cover']
+            if ($key eq 'class' and ref($value) and ref($value) eq 'ARRAY') {
 
-        # handle search by primary_category_id
-        if ($key eq 'primary_category_id') {
-            $from{"story_category as sc"} = 1;
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, 'sc.category_id = ?', 'sc.ord = 0');
-            push(@param, $value);
-            next;
-        }
+                # an array of classes selects a list of stories by class
+                push @where, 's.class IN (' . join(',', ("?") x @$value) . ')';
+                push @param, @$value;
+                next;
+            }
 
-        # handle below_category_id
-        if ($key eq 'below_category_id') {
-            $from{"story_category as sc"} = 1;
-            push(@where, 's.story_id = sc.story_id');
-            my ($cat) = pkg('Category')->find(category_id => $value);
-            if ($cat) {
-                my @ids = ($value, $cat->descendants( ids_only => 1 ));
+            # handle simple fields
+            if (exists $simple_fields{$key}) {
+                if (defined $value) {
+                    push @where, $like ? "s.$key LIKE ?" : "s.$key = ?";
+                    push @param, $value;
+                } else {
+                    push @where, "s.$key IS NULL";
+                }
+                next;
+            }
+
+            # handle search by category_id
+            if ($key eq 'category_id') {
+                $from{"story_category as sc"} = 1;
                 push(@where, 's.story_id = sc.story_id');
-                push(@where, 
-                     'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
-                push(@param, @ids);
-            }
-            next;
-        }
-
-        # handle below_primary_category_id
-        if ($key eq 'below_primary_category_id') {
-            $from{"story_category as sc"} = 1;
-            push(@where, 's.story_id = sc.story_id');
-            my ($cat) = pkg('Category')->find(category_id => $value);
-            if ($cat) {
-                my @ids = ($value, $cat->descendants( ids_only => 1 ));
-                push(@where, 's.story_id = sc.story_id AND sc.ord = 0');
-                push(@where, 
-                     'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
-                push(@param, @ids);
-            }
-            next;
-        }
-
-        # handle search by site_id
-        if ($key eq 'site_id') {
-            # need to bring in category
-            $from{"story_category as sc"} = 1;
-            $from{"category as c"} = 1;
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, 'sc.category_id = c.category_id');
-            if (ref $args{$key} eq 'ARRAY') {
-                push(@where,
-                     'c.site_id IN (' . join(',', ('?') x @{$args{$key}}) . ')');
-                push(@param, @{$args{site_id}});
-            } else {
-                push(@where, 'c.site_id = ?');
+                push(@where, 'sc.category_id = ?');
                 push(@param, $value);
+                next;
             }
-            next;
-        }
 
-        # handle search by primary_site_id
-        if ($key eq 'primary_site_id') {
-            # need to bring in category
-            $from{"story_category as sc"} = 1;
-            $from{"category as c"} = 1;
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, 'sc.category_id = c.category_id');
-            if (ref $args{$key} eq 'ARRAY') {
-                push(@where,
-                     'c.site_id IN (' . join(',', ('?') x @{$args{$key}}) . ')');
-                push(@param, @{$args{$key}});
-            } else {
-                push(@where, 'c.site_id = ?', 'sc.ord = 0');
+            # handle search by primary_category_id
+            if ($key eq 'primary_category_id') {
+                $from{"story_category as sc"} = 1;
+                push(@where, 's.story_id = sc.story_id');
+                push(@where, 'sc.category_id = ?', 'sc.ord = 0');
                 push(@param, $value);
+                next;
             }
-            next;
-        }
 
-        # handle search by url
-        if ($key eq 'url') {
-            $from{"story_category as sc"} = 1;
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'));
-            push(@param, $value);
-            next;
-        }
+            # handle below_category_id
+            if ($key eq 'below_category_id') {
+                $from{"story_category as sc"} = 1;
+                push(@where, 's.story_id = sc.story_id');
+                my ($cat) = pkg('Category')->find(category_id => $value);
+                if ($cat) {
+                    my @ids = ($value, $cat->descendants(ids_only => 1));
+                    push(@where, 's.story_id = sc.story_id');
+                    push(@where, 'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
+                    push(@param, @ids);
+                }
+                next;
+            }
 
-        # handle search by primary_url
-        if ($key eq 'primary_url') {
-            $from{"story_category as sc"} = 1;
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'),
-                         'sc.ord = 0');
-            push(@param, $value);
-            next;
-        }
+            # handle below_primary_category_id
+            if ($key eq 'below_primary_category_id') {
+                $from{"story_category as sc"} = 1;
+                push(@where, 's.story_id = sc.story_id');
+                my ($cat) = pkg('Category')->find(category_id => $value);
+                if ($cat) {
+                    my @ids = ($value, $cat->descendants(ids_only => 1));
+                    push(@where, 's.story_id = sc.story_id AND sc.ord = 0');
+                    push(@where, 'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
+                    push(@param, @ids);
+                }
+                next;
+            }
 
-        # handle search by non-primary_url
-        if ($key eq 'non_primary_url') {
-            $from{"story_category as sc"} = 1;
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'),
-                         'sc.ord != 0');
-            push(@param, $value);
-            next;
-        }
- 
-        # handle contrib_simple
-        if ($key eq 'contrib_simple') {
-            $from{"story_contrib as scon"} = 1;
-            $from{"contrib as con"} = 1;
-            push(@where, 's.story_id = scon.story_id');
-            push(@where, 'con.contrib_id = scon.contrib_id');
+            # handle search by site_id
+            if ($key eq 'site_id') {
 
-            my @words = split(/\s+/, $args{'contrib_simple'});
-            foreach my $word (@words){
-                push(@where, 
-                    q{concat(
+                # need to bring in category
+                $from{"story_category as sc"} = 1;
+                $from{"category as c"}        = 1;
+                push(@where, 's.story_id = sc.story_id');
+                push(@where, 'sc.category_id = c.category_id');
+                if (ref $args{$key} eq 'ARRAY') {
+                    push(@where, 'c.site_id IN (' . join(',', ('?') x @{$args{$key}}) . ')');
+                    push(@param, @{$args{site_id}});
+                } else {
+                    push(@where, 'c.site_id = ?');
+                    push(@param, $value);
+                }
+                next;
+            }
+
+            # handle search by primary_site_id
+            if ($key eq 'primary_site_id') {
+
+                # need to bring in category
+                $from{"story_category as sc"} = 1;
+                $from{"category as c"}        = 1;
+                push(@where, 's.story_id = sc.story_id');
+                push(@where, 'sc.category_id = c.category_id');
+                if (ref $args{$key} eq 'ARRAY') {
+                    push(@where, 'c.site_id IN (' . join(',', ('?') x @{$args{$key}}) . ')');
+                    push(@param, @{$args{$key}});
+                } else {
+                    push(@where, 'c.site_id = ?', 'sc.ord = 0');
+                    push(@param, $value);
+                }
+                next;
+            }
+
+            # handle search by url
+            if ($key eq 'url') {
+                $from{"story_category as sc"} = 1;
+                push(@where, 's.story_id = sc.story_id');
+                push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'));
+                push(@param, $value);
+                next;
+            }
+
+            # handle search by primary_url
+            if ($key eq 'primary_url') {
+                $from{"story_category as sc"} = 1;
+                push(@where, 's.story_id = sc.story_id');
+                push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'), 'sc.ord = 0');
+                push(@param, $value);
+                next;
+            }
+
+            # handle search by non-primary_url
+            if ($key eq 'non_primary_url') {
+                $from{"story_category as sc"} = 1;
+                push(@where, 's.story_id = sc.story_id');
+                push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'), 'sc.ord != 0');
+                push(@param, $value);
+                next;
+            }
+
+            # handle contrib_simple
+            if ($key eq 'contrib_simple') {
+                $from{"story_contrib as scon"} = 1;
+                $from{"contrib as con"}        = 1;
+                push(@where, 's.story_id = scon.story_id');
+                push(@where, 'con.contrib_id = scon.contrib_id');
+
+                my @words = split(/\s+/, $args{'contrib_simple'});
+                foreach my $word (@words) {
+                    push(
+                        @where,
+                        q{concat(
                       coalesce(con.first,''), ' ',
                       coalesce(con.middle,''), ' ',
                       coalesce(con.last),'') LIKE ?
-                });
-                push(@param, "%${word}%");
+                }
+                    );
+                    push(@param, "%${word}%");
+                }
+                next;
             }
-            next;
+
+            # handle creator_simple
+            if ($key eq 'creator_simple') {
+                $from{"history as h"} = 1;
+                $from{"user as u"}    = 1;
+                push(@where, 's.story_id = h.object_id');
+                push(@where,
+                    "(h.object_type = 'Krang::Story' or h.object_type ='" . pkg('Story') . "')");
+                push(@where, "h.action = 'new'");
+                push(@where, 'h.user_id = u.user_id');
+
+                my @words = split(/\s+/, $args{'creator_simple'});
+                foreach my $word (@words) {
+                    push(@where, q{concat(u.first_name,' ',u.last_name) LIKE ?});
+                    push(@param, "%${word}%");
+                }
+                next;
+            }
+
+            # handle simple_search
+            if ($key eq 'simple_search') {
+                $from{"story_category as sc"} = 1;
+                push(@where, 's.story_id = sc.story_id');
+
+                my @words = split(/\s+/, ($args{'simple_search'} || ""));
+                foreach my $word (@words) {
+                    my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
+                    push(
+                        @where,
+                        '('
+                          . join(' OR ',
+                            ($numeric ? 's.story_id = ?' : ()),
+                            's.title LIKE ?',
+                            'sc.url LIKE ?')
+                          . ')'
+                    );
+
+                    # escape any literal SQL wildcard chars
+                    if (!$numeric) {
+                        $word =~ s/_/\\_/g;
+                        $word =~ s/%/\\%/g;
+                    }
+                    push(@param, ($numeric ? ($word) : ()), "%${word}%", "%${word}%");
+                }
+                next;
+            }
+
+            # handle dates
+            if ($key eq 'cover_date' or $key eq 'publish_date') {
+                if (ref $value and UNIVERSAL::isa($value, 'Time::Piece')) {
+                    push @where, "$key = ?";
+                    push @param, $value->mysql_datetime;
+                } elsif (ref $value and UNIVERSAL::isa($value, 'ARRAY')) {
+                    if ($value->[0] and $value->[1]) {
+                        push @where, "$key BETWEEN ? AND ?";
+                        push @param, $value->[0]->mysql_datetime, $value->[1]->mysql_datetime;
+                    } elsif ($value->[0]) {
+                        push @where, "$key >= ?";
+                        push @param, $value->[0]->mysql_datetime;
+                    } elsif ($value->[1]) {
+                        push @where, "$key <= ?";
+                        push @param, $value->[1]->mysql_datetime;
+                    }
+                } else {
+                    croak(
+                        "Bad date aguement, must be either an array of two Time::Piece objects or one Time::Piece object."
+                    );
+                }
+                next;
+            }
+
+            # handle exclude_story_ids => [1, 2, 3]
+            if ($key eq 'exclude_story_ids') {
+                if (@$value) {
+                    push(@where, ('s.story_id != ?') x @$value);
+                    push(@param, @$value);
+                }
+                next;
+            }
+
+            # handle published flag
+            if ($key eq 'published') {
+                my $ps =
+                  ($args{published} eq '1')
+                  ? 's.published_version > 0'
+                  : '(s.published_version IS NULL OR s.published_version = 0)';
+                push(@where, $ps);
+                next;
+            }
+
+            # handle may_see
+            if ($key eq 'may_see') {
+                push(@where, 'ucpc.may_see = ?');
+                push(@param, 1);
+                next;
+            }
+
+            # handle may_edit
+            if ($key eq 'may_edit') {
+                push(@where, 'ucpc.may_edit = ?');
+                push(@param, 1);
+                next;
+            }
+
+            # handle element_index
+            if ($key eq 'element_index') {
+
+                # setup join to element_index
+                $from{"element as e"}        = 1;
+                $from{"element_index as ei"} = 1;
+                push(@where, 's.element_id = e.root_id');
+                push(@where, 'e.element_id = ei.element_id');
+
+                # produce where clause
+                push(@where, 'e.class = ?', ($like ? 'ei.value LIKE ?' : 'ei.value = ?'));
+                push(@param, $value->[0], $value->[1]);
+                next;
+            }
+
+            croak("Unknown find key '$key'");
         }
 
-        # handle creator_simple
-        if ($key eq 'creator_simple') {
-            $from{"history as h"} = 1;
-            $from{"user as u"} = 1;
-            push(@where, 's.story_id = h.object_id');
-            push(@where, "(h.object_type = 'Krang::Story' or h.object_type ='"
-                          .pkg('Story')."')");
-            push(@where, "h.action = 'new'");
-            push(@where, 'h.user_id = u.user_id');
+        # Add user_id into the query
+        my $user_id = $ENV{REMOTE_USER} || croak("No user_id in REMOTE_USER");
+        push(@where, "ucpc.user_id = ?");
+        push(@param, $user_id);
 
-            my @words = split(/\s+/, $args{'creator_simple'});
-            foreach my $word (@words){
-                push(@where, 
-                     q{concat(u.first_name,' ',u.last_name) LIKE ?});
-                push(@param, "%${word}%");
-            }
-            next;
-        }
-
-        # handle simple_search
-        if ($key eq 'simple_search') {            
+        # handle ordering by primary URL, which is in story_category
+        if ($order_by eq 'url') {
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
-
-            my @words = split(/\s+/, ($args{'simple_search'} || ""));
-            foreach my $word (@words){
-                my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
-                  push(@where, '(' .                      
-                     join(' OR ', 
-                          ($numeric ? 's.story_id = ?' : ()),
-                          's.title LIKE ?', 
-                          'sc.url LIKE ?') . ')');
-                # escape any literal SQL wildcard chars
-                if( !$numeric ) {
-                    $word =~ s/_/\\_/g;
-                    $word =~ s/%/\\%/g;
-                } 
-                push(@param, ($numeric ? ($word) : ()),
-                     "%${word}%", "%${word}%");
-            }
-            next;
+            push(@where, 'sc.ord = 0');
+            $order_by = 'sc.url';
+        } elsif ($order_by !~ /\w+\./) {
+            $order_by = "s." . $order_by;
         }
 
-        # handle dates
-        if ($key eq 'cover_date' or $key eq 'publish_date') {
-            if (ref $value and UNIVERSAL::isa($value, 'Time::Piece')) {
-                push @where, "$key = ?";
-                push @param, $value->mysql_datetime;
-            } elsif (ref $value and UNIVERSAL::isa($value, 'ARRAY')) {
-                if ($value->[0] and $value->[1]) {
-                    push @where, "$key BETWEEN ? AND ?";
-                    push @param, $value->[0]->mysql_datetime,
-                                 $value->[1]->mysql_datetime;
-                } elsif ($value->[0]) {
-                    push @where, "$key >= ?";
-                    push @param, $value->[0]->mysql_datetime;
-                } elsif ($value->[1]) {
-                    push @where, "$key <= ?";
-                    push @param, $value->[1]->mysql_datetime;
-                }
+        # restrict to visible stories unless show_hidden is passed.
+        unless ($show_hidden) {
+            push(@where, 's.hidden = 0');
+        }
+
+        # always restrict perm checking to primary category
+        push(@where, 'sc_p.ord = 0');
+
+        # include live/archived/trashed
+        unless ($args{story_id}) {
+            if ($include_live) {
+                push(@where, 's.archived = 0') unless $include_archived;
+                push(@where, 's.trashed  = 0') unless $include_trashed;
             } else {
-                croak("Bad date aguement, must be either an array of two Time::Piece objects or one Time::Piece object.");
+                if ($include_archived) {
+                    if ($include_trashed) {
+                        push(@where, 's.archived = 1 AND s.trashed = 1');
+                    } else {
+                        push(@where, 's.archived = 1 AND s.trashed = 0');
+                    }
+                } else {
+                    push(@where, 's.trashed = 1') if $include_trashed;
+                }
             }
-            next;
         }
 
-        # handle exclude_story_ids => [1, 2, 3]
-        if ($key eq 'exclude_story_ids') {
-            if(@$value) {
-                push(@where, ('s.story_id != ?') x @$value);
-                push(@param, @$value);
-            }
-            next;
-        }
-
-        # handle published flag
-        if ($key eq 'published') {
-            my $ps = ($args{published} eq '1') ? 
-                     's.published_version > 0' : 
-                     '(s.published_version IS NULL OR s.published_version = 0)';
-            push(@where, $ps);
-            next;
-        }
-
-        # handle may_see
-        if ($key eq 'may_see') {
-            push(@where, 'ucpc.may_see = ?');
-            push(@param, 1);
-            next;
-        }
-
-        # handle may_edit
-        if ($key eq 'may_edit') {
-            push(@where, 'ucpc.may_edit = ?');
-            push(@param, 1);
-            next;
-        }
-
-        # handle element_index
-        if ($key eq 'element_index') {
-            # setup join to element_index
-            $from{"element as e"} = 1;
-            $from{"element_index as ei"} = 1;
-            push(@where, 's.element_id = e.root_id');
-            push(@where, 'e.element_id = ei.element_id');
-
-            # produce where clause
-            push(@where, 
-                 'e.class = ?',
-                 ($like ? 'ei.value LIKE ?' : 'ei.value = ?'));
-            push(@param, $value->[0], $value->[1]);
-            next;
-        }
-
-        croak("Unknown find key '$key'");
-    }
-
-    # Add user_id into the query
-    my $user_id = $ENV{REMOTE_USER} || croak("No user_id in REMOTE_USER");
-    push(@where, "ucpc.user_id = ?");
-    push(@param, $user_id);
-
-    # handle ordering by primary URL, which is in story_category
-    if ($order_by eq 'url') {
-        $from{"story_category as sc"} = 1;
-        push(@where, 's.story_id = sc.story_id');
-        push(@where, 'sc.ord = 0');
-        $order_by = 'sc.url';
-    } elsif ($order_by !~ /\w+\./) {
-        $order_by = "s." . $order_by;
-    }
-
-    # restrict to visible stories unless show_hidden is passed.
-    unless ($show_hidden) {
-        push(@where, 's.hidden = 0');
-    }
-
-    # always restrict perm checking to primary category
-    push(@where, 'sc_p.ord = 0');
-
-    # include live/archived/trashed
-    unless ($args{story_id}) {
-	if ($include_live) {
-	    push(@where, 's.archived = 0') unless $include_archived;
-	    push(@where, 's.trashed  = 0') unless $include_trashed;
-	} else {
-	    if ($include_archived) {
-		if ($include_trashed) {
-		    push(@where, 's.archived = 1 AND s.trashed = 1');
-		} else {
-		    push(@where, 's.archived = 1 AND s.trashed = 0');
-		}
-	    } else {
-		push(@where, 's.trashed = 1') if $include_trashed;
-	    }
-	}
-    }
-
-    # construct base query
-    my $query;
-    my $from = " FROM story AS s 
+        # construct base query
+        my $query;
+        my $from = " FROM story AS s 
                  LEFT JOIN story_category AS sc_p 
                    ON s.story_id = sc_p.story_id
                  LEFT JOIN user_category_permission_cache as ucpc
                    ON sc_p.category_id = ucpc.category_id ";
-    my $group_by = 0;
+        my $group_by = 0;
 
-    if ($count) {        
-        $query = "SELECT COUNT(DISTINCT(s.story_id)) $from";
-    } elsif ($ids_only) {
-        $query = "SELECT DISTINCT(s.story_id) $from";
-    } else {
-        # Get user asset permissions -- overrides may_edit if false
-        my $may_edit;
-        if (pkg('Group')->user_asset_permissions('story') eq "edit") {
-            $may_edit = "ucpc.may_edit as may_edit";
+        if ($count) {
+            $query = "SELECT COUNT(DISTINCT(s.story_id)) $from";
+        } elsif ($ids_only) {
+            $query = "SELECT DISTINCT(s.story_id) $from";
         } else {
-            $may_edit = $dbh->quote("0") . " as may_edit";
-        }
 
-        $query = "SELECT " .
-           join(', ', map { "s.$_" } STORY_FIELDS) .
-             ",ucpc.may_see as may_see, $may_edit" .
-             $from;
-        $group_by = 1;
-    }
-
-    # add joins, if any
-    $query .= ", " . join(', ', keys(%from)) if (%from);
-    
-    # add WHERE, GROUP BY and ORDER BY clauses, if any
-    $query .= " WHERE " . join(' AND ', @where) if @where;
-    $query .= " GROUP BY s.story_id" if $group_by;
-    $query .= " ORDER BY $order_by $order_dir " if $order_by and not $count;
-
-    # add LIMIT clause, if any
-    if ($limit) {
-        $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
-    } elsif ($offset) {
-        $query .= " LIMIT $offset, -1";
-    }
-
-    debug(__PACKAGE__ . "::find() SQL: " . $query);
-    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @param));
-    
-    # return count results
-    if ($count) {
-        my ($result) = $dbh->selectrow_array($query, undef, @param);
-        return $result;
-    }
-
-    # return ids
-    if ($ids_only) {
-        my $result = $dbh->selectcol_arrayref($query, undef, @param);
-        return $result ? @$result : ();
-    }
-    
-    # execute an object search
-    my $sth = $dbh->prepare($query);
-    $sth->execute(@param);
-
-    # we'll fold in user desk permissions after constructing story objects
-    my %desk_permissions = pkg('Group')->user_desk_permissions;
-
-    # construct objects from results
-    my ($row, @stories, $result);
-    while ($row = $sth->fetchrow_arrayref()) {
-        my $obj = bless({}, $pkg);
-        @{$obj}{(STORY_FIELDS, 'may_see', 'may_edit')} = @$row;
-
-        # objectify dates
-        for (qw(cover_date publish_date)) {
-            if ($obj->{$_} and $obj->{$_} ne '0000-00-00 00:00:00') {
-                $obj->{$_} = Time::Piece->from_mysql_datetime($obj->{$_});
+            # Get user asset permissions -- overrides may_edit if false
+            my $may_edit;
+            if (pkg('Group')->user_asset_permissions('story') eq "edit") {
+                $may_edit = "ucpc.may_edit as may_edit";
             } else {
-                $obj->{$_} = undef;
+                $may_edit = $dbh->quote("0") . " as may_edit";
             }
-        }
-       
 
-        # load category_ids and urls
-        $result = $dbh->selectall_arrayref('SELECT category_id, url '.
-                                           'FROM story_category '.
-                                           'WHERE story_id = ? ORDER BY ord', 
-                                           undef, $obj->{story_id});
-        @{$obj}{('category_ids', 'urls')} = ([], []);
-        foreach my $row (@$result) {
-            push @{$obj->{category_ids}}, $row->[0];
-            push @{$obj->{url_cache}},         $row->[1];
+            $query =
+                "SELECT "
+              . join(', ', map { "s.$_" } STORY_FIELDS)
+              . ",ucpc.may_see as may_see, $may_edit"
+              . $from;
+            $group_by = 1;
         }
 
-        # load contribs
-        $result = $dbh->selectall_arrayref(
-                 'SELECT contrib_id, contrib_type_id FROM story_contrib '.
-                 'WHERE story_id = ? ORDER BY ord',
-                                           undef, $obj->{story_id});
-        $obj->{contrib_ids} = @$result ?
-          [ map { { contrib_id      => $_->[0],
-                    contrib_type_id => $_->[1] 
-                  } } @$result ] :
-          [];
+        # add joins, if any
+        $query .= ", " . join(', ', keys(%from)) if (%from);
 
-	# fold in user desk permissions
-	if (my $desk_id = $obj->desk_id) {
-	    $desk_permissions{$desk_id} eq 'edit' or $obj->{may_edit} = 0;
-	}
+        # add WHERE, GROUP BY and ORDER BY clauses, if any
+        $query .= " WHERE " . join(' AND ', @where) if @where;
+        $query .= " GROUP BY s.story_id" if $group_by;
+        $query .= " ORDER BY $order_by $order_dir " if $order_by and not $count;
 
-        push @stories, $obj;
+        # add LIMIT clause, if any
+        if ($limit) {
+            $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
+        } elsif ($offset) {
+            $query .= " LIMIT $offset, -1";
+        }
+
+        debug(__PACKAGE__ . "::find() SQL: " . $query);
+        debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @param));
+
+        # return count results
+        if ($count) {
+            my ($result) = $dbh->selectrow_array($query, undef, @param);
+            return $result;
+        }
+
+        # return ids
+        if ($ids_only) {
+            my $result = $dbh->selectcol_arrayref($query, undef, @param);
+            return $result ? @$result : ();
+        }
+
+        # execute an object search
+        my $sth = $dbh->prepare($query);
+        $sth->execute(@param);
+
+        # we'll fold in user desk permissions after constructing story objects
+        my %desk_permissions = pkg('Group')->user_desk_permissions;
+
+        # construct objects from results
+        my ($row, @stories, $result);
+        while ($row = $sth->fetchrow_arrayref()) {
+            my $obj = bless({}, $pkg);
+            @{$obj}{(STORY_FIELDS, 'may_see', 'may_edit')} = @$row;
+
+            # objectify dates
+            for (qw(cover_date publish_date)) {
+                if ($obj->{$_} and $obj->{$_} ne '0000-00-00 00:00:00') {
+                    $obj->{$_} = Time::Piece->from_mysql_datetime($obj->{$_});
+                } else {
+                    $obj->{$_} = undef;
+                }
+            }
+
+            # load category_ids and urls
+            $result = $dbh->selectall_arrayref(
+                'SELECT category_id, url '
+                  . 'FROM story_category '
+                  . 'WHERE story_id = ? ORDER BY ord',
+                undef, $obj->{story_id}
+            );
+            @{$obj}{('category_ids', 'urls')} = ([], []);
+            foreach my $row (@$result) {
+                push @{$obj->{category_ids}}, $row->[0];
+                push @{$obj->{url_cache}},    $row->[1];
+            }
+
+            # load contribs
+            $result = $dbh->selectall_arrayref(
+                'SELECT contrib_id, contrib_type_id FROM story_contrib '
+                  . 'WHERE story_id = ? ORDER BY ord',
+                undef, $obj->{story_id}
+            );
+            $obj->{contrib_ids} =
+              @$result
+              ? [map { {contrib_id => $_->[0], contrib_type_id => $_->[1]} } @$result]
+              : [];
+
+            # fold in user desk permissions
+            if (my $desk_id = $obj->desk_id) {
+                $desk_permissions{$desk_id} eq 'edit' or $obj->{may_edit} = 0;
+            }
+
+            push @stories, $obj;
+        }
+
+        # finish statement handle
+        $sth->finish();
+
+        return @stories;
     }
-
-    # finish statement handle
-    $sth->finish();
-
-    return @stories;
-}}
+}
 
 sub transform_stories {
     my ($pkg, %args) = @_;
-    my $callback = delete $args{callback} 
-        or croak('You must provide a callback for transform_stories()');
+    my $callback = delete $args{callback}
+      or croak('You must provide a callback for transform_stories()');
     my $past_versions = delete $args{past_versions};
 
     # make find() do all the hard stuff
@@ -1630,8 +1663,9 @@ sub transform_stories {
         $story = $callback->(story => $story, live => 1);
         $story->save(keep_version => 1, no_history => 1, no_verify_checkout => 1);
 
-        if( $past_versions ) {
-            my $dbh  = dbh;
+        if ($past_versions) {
+            my $dbh = dbh;
+
             # load each old version, give it to the callback and then replace what's in the db
             foreach my $v (@{$story->all_versions}) {
                 next if $v == $story->version;
@@ -1639,13 +1673,8 @@ sub transform_stories {
                 $old_story = $callback->(story => $old_story, live => 0);
 
                 # re-save version
-                $dbh->do(
-                    'REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)', 
-                    undef,
-                    $story_id, 
-                    $v, 
-                    nfreeze($old_story)
-                );
+                $dbh->do('REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)',
+                    undef, $story_id, $v, nfreeze($old_story));
             }
         }
     }
@@ -1653,7 +1682,8 @@ sub transform_stories {
 
 sub transform_stories_xml {
     my ($pkg, %args) = @_;
-    my $callback = delete $args{callback} or croak('You must provide a callback for transform_stories()');
+    my $callback = delete $args{callback}
+      or croak('You must provide a callback for transform_stories()');
     my $past_versions = delete $args{past_versions};
 
     # make find() do all the hard stuff
@@ -1669,25 +1699,23 @@ sub transform_stories_xml {
         $writer->end();
 
         # transform the XML via callback
-        $xml = $callback->({ xml => $xml, live => 1 });
+        $xml = $callback->({xml => $xml, live => 1});
 
         # now flip the XML back into a Story
         $story->save(keep_version => 1, no_history => 1);
 
-        if( $past_versions ) {
-            my $dbh  = dbh;
+        if ($past_versions) {
+            my $dbh = dbh;
             foreach my $v ($story->all_versions) {
                 next unless $v == $story->version;
                 my $old_story = $pkg->_load_version($story_id, $v);
-                $old_story = $callback->({ story => $story, live => 0 });
+                $old_story = $callback->({story => $story, live => 0});
 
                 # re-save version
                 $dbh->do(
-                    'REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)', 
-                    undef,
-                    $old_story->{story_id}, 
-                    $old_story->{version}, 
-                    nfreeze($old_story)
+                    'REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)',
+                    undef, $old_story->{story_id},
+                    $old_story->{version}, nfreeze($old_story)
                 );
             }
         }
@@ -1698,9 +1726,11 @@ sub _load_version {
     my ($pkg, $story_id, $version) = @_;
     my $dbh = dbh;
 
-    my ($data) = $dbh->selectrow_array('SELECT data FROM story_version
+    my ($data) = $dbh->selectrow_array(
+        'SELECT data FROM story_version
                                         WHERE story_id = ? AND version = ?',
-                                       undef, $story_id, $version);
+        undef, $story_id, $version
+    );
     croak("Unable to load version '$version' of story '$story_id'")
       unless $data;
 
@@ -1735,33 +1765,42 @@ sub move_to_desk {
     my ($self, $desk_id) = @_;
     my $dbh = dbh();
 
-    croak(__PACKAGE__."->move_to_desk requires a desk_id") if not $desk_id;
+    croak(__PACKAGE__ . "->move_to_desk requires a desk_id") if not $desk_id;
 
     my $story_id = $self->story_id;
 
     # check status
     my ($co) = $dbh->selectrow_array(
-         'SELECT checked_out FROM story
-           WHERE story_id = ?', undef, $story_id);
+        'SELECT checked_out FROM story
+           WHERE story_id = ?', undef, $story_id
+    );
 
-    Krang::Story::CheckedOut->throw( message => "Story is checked out and can't be moved to desk",
-				     desk_id => $desk_id) if $co;
+    Krang::Story::CheckedOut->throw(
+        message => "Story is checked out and can't be moved to desk",
+        desk_id => $desk_id
+    ) if $co;
 
-    Krang::Story::NoDesk->throw( message => "Story can't be moved to non existing desk", desk_id => $desk_id)
-	unless scalar(pkg('Desk')->find( desk_id => $desk_id ));
+    Krang::Story::NoDesk->throw(
+        message => "Story can't be moved to non existing desk",
+        desk_id => $desk_id
+    ) unless scalar(pkg('Desk')->find(desk_id => $desk_id));
 
-    $dbh->do('UPDATE story
+    $dbh->do(
+        'UPDATE story
               SET desk_id = ?, last_desk_id = ?
               WHERE story_id = ?',
-              undef, $desk_id, $self->desk_id, $story_id);
+        undef, $desk_id, $self->desk_id, $story_id
+    );
 
     # update desk id in our story object
     $self->{last_desk_id} = $self->{desk_id};
     $self->{desk_id}      = $desk_id;
 
-    add_history( action  => 'move',
-                 object  => $self,
-                 desk_id => $desk_id );
+    add_history(
+        action  => 'move',
+        object  => $self,
+        desk_id => $desk_id
+    );
 }
 
 =item C<< $story->checkout() >>
@@ -1779,36 +1818,42 @@ sub checkout {
       if ref $self and @_ > 1;
     $self = (pkg('Story')->find(story_id => $story_id))[0]
       unless $self;
-    my $dbh      = dbh();
-    my $user_id  = $ENV{REMOTE_USER};
+    my $dbh     = dbh();
+    my $user_id = $ENV{REMOTE_USER};
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
-        unless ($self->may_edit);
+    Krang::Story::NoEditAccess->throw(
+        message  => "Not allowed to edit story",
+        story_id => $self->story_id
+    ) unless ($self->may_edit);
 
     # short circuit checkout
-    return if  $self->{checked_out} and 
-      $self->{checked_out_by} == $user_id;
+    return
+      if $self->{checked_out}
+          and $self->{checked_out_by} == $user_id;
 
     eval {
+
         # lock story for an atomic test and set on checked_out
         $dbh->do("LOCK TABLES story WRITE");
 
         # check status
         my ($co, $uid) = $dbh->selectrow_array(
-             'SELECT checked_out, checked_out_by FROM story
-              WHERE story_id = ?', undef, $self->{story_id});
-        
+            'SELECT checked_out, checked_out_by FROM story
+              WHERE story_id = ?', undef, $self->{story_id}
+        );
+
         croak("Story '$self->{story_id}' is already checked out by user '$uid'")
           if ($co and $uid != $user_id);
 
-
         # checkout the story
-        $dbh->do('UPDATE story
+        $dbh->do(
+            'UPDATE story
                   SET checked_out = ?, checked_out_by = ?,
                       desk_id     = ?, last_desk_id   = ?
-                  WHERE story_id = ?', undef, 
-		 1, $user_id, undef, $self->{desk_id}, $self->{story_id});
+                  WHERE story_id = ?', undef,
+            1, $user_id, undef, $self->{desk_id}, $self->{story_id}
+        );
 
         # unlock template table
         $dbh->do("UNLOCK TABLES");
@@ -1816,6 +1861,7 @@ sub checkout {
 
     if ($@) {
         my $eval_error = $@;
+
         # unlock the table, so it's not locked forever
         $dbh->do("UNLOCK TABLES");
         croak($eval_error);
@@ -1827,9 +1873,10 @@ sub checkout {
     $self->{last_desk_id}   = $self->{desk_id};
     $self->{desk_id}        = undef;
 
-    add_history(    object => $self,
-                    action => 'checkout',
-               );
+    add_history(
+        object => $self,
+        action => 'checkout',
+    );
 }
 
 =item C<< Krang::Story->checkin($story_id) >>
@@ -1842,15 +1889,19 @@ fail if the story is not checked out.
 =cut
 
 sub checkin {
-    my $self     = ref $_[0] ? $_[0] : 
-      (pkg('Story')->find(story_id => $_[1]))[0];
+    my $self =
+      ref $_[0]
+      ? $_[0]
+      : (pkg('Story')->find(story_id => $_[1]))[0];
     my $story_id = $self->{story_id};
     my $dbh      = dbh();
     my $user_id  = $ENV{REMOTE_USER};
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
-        unless ($self->may_edit);
+    Krang::Story::NoEditAccess->throw(
+        message  => "Not allowed to edit story",
+        story_id => $self->story_id
+    ) unless ($self->may_edit);
 
     # get admin permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
@@ -1859,19 +1910,21 @@ sub checkin {
     $self->_verify_checkout() unless $admin_perms{may_checkin_all};
 
     # checkin the story
-    $dbh->do('UPDATE story
+    $dbh->do(
+        'UPDATE story
               SET checked_out = ?, checked_out_by = ?
-              WHERE story_id = ?', undef, 0, 0, $story_id);
+              WHERE story_id = ?', undef, 0, 0, $story_id
+    );
 
     # update checkout fields
-    $self->{checked_out} = 0;
+    $self->{checked_out}    = 0;
     $self->{checked_out_by} = 0;
 
-    add_history(    object => $self,
-                    action => 'checkin',
-               );
+    add_history(
+        object => $self,
+        action => 'checkin',
+    );
 }
-
 
 =item C<< $story->mark_as_published() >>
 
@@ -1889,16 +1942,17 @@ sub mark_as_published {
     croak __PACKAGE__ . ": Cannot publish unsaved story" unless ($self->{story_id});
 
     $self->{published_version} = $self->{version};
-    $self->{publish_date} = localtime;
+    $self->{publish_date}      = localtime;
 
     $self->{desk_id} = undef;
 
-    $self->{checked_out} = 0;
+    $self->{checked_out}    = 0;
     $self->{checked_out_by} = 0;
 
     # update the DB.
     my $dbh = dbh();
-    $dbh->do('UPDATE story
+    $dbh->do(
+        'UPDATE story
               SET checked_out = ?,
                   checked_out_by = ?,
                   desk_id = ?,
@@ -1906,14 +1960,14 @@ sub mark_as_published {
                   publish_date = ?
               WHERE story_id = ?',
 
-             undef,
-             $self->{checked_out},
-             $self->{checked_out_by},
-             $self->{desk_id},
-             $self->{published_version},
-             $self->{publish_date}->mysql_datetime,
-             $self->{story_id}
-            );
+        undef,
+        $self->{checked_out},
+        $self->{checked_out_by},
+        $self->{desk_id},
+        $self->{published_version},
+        $self->{publish_date}->mysql_datetime,
+        $self->{story_id}
+    );
 }
 
 =item C<< $story->mark_as_previewed(unsaved => 1) >>
@@ -1938,14 +1992,13 @@ sub mark_as_previewed {
 
     # update the DB
     my $dbh = dbh();
-    $dbh->do('UPDATE story SET preview_version = ? WHERE story_id = ?',
-             undef,
-             $self->{preview_version},
-             $self->{story_id}
-            );
+    $dbh->do(
+        'UPDATE story SET preview_version = ? WHERE story_id = ?',
+        undef, $self->{preview_version},
+        $self->{story_id}
+    );
 
 }
-
 
 =item $path = $story->publish_path(category => $category)
 
@@ -1959,13 +2012,15 @@ returned.
 =cut
 
 sub publish_path {
-    my $self = shift;
-    my %arg  = @_;
+    my $self     = shift;
+    my %arg      = @_;
     my $category = $arg{category} ? $arg{category} : $self->category;
 
     my $path = $category->site->publish_path;
-    my $url  = $self->element->build_url(story    => $self,
-                                         category => $category);
+    my $url  = $self->element->build_url(
+        story    => $self,
+        category => $category
+    );
 
     # remove the site part
     $url =~ s![^/]+/!!;
@@ -1973,7 +2028,6 @@ sub publish_path {
     # paste them together
     return canonpath(catdir($path, $url));
 }
-
 
 =item $path = $story->preview_path(category => $category)
 
@@ -1993,8 +2047,10 @@ sub preview_path {
     my $category = $arg{category} ? $arg{category} : $self->category;
 
     my $path = $category->site->preview_path;
-    my $url  = $self->element->build_url(story    => $self,
-                                         category => $category);
+    my $url  = $self->element->build_url(
+        story    => $self,
+        category => $category
+    );
 
     # remove the site part
     $url =~ s![^/]+/!!;
@@ -2003,8 +2059,6 @@ sub preview_path {
     return canonpath(catdir($path, $url));
 }
 
-
-
 # make sure the object is checked out, or croak
 sub _verify_checkout {
     my $self = shift;
@@ -2012,10 +2066,10 @@ sub _verify_checkout {
     croak("Story '$self->{story_id}' is not checked out.")
       unless $self->{checked_out};
 
-    croak("Story '$self->{story_id}' is already checked out by another user '$self->{checked_out_by}'")
-      unless $self->{checked_out_by} == $ENV{REMOTE_USER};
+    croak(
+        "Story '$self->{story_id}' is already checked out by another user '$self->{checked_out_by}'"
+    ) unless $self->{checked_out_by} == $ENV{REMOTE_USER};
 }
-
 
 =item C<< $story->revert($version) >>
 
@@ -2035,23 +2089,24 @@ sub revert {
 
     # persist certain data from current version
     my %persist = (
-                   version           => $self->{version},
-                   checked_out_by    => $self->{checked_out_by},
-                   checked_out       => $self->{checked_out},
-                   published_version => $self->{published_version},
-                   publish_date      => $self->{publish_date},
-                   url_cache         => [],
-                  );
+        version           => $self->{version},
+        checked_out_by    => $self->{checked_out_by},
+        checked_out       => $self->{checked_out},
+        published_version => $self->{published_version},
+        publish_date      => $self->{publish_date},
+        url_cache         => [],
+    );
     my ($obj) = $self->_load_version($self->{story_id}, $target);
 
     # copy in data, preserving contents of %persist
     %$self = (%$obj, %persist);
 
-    add_history(    object => $self, 
-                    action => 'revert',
-               );
+    add_history(
+        object => $self,
+        action => 'revert',
+    );
 
-    return $self; 
+    return $self;
 }
 
 =item C<< $story->delete() >>
@@ -2068,7 +2123,7 @@ will fail if the story is checked out to another user.
 
 sub delete {
     my $self = shift;
-    unless(ref $self) {
+    unless (ref $self) {
         my $story_id = shift;
         ($self) = pkg('Story')->find(story_id => $story_id);
         croak("Unable to load story '$story_id'.") unless $self;
@@ -2076,8 +2131,10 @@ sub delete {
     $self->checkout;
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoDeleteAccess->throw( message => "Not allowed to delete story", story_id => $self->story_id )
-        unless pkg('Group')->user_admin_permissions('admin_delete');
+    Krang::Story::NoDeleteAccess->throw(
+        message  => "Not allowed to delete story",
+        story_id => $self->story_id
+    ) unless pkg('Group')->user_admin_permissions('admin_delete');
 
     # unpublish
     pkg('Publisher')->new->unpublish_story(story => $self);
@@ -2086,29 +2143,29 @@ sub delete {
     pkg('History')->delete(object => $self);
 
     my $dbh = dbh;
-    $dbh->do('DELETE FROM story WHERE story_id = ?', 
-             undef, $self->{story_id});
-    $dbh->do('DELETE FROM story_category WHERE story_id = ?', 
-             undef, $self->{story_id});
-    $dbh->do('DELETE FROM story_version WHERE story_id = ?', 
-             undef, $self->{story_id});
-    $dbh->do('DELETE FROM story_contrib WHERE story_id = ?',
-             undef, $self->{story_id});
+    $dbh->do('DELETE FROM story WHERE story_id = ?',          undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_category WHERE story_id = ?', undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_version WHERE story_id = ?',  undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_contrib WHERE story_id = ?',  undef, $self->{story_id});
     $self->element->delete;
 
     # remove from trash
     pkg('Trash')->remove(object => $self);
 
     # delete schedules for this story
-    $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?', undef, 'story', $self->{story_id});
+    $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
+        undef, 'story', $self->{story_id});
 
-    add_history(    object => $self,
-                    action => 'delete',
-               );
+    add_history(
+        object => $self,
+        action => 'delete',
+    );
 
 }
 
 =item C<< $copy = $story->clone() >>
+
+=item C<< $copy = $story->clone(no_title_modification => 1, no_url_conflict_resolution => 1) >>
 
 Creates a copy of the story object, with most fields identical except
 for C<story_id> and C<< element->element_id >> which will both be
@@ -2117,11 +2174,25 @@ C<undef>.  Sets to title to "Copy of $title".  Sets slug to
 generate a story without duplicate URLs.  Cloned stories get a new
 story_uuid.
 
+B<Options:>
+
+=over
+
+=item no_title_modification
+
+Don't prepend "Copy of " to the title.
+
+=item no_url_conflict_resolution
+
+Don't resolve URL conflicts with existing stories.
+
+=back
+
 =cut
 
 sub clone {
-    my $self = shift;
-    my $copy = bless({ %$self }, ref($self));
+    my ($self, %args) = @_;
+    my $copy = bless({%$self}, ref($self));
 
     # clone the element tree
     $copy->{element} = $self->element->clone();
@@ -2131,23 +2202,31 @@ sub clone {
     $copy->{element}{element_id} = undef;
 
     # mangle title
-    $copy->{title} = "Copy of $copy->{title}";
+    $copy->{title} = "Copy of $copy->{title}"
+      unless $args{no_title_modification};
 
     # start at version 0
     $copy->{version} = 0;
 
     # never been published
-    $copy->{publish_date} = undef;
+    $copy->{publish_date}      = undef;
     $copy->{published_version} = 0;
+    $copy->{preview_version}   = 0;
 
     # get a new UUID
     $copy->{story_uuid} = pkg('UUID')->new;
 
-    # unset archived flag
+    # unset archived and trashed flag
     $copy->{archived} = 0;
+    $copy->{trashed}  = 0;
+
+    # unset (last_)desk_id
+    $copy->{desk_id}      = undef;
+    $copy->{last_desk_id} = undef;
 
     # resolve URL conflict
-    $copy->resolve_url_conflict(append => 'copy');
+    $copy->resolve_url_conflict(append => 'copy')
+      unless $args{no_url_conflict_resolution};
 
     return $copy;
 }
@@ -2168,7 +2247,7 @@ sub resolve_url_conflict {
     my ($self, %args) = @_;
 
     # returns 1 if there is a dup, 0 otherwise
-    my $is_dup = sub {  
+    my $is_dup = sub {
         eval { shift->_verify_unique; };
         return 1 if $@ and ref $@ and $@->isa('Krang::Story::DuplicateURL');
         die($@) if $@;
@@ -2178,14 +2257,16 @@ sub resolve_url_conflict {
     # if changing the slug will help, do that until it works
     my @url_attributes = $self->element->class->url_attributes;
     if (grep { $_ eq 'slug' } @url_attributes) {
+
         # find a slug that works
         my $slug = $self->slug;
-        my $x = 1;
+        my $x    = 1;
         do {
             $self->slug("${slug}_$args{append}" . ($x > 1 ? $x : ""));
             $x++;
         } while ($is_dup->($self));
     } else {
+
         # erase category associations
         $self->{category_ids}   = [];
         $self->{category_cache} = [];
@@ -2203,19 +2284,21 @@ story is linked more than once.
 =cut
 
 sub linked_stories {
-    my $self = shift;
+    my $self    = shift;
     my $element = $self->element;
 
     # find StoryLinks and index by id
     my %story_links;
     my $story;
-    foreach_element { 
-        if ($_->class->isa(pkg('ElementClass::StoryLink')) and 
-            $story = $_->data) {
+    foreach_element {
+        if (    $_->class->isa(pkg('ElementClass::StoryLink'))
+            and $story = $_->data)
+        {
             $story_links{$story->story_id} = $story;
         }
-    } $element;
-    
+    }
+    $element;
+
     return values %story_links;
 }
 
@@ -2229,18 +2312,20 @@ is linked more than once.
 =cut
 
 sub linked_media {
-    my $self = shift;
+    my $self    = shift;
     my $element = $self->element;
 
     # find StoryLinks and index by id
     my %media_links;
     my $media;
-    foreach_element { 
-        if ($_->class->isa(pkg('ElementClass::MediaLink')) and
-            $media = $_->data) {
+    foreach_element {
+        if (    $_->class->isa(pkg('ElementClass::MediaLink'))
+            and $media = $_->data)
+        {
             $media_links{$media->media_id} = $media;
         }
-    } $element;
+    }
+    $element;
 
     # check contributors for additional media objects
     foreach my $contrib ($self->contribs()) {
@@ -2270,7 +2355,7 @@ sub STORABLE_freeze {
 
     # make sure element tree is loaded
     $self->element();
-    
+
     # serialize data in $self with Storable
     my $data;
     eval { $data = nfreeze({%$self}) };
@@ -2312,8 +2397,8 @@ Serialize as XML.  See Krang::DataSet for details.
 =cut
 
 sub serialize_xml {
-    my ($self,   %args) = @_;
-    my ($writer, $set, $no_elements)  = @args{qw(writer set no_elements)};
+    my ($self, %args) = @_;
+    my ($writer, $set, $no_elements) = @args{qw(writer set no_elements)};
     local $_;
 
     # open up <story> linked to schema/story.xsd
@@ -2363,7 +2448,7 @@ sub serialize_xml {
     }
 
     # serialize elements
-    unless($no_elements) {
+    unless ($no_elements) {
         $self->element->serialize_xml(
             writer => $writer,
             set    => $set,
@@ -2485,9 +2570,9 @@ sub deserialize_xml {
         # and class
         $story = pkg('Story')->new(
             categories => \@categories,
-            slug       => $data->{slug} || "",
-            title      => $data->{title} || "",
-            class      => $data->{class}
+            slug  => $data->{slug}  || "",
+            title => $data->{title} || "",
+            class => $data->{class}
         );
     }
 
@@ -2568,15 +2653,17 @@ the story's last desk ID.
 
 sub archive {
     my ($self, %args) = @_;
-    unless(ref $self) {
+    unless (ref $self) {
         my $story_id = $args{story_id};
         ($self) = pkg('Story')->find(story_id => $story_id);
         croak("Unable to load story '$story_id'.") unless $self;
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
-        unless ($self->may_edit);
+    Krang::Story::NoEditAccess->throw(
+        message  => "Not allowed to edit story",
+        story_id => $self->story_id
+    ) unless ($self->may_edit);
 
     # make sure we are the one
     $self->checkout;
@@ -2586,13 +2673,16 @@ sub archive {
 
     # archive the story
     my $dbh = dbh();
-    $dbh->do("UPDATE story
+    $dbh->do(
+        "UPDATE story
               SET    archived = 1
               WHERE  story_id = ?", undef,
-	     $self->{story_id});
+        $self->{story_id}
+    );
 
     # delete schedules for this story
-    $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?', undef, 'story', $self->{story_id});
+    $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
+        undef, 'story', $self->{story_id});
 
     # living in archive
     $self->{archived} = 1;
@@ -2618,15 +2708,17 @@ another user.
 
 sub unarchive {
     my ($self, %args) = @_;
-    unless(ref $self) {
+    unless (ref $self) {
         my $story_id = $args{story_id};
         ($self) = pkg('Story')->find(story_id => $story_id);
         croak("Unable to load story '$story_id'.") unless $self;
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
-        unless ($self->may_edit);
+    Krang::Story::NoEditAccess->throw(
+        message  => "Not allowed to edit story",
+        story_id => $self->story_id
+    ) unless ($self->may_edit);
 
     # make sure we are the one
     $self->checkout;
@@ -2636,10 +2728,12 @@ sub unarchive {
 
     # unarchive the story
     my $dbh = dbh();
-    $dbh->do('UPDATE story
+    $dbh->do(
+        'UPDATE story
               SET    archived = 0
               WHERE  story_id = ?', undef,
-	     $self->{story_id});
+        $self->{story_id}
+    );
 
     # alive again
     $self->{archived} = 0;
@@ -2667,15 +2761,17 @@ user.
 
 sub trash {
     my ($self, %args) = @_;
-    unless(ref $self) {
+    unless (ref $self) {
         my $story_id = $args{story_id};
         ($self) = pkg('Story')->find(story_id => $story_id);
         croak("Unable to load story '$story_id'.") unless $self;
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
-        unless ($self->may_edit);
+    Krang::Story::NoEditAccess->throw(
+        message  => "Not allowed to edit story",
+        story_id => $self->story_id
+    ) unless ($self->may_edit);
 
     # make sure we are the one
     $self->checkout;
@@ -2711,15 +2807,17 @@ Krang::Trash->restore().
 
 sub untrash {
     my ($self, %args) = @_;
-    unless(ref $self) {
+    unless (ref $self) {
         my $story_id = $args{story_id};
         ($self) = pkg('Story')->find(story_id => $story_id);
         croak("Unable to load story '$story_id'.") unless $self;
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Story::NoRestoreAccess->throw( message => "Not allowed to restore story", story_id => $self->story_id )
-        unless ($self->may_edit);
+    Krang::Story::NoRestoreAccess->throw(
+        message  => "Not allowed to restore story",
+        story_id => $self->story_id
+    ) unless ($self->may_edit);
 
     # make sure no other story occupies our initial place (URL)
     $self->_verify_unique unless $self->archived;
@@ -2729,10 +2827,12 @@ sub untrash {
 
     # unset trash flag in story table
     my $dbh = dbh();
-    $dbh->do('UPDATE story
+    $dbh->do(
+        'UPDATE story
               SET trashed = ?
               WHERE story_id = ?', undef,
-	     0, $self->{story_id});
+        0,                         $self->{story_id}
+    );
 
     # remove from trash
     pkg('Trash')->remove(object => $self);
