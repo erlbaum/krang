@@ -23,6 +23,7 @@ use Time::Piece;
 use Time::Piece::MySQL;
 use File::Temp qw/ tempdir /;
 use Image::Info qw( image_info dim );
+use FileHandle;
 
 # constants
 use constant THUMBNAIL_SIZE     => 35;
@@ -32,11 +33,11 @@ use constant FIELDS =>
 
 # setup exceptions
 use Exception::Class (
-    'Krang::Media::DuplicateURL'         => {fields => ['media_id']   },
+    'Krang::Media::DuplicateURL'         => {fields => ['media_id']},
     'Krang::Media::NoCategoryEditAccess' => {fields => ['category_id']},
-    'Krang::Media::NoEditAccess'         => {fields => ['media_id']   },
-    'Krang::Media::NoDeleteAccess'       => {fields => ['media_id']   },
-    'Krang::Media::NoRestoreAccess'      => {fields => ['media_id']   },
+    'Krang::Media::NoEditAccess'         => {fields => ['media_id']},
+    'Krang::Media::NoDeleteAccess'       => {fields => ['media_id']},
+    'Krang::Media::NoRestoreAccess'      => {fields => ['media_id']},
 );
 
 =head1 NAME
@@ -285,8 +286,8 @@ sub init {
     $self->{preview_version}   = 0;
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
     $self->{creation_date} = localtime unless defined $self->{creation_date};
-    $self->{archived}          = 0;
-    $self->{trashed}           = 0;
+    $self->{archived}      = 0;
+    $self->{trashed}       = 0;
 
     # Set up temporary permissions
     $self->{may_see}  = 1;
@@ -833,8 +834,8 @@ sub save {
     eval { $serialized = nfreeze($self); };
     croak("Unable to serialize object: $@") if $@;
     $dbh->do('REPLACE INTO media_version (media_id, version, data) values (?,?,?)',
-	     undef, $media_id, $self->{version}, $serialized);
-    
+        undef, $media_id, $self->{version}, $serialized);
+
     # prune previous versions from the version table
     $self->prune_versions();
 
@@ -1047,7 +1048,7 @@ sub find {
         may_edit          => 1,
         mime_type         => 1,
         mime_type_like    => 1,
-	include_live      => 1,
+        include_live      => 1,
         include_archived  => 1,
         include_trashed   => 1,
     );
@@ -1297,31 +1298,31 @@ sub find {
 
     # include live/archived/trashed
     unless ($args{media_id}) {
-	if ($include_live) {
-	    unless ($include_archived) {
-		$where_string .= ' and ' if $where_string;
-		$where_string .= ' media.archived = 0';
-	    }
-	    unless ($include_trashed) {
-		$where_string .= ' and ' if $where_string;
-		$where_string .= ' media.trashed  = 0';
-	    }
-	} else {
-	    if ($include_archived) {
-		if ($include_trashed) {
-		    $where_string .= ' and 'if $where_string;
-		    $where_string .= ' media.archived = 1 AND media.trashed = 1';
-		} else {
-		    $where_string .= ' and 'if $where_string;
-		    $where_string .= ' media.archived = 1 AND media.trashed = 0';
-		}
-	    } else {
-		if ($include_trashed) {
-		    $where_string .= ' and 'if $where_string;
-		    $where_string .= ' media.trashed = 1';
-		}
-	    }
-	}
+        if ($include_live) {
+            unless ($include_archived) {
+                $where_string .= ' and ' if $where_string;
+                $where_string .= ' media.archived = 0';
+            }
+            unless ($include_trashed) {
+                $where_string .= ' and ' if $where_string;
+                $where_string .= ' media.trashed  = 0';
+            }
+        } else {
+            if ($include_archived) {
+                if ($include_trashed) {
+                    $where_string .= ' and ' if $where_string;
+                    $where_string .= ' media.archived = 1 AND media.trashed = 1';
+                } else {
+                    $where_string .= ' and ' if $where_string;
+                    $where_string .= ' media.archived = 1 AND media.trashed = 0';
+                }
+            } else {
+                if ($include_trashed) {
+                    $where_string .= ' and ' if $where_string;
+                    $where_string .= ' media.trashed = 1';
+                }
+            }
+        }
     }
 
     my $sql = qq( select $select_string from media
@@ -1805,7 +1806,7 @@ This method checks whether the url of a media object is unique.
 
 sub duplicate_check {
     my ($self, %args) = @_;
-    my $id       = $self->{media_id} || 0;
+    my $id = $self->{media_id} || 0;
     my $media_id = 0;
 
     my $query = <<SQL;
@@ -1967,7 +1968,6 @@ sub serialize_xml {
       if $self->{publish_date};
     $writer->dataElement(archived => $self->archived);
     $writer->dataElement(trashed  => $self->trashed);
-
 
     # add category to set
     $set->add(object => $self->category, from => $self);
@@ -2251,7 +2251,7 @@ sub archive {
     add_history(
         object => $self,
         action => 'archive'
-    )
+    );
 }
 
 =item C<< $media->unarchive() >>
@@ -2417,6 +2417,52 @@ trashed.
 =cut
 
 sub wont_publish { return $_[0]->archived || $_[0]->trashed }
+
+=item C<< $media->clone(category_id => $category_id) >>
+
+Copy $media to the category having the specified category_id.  Returns
+an unsaved copy with the media file already uploaded.
+
+=cut
+
+sub clone {
+    my ($self, %args) = @_;
+
+    croak("No Category ID specified where to copy the media to")
+      unless $args{category_id};
+
+    my $copy = bless({%$self} => ref($self));
+
+    # redefine
+    $copy->{media_id}          = undef;
+    $copy->{media_uuid}        = pkg('UUID')->new;
+    $copy->{category_id}       = $args{category_id};
+    $copy->{version}           = 0;
+    $copy->{creation_date}     = undef;
+    $copy->{preview_version}   = 0;
+    $copy->{published_version} = 0;
+    $copy->{publish_date}      = undef;
+    $copy->{archived}          = 0;
+    $copy->{trashed}           = 0;
+    $copy->{url_cache}         = undef;
+    $copy->{cat_cache}         = undef;
+    $copy->{checked_out}       = 1;
+    $copy->{checked_out_by}    = $ENV{REMOTE_USER};
+
+    # upload file
+    my $filepath   = $self->file_path;
+    my $filehandle = new FileHandle $filepath;
+
+    croak("Cant get a filehandle on '$filepath' to copy Media " . $self->media_id)
+      unless $filehandle;
+
+    $copy->upload_file(filename => $self->filename, filehandle => $filehandle);
+
+    # set URL
+    $copy->{url} = $copy->url;
+
+    return $copy;
+}
 
 =back
 

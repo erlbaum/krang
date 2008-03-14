@@ -31,6 +31,11 @@ $subcat->save();
 END { $subcat->delete() }
 my $subcat_id = $subcat->category_id();
 
+# create another subcategory for $media->clone()
+my $clone_cat = pkg('Category')->new(dir => 'clone', parent_id => $category_id );
+$clone_cat->save();
+END{ $clone_cat->delete() }
+
 # create new media object
 my $media = pkg('Media')->new(title => 'test media object', category_id => $category_id, media_type_id => 1);
 isa_ok($media, 'Krang::Media');
@@ -100,16 +105,23 @@ is($media->file_path, catfile(KrangRoot, $media->file_path(relative => 1)), "Fil
 ok(-f $media->file_path, "Media file is still found on hard disk");
 
 # try to load it again and see if the file is still available
-my ($copy) = pkg('Media')->find(media_id => $media->media_id);
-is($media->file_path, $copy->file_path);
-is($media->media_uuid, $copy->media_uuid);
-ok(-f $copy->file_path);
+my ($found) = pkg('Media')->find(media_id => $media->media_id);
+is($media->file_path, $found->file_path);
+is($media->media_uuid, $found->media_uuid);
+ok(-f $found->file_path);
 
 # find by UUID
-my ($copy2) = pkg('Media')->find(media_uuid => $media->media_uuid);
-is($media->file_path, $copy->file_path);
-is($media->media_id, $copy->media_id);
-ok(-f $copy2->file_path);
+my ($found2) = pkg('Media')->find(media_uuid => $media->media_uuid);
+is($media->file_path, $found->file_path);
+is($media->media_id, $found->media_id);
+ok(-f $found2->file_path);
+
+# test copy()
+my $copy = $media->clone(category_id => $clone_cat->category_id);
+$copy->save();
+_test_copy($media, $copy);
+isa_ok($copy, 'Krang::Media');
+$copy->delete;
 
 $fh = new FileHandle $filepath;
 
@@ -455,3 +467,28 @@ $medias[1]->delete();
     $ptest_site->delete();
 }
 
+sub _test_copy {
+    my ($orig, $copy) = @_;
+
+    diag("Comparing original and copy after clone()'ing media");
+
+    is($orig->title,         $copy->title,         "Title ok");
+    is($orig->filename,      $copy->filename,      "Filename ok");
+    is($orig->caption,       $copy->caption,       "Caption ok");
+    is($orig->copyright,     $copy->copyright,     "Copyright ok");
+    is($orig->notes,         $copy->notes,         "Notes ok");
+    is($orig->alt_tag,       $copy->alt_tag,       "Alt_tag ok");
+    is($orig->mime_type,     $copy->mime_type,     "Mime_type ok");
+    is($orig->media_type_id, $copy->media_type_id, "Media_type_id ok");
+
+    diag("Verifying redefined properties on copy");
+
+    is($copy->version, 1,           "Version ok");
+    is($copy->published_version, 0, "Published Version ok");
+    is($copy->preview_version, 0,   "Previewed Version ok");
+    is($copy->publish_date, undef,  "Publish Date ok");
+    is($copy->archived, 0,          "Not archived");
+    is($copy->trashed, 0,           "Not trashed");
+    is($copy->checked_out, 1,       "Is checked out");
+    is($copy->checked_out_by, $ENV{REMOTE_USER}, "Checked Out By ok");
+}
