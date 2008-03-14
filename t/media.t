@@ -116,7 +116,7 @@ is($media->file_path, $found->file_path);
 is($media->media_id, $found->media_id);
 ok(-f $found2->file_path);
 
-# test copy()
+# test clone()
 my $copy = $media->clone(category_id => $clone_cat->category_id);
 $copy->save();
 _test_copy($media, $copy);
