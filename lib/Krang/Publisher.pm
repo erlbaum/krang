@@ -371,6 +371,11 @@ those that have.  When false, it will publish all related assets,
 regardless of whether or not the current version has been published
 before.
 
+=item * C<maintain_versions>
+
+Defaults to 0. If true, will re-publish the last-published
+version of each asset rather than the latest version.
+
 =item * C<remember_asset_list>
 
 Boolean, defaults to false.
@@ -447,9 +452,10 @@ sub publish_story {
     # set internal mode - publish, not preview.
     $self->_set_publish_mode();
 
-    my $story         = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
-    my $unsaved       = (exists($args{unsaved})) ? $args{unsaved} : 0;
-    my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $story             = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
+    my $unsaved           = (exists($args{unsaved})) ? $args{unsaved} : 0;
+    my $version_check     = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
 
     # callbacks
     my $callback      = $args{callback};
@@ -462,7 +468,7 @@ sub publish_story {
 
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
-
+    
     # build the list of assets to publish.
     if ($no_related_check) {
         debug(__PACKAGE__ . ": disabling related_assets checking for publish");
@@ -471,9 +477,32 @@ sub publish_story {
         } else {
             push @$publish_list, $story;
         }
+	# normally _build_asset_list() handles the 'maintain_version' option, so 
+	# when running in 'disable_related_assets' mode we need to handle it here
+	if ($maintain_versions) {
+	    my @stories;
+	    foreach my $s (@$publish_list) {
+                if ($s->checked_out && ($s->checked_out_by != $user_id)) {
+                    # if story is checked out to another user, it shouldn't get published anyway
+                    # (doing so would clear the checked-out flag), so we don't get old version
+                    push @stories, $s;
+                } else {
+                    # story is not checked out, so we grab last-published version (if any)
+                    my $v = $s->published_version;
+                    next unless $v;
+                    if ($v == $s->version) {
+                        push @stories, $s;
+		    } else {
+                        push @stories, pkg('Story')->find(story_id => $s->story_id, version => $v);
+		    }
+                }
+	    }
+	    $publish_list = \@stories;
+	}
     } else {
-        $publish_list = $self->asset_list(story         => $story,
-                                          version_check => $version_check);
+        $publish_list = $self->asset_list(story            => $story,
+                                          version_check    => $version_check,
+                                          maintain_versions => $maintain_versions);
     }
 
     $self->_process_assets(
@@ -709,6 +738,10 @@ This only affects successive publish calls to a single
 C<Krang::Publisher> object.  See C<bin/krang_publish> for an example
 of this functionality being used.
 
+=item * C<maintain_versions>
+
+Defaults to 0. If true, will re-publish the last-published
+version of each asset (if any) rather than the latest.
 
 =back
 
@@ -731,10 +764,11 @@ sub publish_media {
     $self->_set_publish_mode();
 
     # callbacks
-    my $callback      = $args{callback};
-    my $skip_callback = $args{skip_callback};
+    my $callback          = $args{callback};
+    my $skip_callback     = $args{skip_callback};
 
-    my $keep_asset_list = $args{remember_asset_list} || 0;
+    my $maintain_versions = $args{maintain_versions} || 0;
+    my $keep_asset_list   = $args{remember_asset_list} || 0;
 
     my $publish_list;
 
@@ -762,6 +796,15 @@ sub publish_media {
                 debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $media_object->media_id);
                 $skip_callback->(object => $media_object, error => 'checked_out') if $skip_callback;
                 next;
+            }
+        }
+
+	# if requested, re-publish last-published (instead of latest) version
+	if ($maintain_versions) {
+	    my $v = $media_object->published_version;
+	    next unless $v;
+            if ($v != $media_object->version) {
+                my ($media_object) = pkg('Media')->find(media_id => $media_object->media_id, version => $v);
             }
         }
 
@@ -860,6 +903,11 @@ This addition is a performance improvement - the purpose is to keep
 from publishing content that has not changed since the last
 publishing.
 
+=item * C<maintain_versions>
+
+Defaults to 0. If true, will re-publish the last-published
+version of each asset (if any) rather than the latest.
+
 =back
 
 =cut
@@ -873,7 +921,8 @@ sub asset_list {
     my $mode          = $args{mode};
 #    my $keep_list     = $args{keep_asset_list} || 0;
 #    my $keep_list = 0;
-    my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $version_check     = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
 
     # check publish mode.
     if ($mode) {
@@ -888,9 +937,10 @@ sub asset_list {
         }
     }
 
-    my @publish_list = $self->_build_asset_list(object         => $story,
-                                                version_check  => $version_check,
-                                                initial_assets => 1,
+    my @publish_list = $self->_build_asset_list(object           => $story,
+                                                version_check    => $version_check,
+						maintain_versions => $maintain_versions,
+                                                initial_assets   => 1
                                                );
 
 #     unless ($keep_list) {
@@ -1840,6 +1890,9 @@ sub _cat_content {
 # version_check will check preview/published_version if true.
 # Defaults true.
 #
+# maintain_versions defaults to 0. If true, it will re-publish the last-published
+# version of each asset (if any) rather than the latest.
+#
 # initial_assets will skip that check when true - used for the first
 # call from asset_list().  Defaults false.
 #
@@ -1852,42 +1905,40 @@ sub _build_asset_list {
     my $object         = $args{object};
     my $version_check  = (exists($args{version_check})) ? $args{version_check} : 1;
     my $initial_assets = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
+    my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
 
     my @asset_list;
     my @check_list;
 
-    if (ref $object eq 'ARRAY') {
-        foreach my $o (@$object) {
-            my ($publish_ok, $check_links) =
-              $self->_check_asset_status(
-                                         object => $o,
-                                         version_check  => $version_check,
-                                         initial_assets => $initial_assets
-                                        );
-            push @asset_list, $o if ($publish_ok);
-            if ($check_links) {
-                push @check_list, $o->linked_stories;
-                push @check_list, $o->linked_media;
+    my @objects = (ref $object eq 'ARRAY') ? @$object : ($object);
+    foreach my $o (@objects) {
+	# if object is a story, handle 'maintain_versions' mode (media will be handled by publish_media())
+	if ($maintain_versions && $o->isa('Krang::Story')) {
+            unless ($o->checked_out && ($o->checked_out_by != $ENV{REMOTE_USER})) {
+                my $v = $o->published_version;
+                next unless $v;
+		if ($v != $o->version) {
+		    ($o) = pkg('Story')->find(story_id => $o->story_id, version => $v);
+		}
             }
         }
-
-    } else {
-        my ($publish_ok, $check_links) =
-          $self->_check_asset_status(
-                                     object => $object,
-                                     version_check  => $version_check,
-                                     initial_assets => $initial_assets
-                                    );
-        push @asset_list, $object if ($publish_ok);
-        if ($check_links) {
-            push @check_list, $object->linked_stories;
-            push @check_list, $object->linked_media;
-        }
+	my ($publish_ok, $check_links) =
+	    $self->_check_asset_status(
+				       object => $o,
+				       version_check  => $version_check,
+				       initial_assets => $initial_assets
+				       );
+	push @asset_list, $o if ($publish_ok);
+	if ($check_links) {
+	    push @check_list, $o->linked_stories;
+	    push @check_list, $o->linked_media;
+	}
     }
 
     # if there are objects to be checked, check 'em.
     push @asset_list, $self->_build_asset_list(object         => \@check_list,
                                                version_check  => $version_check,
+					       maintain_versions => $maintain_versions,
                                                initial_assets => 0,
                                               ) if (@check_list);
 

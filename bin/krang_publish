@@ -39,9 +39,13 @@ The alternative form for multiple-story publish
 
   $ krang_publish --story-id 10 --story-id 11 --story-id 12
 
-Publish all assets of a single site, but only the latest versions of assets that have been previously published
+Publish all assets of a single site, but only the latest versions of assets that have already been published
 
   $ krang_publish --site-id 10 --republish-only
+
+Publish all assets of a single site, but only the last-published versions of assets that have been published
+
+  $ krang_publish --site-id 10 --republish-only --maintain-versions
 
 =head1 DESCRIPTION
 
@@ -139,6 +143,12 @@ BROKEN>
 This modifier will limit the publish process to assets that have been
 published previously.
 
+=item --maintain-versions
+
+Adding this to a --republish-only will cause the last-published
+version of each asset to be republished (instead of the
+latest version).
+
 =item --not-on-desk
 
 This modifier will limit the publish process to assets that are not
@@ -214,6 +224,7 @@ my ($help, $man, $everything, $verbose, $all_instances) = (0, 0, 0, 0, 0);
 my $limited_to_site     = 0;
 my $limited_to_category = 0;
 my $republish_only      = 0;
+my $maintain_versions   = 0;
 my $version_check       = 0;
 my $increment           = 100;
 my $media_only          = 0;
@@ -234,6 +245,7 @@ pod2usage(2) unless
              'limited-to-site'     => \$limited_to_site,
              'limited-to-category' => \$limited_to_category,
              'republish-only'      => \$republish_only,
+	     'maintain-versions'   => \$maintain_versions,
              'not-on-desk'         => \$not_on_desk,
              'version-check'       => \$version_check,
              'to-preview'          => \$to_preview,
@@ -252,7 +264,12 @@ pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
   if @ARGV;
 
 if( $all_instances && ! $everything ) {
-    warn "Can't use --all_instances without also using --everything!\n";
+    warn "Can't use --all-instances without also using --everything!\n";
+    exit(1);
+}
+
+if ( $maintain_versions && !$republish_only ) {
+    warn "Can't use --maintain-versions without also using --republish-only!\n";
     exit(1);
 }
 
@@ -270,6 +287,7 @@ my %publish_args = (
 
 if ($republish_only) {
     $find_options{published} = 1;
+    $publish_args{maintain_versions} = $maintain_versions;
 }
 
 if($not_on_desk) {
@@ -283,6 +301,7 @@ my $has_options = 0;
 
 $arg_string .= " --to-preview" if $to_preview;
 $arg_string .= " --republish-only" if $republish_only;
+$arg_string .= " --maintain-versions" if $maintain_versions;
 $arg_string .= " --not-on-desk" if $not_on_desk;
 $arg_string .= " --version-check" if $version_check;
 $arg_string .= " --all-instances" if $all_instances;
