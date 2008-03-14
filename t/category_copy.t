@@ -57,13 +57,14 @@ $user->save();
 END { $user->delete }
 
 # some variables
-my ($creator, $this, $that, $source, $water, $conflict);
-my (@categories, @stories);
+my ($creator, $this, $that, $source, $water, $conflict, $copied);
+my (@categories, @stories, @media, @templates);
 
-#
-# 1. Test without conflict possibility
-#
+diag('');
+diag('1. Test without conflict possibility');
+diag('');
 setup_tree();
+# can we copy?
 eval {
     $this->can_copy_test(dst_category  => $that,
                          story     => 1,
@@ -73,9 +74,23 @@ eval {
 };
 is(not($@), 1, "May copy test without conflicts");
 
-#
-# 2. Story conflict without overwrite
-#
+# do copy
+eval {
+    $copied = $this->copy(dst_category => $that,
+                          story     => 1,
+                          media     => 1,
+                          template  => 1,
+                          overwrite => 0);
+};
+is(not($@), 1, "Actual copy succeeded");
+push @categories, @{$copied->{categories}} if $copied->{categories};
+push @stories,    @{$copied->{stories}}    if $copied->{stories};
+push @media,      @{$copied->{media}}      if $copied->{media};
+push @templates,  @{$copied->{templates}}  if $copied->{templates};
+
+diag('');
+diag('2. Story conflict without overwrite');
+diag('');
 setup_tree();
 $conflict = pkg('Story')->new(categories => [$that],
                                  slug       => 'from_story_1',
@@ -93,9 +108,29 @@ eval {
 diag('Testing Story conflict without overwrite - should throw exception');
 isa_ok($@, 'Krang::Category::CopyAssetConflict');
 
-#
-# 3. Story conflict with overwrite
-#
+# do copy
+eval {
+    $copied = $this->copy(dst_category => $that,
+                          story     => 1,
+                          media     => 1,
+                          template  => 1,
+                          overwrite => 0);
+};
+is(not($@), 1, "Trying to copy did not throw error");
+my @tmp = pkg('Story')->find(url => $conflict->url);
+is(scalar(@tmp), 1, "No story copied");
+
+($conflict) = pkg('Story')->find(story_id => $conflict->story_id);
+is($conflict->trashed, 0, "Conflicting story has not been trashed");
+
+push @categories, @{$copied->{categories}} if $copied->{categories};
+push @stories,    @{$copied->{stories}}    if $copied->{stories};
+push @media,      @{$copied->{media}}      if $copied->{media};
+push @templates,  @{$copied->{templates}}  if $copied->{templates};
+
+diag('');
+diag('3. Story conflict with overwrite');
+diag('');
 setup_tree();
 $conflict = pkg('Story')->new(categories => [$that],
                               slug       => 'from_story_1',
@@ -110,11 +145,30 @@ eval {
                          template  => 1,
                          overwrite => 1);
 };
-is(not($@), 1, 'Story conflict with overwrite');
+is(not($@), 1, 'Can copy test succeeded');
 
-#
-# 4. Media conflict without overwrite
-#
+# do copy
+eval {
+    $copied = $this->copy(dst_category => $that,
+                          story     => 1,
+                          media     => 1,
+                          template  => 1,
+                          overwrite => 1);
+};
+my @copied_stories = $copied->{stories} ? @{$copied->{stories}} : ();
+($conflict) = pkg('Story')->find(story_id => $conflict->story_id);
+is(not($@), 1, "Actual copy did not throw error");
+is($conflict->trashed, 1, "Conflicting story has been trashed");
+is($copied_stories[0]->url, $conflict->url, "Copied Story has same URL as conflicting story");
+
+push @categories, @{$copied->{categories}} if $copied->{categories};
+push @stories,    @copied_stories;
+push @media,      @{$copied->{media}}      if $copied->{media};
+push @templates,  @{$copied->{templates}}  if $copied->{templates};
+
+diag('');
+diag('4. Media conflict without overwrite');
+diag('');
 setup_tree();
 # Add a TO category also existing in FROM
 $source = pkg('Category')->new(parent_id => $that->category_id,
@@ -136,13 +190,34 @@ eval {
 diag('Testing Media conflict without overwrite - should throw exception');
 isa_ok($@, 'Krang::Category::CopyAssetConflict');
 
-#
-# 5. Media conflict with overwrite
-#
+# do copy
+eval {
+    $copied = $this->copy(dst_category => $that,
+                          story     => 1,
+                          media     => 1,
+                          template  => 1,
+                          overwrite => 0);
+};
+is(not($@), 1, "Trying to copy did not throw error");
+@tmp = pkg('Media')->find(url => $conflict->url);
+is(scalar(@tmp), 1, "No media copied");
+
+($conflict) = pkg('Media')->find(media_id => $conflict->media_id);
+is($conflict->trashed, 0, "Conflicting media has not been trashed");
+
+push @categories, @{$copied->{categories}} if $copied->{categories};
+push @stories,    @{$copied->{stories}}    if $copied->{stories};
+push @media,      @{$copied->{media}}      if $copied->{media};
+push @templates,  @{$copied->{templates}}  if $copied->{templates};
+
+
+diag('');
+diag('5. Media conflict with overwrite');
+diag('');
 setup_tree();
 # Add a TO category also existing in FROM
 $source = pkg('Category')->new(parent_id => $that->category_id,
-                                  dir       => 'source');
+                               dir       => 'source');
 $source->save;
 push @categories, $source;
 # Add a conflicting media in /to/that/source/
@@ -159,9 +234,29 @@ eval {
 };
 is(not($@), 1, 'Media conflict with overwrite');
 
-#
-# 6. Template conflict without overwrite
-#
+# do copy
+eval {
+    $copied = $this->copy(dst_category => $that,
+                          story     => 1,
+                          media     => 1,
+                          template  => 1,
+                          overwrite => 1);
+};
+my @copied_media = $copied->{media} ? @{$copied->{media}} : ();
+($conflict) = pkg('Media')->find(media_id => $conflict->media_id);
+is(not($@), 1, "Actual copy did not throw error");
+is($conflict->trashed, 1, "Conflicting media has been trashed");
+is($copied_media[1]->url, $conflict->url, "Copied Media has same URL as conflicting media");
+
+push @categories, @{$copied->{categories}} if $copied->{categories};
+push @stories,    @{$copied->{stories}}    if $copied->{stories};
+push @media,      @copied_media;
+push @templates,  @{$copied->{templates}}  if $copied->{templates};
+
+
+diag('');
+diag('6. Template conflict without overwrite');
+diag('');
 setup_tree();
 # Add a TO category also existing in FROM
 $source = pkg('Category')->new(parent_id => $that->category_id,
@@ -187,9 +282,9 @@ eval {
 diag('Testing Template conflict without overwrite - should throw exception');
 isa_ok($@, 'Krang::Category::CopyAssetConflict');
 
-#
-# 7. Template conflict with overwrite
-#
+diag('');
+diag('7. Template conflict with overwrite');
+diag('');
 setup_tree();
 # Add a TO category also existing in FROM
 $source = pkg('Category')->new(parent_id => $that->category_id,
@@ -214,9 +309,9 @@ eval {
 };
 is(not($@), 1, 'Template conflict with overwrite');
 
-#
-# 8. Resolvable URL Conflict between would-be-created category and story existing in TO
-#
+diag('');
+diag('8. Resolvable URL Conflict between would-be-created category and story existing in TO');
+diag('');
 setup_tree();
 $conflict = pkg('Story')->new(categories => [$that],
                               slug       => 'source',
@@ -233,9 +328,9 @@ eval {
 };
 is(not($@), 1, "Resolvable conflict between would-be-created category and slug-provided story in copy destination");
 
-#
-# 9. Unresolvable URL Conflict between would-be-created category and story existing in TO
-#
+diag('');
+diag('9. Unresolvable URL Conflict between would-be-created category and story existing in TO');
+diag('');
 setup_tree();
 $conflict = pkg('Story')->new(categories => [$that],
                               slug       => 'source',
@@ -276,11 +371,15 @@ diag("We are the normal test user again.");
 sub setup_tree {
 
     $_->delete for @stories;
+    $_->delete for @media;
+    $_->delete for @templates;
     eval { $creator->cleanup() };
     $_->delete for reverse @categories;
 
     @categories = ();
     @stories    = ();
+    @media      = ();
+    @templates  = ();
 
     $creator = pkg('Test::Content')->new;
 
@@ -435,6 +534,8 @@ sub setup_tree {
 
 END{
     $_->delete for @stories;
+    $_->delete for @media;
+    $_->delete for @templates;
     $creator->cleanup();
     $_->delete for reverse @categories;
 }

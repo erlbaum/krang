@@ -1554,8 +1554,110 @@ sub can_copy_test {
     }
 }
 
+sub copy {
+    my ($self, %args) = @_;
 
-sub copy {return "copy() stub" }
+    my $dst_cat = $args{dst_category};
+
+    my $copied = {};
+
+    my @pair = ([$self, $dst_cat]);
+
+    while (@pair) {
+        my ($src, $dst) = @{ shift(@pair) };
+
+        my $src_url => $src->url;
+
+        for my $src_child ($src->children) {
+
+            my $url = _build_url($dst->url, $src_child->{dir});
+
+            # would-be-created category already exists: don't copy
+            if (my ($existing) = pkg('Category')->find(url => $url)) {
+                push @pair, [$src_child, $existing];
+                next;
+            }
+
+            # do the copy
+            my $copy = bless( {%$src_child}, ref($src_child));
+            $copy->{element} = $src_child->element->clone();
+
+            $copy->{category_id} = undef;
+            $copy->{category_uuid} = pkg('UUID')->new;
+            $copy->{element}{element_id} = undef;
+            $copy->{parent_id} = $dst->category_id;
+            $copy->{site_id}   = $dst->site_id;
+            $copy->{url} = $url;
+
+            $copy->save;
+
+            push @{$copied->{categories}}, $copy;
+
+            push @pair, [$src_child, $copy];
+        }
+
+        if ($args{story}) {
+
+            for my $story (pkg('Story')->find(category_id => $src->category_id)) {
+
+                # is the URL of our would-be-copy already occupied?
+                my ($conflict) = pkg('Story')->find(category_id => $dst->category_id,
+                                                    slug        => $story->slug);
+
+                # if so, maybe trash it, maybe skip the copy
+                if ($conflict) {
+                    if ($args{overwrite}) {
+                        $conflict->trash;
+                    } else {
+                        next;
+                    }
+                }
+
+                # make the copy
+                my $copy = $story->clone(no_title_modification      => 1,
+                                         no_url_conflict_resolution => 1);
+
+                $copy->{checked_out}    = 0;
+                $copy->{checked_out_by} = 0;
+
+                $copy->categories($dst);
+
+                $copy->save(no_verify_checkout => 1);
+
+                push @{$copied->{stories}}, $copy;
+            }
+        }
+
+        if ($args{media}) {
+
+            for my $media (pkg('Media')->find(category_id => $src->category_id)) {
+
+                # is the URL of our would-be-copy already occupied?
+                my ($conflict) = pkg('Media')->find(category_id => $dst->category_id,
+                                                    filename    => $media->filename);
+
+                # if so, maybe trash it, maybe skip the copy
+                if ($conflict) {
+                    if ($args{overwrite}) {
+                        $conflict->trash;
+                    } else {
+                        next;
+                    }
+                }
+
+                # make the copy
+                my $copy = $media->clone(category_id => $dst->category_id);
+
+                $copy->save;
+                $copy->checkin;
+
+                push @{$copied->{media}}, $copy;
+            }
+        }
+    }
+
+    return $copied;
+}
 
 =back
 
