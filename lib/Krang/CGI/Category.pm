@@ -883,11 +883,11 @@ sub _do_execute_copy {
     my $dst_cat = $self->_load_category(param => 'dst_category_id');
 
     $src_cat->copy(
-        dst_category_id => $query->param('dst_category_id'),
-        story           => $query->param('copy_story'),
-        media           => $query->param('copy_media'),
-        template        => $query->param('copy_template'),
-        overwrite       => $query->param('overwrite'),
+        dst_category => $query->param('dst_cat'),
+        story        => $query->param('copy_story'),
+        media        => $query->param('copy_media'),
+        template     => $query->param('copy_template'),
+        overwrite    => $query->param('overwrite'),
     );
 
     add_message(
