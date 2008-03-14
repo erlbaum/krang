@@ -177,7 +177,12 @@ Krang.Window = {
     },
 
     _id_from_name : function() {
-        return window.name.match(/^krang_window_/) && window.name.match(/\d+$/);        
+        var matches = window.name.match(/^krang_window_(\d+)/);
+        if(matches == null ) {
+            return null;
+        } else {
+            return matches[1];
+        }
     },    
 
     _id_from_pool : function() {
@@ -543,7 +548,8 @@ Krang.Form = {
             // save the old target of the form so we can restore it after
             // submission
             var old_target = form.target;
-            form.target = '_blank';
+            form.target = window.name + '_b';
+            Krang.Window.pass_id();
             form.submit();
             form.target = old_target;
         } else {
