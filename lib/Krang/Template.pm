@@ -87,8 +87,8 @@ use Exception::Class (
     'Krang::Template::DuplicateURL'         => {fields => 'template_id'},
     'Krang::Template::NoCategoryEditAccess' => {fields => 'category_id'},
     'Krang::Template::NoEditAccess'         => {fields => 'template_id'},
-    'Krang::Template::NoDeleteAccess'       => { fields => [ 'template_id'    ] },
-    'Krang::Template::NoRestoreAccess'      => { fields => [ 'template_id'    ] },
+    'Krang::Template::NoDeleteAccess'       => {fields => ['template_id']},
+    'Krang::Template::NoRestoreAccess'      => {fields => ['template_id']},
 );
 use Storable qw(nfreeze thaw);
 use Time::Piece;
@@ -880,31 +880,31 @@ sub find {
 
     # include live/archived/trashed
     unless ($args{template_id}) {
-	if ($include_live) {
-	    unless ($include_archived) {
-		$where_clause .= ' and ' if $where_clause;
-		$where_clause .= ' t.archived = 0';
-	    }
-	    unless ($include_trashed) {
-		$where_clause .= ' and ' if $where_clause;
-		$where_clause .= ' t.trashed  = 0';
-	    }
-	} else {
-	    if ($include_archived) {
-		if ($include_trashed) {
-		    $where_clause .= ' and 'if $where_clause;
-		    $where_clause .= ' t.archived = 1 AND t.trashed = 1';
-		} else {
-		    $where_clause .= ' and 'if $where_clause;
-		    $where_clause .= ' t.archived = 1 AND t.trashed = 0';
-		}
-	    } else {
-		if ($include_trashed) {
-		    $where_clause .= ' and 'if $where_clause;
-		    $where_clause .= ' t.trashed = 1';
-		}
-	    }
-	}
+        if ($include_live) {
+            unless ($include_archived) {
+                $where_clause .= ' and ' if $where_clause;
+                $where_clause .= ' t.archived = 0';
+            }
+            unless ($include_trashed) {
+                $where_clause .= ' and ' if $where_clause;
+                $where_clause .= ' t.trashed  = 0';
+            }
+        } else {
+            if ($include_archived) {
+                if ($include_trashed) {
+                    $where_clause .= ' and ' if $where_clause;
+                    $where_clause .= ' t.archived = 1 AND t.trashed = 1';
+                } else {
+                    $where_clause .= ' and ' if $where_clause;
+                    $where_clause .= ' t.archived = 1 AND t.trashed = 0';
+                }
+            } else {
+                if ($include_trashed) {
+                    $where_clause .= ' and ' if $where_clause;
+                    $where_clause .= ' t.trashed = 1';
+                }
+            }
+        }
     }
 
     # construct base query
@@ -1365,8 +1365,8 @@ sub serialize_xml {
     $writer->dataElement(version       => $self->{version});
     $writer->dataElement(deployed_version => $self->{deployed_version})
       if $self->{deployed_version};
-    $writer->dataElement(archived      => $self->archived);
-    $writer->dataElement(trashed       => $self->trashed);
+    $writer->dataElement(archived => $self->archived);
+    $writer->dataElement(trashed  => $self->trashed);
 
     # add category to set
     $set->add(object => $self->category, from => $self)
@@ -1528,15 +1528,17 @@ by another user.
 
 sub archive {
     my ($self, %args) = @_;
-    unless(ref $self) {
+    unless (ref $self) {
         my $template_id = $args{template_id};
         ($self) = pkg('Template')->find(template_id => $template_id);
         croak("Unable to load template '$template_id'.") unless $self;
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Template::NoEditAccess->throw( message => "Not allowed to edit template", template_id => $self->template_id )
-        unless ($self->may_edit);
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to edit template",
+        template_id => $self->template_id
+    ) unless ($self->may_edit);
 
     # make sure we are the one
     $self->checkout;
@@ -1546,10 +1548,12 @@ sub archive {
 
     # archive the template
     my $dbh = dbh();
-    $dbh->do("UPDATE template
+    $dbh->do(
+        "UPDATE template
               SET    archived = 1
               WHERE  template_id = ?", undef,
-	     $self->{template_id});
+        $self->{template_id}
+    );
 
     # living in archive
     $self->{archived} = 1;
@@ -1575,15 +1579,17 @@ another user.
 
 sub unarchive {
     my ($self, %args) = @_;
-    unless(ref $self) {
+    unless (ref $self) {
         my $template_id = $args{template_id};
         ($self) = pkg('Template')->find(template_id => $template_id);
         croak("Unable to load template '$template_id'.") unless $self;
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Template::NoEditAccess->throw( message => "Not allowed to edit template", template_id => $self->template_id )
-        unless ($self->may_edit);
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to edit template",
+        template_id => $self->template_id
+    ) unless ($self->may_edit);
 
     # make sure no other template occupies our initial place (URL)
     $self->duplicate_check();
@@ -1596,10 +1602,12 @@ sub unarchive {
 
     # unarchive the template
     my $dbh = dbh();
-    $dbh->do('UPDATE template
+    $dbh->do(
+        'UPDATE template
               SET    archived = 0
               WHERE  template_id = ?', undef,
-	     $self->{template_id});
+        $self->{template_id}
+    );
 
     add_history(
         object => $self,
@@ -1623,15 +1631,17 @@ is checked out by another user.
 
 sub trash {
     my ($self, %args) = @_;
-    unless(ref $self) {
+    unless (ref $self) {
         my $template_id = $args{template_id};
         ($self) = pkg('Template')->find(template_id => $template_id);
         croak("Unable to load template '$template_id'.") unless $self;
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Template::NoEditAccess->throw( message => "Not allowed to edit template", template_id => $self->template_id )
-        unless ($self->may_edit);
+    Krang::Template::NoEditAccess->throw(
+        message     => "Not allowed to edit template",
+        template_id => $self->template_id
+    ) unless ($self->may_edit);
 
     # make sure we are the one
     $self->checkout;
@@ -1669,16 +1679,17 @@ Krang::Trash->restore().
 
 sub untrash {
     my ($self, %args) = @_;
-    unless(ref $self) {
+    unless (ref $self) {
         my $template_id = $args{template_id};
         ($self) = pkg('Template')->find(template_id => $template_id);
         croak("Unable to load template '$template_id'.") unless $self;
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Template::NoRestoreAccess->throw(message => "Not allowed to restore template",
-					    template_id => $self->template_id)
-        unless ($self->may_edit);
+    Krang::Template::NoRestoreAccess->throw(
+        message     => "Not allowed to restore template",
+        template_id => $self->template_id
+    ) unless ($self->may_edit);
 
     # make sure no other template occupies our initial place (URL)
     $self->duplicate_check unless $self->archived;
@@ -1688,10 +1699,12 @@ sub untrash {
 
     # unset trash flag in template table
     my $dbh = dbh();
-    $dbh->do('UPDATE template
+    $dbh->do(
+        'UPDATE template
               SET trashed = ?
               WHERE template_id = ?', undef,
-	     0, $self->{template_id});
+        0,                            $self->{template_id}
+    );
 
     # remove from trash
     pkg('Trash')->remove(object => $self);
