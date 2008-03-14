@@ -23,6 +23,10 @@ isa_ok($site, 'Krang::Site');
 
 my ($category) = pkg('Category')->find(site_id => $site->site_id());
 
+# create another category for $media->clone()
+my $clone_cat = pkg('Category')->new(dir => 'clone', parent_id => $category->category_id );
+$clone_cat->save();
+
 # constructor failure
 my $tmpl;
 eval {$tmpl = pkg('Template')->new(category => 'blah',
@@ -106,6 +110,14 @@ like($@, qr/Template isn't checked out/i, 'verify_checkout() Test');
 
 # verify checkout works
 is($tmpl->checkout()->isa('Krang::Template'), 1, 'Checkout Test');
+
+# test clone()
+my $copy = $tmpl->clone(category_id => $clone_cat->category_id);
+$copy->save();
+_test_copy($tmpl, $copy);
+isa_ok($copy, 'Krang::Template');
+$copy->delete;
+$clone_cat->delete();
 
 my $tmpl2 = pkg('Template')->new(category_id => $category->category_id(),
                                  content => '<html></html>',
@@ -391,4 +403,26 @@ END {
 
     # Delete test site
     $site->delete();
+}
+
+sub _test_copy {
+    my ($orig, $copy) = @_;
+
+    diag("Comparing original and copy after clone()'ing media");
+
+    is($orig->filename,           $copy->filename,           "Filename ok");
+    is($orig->content,            $copy->content,            "Content ok");
+##    is($orig->element_class_name, $copy->element_class_name, "Element Class Name ok"); # obviously unused DB column
+
+    diag("Verifying redefined properties on copy");
+
+    is($copy->version, 1,           "Version ok");
+    is($copy->testing, 0,           "Testing ok");
+    is($copy->deploy_date, undef,   "Deploy Date ok");
+    is($copy->deployed, 0,          "Deployed ok");
+    is($copy->deployed_version, 0,  "Deployed Version ok");
+    is($copy->archived, 0,          "Not archived");
+    is($copy->trashed, 0,           "Not trashed");
+    is($copy->checked_out, 1,       "Is checked out");
+    is($copy->checked_out_by, $ENV{REMOTE_USER}, "Checked Out By ok");
 }

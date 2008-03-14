@@ -1673,8 +1673,6 @@ exception if user may not edit this template. Croaks if the template
 is checked out by another user. This method is called by
 Krang::Trash->restore().
 
-=back
-
 =cut
 
 sub untrash {
@@ -1719,6 +1717,42 @@ sub untrash {
         object => $self,
         action => 'untrash',
     );
+}
+
+=item C<< $template->clone(category_id => $category_id) >>
+
+Copy $template to the category having the specified category_id.  Returns
+an unsaved copy.
+
+=back
+
+=cut
+
+sub clone {
+    my ($self, %args) = @_;
+
+    croak("No Category ID specified where to copy to template to")
+      unless $args{category_id};
+
+    my $copy = bless({%$self} => ref($self));
+
+    # redefine
+    $copy->{template_id}       = undef;
+    $copy->{template_uuid}     = pkg('UUID')->new;
+    $copy->{category_id}       = $args{category_id};
+    $copy->{version}           = 0;
+    $copy->{testing}           = 0;
+    $copy->{creation_date}     = localtime();
+    $copy->{deploy_date}       = undef;
+    $copy->{deployed}          = 0;
+    $copy->{deployed_version}  = 0;
+    $copy->{archived}          = 0;
+    $copy->{trashed}           = 0;
+    $copy->{url}               = ''; # is set by save()
+    $copy->{checked_out}       = 1;
+    $copy->{checked_out_by}    = $ENV{REMOTE_USER};
+
+    return $copy;
 }
 
 =head1 TO DO
