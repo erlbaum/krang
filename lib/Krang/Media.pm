@@ -2421,7 +2421,7 @@ sub wont_publish { return $_[0]->archived || $_[0]->trashed }
 =item C<< $media->clone(category_id => $category_id) >>
 
 Copy $media to the category having the specified category_id.  Returns
-an unsaved copy with the media file already uploaded.
+an unsaved and checked_out copy with the media file already uploaded.
 
 =cut
 

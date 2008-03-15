@@ -1722,7 +1722,7 @@ sub untrash {
 =item C<< $template->clone(category_id => $category_id) >>
 
 Copy $template to the category having the specified category_id.  Returns
-an unsaved copy.
+an unsaved and checked out copy.
 
 =back
 
