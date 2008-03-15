@@ -537,6 +537,8 @@ sub dependent_check {
           ? (category_id => $id, show_hidden => 1)
           : (category_id => $id);
 
+        @find_args{ qw(include_archived include_trashed) } = (1,1);
+
         for ("Krang::$type"->find(%find_args)) {
             my $field = lc $type . "_id";
             push @{$info{lc($type)}}, $_->$field;
