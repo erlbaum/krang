@@ -845,13 +845,13 @@ sub _do_execute_copy {
     my $src_cat = $self->_load_category(param => 'src_category_id');
     my $dst_cat = $self->_load_category(param => 'dst_category_id');
 
-##    $src_cat->copy(
-##        dst_category => $query->param('dst_cat'),
-##        story        => $query->param('copy_story'),
-##        media        => $query->param('copy_media'),
-##        template     => $query->param('copy_template'),
-##        overwrite    => $query->param('overwrite'),
-##    );
+    $src_cat->copy(
+        dst_category => $query->param('dst_cat'),
+        story        => $query->param('copy_story'),
+        media        => $query->param('copy_media'),
+        template     => $query->param('copy_template'),
+        overwrite    => $query->param('overwrite'),
+    );
 
     add_message(
         $args{message},
@@ -861,7 +861,7 @@ sub _do_execute_copy {
         dst_url => $dst_cat->url
     );
 
-    add_message('msg', msg => "This is a stub: The Copying has not be done!");
+    add_message('msg', msg => "This is still Alpha: The UI-controlled copying might still be buggy!  More testing next week");
 }
 
 1;
