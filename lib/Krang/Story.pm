@@ -895,7 +895,7 @@ sub _verify_unique {
         }
     }
 
-    # then look for stories that have one of our URLs without being archived
+    # then look for stories that have one of our URLs without being archived nor trashed
     my $query =
         'SELECT s.story_id, url, archived, trashed '
       . 'FROM   story s '
@@ -2914,16 +2914,17 @@ sub turn_into_category_index {
     foreach my $old_cat (@old_cats) {
         my ($new_cat) = pkg('Category')->find(url => $old_cat->url . $slug);
         unless ($new_cat) {
-            $new_cat = pkg('Category')->new(
-                dir       => $slug,
-                parent_id => $old_cat->category_id,
-                site_id   => $old_cat->site_id
-            );
-            $new_cat->save;
-
-            # if this cat corresponds to session's cat, update session cat's ID
-            $category->{category_id} = $new_cat->category_id
-              if ($category->parent_id eq $old_cat->category_id);
+            if ($category->parent_id eq $old_cat->category_id) {
+                $category->save;
+                $new_cat = $category;
+            } else {
+                $new_cat = pkg('Category')->new(
+                                                dir       => $slug,
+                                                parent_id => $old_cat->category_id,
+                                                site_id   => $old_cat->site_id
+                                               );
+                $new_cat->save;
+            }
         }
         push @new_cats, $new_cat;
     }
