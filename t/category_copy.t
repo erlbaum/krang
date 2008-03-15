@@ -58,7 +58,7 @@ END { $user->delete }
 
 # some variables
 my ($creator, $this, $that, $source, $water, $conflict, $copied);
-my (@categories, @stories, @media, @templates);
+my (@categories, @stories, @media, @templates, @tmp);
 
 diag('');
 diag('1. Test without conflict possibility');
@@ -117,7 +117,7 @@ eval {
                           overwrite => 0);
 };
 is(not($@), 1, "Trying to copy did not throw error");
-my @tmp = pkg('Story')->find(url => $conflict->url);
+@tmp = pkg('Story')->find(url => $conflict->url);
 is(scalar(@tmp), 1, "No story copied");
 
 ($conflict) = pkg('Story')->find(story_id => $conflict->story_id);
@@ -253,7 +253,6 @@ push @stories,    @{$copied->{stories}}    if $copied->{stories};
 push @media,      @copied_media;
 push @templates,  @{$copied->{templates}}  if $copied->{templates};
 
-
 diag('');
 diag('6. Template conflict without overwrite');
 diag('');
@@ -282,6 +281,26 @@ eval {
 diag('Testing Template conflict without overwrite - should throw exception');
 isa_ok($@, 'Krang::Category::CopyAssetConflict');
 
+# do copy
+eval {
+    $copied = $this->copy(dst_category => $that,
+                          story     => 1,
+                          media     => 1,
+                          template  => 1,
+                          overwrite => 0);
+};
+is(not($@), 1, "Trying to copy did not throw error");
+@tmp = pkg('Template')->find(url => $conflict->url);
+is(scalar(@tmp), 1, "No template copied");
+
+($conflict) = pkg('Template')->find(template_id => $conflict->template_id);
+is($conflict->trashed, 0, "Conflicting template has not been trashed");
+
+push @categories, @{$copied->{categories}} if $copied->{categories};
+push @stories,    @{$copied->{stories}}    if $copied->{stories};
+push @media,      @{$copied->{media}}      if $copied->{media};
+push @templates,  @{$copied->{templates}}  if $copied->{templates};
+
 diag('');
 diag('7. Template conflict with overwrite');
 diag('');
@@ -309,6 +328,25 @@ eval {
 };
 is(not($@), 1, 'Template conflict with overwrite');
 
+# do copy
+eval {
+    $copied = $this->copy(dst_category => $that,
+                          story     => 1,
+                          media     => 1,
+                          template  => 1,
+                          overwrite => 1);
+};
+my @copied_templates = $copied->{templates} ? @{$copied->{templates}} : ();
+($conflict) = pkg('Template')->find(template_id => $conflict->template_id);
+is(not($@), 1, "Actual copy did not throw error");
+is($conflict->trashed, 1, "Conflicting template has been trashed");
+is($copied_templates[1]->url, $conflict->url, "Copied Template has same URL as conflicting template");
+
+push @categories, @{$copied->{categories}} if $copied->{categories};
+push @stories,    @{$copied->{stories}}    if $copied->{stories};
+push @media,      @{$copied->{media}}      if $copied->{media};
+push @templates,  @copied_templates;
+
 diag('');
 diag('8. Resolvable URL Conflict between would-be-created category and story existing in TO');
 diag('');
@@ -327,6 +365,30 @@ eval {
                          overwrite => 0);
 };
 is(not($@), 1, "Resolvable conflict between would-be-created category and slug-provided story in copy destination");
+
+# do copy
+eval {
+    $copied = $this->copy(dst_category => $that,
+                          story     => 1,
+                          media     => 1,
+                          template  => 1,
+                          overwrite => 1);
+};
+is(not($@), 1, "Actual copy did not throw error");
+
+# could the category be created?
+my ($cat) = pkg('Category')->find(parent_id => $that->category_id, dir => 'source');
+isa_ok($cat, 'Krang::Category');
+
+# has the conflicting story be turned into an index page of this category?
+my ($cat_idx) = pkg('Story')->find(category_id => $cat->category_id, slug => '');
+isa_ok($cat_idx, 'Krang::Story');
+
+push @categories, @{$copied->{categories}} if $copied->{categories};
+push @stories,    @{$copied->{stories}}    if $copied->{stories};
+push @media,      @{$copied->{media}}      if $copied->{media};
+push @templates,  @{$copied->{templates}}  if $copied->{templates};
+
 
 diag('');
 diag('9. Unresolvable URL Conflict between would-be-created category and story existing in TO');
@@ -348,7 +410,7 @@ diag("We are now another user - testing unresolvable conflict between would-be-c
     $conflict->checkout;
     is($conflict->checked_out_by, $user->user_id, "Conflicting story checked out by other user");
 }
-diag("We are the normal test user again.");
+diag("We are the normal test user again: Can-copy-test should throw a Krang::Story::CantCheckOut exception");
 eval {
     $this->can_copy_test(dst_category  => $that,
                          story     => 1,
@@ -357,6 +419,16 @@ eval {
                          overwrite => 0);
 };
 isa_ok($@, 'Krang::Story::CantCheckOut');
+
+diag("Trying to copy althoug we can't check out some story should throw a Krang::Category::DuplicateURL");
+eval {
+    $copied = $this->copy(dst_category => $that,
+                          story     => 1,
+                          media     => 1,
+                          template  => 1,
+                          overwrite => 1);
+};
+isa_ok($@, 'Krang::Category::DuplicateURL');
 {
     diag("We are now another user");
     local $ENV{REMOTE_USER} = $user->user_id;
