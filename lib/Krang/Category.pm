@@ -1623,6 +1623,7 @@ sub copy {
                 $copy->categories($dst);
 
                 $copy->save(no_verify_checkout => 1);
+                $copy->checkin;
 
                 push @{$copied->{stories}}, $copy;
             }
@@ -1652,6 +1653,33 @@ sub copy {
                 $copy->checkin;
 
                 push @{$copied->{media}}, $copy;
+            }
+        }
+
+        if ($args{template}) {
+
+            for my $template (pkg('Template')->find(category_id => $src->category_id)) {
+
+                # is the URL of our would-be-copy already occupied?
+                my ($conflict) = pkg('Template')->find(category_id => $dst->category_id,
+                                                       filename    => $template->filename);
+
+                # if so, maybe trash it, maybe skip the copy
+                if ($conflict) {
+                    if ($args{overwrite}) {
+                        $conflict->trash;
+                    } else {
+                        next;
+                    }
+                }
+
+                # make the copy
+                my $copy = $template->clone(category_id => $dst->category_id);
+
+                $copy->save;
+                $copy->checkin;
+
+                push @{$copied->{templates}}, $copy;
             }
         }
     }
