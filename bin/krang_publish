@@ -15,9 +15,17 @@ krang_publish - command-line publishing utility for Krang.
 
 =head1 SYNOPSIS
 
-Publish everything (all stories & media for all sites) in a krang installation:
+Publish everything (all stories & media for all sites) in a krang installation
 
   $ krang_publish --everything
+
+Only publish assets that have been published before (but publish their latest versions)
+
+  $ krang_publish --everything --republish-only
+
+Only publish assets that have been published before (and re-publish their last-published versions)
+
+  $ krang_publish --everything --republish-only --maintain-versions
 
 Publish all assets of a single site, specified by site-id
 
@@ -38,14 +46,6 @@ Publish a series of stories and their related assets
 The alternative form for multiple-story publish
 
   $ krang_publish --story-id 10 --story-id 11 --story-id 12
-
-Publish all assets of a single site, but only the latest versions of assets that have already been published
-
-  $ krang_publish --site-id 10 --republish-only
-
-Publish all assets of a single site, but only the last-published versions of assets that have been published
-
-  $ krang_publish --site-id 10 --republish-only --maintain-versions
 
 =head1 DESCRIPTION
 
