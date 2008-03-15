@@ -2858,6 +2858,83 @@ trashed.
 
 sub wont_publish { return $_[0]->archived || $_[0]->trashed }
 
+=item C<< $story->turn_into_category_index(category => $category) >>
+
+=item C<< $story->turn_into_category_index(category => $category, steal => 1) >>
+
+Convenience method to resolve URL conflicts when creating a $category
+whose 'dir' property equals the slug of $story.
+
+Turns the slug-provided $story into a slugless index page of the
+specified $category.
+
+Returns undef if user can't check out the story.
+
+When specifiying the flag B<steal>, stories checked out by another
+user will be stolen if we have the necessary user admin permission
+'may_checkin_all'. Otherwise returns undef.
+
+=cut
+
+sub turn_into_category_index {
+    my ($self, %args) = @_;
+
+    # the category whose 'dir' equals the story's slug
+    my $category = $args{category};
+
+    # return if we can't edit
+    return unless $self->may_edit;
+
+    # handle checked out story
+    if ($self->checked_out) {
+        if ($self->checked_out_by ne $ENV{REMOTE_USER}) {
+            if ($args{steal}) {
+                my %admin_perms = pkg('Group')->user_admin_permissions();
+                unless ($admin_perms{may_checkin_all}) {
+                    return;
+                }
+            } else {
+                return;
+            }
+            $self->checkin;
+            $self->checkout;
+        }
+    } else {
+        $self->checkout;
+    }
+
+    # give story temporary slug so we don't throw dupe error during conversion!
+    my $slug = $self->slug;
+    $self->slug('_TEMP_SLUG_FOR_CONVERSION_');
+    $self->save;
+
+    # form story's new cats by appending its slug to existing cats
+    my @old_cats = $self->categories;
+    my @new_cats;
+    foreach my $old_cat (@old_cats) {
+        my ($new_cat) = pkg('Category')->find(url => $old_cat->url . $slug);
+        unless ($new_cat) {
+            $new_cat = pkg('Category')->new(
+                dir       => $slug,
+                parent_id => $old_cat->category_id,
+                site_id   => $old_cat->site_id
+            );
+            $new_cat->save;
+
+            # if this cat corresponds to session's cat, update session cat's ID
+            $category->{category_id} = $new_cat->category_id
+              if ($category->parent_id eq $old_cat->category_id);
+        }
+        push @new_cats, $new_cat;
+    }
+    $self->slug('');
+    $self->categories(@new_cats);
+    $self->save;
+    $self->checkin;
+
+    return 1;
+}
+
 =back
 
 =cut
