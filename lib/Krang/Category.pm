@@ -1565,6 +1565,7 @@ sub copy {
 
     my @pair = ([$self, $dst_cat]);
 
+    # copy category subtree
     while (@pair) {
         my ($src, $dst) = @{ shift(@pair) };
 
@@ -1591,7 +1592,26 @@ sub copy {
             $copy->{site_id}   = $dst->site_id;
             $copy->{url} = $url;
 
-            $copy->save;
+            eval { $copy->save };
+
+            # turn slug-provided story in category index if necessary
+            if ($@ and ref($@)) {
+                if ($@->isa('Krang::Category::DuplicateURL')) {
+                    if (my $story_id = $@->story_id) {
+                        my ($story) = pkg('Story')->find(story_id => $@->story_id);
+
+                        unless ($story->turn_into_category_index(category => $copy, steal => 0)) {
+                            $@->rethrow;
+                        }
+                    } elsif ($@->category_id) {
+                        $@->rethrow();
+                    }
+                } else {
+                    croak("Unknown exception thrown in ".__PACKAGE__."->copy(): ".$@);
+                }
+            } elsif ($@) {
+                die $@;
+            }
 
             push @{$copied->{categories}}, $copy;
 
