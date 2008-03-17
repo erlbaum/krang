@@ -764,7 +764,7 @@ sub execute_copy {
     if (defined($query->param('non_conflicting'))
         and $query->param('non_conflicting'))
     {
-        $self->_do_execute_copy(message => 'copied_category_with_some_conflicts');
+        $self->_do_execute_copy(message => 'copied_category_no_overwrite');
 
         return $self->find;
     }
@@ -783,7 +783,8 @@ sub execute_copy {
     # handle conflicts
     if ($@ and ref($@)) {
         if ($@->isa('Krang::Story::CantCheckOut')) {
-            if (my @stories = @{$@->stories}) {    # can't copy category subtree
+            # can't copy category subtree, return to copy form
+            if (my @stories = @{$@->stories}) {
                 add_alert(
                     'cant_checkout_stories_to_resolve_url_conflict',
                     stories => join('<br/>', map { "Story $_->{id} ($_->{url})" } @stories),
@@ -802,6 +803,7 @@ sub execute_copy {
     }
 
     # we may copy, maybe overwriting existing files
+    add_message("conflicting_assets_moved_to_trash") if $query->param('overwrite');
     $self->_do_execute_copy(message => 'copied_category');
 
     return $self->find;
@@ -846,7 +848,7 @@ sub _do_execute_copy {
     my $dst_cat = $self->_load_category(param => 'dst_category_id');
 
     $src_cat->copy(
-        dst_category => $query->param('dst_cat'),
+        dst_category => $dst_cat,
         story        => $query->param('copy_story'),
         media        => $query->param('copy_media'),
         template     => $query->param('copy_template'),
@@ -860,8 +862,6 @@ sub _do_execute_copy {
         dst_id  => $dst_cat->category_id,
         dst_url => $dst_cat->url
     );
-
-    add_message('msg', msg => "This is still Alpha: The UI-controlled copying might still be buggy!  More testing next week");
 }
 
 1;
