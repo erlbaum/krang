@@ -1348,6 +1348,11 @@ sub deserialize_xml {
             site_id   => $site_id,
             parent_id => undef
         );
+        if(!$new_c) {
+            $new_c = pkg('Category')->new(dir => '/', site_id => $site_id);
+            $new_c->save();
+        }
+
         $pkg->_update_category_data($set, $new_c, $data, $no_update, %args);
         return $new_c;
     }
