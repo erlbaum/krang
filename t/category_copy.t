@@ -520,6 +520,55 @@ isa_ok($@, 'Krang::Category::DuplicateURL');
 }
 diag("We are the normal test user again.");
 
+diag('');
+diag('10. Conflict with existing destination category to which we have no EditAcces');
+diag('');
+setup_tree();
+
+# Add a TO category also existing in FROM
+$conflict = pkg('Category')->new(
+    parent_id => $that->category_id,
+    dir       => 'source'
+);
+$conflict->save;
+push @categories, $source;
+{
+
+    # setup group with asset permissions
+    my $group = pkg('Group')->new(
+        name           => 'LimitedCategoryAccess',
+        asset_story    => 'edit',
+        asset_media    => 'edit',
+        asset_template => 'edit',
+        categories     => {$conflict->category_id => 'read-only'},
+    );
+    $group->save();
+    END { $group->delete }
+
+    # put a user into this group
+    my $user = pkg('User')->new(
+        login     => 'limited',
+        password  => 'limited',
+        group_ids => [$group->group_id],
+    );
+    $user->save();
+    END { $user->delete }
+
+    diag("We are a user without edit permission to Category " . $conflict->category_id);
+    local $ENV{REMOTE_USER} = $user->user_id;
+
+    eval {
+        $this->can_copy_test(
+            dst_category => $that,
+            story        => 1,
+            media        => 1,
+            template     => 1,
+            overwrite    => 1
+        );
+    };
+    isa_ok($@, 'Krang::Category::NoEditAccess');
+}
+
 #   --- End tests ---
 
 sub setup_tree {

@@ -97,8 +97,8 @@ use warnings;
 use Carp qw(verbose croak);
 use Exception::Class (
     'Krang::Category::Dependent'    => {fields => 'dependents'},
-    'Krang::Category::DuplicateURL' => {fields => ['category_id', 'story_id', 'url']},
-    'Krang::Category::NoEditAccess' => {fields => 'category_id'},
+    'Krang::Category::DuplicateURL' => {fields => [qw(category_id story_id url)]},
+    'Krang::Category::NoEditAccess' => {fields => [qw(category_id category_url)]},
     'Krang::Category::RootDeletion',
     'Krang::Category::CopyAssetConflict',
 );
@@ -537,7 +537,7 @@ sub dependent_check {
           ? (category_id => $id, show_hidden => 1)
           : (category_id => $id);
 
-        @find_args{ qw(include_archived include_trashed) } = (1,1);
+        @find_args{qw(include_archived include_trashed)} = (1, 1);
 
         for ("Krang::$type"->find(%find_args)) {
             my $field = lc $type . "_id";
@@ -1348,7 +1348,7 @@ sub deserialize_xml {
             site_id   => $site_id,
             parent_id => undef
         );
-        if(!$new_c) {
+        if (!$new_c) {
             $new_c = pkg('Category')->new(dir => '/', site_id => $site_id);
             $new_c->save();
         }
@@ -1468,15 +1468,30 @@ sub can_copy_test {
     # build URL collection of would-be-created categories below destination category
     for my $descendant (@src_cat_descendants) {
 
-        # collect URLs of would-be-created categories
+        # build URL of would-be-created categories
         (my $rel_src_url = $descendant->url) =~ s!^$src_cat_url!!;
 
         my $dst_child_cat_url = $dst_cat_url . $rel_src_url;
 
+        # if we want to copy assets, make sure we have EditAccess to existing destination categories
+        if ($args{story} or $args{media} or $args{template}) {
+            my ($cat) = pkg('Category')->find(url => $dst_child_cat_url);
+            if ($cat and not $cat->may_edit) {
+                Krang::Category::NoEditAccess->throw(
+                    message => "User does not have access to copy assets to category "
+                      . $cat->category_id,
+                    category_id  => $cat->category_id,
+                    category_url => $cat->url
+                );
+            }
+        }
+
+        # chop trailing slash for comparison with story URLs
         $dst_child_cat_url =~ s!/$!!;
 
         debug(__PACKAGE__ . "::can_copy_test() destination category URL: " . $dst_child_cat_url);
 
+        # remember it
         $dst_cat_urls{$dst_child_cat_url} = 1;
     }
 
@@ -1487,9 +1502,7 @@ sub can_copy_test {
     my @conflicting_stories =
       grep { $dst_cat_urls{$_->url} and $_ } @stories_below_dst_cat;
 
-    debug(  __PACKAGE__
-          . "::can_copy_test() conflicting URLs: "
-          . join("\n", @conflicting_stories));
+    debug(__PACKAGE__ . "::can_copy_test() conflicting URLs: " . join("\n", @conflicting_stories));
 
     # success if no conflicting story URLs and overwrite
     return 1 if scalar(@conflicting_stories) == 0 && $args{overwrite};
@@ -1514,6 +1527,7 @@ sub can_copy_test {
         }
 
         if ($cant_checkout_stories) {
+
             # we won't be able to resolve URL conflicts by turning a
             # slug-provided story into a category index (see Krang::CGI::Category->create()
             $_->checkin for @checked_out_stories;
@@ -1572,7 +1586,7 @@ sub copy {
 
     # copy category subtree
     while (@pair) {
-        my ($src, $dst) = @{ shift(@pair) };
+        my ($src, $dst) = @{shift(@pair)};
 
         my $src_url => $src->url;
 
@@ -1587,15 +1601,15 @@ sub copy {
             }
 
             # do the copy
-            my $copy = bless( {%$src_child}, ref($src_child));
+            my $copy = bless({%$src_child}, ref($src_child));
             $copy->{element} = $src_child->element->clone();
 
-            $copy->{category_id} = undef;
-            $copy->{category_uuid} = pkg('UUID')->new;
+            $copy->{category_id}         = undef;
+            $copy->{category_uuid}       = pkg('UUID')->new;
             $copy->{element}{element_id} = undef;
-            $copy->{parent_id} = $dst->category_id;
-            $copy->{site_id}   = $dst->site_id;
-            $copy->{url} = $url;
+            $copy->{parent_id}           = $dst->category_id;
+            $copy->{site_id}             = $dst->site_id;
+            $copy->{url}                 = $url;
 
             eval { $copy->save };
 
@@ -1612,7 +1626,7 @@ sub copy {
                         $@->rethrow();
                     }
                 } else {
-                    croak("Unknown exception thrown in ".__PACKAGE__."->copy(): ".$@);
+                    croak("Unknown exception thrown in " . __PACKAGE__ . "->copy(): " . $@);
                 }
             } elsif ($@) {
                 die $@;
@@ -1628,8 +1642,10 @@ sub copy {
             for my $story (pkg('Story')->find(category_id => $src->category_id)) {
 
                 # is the URL of our would-be-copy already occupied?
-                my ($conflict) = pkg('Story')->find(category_id => $dst->category_id,
-                                                    slug        => $story->slug);
+                my ($conflict) = pkg('Story')->find(
+                    category_id => $dst->category_id,
+                    slug        => $story->slug
+                );
 
                 # if so, maybe trash it, maybe skip the copy
                 if ($conflict) {
@@ -1641,8 +1657,10 @@ sub copy {
                 }
 
                 # make the copy
-                my $copy = $story->clone(no_title_modification      => 1,
-                                         no_url_conflict_resolution => 1);
+                my $copy = $story->clone(
+                    no_title_modification      => 1,
+                    no_url_conflict_resolution => 1
+                );
 
                 $copy->{checked_out}    = 0;
                 $copy->{checked_out_by} = 0;
@@ -1661,8 +1679,10 @@ sub copy {
             for my $media (pkg('Media')->find(category_id => $src->category_id)) {
 
                 # is the URL of our would-be-copy already occupied?
-                my ($conflict) = pkg('Media')->find(category_id => $dst->category_id,
-                                                    filename    => $media->filename);
+                my ($conflict) = pkg('Media')->find(
+                    category_id => $dst->category_id,
+                    filename    => $media->filename
+                );
 
                 # if so, maybe trash it, maybe skip the copy
                 if ($conflict) {
@@ -1688,8 +1708,10 @@ sub copy {
             for my $template (pkg('Template')->find(category_id => $src->category_id)) {
 
                 # is the URL of our would-be-copy already occupied?
-                my ($conflict) = pkg('Template')->find(category_id => $dst->category_id,
-                                                       filename    => $template->filename);
+                my ($conflict) = pkg('Template')->find(
+                    category_id => $dst->category_id,
+                    filename    => $template->filename
+                );
 
                 # if so, maybe trash it, maybe skip the copy
                 if ($conflict) {

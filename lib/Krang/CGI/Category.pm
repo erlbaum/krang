@@ -782,7 +782,15 @@ sub execute_copy {
 
     # handle conflicts
     if ($@ and ref($@)) {
-        if ($@->isa('Krang::Story::CantCheckOut')) {
+        if ($@->isa('Krang::Category::NoEditAccess')) {
+            add_alert(
+                'no_edit_access_to_existing_destination_category',
+                id  => $@->category_id,
+                url => $@->category_url
+            );
+            return $self->prepare_copy;
+        } elsif ($@->isa('Krang::Story::CantCheckOut')) {
+
             # can't copy category subtree, return to copy form
             if (my @stories = @{$@->stories}) {
                 add_alert(
