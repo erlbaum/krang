@@ -8,7 +8,7 @@ Krang.onload( function() {
     if (confirm("Some Objects you want to copy conflict with existing ones.\n\nIf you wish to copy those who don't conflict, press OK.\n\nTo abort and return to the Category listing press Cancel.")) {
         copy('non_conflicting');
     } else {
-        cancel();
+        Krang.Form.submit('copy_category', { rm: 'prepare_copy' });
     }
     </tmpl_if>
 } );
