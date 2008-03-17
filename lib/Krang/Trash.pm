@@ -159,6 +159,11 @@ sub find {
 
         @{$obj}{(TRASH_OBJECT_FIELDS)} = @$row;
 
+        if ($obj->{type} eq 'media') {
+            my ($media) = pkg('Media')->find(media_id => $obj->{id});
+            $obj->{thumbnail_src} = $media->thumbnail_path(relative => 1);
+        }
+
         push @objects, $obj;
     }
 
@@ -203,7 +208,7 @@ UNION
         version       AS version,
         ucpc.may_see  AS may_see,
         ucpc.may_edit AS may_edit,
-        0             AS forth_col,
+        1             AS forth_col,
         1             AS linkto
  FROM media AS m
  LEFT JOIN user_category_permission_cache AS ucpc
