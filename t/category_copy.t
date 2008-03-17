@@ -531,7 +531,7 @@ $conflict = pkg('Category')->new(
     dir       => 'source'
 );
 $conflict->save;
-push @categories, $source;
+push @categories, $conflict;
 {
 
     # setup group with asset permissions
