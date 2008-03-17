@@ -88,10 +88,10 @@ eval {
     );
 };
 is(not($@), 1, "Actual copy succeeded");
-push @categories, @{$copied->{categories}} if $copied->{categories};
-push @stories,    @{$copied->{stories}}    if $copied->{stories};
-push @media,      @{$copied->{media}}      if $copied->{media};
-push @templates,  @{$copied->{templates}}  if $copied->{templates};
+push @categories, @{$copied->{category}} if $copied->{category};
+push @stories,    @{$copied->{story}}    if $copied->{story};
+push @media,      @{$copied->{media}}    if $copied->{media};
+push @templates,  @{$copied->{template}} if $copied->{template};
 
 diag('');
 diag('2. Story conflict without overwrite');
@@ -135,10 +135,10 @@ is(scalar(@tmp), 1, "No story copied");
 ($conflict) = pkg('Story')->find(story_id => $conflict->story_id);
 is($conflict->trashed, 0, "Conflicting story has not been trashed");
 
-push @categories, @{$copied->{categories}} if $copied->{categories};
-push @stories,    @{$copied->{stories}}    if $copied->{stories};
-push @media,      @{$copied->{media}}      if $copied->{media};
-push @templates,  @{$copied->{templates}}  if $copied->{templates};
+push @categories, @{$copied->{category}} if $copied->{category};
+push @stories,    @{$copied->{story}}    if $copied->{story};
+push @media,      @{$copied->{media}}    if $copied->{media};
+push @templates,  @{$copied->{template}} if $copied->{template};
 
 diag('');
 diag('3. Story conflict with overwrite');
@@ -174,16 +174,16 @@ eval {
         overwrite    => 1
     );
 };
-my @copied_stories = $copied->{stories} ? @{$copied->{stories}} : ();
+my @copied_stories = $copied->{story} ? @{$copied->{story}} : ();
 ($conflict) = pkg('Story')->find(story_id => $conflict->story_id);
 is(not($@),                 1,              "Actual copy did not throw error");
 is($conflict->trashed,      1,              "Conflicting story has been trashed");
 is($copied_stories[0]->url, $conflict->url, "Copied Story has same URL as conflicting story");
 
-push @categories, @{$copied->{categories}} if $copied->{categories};
+push @categories, @{$copied->{category}} if $copied->{category};
 push @stories,    @copied_stories;
-push @media,      @{$copied->{media}}      if $copied->{media};
-push @templates,  @{$copied->{templates}}  if $copied->{templates};
+push @media,      @{$copied->{media}}    if $copied->{media};
+push @templates,  @{$copied->{template}} if $copied->{template};
 
 diag('');
 diag('4. Media conflict without overwrite');
@@ -234,10 +234,10 @@ is(scalar(@tmp), 1, "No media copied");
 ($conflict) = pkg('Media')->find(media_id => $conflict->media_id);
 is($conflict->trashed, 0, "Conflicting media has not been trashed");
 
-push @categories, @{$copied->{categories}} if $copied->{categories};
-push @stories,    @{$copied->{stories}}    if $copied->{stories};
-push @media,      @{$copied->{media}}      if $copied->{media};
-push @templates,  @{$copied->{templates}}  if $copied->{templates};
+push @categories, @{$copied->{category}} if $copied->{category};
+push @stories,    @{$copied->{story}}    if $copied->{story};
+push @media,      @{$copied->{media}}    if $copied->{media};
+push @templates,  @{$copied->{template}} if $copied->{template};
 
 diag('');
 diag('5. Media conflict with overwrite');
@@ -286,10 +286,10 @@ is(not($@),               1,              "Actual copy did not throw error");
 is($conflict->trashed,    1,              "Conflicting media has been trashed");
 is($copied_media[1]->url, $conflict->url, "Copied Media has same URL as conflicting media");
 
-push @categories, @{$copied->{categories}} if $copied->{categories};
-push @stories,    @{$copied->{stories}}    if $copied->{stories};
+push @categories, @{$copied->{category}} if $copied->{category};
+push @stories,    @{$copied->{story}}    if $copied->{story};
 push @media,      @copied_media;
-push @templates,  @{$copied->{templates}}  if $copied->{templates};
+push @templates,  @{$copied->{template}} if $copied->{template};
 
 diag('');
 diag('6. Template conflict without overwrite');
@@ -345,10 +345,10 @@ is(scalar(@tmp), 1, "No template copied");
 ($conflict) = pkg('Template')->find(template_id => $conflict->template_id);
 is($conflict->trashed, 0, "Conflicting template has not been trashed");
 
-push @categories, @{$copied->{categories}} if $copied->{categories};
-push @stories,    @{$copied->{stories}}    if $copied->{stories};
-push @media,      @{$copied->{media}}      if $copied->{media};
-push @templates,  @{$copied->{templates}}  if $copied->{templates};
+push @categories, @{$copied->{category}} if $copied->{category};
+push @stories,    @{$copied->{story}}    if $copied->{story};
+push @media,      @{$copied->{media}}    if $copied->{media};
+push @templates,  @{$copied->{template}} if $copied->{template};
 
 diag('');
 diag('7. Template conflict with overwrite');
@@ -396,16 +396,16 @@ eval {
         overwrite    => 1
     );
 };
-my @copied_templates = $copied->{templates} ? @{$copied->{templates}} : ();
+my @copied_templates = $copied->{template} ? @{$copied->{template}} : ();
 ($conflict) = pkg('Template')->find(template_id => $conflict->template_id);
 is(not($@), 1, "Actual copy did not throw error");
 is($conflict->trashed, 1, "Conflicting template has been trashed");
 is($copied_templates[1]->url,
     $conflict->url, "Copied Template has same URL as conflicting template");
 
-push @categories, @{$copied->{categories}} if $copied->{categories};
-push @stories,    @{$copied->{stories}}    if $copied->{stories};
-push @media,      @{$copied->{media}}      if $copied->{media};
+push @categories, @{$copied->{category}} if $copied->{category};
+push @stories,    @{$copied->{story}}    if $copied->{story};
+push @media,      @{$copied->{media}}    if $copied->{media};
 push @templates,  @copied_templates;
 
 diag('');
@@ -454,10 +454,10 @@ isa_ok($cat, 'Krang::Category');
 my ($cat_idx) = pkg('Story')->find(category_id => $cat->category_id, slug => '');
 isa_ok($cat_idx, 'Krang::Story');
 
-push @categories, @{$copied->{categories}} if $copied->{categories};
-push @stories,    @{$copied->{stories}}    if $copied->{stories};
-push @media,      @{$copied->{media}}      if $copied->{media};
-push @templates,  @{$copied->{templates}}  if $copied->{templates};
+push @categories, @{$copied->{category}} if $copied->{category};
+push @stories,    @{$copied->{story}}    if $copied->{story};
+push @media,      @{$copied->{media}}    if $copied->{media};
+push @templates,  @{$copied->{template}} if $copied->{template};
 
 diag('');
 diag('9. Unresolvable URL Conflict between would-be-created category and story existing in TO');

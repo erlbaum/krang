@@ -1457,8 +1457,6 @@ sub can_copy_test {
     my $dst_cat     = $args{dst_category};
     my $dst_cat_url = $dst_cat->url;
 
-    my @assets = qw(story media template);
-
     #
     # First verify that we can create the category subtree below destination category
     #
@@ -1546,12 +1544,14 @@ sub can_copy_test {
     # source asset' URL would conflict with the URL of an asset
     # already existing below the destination category
     #
-    for my $asset (@assets) {
+    for my $asset ($self->asset_names()) {
+
+        my $asset_type = $asset->{type};
 
         # do nothing if $asset should not be copied
-        next unless $args{$asset};
+        next unless $args{$asset_type};
 
-        my $pkg = pkg(ucfirst($asset));
+        my $pkg = pkg(ucfirst($asset_type));
 
         # collect the URLs of all asset objects existing in destination category...
         my %existing_asset_has =
@@ -1563,7 +1563,7 @@ sub can_copy_test {
 
             my $dst_asset_url = $dst_cat_url . $rel_asset_url;
 
-            debug(__PACKAGE__ . "::can_copy_test() destination $asset URL: " . $dst_asset_url);
+            debug(__PACKAGE__ . "::can_copy_test() destination $asset_type URL: " . $dst_asset_url);
             if ($existing_asset_has{$dst_asset_url}) {
 
                 # ask user
@@ -1632,19 +1632,26 @@ sub copy {
                 die $@;
             }
 
-            push @{$copied->{categories}}, $copy;
+            push @{$copied->{category}}, $copy;
 
             push @pair, [$src_child, $copy];
         }
 
-        if ($args{story}) {
+        for my $asset ($self->asset_names) {
 
-            for my $story (pkg('Story')->find(category_id => $src->category_id)) {
+            my $asset_type = $asset->{type};
+            my $asset_meth = $asset->{meth};
+
+            next unless $args{$asset_type};
+
+            my $pkg = pkg(ucfirst($asset_type));
+
+            for my $obj ($pkg->find(category_id => $src->category_id)) {
 
                 # is the URL of our would-be-copy already occupied?
-                my ($conflict) = pkg('Story')->find(
+                my ($conflict) = $pkg->find(
                     category_id => $dst->category_id,
-                    slug        => $story->slug
+                    $asset_meth => $obj->$asset_meth,
                 );
 
                 # if so, maybe trash it, maybe skip the copy
@@ -1657,83 +1664,27 @@ sub copy {
                 }
 
                 # make the copy
-                my $copy = $story->clone(
-                    no_title_modification      => 1,
-                    no_url_conflict_resolution => 1
-                );
+                my $copy = $obj->clone(category_id => $dst->category_id);
 
-                $copy->{checked_out}    = 0;
-                $copy->{checked_out_by} = 0;
-
-                $copy->categories($dst);
-
-                $copy->save(no_verify_checkout => 1);
+                $copy->save();
                 $copy->checkin;
 
-                push @{$copied->{stories}}, $copy;
-            }
-        }
-
-        if ($args{media}) {
-
-            for my $media (pkg('Media')->find(category_id => $src->category_id)) {
-
-                # is the URL of our would-be-copy already occupied?
-                my ($conflict) = pkg('Media')->find(
-                    category_id => $dst->category_id,
-                    filename    => $media->filename
-                );
-
-                # if so, maybe trash it, maybe skip the copy
-                if ($conflict) {
-                    if ($args{overwrite}) {
-                        $conflict->trash;
-                    } else {
-                        next;
-                    }
-                }
-
-                # make the copy
-                my $copy = $media->clone(category_id => $dst->category_id);
-
-                $copy->save;
-                $copy->checkin;
-
-                push @{$copied->{media}}, $copy;
-            }
-        }
-
-        if ($args{template}) {
-
-            for my $template (pkg('Template')->find(category_id => $src->category_id)) {
-
-                # is the URL of our would-be-copy already occupied?
-                my ($conflict) = pkg('Template')->find(
-                    category_id => $dst->category_id,
-                    filename    => $template->filename
-                );
-
-                # if so, maybe trash it, maybe skip the copy
-                if ($conflict) {
-                    if ($args{overwrite}) {
-                        $conflict->trash;
-                    } else {
-                        next;
-                    }
-                }
-
-                # make the copy
-                my $copy = $template->clone(category_id => $dst->category_id);
-
-                $copy->save;
-                $copy->checkin;
-
-                push @{$copied->{templates}}, $copy;
+                push @{$copied->{$asset_type}}, $copy;
             }
         }
     }
 
     return $copied;
+}
+
+sub asset_names {
+    my $self = shift;
+
+    return (
+        {type => 'story',    meth => 'slug'},
+        {type => 'media',    meth => 'filename'},
+        {type => 'template', meth => 'filename'},
+    );
 }
 
 =back
