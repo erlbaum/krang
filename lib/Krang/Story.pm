@@ -2165,26 +2165,20 @@ sub delete {
 
 =item C<< $copy = $story->clone() >>
 
-=item C<< $copy = $story->clone(no_title_modification => 1, no_url_conflict_resolution => 1) >>
+=item C<< $copy = $story->clone(category_id => $category_id)
 
 Creates a copy of the story object, with most fields identical except
 for C<story_id> and C<< element->element_id >> which will both be
-C<undef>.  Sets to title to "Copy of $title".  Sets slug to
-"$slug_copy" if slug is set.  Will remove categories as necessary to
-generate a story without duplicate URLs.  Cloned stories get a new
-story_uuid.
+C<undef>. The copy gets a new story_uuid.  It will be checked out by
+the current user and it will not be saved.
 
-B<Options:>
+If no category ID is passed in, a raw clone is assumed: In this case,
+the title will be set to "Copy of $title" and
+$clone->resolve_url_conflict() will be called to provide the clone
+with non-conflicting URL(s).
 
-=over
-
-=item no_title_modification
-
-Don't prepend "Copy of " to the title.
-
-=item no_url_conflict_resolution
-
-Don't resolve URL conflicts with existing stories.
+If a category ID is specified, no further DuplicateURL checks will be
+performed, and the clone will live in this category.
 
 =back
 
@@ -2200,10 +2194,6 @@ sub clone {
     # zap ids
     $copy->{story_id} = undef;
     $copy->{element}{element_id} = undef;
-
-    # mangle title
-    $copy->{title} = "Copy of $copy->{title}"
-      unless $args{no_title_modification};
 
     # start at version 0
     $copy->{version} = 0;
@@ -2224,9 +2214,17 @@ sub clone {
     $copy->{desk_id}      = undef;
     $copy->{last_desk_id} = undef;
 
-    # resolve URL conflict
-    $copy->resolve_url_conflict(append => 'copy')
-      unless $args{no_url_conflict_resolution};
+    # make sure it's checked out
+    $copy->{checked_out}    = 1;
+    $copy->{checked_out_by} = $ENV{REMOTE_USER};
+
+    # cooked copy or raw clone?
+    if ($args{category_id}) {
+        $copy->categories($args{category_id});
+    } else {
+        $copy->{title} = "Copy of $copy->{title}";
+        $copy->resolve_url_conflict(append => 'copy');
+    }
 
     return $copy;
 }
