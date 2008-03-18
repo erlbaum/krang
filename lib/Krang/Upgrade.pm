@@ -6,8 +6,13 @@ use strict;
 
 use Krang::ClassLoader 'Conf';
 use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader 'AddOn';
 use Carp qw(croak);
 
+# call the init-handler of any AddOns being used
+BEGIN {
+    pkg('AddOn')->call_handler('InitHandler');
+}
 
 =head1 NAME
 
