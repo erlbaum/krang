@@ -523,7 +523,7 @@ sub run {
     # Load and unload session ONLY if we have a session ID set
     my $we_loaded_session = 0;
     if (my $session_id = $ENV{KRANG_SESSION_ID}) {
-        # Load session if we're in CGI_MODE and we have a KRANG_SESSION_ID
+        # Load session if we have a KRANG_SESSION_ID
         debug("Krang::CGI:  Loading Session '$session_id'");
         pkg('Session')->load($session_id);
         $we_loaded_session++;
