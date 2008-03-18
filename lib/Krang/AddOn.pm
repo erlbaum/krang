@@ -554,8 +554,13 @@ sub _compare_versions {
             push(@last_nums, 0) 
         }
     }
-    $first = version->new(join('.', @first_nums))->numify;
-    $last = version->new(join('.', @last_nums))->numify;
+
+    # because we already have a version() subroutine/method that
+    # our MethodMaker creates so it means we can't use a class by the same
+    # name or we get a bare-word conflict
+    my $version_class = 'version';
+    $first = $version_class->new(join('.', @first_nums))->numify;
+    $last = $version_class->new(join('.', @last_nums))->numify;
     return eval "$first $op $last";
 }
 
