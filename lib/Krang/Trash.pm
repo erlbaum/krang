@@ -50,8 +50,10 @@ Krang::Trash - data broker for TrashBin CGI
 
 =head1 DESCRIPTION
 
-This module provides a find() method which returns all objects
-living in the trashbin.
+This module provides a find() method which returns all objects living
+in the trashbin. These are not full-fledged Story/Media/Template
+objects, just hashes containing what we need to fill the trashbin's
+pager view.
 
 =head1 INTERFACE
 
@@ -63,8 +65,8 @@ living in the trashbin.
 
 Finds stories, media and templates currently living the trashbin.  The
 returned array will contain Krang::Story, Krang::Media and
-Krang::Template objects (but see the class method
-C<register_find_sql()>).
+Krang::Template objects slimmed down to Trash objects.  Custom objects
+may also be listed (see the class method C<register_find_sql()>).
 
 Since the returned objects do not share single ID-space, the standard
 C<ids_only> mode is not supported.
@@ -118,13 +120,13 @@ sub find {
 
     # massage order_by clause
     if ($order_by eq 'type') {
-	$order_by = " type $order_dir, class ASC, id ASC ";
+        $order_by = " type $order_dir, class ASC, id ASC ";
     } elsif ($order_by eq 'title') {
-	$order_by = " title $order_dir, id ASC ";
+        $order_by = " title $order_dir, id ASC ";
     } elsif ($order_by eq 'date') {
-	$order_by = " date $order_dir, type ASC, id ASC ";
+        $order_by = " date $order_dir, type ASC, id ASC ";
     } else {
-	$order_by .= " $order_dir ";
+        $order_by .= " $order_dir ";
     }
 
     # built at INIT time
@@ -257,9 +259,9 @@ object fields.  Order matters!  All fields must be present, though
 they might contain the empty string (as the 'class' field in the
 example below.
 
-Also assumed is the presence of a boolean column named 'trashed',
-which is supposed to be set to true if the object currently lives in
-the trashbin.
+Also assumed int the custom objects database table is the presence of
+a boolean column named 'trashed', which is supposed to be set to true
+if the object currently lives in the trashbin.
 
  Class:   Krang::Mailing
  Table:   mailing
@@ -302,8 +304,8 @@ sub register_find_sql {
 
 =item C<< pkg('Trash')->store(object => $other) >>
 
-This method moves object to the trash on the database level.  It is
-called by the object's trash() method.
+This method moves the specified object to the trash on the database
+level.  It must be called by the object's trash() method.
 
 =cut
 
@@ -452,9 +454,9 @@ sub delete {
 
 =item C<< pkg('Trash')->restore(object => $other) >>
 
-Restores the specified object from the trashbin back to live.  The
-object must implement a method named C<untrash()> that does the heavy
-lifting.
+Restores the specified object from the trashbin back to live or to the
+archive (depending from where it has been deleted).  The object must
+implement a method named C<untrash()> that does the heavy lifting.
 
 =cut
 

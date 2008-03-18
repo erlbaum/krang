@@ -637,55 +637,11 @@ sub delete_selected {
     return $self->find();
 }
 
-=back
+=item prepare_copy
+
+Show the Category Copy screen, providing controls to tune the category copy.
 
 =cut
-
-###########################
-####  PRIVATE METHODS  ####
-###########################
-
-# Encapculate category save (in case we need to handle permissions)
-sub category_save {
-    my $self = shift;
-
-    # save category to the database
-    my $category = $session{category};
-    $category->save();
-}
-
-sub autocomplete {
-    my $self = shift;
-    return autocomplete_values(
-        table  => 'category',
-        fields => [qw(category_id url)],
-    );
-}
-
-sub _load_category {
-    my ($self, %args) = @_;
-    my $query = $self->query;
-
-    my $category;
-
-    # load category from database or session
-    if (my $id = $query->param($args{param})) {
-
-        # load category from DB
-        ($category) = pkg('Category')->find(category_id => $id);
-        croak("Unable to load Category $id.")
-          unless $category;
-
-        $query->delete('category_id');
-        $session{category} = $category;
-    } else {
-        $category = $session{category};
-        croak("Unable to load category from session!")
-          unless $category;
-    }
-
-    return $category;
-}
 
 sub prepare_copy {
     my $self = shift;
@@ -741,6 +697,12 @@ sub prepare_copy {
 
     return $t->output;
 }
+
+=item execute_copy
+
+Execute the category copy operation.
+
+=cut
 
 sub execute_copy {
     my $self  = shift;
@@ -815,6 +777,56 @@ sub execute_copy {
     $self->_do_execute_copy(message => 'copied_category');
 
     return $self->find;
+}
+
+=back
+
+=cut
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+# Encapculate category save (in case we need to handle permissions)
+sub category_save {
+    my $self = shift;
+
+    # save category to the database
+    my $category = $session{category};
+    $category->save();
+}
+
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'category',
+        fields => [qw(category_id url)],
+    );
+}
+
+sub _load_category {
+    my ($self, %args) = @_;
+    my $query = $self->query;
+
+    my $category;
+
+    # load category from database or session
+    if (my $id = $query->param($args{param})) {
+
+        # load category from DB
+        ($category) = pkg('Category')->find(category_id => $id);
+        croak("Unable to load Category $id.")
+          unless $category;
+
+        $query->delete('category_id');
+        $session{category} = $category;
+    } else {
+        $category = $session{category};
+        croak("Unable to load category from session!")
+          unless $category;
+    }
+
+    return $category;
 }
 
 sub _validate_copy_form {

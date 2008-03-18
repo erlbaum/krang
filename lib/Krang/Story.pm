@@ -2165,22 +2165,20 @@ sub delete {
 
 =item C<< $copy = $story->clone() >>
 
-=item C<< $copy = $story->clone(category_id => $category_id)
+=item C<< $copy = $story->clone(category_id => $category_id) >>
 
 Creates a copy of the story object, with most fields identical except
 for C<story_id> and C<< element->element_id >> which will both be
-C<undef>. The copy gets a new story_uuid.  It will be checked out by
-the current user and it will not be saved.
+C<undef>. Also, the copy gets a new story_uuid.  It will be checked
+out by the current user and it will not be saved.
 
 If no category ID is passed in, a raw clone is assumed: In this case,
 the title will be set to "Copy of $title" and
 $clone->resolve_url_conflict() will be called to provide the clone
-with non-conflicting URL(s).
+with non-conflicting URL(s) derived from the URL(s) of the original.
 
 If a category ID is specified, no further DuplicateURL checks will be
 performed, and the clone will live in this category.
-
-=back
 
 =cut
 
@@ -2644,8 +2642,7 @@ sub deserialize_xml {
 Archive the story, i.e. remove it from its publish/preview location
 and don't show it on the Find Story screen.  Throws a
 Krang::Story::NoEditAccess exception if user may not edit this
-story. Croaks if the story is checked out by another user. Remembers
-the story's last desk ID.
+story. Croaks if the story is checked out by another user.
 
 =cut
 
@@ -2699,8 +2696,9 @@ sub archive {
 
 Unarchive the story, i.e. show it again on the Find Story screen, but
 don't republish it. Throws a Krang::Story::NoEditAccess exception if
-user may not edit this story. Croaks if the story is checked out by
-another user.
+user may not edit this story. Throws a Krang::Story::DuplicateURL
+exception if a story with the same URL has been created in
+Live. Croaks if the story is checked out by another user.
 
 =cut
 
@@ -2917,10 +2915,10 @@ sub turn_into_category_index {
                 $new_cat = $category;
             } else {
                 $new_cat = pkg('Category')->new(
-                                                dir       => $slug,
-                                                parent_id => $old_cat->category_id,
-                                                site_id   => $old_cat->site_id
-                                               );
+                    dir       => $slug,
+                    parent_id => $old_cat->category_id,
+                    site_id   => $old_cat->site_id
+                );
                 $new_cat->save;
             }
         }

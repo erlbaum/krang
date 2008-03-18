@@ -1687,11 +1687,13 @@ sub delete {
 
 =item find
 
-List live stories which match the search criteria.  Provide links to
-edit or view each story.  Provide a link to view the log for a story.
+List live stories which match the search criteria.  Provide buttons to
+view, edit, copy and archive each story (depending on the user's story
+asset permissions).
 
-Also, provide checkboxes next to each story through which the user may 
-select a set of stories to be deleted or checked out to Workplace.
+Also, provide checkboxes next to each story through which the user may
+select a set of stories to be checked out to Workplace, published or
+deleted (also depending on the user's permissions).
 
 =cut
 
@@ -1706,11 +1708,13 @@ sub find {
 
 =item list_archived
 
-List archived stories which match the search criteria.  Provide links to
-view, copy or unarchive each story.
+List live stories which match the search criteria.  Provide buttons to
+view, copy and unarchive each story (depending on the user's story
+asset permissions).
 
 Also, provide checkboxes next to each story through which the user may
-select a set of stories to be deleted.
+select a set of stories to be deleted (also depending on the user's
+permissions).
 
 =cut
 
@@ -1723,6 +1727,10 @@ sub list_archived {
     );
 }
 
+#
+# the workhorse who does the actual find operation for find() and
+# list_archived()
+#
 sub _do_find {
     my ($self, %args) = @_;
 
@@ -1962,7 +1970,7 @@ sub _do_find {
 
 List all active stories.  Provide links to view each story.  If the
 user has 'checkin all' admin abilities then checkboxes are provided to
-allow the stories to be stole or checked-in.
+allow the stories to be stolen or checked-in.
 
 =cut
 
@@ -2570,7 +2578,12 @@ sub make_sure_story_is_still_ours {
 
 =item archive
 
-Move story to the archive and return to the Find Story screen
+Usage:      Runmode.
+Purpose:    Move story to the archive and return to the Find Story screen.
+Parameters: Requires a story ID in CGI param 'story_id'.
+Throws:     None.
+Croaks:     If the story can't be loaded from the database.
+Returns:    Find Story screen.
 
 =cut
 
@@ -2600,11 +2613,16 @@ sub archive {
 
 =item unarchive
 
-Move story from archive back to live. Modify the story's slug or clear
-its categories if it conflicts with a live story or category.
-
-If a URL conflict occures, return to Edit Story, otherwise return to
-Archived Stories.
+Usage:      Runmode.
+Purpose:    Move story from archive back to live.
+Parameters: Requires a story ID in CGI param 'story_id'.
+Throws:     None.
+Croaks:     If the story can't be loaded from the database.
+Returns:    See Comments.
+Comments:   Modify the story's slug or clear its categories if it
+            url-conflicts with a live story or category. If a URL
+            conflict occures, return to Edit Story, otherwise return
+            to Archived Stories.
 
 =cut
 
@@ -2644,7 +2662,7 @@ sub unarchive {
         # resolve the conflict
         $story->resolve_url_conflict(story => $story, append => 'unarchived');
 
-        # find the user message for the three possible conflict cases
+        # find the user message for the three possible conflict resolution cases
         if (@conflict_cats) {    # case 1: slug has been modified
             add_alert(
                 'duplicate_cat_url_on_unarchive',
@@ -2678,6 +2696,7 @@ sub unarchive {
                     site_id => $site_id
                 );
 
+                # use the story's UUID as the default category
                 $default_cat ||= pkg('Category')->new(
                     dir     => $story->story_uuid,
                     site_id => $site_id

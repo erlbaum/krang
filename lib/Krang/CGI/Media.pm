@@ -100,10 +100,11 @@ sub setup {
 =item find
 
 The find mode allows the user to run simple and advanced searches on
-media objects, which will be listed on a paging view.
+live media objects, which will be listed on paging view 'Find Media'.
 
-From this paging view the user may choose to edit or view
-an object, or select a set of objects to be deleted.
+From this paging view the user may choose to view, edit or archive an
+object, or select a set of objects to be checked out to the workspace,
+published or deleted (depending on the user's permission set).
 
 =cut
 
@@ -122,11 +123,13 @@ sub find {
 
 =item list_archived
 
-List archived media which match the search criteria.  Provide links to
-view and unarchive each media.
+The list_archived mode allows the user to run simple and advanced
+searches on archived media objects, which will be listed on paging
+view 'Archived Media'.
 
-Also, provide checkboxes next to each media through which the user may
-select a set of stories to be deleted.
+From this paging view the user may choose to view or unarchive an
+object, or select a set of objects to be deleteted (depending on the
+user's permission set).
 
 =cut
 
@@ -143,6 +146,10 @@ sub list_archived {
     $self->_do_find(%args);
 }
 
+#
+# This private method dispatches find operations to _do_simple_find() or
+# _do_advanced_find().
+#
 sub _do_find {
     my ($self, %args) = @_;
 
@@ -159,6 +166,9 @@ sub _do_find {
       : $self->_do_simple_find(%args);
 }
 
+#
+# The workhorse doing simple finds.
+#
 sub _do_simple_find {
     my ($self, %args) = @_;
 
@@ -260,13 +270,14 @@ sub _do_simple_find {
 
 =item advanced_find
 
+B<This method is deprecated, but left in here for backwards
+compatibility.>
+
 The find mode allows the user to run an "advanced search" on 
 media objects, which will be listed on a paging view.
 
 From this paging view the user may choose to edit or view
 an object, or select a set of objects to be deleted.
-
-This method is deperecated, left here for backwards compatibility.
 
 =cut
 
@@ -278,6 +289,9 @@ sub advanced_find {
     return $self->find;
 }
 
+#
+# The workhorse doing advanced finds.
+#
 sub _do_advanced_find {
     my ($self, %args) = @_;
 

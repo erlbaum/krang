@@ -1449,6 +1449,58 @@ sub STORABLE_thaw {
     return $self;
 }
 
+=item * C<< $category->can_copy_test(dst_category => $destination_category) >>
+
+Test if a recursive copy of the $category's children to the
+$destination_category would be possible.  The actual copy operation is
+done by copy().  can_copy_test() should always be called before
+copy(), and it should be called with the same argument and the same
+options to make sure the copy will succeed.
+
+Throws a Krang::Story::CantCheckOut exception if the URL of a
+would-be-created category is occupied by some story and we cannot
+check out this story (if we can, we can turn the story into a category
+index, but this is done by copy()).
+
+B<Options>
+
+The following three options might trigger a
+Krang::Category::NoEditAccess exception if an asset's destination
+category already exists and we don't have edit access to this
+category.  This can only happen when copying to non-leaf-categories.
+
+If one of the would-be-created assets already exists, a
+Krang::Category::CopyAssetConflict is thrown, unless the option
+'overwrite' is specified.
+
+=over
+
+=item story => 1
+
+Also test wether copying stories living below $category and its children
+would succeed.
+
+=item media => 1
+
+Also test wether copying media living below $category and its children
+would succeed.
+
+=item template => 1
+
+Also test wether copying templates living below $category and its children
+would succeed.
+
+=item overwrite => 1
+
+This option modifies the test behavior of this method.  No
+Krang::Category::CopyAssetConflict will be thrown even if the URL of a
+would-be-created asset is already occupied by some other asset living
+below the destination category.
+
+=back
+
+=cut
+
 sub can_copy_test {
     my ($self, %args) = @_;
 
@@ -1575,6 +1627,56 @@ sub can_copy_test {
     }
 }
 
+=item * C<< $category->copy(dst_category => $destination_category) >>
+
+Copies the children of $category to the specified destination
+category.  Make sure to call $category->can_copy_test() with the same
+argument and the same options before calling this method!
+
+B<Options:>
+
+Concerning the following three options note that
+stories/media/templates whose would-be-URL is occupied by some
+existing asset will not be copied, but silently skipped. But see the
+option 'overwrite'.
+
+=over
+
+=item story => 1
+
+Also recursively copy the stories living below $category to their
+corresponding destination category.
+
+=item media => 1
+
+Also recursively copy the media living below $category to their
+corresponding destination category.
+
+=item template => 1
+
+Also recursively copy the templates living below $category to their
+corresponding destination category.
+
+=item overwrite => 1
+
+Normally an asset whose copy destination URL is occupied by an
+existing asset will not be copied. Setting 'overwrite' to true
+modifies this behavior: The conflicting asset will be moved to the
+trashbin to make place for the copy.
+
+=back
+
+B<Note on calling can_copy_test() and copy() with overwrite set to false>
+
+In the case of an asset conflict, can_copy_test() throws a
+Krang::Category::CopyAssetConflict exception, while copy() simply
+skips the conflicting assets. Catching the exception, then, allows to
+prompt the user: Does he want to cancel the whole copy, or is it ok to
+just copy the non-conflicting assets.  This is how runmode
+Krang::CGI::Category->execute_copy() uses these two methods.
+
+=cut
+
 sub copy {
     my ($self, %args) = @_;
 
@@ -1676,6 +1778,21 @@ sub copy {
 
     return $copied;
 }
+
+=item * C<< @assets = $category->asset_names() >>
+
+=item * C<< @assets = pkg('Category')->asset_names() >>
+
+Convenience method for operations on assets. It returns a list of
+hashrefs representing Krang asset specifications.
+
+The 'type' key of each of these hashrefs is just the lower-cased
+moniker of those assets, i.e. 'story', 'media' and 'template'.
+
+The 'meth' key maps to the asset's 'file name' method: It's 'slug' for
+Story, 'filename' for Media and Template.
+
+=cut
 
 sub asset_names {
     my $self = shift;

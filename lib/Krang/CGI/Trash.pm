@@ -13,7 +13,7 @@ None.
 
 =head1 DESCRIPTION
 
-This application manages Krang' trashbin.
+This application manages Krang's trashbin.
 
 =head1 INTERFACE
 
@@ -199,8 +199,7 @@ sub delete_checked {
 
         eval { pkg('Trash')->delete(object => $object) };
 
-        if ($@ and ref($@) and $@->moniker eq 'nodeleteaccess')
-        {
+        if ($@ and ref($@) and $@->moniker eq 'nodeleteaccess') {
             my $id_meth = $object->id_meth;
             push @alerts, ucfirst($object->moniker) . ' ' . $object->$id_meth . ': ' . $object->url;
         }
@@ -269,7 +268,8 @@ sub _register_msg {
         if (@restored) {
             add_alert(
                 'restored_with_some_exceptions',
-                restored_phrase => (scalar(@restored) > 1 ? 'These items have been' : 'This item has been'),
+                restored_phrase =>
+                  (scalar(@restored) > 1 ? 'These items have been' : 'This item has been'),
                 restored_list => join('<br/>', @restored),
                 failed_phrase => (scalar(@failed) > 1 ? 'These items' : 'This item'),
                 failed_list => join('<br/>', @failed),
@@ -285,7 +285,8 @@ sub _register_msg {
     } else {
         add_message(
             'restored_without_exceptions',
-            restored_phrase => (scalar(@restored) > 1 ? 'These items have been' : 'This item has been'),
+            restored_phrase =>
+              (scalar(@restored) > 1 ? 'These items have been' : 'This item has been'),
             restored_list => join '<br/>',
             @restored,
         );
@@ -302,16 +303,11 @@ sub _format_msg {
     my $id_meth = $object->id_meth;
     my $id      = $object->$id_meth;
 
-    my $msg =
-        ucfirst($type) . ' ' 
-      . $id . ' '
-      . $object->url;
+    my $msg = ucfirst($type) . ' ' . $id . ' ' . $object->url;
 
     # sucess
-    return $msg 
-      . ' (restored to '
-      . ($object->archived ? 'Archive' : 'Live') . ')'
-	unless $ex;
+    return $msg . ' (restored to ' . ($object->archived ? 'Archive' : 'Live') . ')'
+      unless $ex;
 
     my $ex_type = $ex->moniker;
 

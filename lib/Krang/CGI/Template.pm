@@ -689,12 +689,16 @@ sub save_and_view_log {
 
 =item search
 
-Displays a list of Template objects based on the passed search criteria.  If no
+Displays a list of live Template objects based on the passed search criteria.  If no
 criteria are passed, a list of all templates on the system are returned.  As a
 simple search, the 'element', 'site', and 'url' fields are searched.
 
 The run mode accepts the parameter "search_filter" which is used to perform
 simple searches.
+
+From this paging view the user may choose to view, edit or archive an
+object, or select a set of objects to be deployed or deleted
+(depending on the user's permission set).
 
 =cut
 
@@ -713,11 +717,17 @@ sub search {
 
 =item list_archived
 
-List archived template which match the search criteria.  Provide links to
-view and unarchive each template.
+Displays a list of archived Template objects based on the passed
+search criteria.  If no criteria are passed, a list of all templates
+on the system are returned.  As a simple search, the 'element',
+'site', and 'url' fields are searched.
 
-Also, provide checkboxes next to each story through which the user may
-select a set of stories to be deleted.
+The run mode accepts the parameter "search_filter" which is used to perform
+simple searches.
+
+From this paging view the user may choose to view or unarchive an
+object, or select a set of objects to be deleted (depending on the
+user's permission set).
 
 =cut
 
@@ -734,6 +744,9 @@ sub list_archived {
     $self->_do_search(%args);
 }
 
+#
+# Dispatches to _do_simple_search() or do_advanced_search().
+#
 sub _do_search {
     my ($self, %args) = @_;
 
@@ -750,6 +763,9 @@ sub _do_search {
       : $self->_do_simple_search(%args);
 }
 
+#
+# The workhorse doing simple finds.
+#
 sub _do_simple_search {
     my ($self, %args) = @_;
     my $q = $self->query();
@@ -812,6 +828,9 @@ sub _do_simple_search {
     return $t->output();
 }
 
+#
+# The workhorse doing advanced finds.
+#
 sub _do_advanced_search {
     my ($self, %args) = @_;
 

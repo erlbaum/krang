@@ -1570,9 +1570,11 @@ sub archive {
 
 =item C<< Krang::Template->unarchive(template_id => $template_id) >>
 
-Unarchive the template, i.e. show it again on the Find Template screen, but
-don't redeploy it. Throws a Krang::Template::NoEditAccess exception if
-user may not edit this template. Croaks if the template is checked out by
+Unarchive the template, i.e. show it again on the Find Template
+screen, but don't redeploy it. Throws a Krang::Template::NoEditAccess
+exception if user may not edit this template. Throws a
+Krang::Template::DuplicateURL exception if a template with the same
+URL has been created in Live. Croaks if the template is checked out by
 another user.
 
 =cut
@@ -1737,20 +1739,20 @@ sub clone {
     my $copy = bless({%$self} => ref($self));
 
     # redefine
-    $copy->{template_id}       = undef;
-    $copy->{template_uuid}     = pkg('UUID')->new;
-    $copy->{category_id}       = $args{category_id};
-    $copy->{version}           = 0;
-    $copy->{testing}           = 0;
-    $copy->{creation_date}     = localtime();
-    $copy->{deploy_date}       = undef;
-    $copy->{deployed}          = 0;
-    $copy->{deployed_version}  = 0;
-    $copy->{archived}          = 0;
-    $copy->{trashed}           = 0;
-    $copy->{url}               = ''; # is set by save()
-    $copy->{checked_out}       = 1;
-    $copy->{checked_out_by}    = $ENV{REMOTE_USER};
+    $copy->{template_id}      = undef;
+    $copy->{template_uuid}    = pkg('UUID')->new;
+    $copy->{category_id}      = $args{category_id};
+    $copy->{version}          = 0;
+    $copy->{testing}          = 0;
+    $copy->{creation_date}    = localtime();
+    $copy->{deploy_date}      = undef;
+    $copy->{deployed}         = 0;
+    $copy->{deployed_version} = 0;
+    $copy->{archived}         = 0;
+    $copy->{trashed}          = 0;
+    $copy->{url}              = '';                   # is set by save()
+    $copy->{checked_out}      = 1;
+    $copy->{checked_out_by}   = $ENV{REMOTE_USER};
 
     return $copy;
 }
