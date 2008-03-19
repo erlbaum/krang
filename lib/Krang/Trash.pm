@@ -24,7 +24,6 @@ use constant TRASH_OBJECT_FIELDS => qw(
   version
   may_see
   may_edit
-  forth_col
   linkto
 );
 
@@ -185,7 +184,6 @@ SELECT s.story_id    AS id,
        version,
        ucpc.may_see  AS may_see,
        ucpc.may_edit AS may_edit,
-       0             AS forth_col,
        1             AS linkto
  FROM  story AS s
  LEFT JOIN story_category AS sc
@@ -210,7 +208,6 @@ UNION
         version       AS version,
         ucpc.may_see  AS may_see,
         ucpc.may_edit AS may_edit,
-        1             AS forth_col,
         1             AS linkto
  FROM media AS m
  LEFT JOIN user_category_permission_cache AS ucpc
@@ -232,7 +229,6 @@ UNION
         version       AS version,
         ucpc.may_see  AS may_see,
         ucpc.may_edit AS may_edit,
-        0             AS forth_col,
         0             AS linkto
  FROM template AS t
  LEFT JOIN user_category_permission_cache AS ucpc
@@ -278,7 +274,6 @@ if the object currently lives in the trashbin.
         ''           AS version,
         someperm     AS may_see,
         otherperm    AS may_edit,
-        0            AS forth_col,  # boolean: this is media's thumbnail column
         1            AS linkto      # format the URL as a link
  FROM mailing
  WHERE trashed = 1
