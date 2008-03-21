@@ -3,8 +3,7 @@
 This document contains a list of changes for each release of Krang.
 
 
-
-=head2 3.01 - February 1, 2008
+=head2 3.011 - March 21, 2008
 
 =over
 
@@ -12,6 +11,15 @@ This document contains a list of changes for each release of Krang.
 
 Added --maintain-versions mode (and associated tests) to publisher
 to rewrite existing versions of live stories to site. [Noam Weinstein]
+
+
+=back
+
+
+
+=head2 3.01 - February 1, 2008
+
+=over
 
 =item *
 
