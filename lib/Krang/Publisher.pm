@@ -740,8 +740,8 @@ of this functionality being used.
 
 =item * C<maintain_versions>
 
-Defaults to 0. If true, will re-publish the last-published
-version of each asset (if any) rather than the latest.
+Defaults to 0. If true, we will re-publish the last-published
+version of the media (if any) rather than the latest.
 
 =back
 
@@ -905,8 +905,8 @@ publishing.
 
 =item * C<maintain_versions>
 
-Defaults to 0. If true, will re-publish the last-published
-version of each asset (if any) rather than the latest.
+Defaults to 0. If true (and in publish mode), we will build a list of the 
+last-published version of each asset (if any) rather than the latest version.
 
 =back
 
@@ -922,7 +922,6 @@ sub asset_list {
 #    my $keep_list     = $args{keep_asset_list} || 0;
 #    my $keep_list = 0;
     my $version_check     = (exists($args{version_check})) ? $args{version_check} : 1;
-    my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
 
     # check publish mode.
     if ($mode) {
@@ -936,6 +935,7 @@ sub asset_list {
             croak "Publish mode unknown.  Set the 'mode' argument'";
         }
     }
+    my $maintain_versions = (($mode eq 'publish') && $args{maintain_versions}) ? 1 : 0;
 
     my @publish_list = $self->_build_asset_list(object           => $story,
                                                 version_check    => $version_check,
@@ -1890,11 +1890,11 @@ sub _cat_content {
 # version_check will check preview/published_version if true.
 # Defaults true.
 #
-# maintain_versions defaults to 0. If true, it will re-publish the last-published
-# version of each asset (if any) rather than the latest.
-#
 # initial_assets will skip that check when true - used for the first
 # call from asset_list().  Defaults false.
+#
+# maintain_versions defaults to 0. If true, we will build a list of the last-published
+# version of each asset (if any) rather than the latest version.
 #
 # Returns a list of Krang::Story and Krang::Media objects.
 #
@@ -1912,13 +1912,17 @@ sub _build_asset_list {
 
     my @objects = (ref $object eq 'ARRAY') ? @$object : ($object);
     foreach my $o (@objects) {
-	# if object is a story, handle 'maintain_versions' mode (media will be handled by publish_media())
-	if ($maintain_versions && $o->isa('Krang::Story')) {
+	# handle 'maintain_versions' mode 
+	if ($maintain_versions) {
             unless ($o->checked_out && ($o->checked_out_by != $ENV{REMOTE_USER})) {
                 my $v = $o->published_version;
                 next unless $v;
 		if ($v != $o->version) {
-		    ($o) = pkg('Story')->find(story_id => $o->story_id, version => $v);
+		    if ($o->isa('Krang::Story')) {
+			($o) = pkg('Story')->find(story_id => $o->story_id, version => $v);
+		    } else {
+			($o) = pkg('Media')->find(media_id => $o->media_id, version => $v);
+		    }
 		}
             }
         }

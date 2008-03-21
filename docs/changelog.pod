@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added --maintain-versions mode (and associated tests) to publisher
+to rewrite existing versions of live stories to site. [Noam Weinstein]
+
+=item *
+
 Fixed a bug in both JavaScript and PERL where some cookies were being written
 to root path and others to active path. [Noam Weinstein]
 
