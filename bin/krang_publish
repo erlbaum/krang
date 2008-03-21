@@ -15,33 +15,37 @@ krang_publish - command-line publishing utility for Krang.
 
 =head1 SYNOPSIS
 
-Publish everything (all stories & media for all sites) in a krang installation:
+Publish everything (all stories & media for all sites) in a krang installation
 
   $ krang_publish --everything
 
-Publish all assets of a single site, specified by site_id
+Only publish assets that have been published before (but publish their latest versions)
 
-  $ krang_publish --site_id 10
+  $ krang_publish --everything --republish-only
 
-Publish all assets for a given category, specified by category_id
+Only publish assets that have been published before (and re-publish their last-published versions)
 
-  $ krang_publish --category_id 10
+  $ krang_publish --everything --republish-only --maintain-versions
+
+Publish all assets of a single site, specified by site-id
+
+  $ krang_publish --site-id 10
+
+Publish all assets for a given category, specified by category-id
+
+  $ krang_publish --category-id 10
 
 Publish a specific story and all related assets (linked stories and media)
 
-  $ krang_publish --story_id 10
+  $ krang_publish --story-id 10
 
 Publish a series of stories and their related assets
 
-  $ krang_publish --story_id 10,11,12
+  $ krang_publish --story-id 10,11,12
 
 The alternative form for multiple-story publish
 
-  $ krang_publish --story_id 10 --story_id 11 --story_id 12
-
-Publish all assets of a single site, but only those assets that have been previously published
-
-  $ krang_publish --site_id 10 --republish_only
+  $ krang_publish --story-id 10 --story-id 11 --story-id 12
 
 =head1 DESCRIPTION
 
@@ -59,9 +63,9 @@ UI is not well-suited to larger publish runs.
 Publish all content (stories and media) in a Krang installation.
 
 Using the --everything flag will cause krang_publish to ignore the
---site_id, --category_id, --story_id and --media_id options.
+--site-id, --category-id, --story-id and --media-id options.
 
-=item --all_instances
+=item --all-instances
 
 Normally we just publish the content for a single instance:
 either the one specified in the C<KRANG_INSTANCE> environment 
@@ -72,17 +76,17 @@ to publish everything in all instances.
 
 This only works along with the C<--everything> flag.
 
-=item --site_id
+=item --site-id
 
 Publish all content (stories and media) under the site specified by
-the site_id.  May only be specified once.
+the site-id.  May only be specified once.
 
-Using the --site_id flag will cause krang_publish to ignore the
---story_id and --media_id options.
+Using the --site-id flag will cause krang_publish to ignore the
+--story-id and --media-id options.
 
-=item --limited_to_site
+=item --limited-to-site
 
-An option addendum to --site_id, any related stories or media that are
+An option addendum to --site-id, any related stories or media that are
 outside of the specified site will not be published.
 
 B<WARNING>: The intended use case for this option would be an
@@ -92,22 +96,22 @@ changes to a specific site, requiring a re-publish for that site
 that stories and media outside of this site are in place in the
 publish path, or broken links in the publish path may result.
 
-=item --category_id
+=item --category-id
 
 Publish all content (stories and media) under the category specified
 by the category_id. May only be specified once.
 
-Using the --category_id flag will cause krang_publish to ignore the
---story_id and --media_id options.
+Using the --category-id flag will cause krang_publish to ignore the
+--story-id and --media-id options.
 
-=item --below_category_id
+=item --below-category-id
 
 Publish all content (stories and media) below the given category and
 its child categories.  May only be specified once.
 
-=item --limited_to_category
+=item --limited-to-category
 
-An option addendum to --category_id and --below_category_id, any
+An option addendum to --category-id and --below-category-id, any
 related stories or media that are outside of the specified category
 will not be published.
 
@@ -119,32 +123,39 @@ absolutely sure that stories and media outside of this category are in
 place in the publish path, or broken links in the publish path may
 result.
 
-=item --story_id
+=item --story-id
 
 Publishes the story and related media objects associated with the
-story_id.  Supports multiple --story_id arguments, or a single
---story_id argument with a comma-separated list of IDs to publish more
+story_id.  Supports multiple --story-id arguments, or a single
+--story-id argument with a comma-separated list of IDs to publish more
 than one story.
 
-Using the --story_id flag will cause krang_publish to ignore the
---site_id, --category_id and --below_category_id options.
+Using the --story-id flag will cause krang_publish to ignore the
+--site-id, --category-id and --below-category-id options.
 
-=item --media_id
+=item --media-id
 
-Publish a single media object, specified by its media_id.  B<CURRENTLY
+Publish a single media object, specified by its media-id.  B<CURRENTLY
 BROKEN>
 
-=item --republish_only
+=item --republish-only
 
 This modifier will limit the publish process to assets that have been
 published previously.
+
+=item --maintain-versions
+
+Adding this to a --republish-only will cause the last-published
+version of each asset to be republished (instead of the
+latest version). This mode is not available when publishing to 
+preview.
 
 =item --not-on-desk
 
 This modifier will limit the publish process to assets that are not
 currently on a desk (associated with a Krang::Desk object).
 
-=item --version_check
+=item --version-check
 
 This modifier will force krang_publish to check the last
 published/previewed version of all assets related to the ones being
@@ -208,37 +219,42 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 # Setup - grabbing all the command-line options.
 
-my %id  = map { ($_, [])} qw(story_id media_id category_id below_category_id site_id);
+my %id  = map { ($_, [])} qw(story media category below_category site);
 
 my ($help, $man, $everything, $verbose, $all_instances) = (0, 0, 0, 0, 0);
 my $limited_to_site     = 0;
 my $limited_to_category = 0;
 my $republish_only      = 0;
+my $maintain_versions   = 0;
 my $version_check       = 0;
 my $increment           = 100;
 my $media_only          = 0;
 my $to_preview          = 0;
 my $not_on_desk         = 0;
 
+# for backwards compatibility, convert all underscores in options to hyphens
+@ARGV = map { $_ =~ s/\_/\-/g; $_ } @ARGV;
 
+# then process options
 pod2usage(2) unless
-  GetOptions(help                => \$help,
-             man                 => \$man,
+  GetOptions('help'                => \$help,
+             'man'                 => \$man,
 
-             verbose             => \$verbose,
-             everything          => \$everything,
-             all_instances       => \$all_instances,
-             limited_to_site     => \$limited_to_site,
-             limited_to_category => \$limited_to_category,
-             republish_only      => \$republish_only,
-             'not-on-desk'       => \$not_on_desk,
-             'not_on_desk'       => \$not_on_desk, # for backwards compat
-             version_check       => \$version_check,
-             'to-preview'        => \$to_preview,
+             'verbose'             => \$verbose,
+             'everything'          => \$everything,
+             'all-instances'       => \$all_instances,
+             'limited-to-site'     => \$limited_to_site,
+             'limited-to-category' => \$limited_to_category,
+             'republish-only'      => \$republish_only,
+	     'maintain-versions'   => \$maintain_versions,
+             'not-on-desk'         => \$not_on_desk,
+             'version-check'       => \$version_check,
+             'to-preview'          => \$to_preview,
 
              'increment=i'       => \$increment,
 
-             (map { ("$_=s", $id{$_}) } keys %id)
+	     # handle --story-id, --site-id, etc.
+             (map { ("$_-id=s", $id{$_}) } keys %id)
 
             );
 
@@ -249,7 +265,17 @@ pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
   if @ARGV;
 
 if( $all_instances && ! $everything ) {
-    warn "Can't use --all_instances without also using --everything!\n";
+    warn "Can't use --all-instances without also using --everything!\n";
+    exit(1);
+}
+
+if ( $maintain_versions && $to_preview ) {
+    warn "Can't use --maintain-versions and --to-preview!\n";
+    exit (1);
+}
+
+if ( $maintain_versions && !$republish_only ) {
+    warn "Can't use --maintain-versions without also using --republish-only!\n";
     exit(1);
 }
 
@@ -267,6 +293,7 @@ my %publish_args = (
 
 if ($republish_only) {
     $find_options{published} = 1;
+    $publish_args{maintain_versions} = $maintain_versions;
 }
 
 if($not_on_desk) {
@@ -279,6 +306,11 @@ my $arg_string = "Publishing content with the following options:\n$0";
 my $has_options = 0;
 
 $arg_string .= " --to-preview" if $to_preview;
+$arg_string .= " --republish-only" if $republish_only;
+$arg_string .= " --maintain-versions" if $maintain_versions;
+$arg_string .= " --not-on-desk" if $not_on_desk;
+$arg_string .= " --version-check" if $version_check;
+$arg_string .= " --all-instances" if $all_instances;
 
 if ($everything) {
     # removes checking for related stories/media.
@@ -288,42 +320,42 @@ if ($everything) {
 
     $has_options = 1;
 } else {
-    # NOTE: --site_id and --category_id options are mutually 
-    #       exclusive from --story_id and --media_id.
-    if (@{$id{site_id}} || @{$id{category_id}} || @{$id{below_category_id}}) {
-        if (@{$id{site_id}}) {
-            $find_options{site_id} = $id{site_id}[0];
-            $arg_string .= " --site_id $find_options{site_id}";
+    # NOTE: --site_id and --category-id options are mutually 
+    #       exclusive from --story-id and --media-id.
+    if (@{$id{site}} || @{$id{category}} || @{$id{below_category}}) {
+        if (@{$id{site}}) {
+            $find_options{site_id} = $id{site}[0];
+            $arg_string .= " --site-id $find_options{site_id}";
             $has_options = 1;
-        } elsif (@{$id{category_id}}) {
-            $find_options{category_id} = $id{category_id}[0];
-            $arg_string .= " --category_id $find_options{category_id}";
+        } elsif (@{$id{category}}) {
+            $find_options{category_id} = $id{category}[0];
+            $arg_string .= " --category-id $find_options{category_id}";
             $publish_args{disable_related_assets} = $limited_to_category;
             $has_options = 1;
-        } elsif (@{$id{below_category_id}}) {
-            $find_options{below_category_id} = $id{below_category_id}[0];
-            $arg_string .= " --below_category_id $find_options{below_category_id}";
+        } elsif (@{$id{below_category}}) {
+            $find_options{below_category_id} = $id{below_category}[0];
+            $arg_string .= " --below-category-id $find_options{below_category_id}";
             $publish_args{disable_related_assets} = $limited_to_category;
             $has_options = 1;
         }
-    } elsif (@{$id{story_id}} || @{$id{media_id}}) {
-        # you can specify both --story_id and --media_id
+    } elsif (@{$id{story}} || @{$id{media}}) {
+        # you can specify both --story-id and --media-id
         # arguments simultaneously.
-        if (@{$id{story_id}}) {
-            $arg_string .= " --story_id $id{story_id}[0]";
-            if ((@{$id{story_id}} == 1 && $id{story_id}[0] =~ /,/)) {
-                $id{story_id} = [ split /,/, $id{story_id}[0] ];
+        if (@{$id{story}}) {
+            $arg_string .= " --story-id $id{story}[0]";
+            if ((@{$id{story}} == 1 && $id{story}[0] =~ /,/)) {
+                $id{story} = [ split /,/, $id{story}[0] ];
             }
-            $find_options{story_id} = $id{story_id};
+            $find_options{story_id} = $id{story};
             $has_options = 1;
         }
 
-        if (@{$id{media_id}}) {
-            $arg_string .= " --media_id $id{media_id}[0]";
-            if ((@{$id{media_id}} == 1 && $id{media_id}[0] =~ /,/)) {
-                $id{media_id} = [ split /,/, $id{media_id}[0] ];
+        if (@{$id{media}}) {
+            $arg_string .= " --media-id $id{media}[0]";
+            if ((@{$id{media}} == 1 && $id{media}[0] =~ /,/)) {
+                $id{media} = [ split /,/, $id{media}[0] ];
             }
-            $find_options{media_id} = $id{media_id};
+            $find_options{media_id} = $id{media};
             $has_options = 1;
         }
     }

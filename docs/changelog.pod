@@ -24,6 +24,18 @@ old Story version. [Bodo Schulze]
 
 
 
+=head2 3.011 - March 20, 2008
+
+=over
+
+=item *
+
+Added --maintain-versions mode (and associated tests) to publisher
+to rewrite existing versions of live stories to site. [Noam Weinstein]
+
+=back
+
+
 =head2 3.01 - February 1, 2008
 
 =over
