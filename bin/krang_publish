@@ -147,7 +147,8 @@ published previously.
 
 Adding this to a --republish-only will cause the last-published
 version of each asset to be republished (instead of the
-latest version).
+latest version). This mode is not available when publishing to 
+preview.
 
 =item --not-on-desk
 
@@ -266,6 +267,11 @@ pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
 if( $all_instances && ! $everything ) {
     warn "Can't use --all-instances without also using --everything!\n";
     exit(1);
+}
+
+if ( $maintain_versions && $to_preview ) {
+    warn "Can't use --maintain-versions and --to-preview!\n";
+    exit (1);
 }
 
 if ( $maintain_versions && !$republish_only ) {
