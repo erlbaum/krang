@@ -257,6 +257,8 @@ test_publish_story($story);
 
 test_preview_story($story);
 
+test_maintain_versions($story2);
+
 test_cgistory_publish();
 
 test_media_deploy();
@@ -1322,6 +1324,55 @@ sub test_preview_story {
     } else {
         fail('Krang::Publisher->preview_story() -- exists');
     }
+}
+
+sub test_maintain_versions {
+
+    # get story & make sure it's been published (along with media)
+    my $story = shift;
+    $publisher->publish_story(story => $story);
+    ($story) = pkg('Story')->find(story_id => $story->story_id);
+
+    # get latest media object (linked to by story)
+    my $media = $story->element->child('page')->child_data('photo');
+    ok ($story->published_version > 0);
+    ok ($media->published_version > 0);
+
+    # increment version numbers (so latest versions are newer than published versions)
+    $story->checkout;
+    $story->save; 
+    $story->checkin;
+    $media->checkout;
+    $media->save;
+    $media->checkin;
+
+    # make sure the above worked
+    my $published_version_of_story = $story->published_version;
+    my $published_version_of_media = $media->published_version;
+    my $latest_version_of_story = $story->version;
+    my $latest_version_of_media = $media->version;
+    ok ($latest_version_of_story > $published_version_of_story, "latest version of story > published version of story");
+    ok ($latest_version_of_media > $published_version_of_media, "latest version of media > published version of media");
+    
+    # get assets without using maintain-versions (which should yield latest versions)
+    $publisher->_clear_asset_lists();
+    my $publish_list = $publisher->asset_list(story => $story, mode => 'publish', maintain_versions => 0, version_check => 0);
+    is (scalar @$publish_list, 3);
+    is ($publish_list->[0]->story_id, $story->story_id);
+    is ($publish_list->[0]->version, $latest_version_of_story, "--maintain-versions=0 on story");
+    ok ($publish_list->[1]->story_id != $story->story_id);
+    is ($publish_list->[2]->media_id, $media->media_id);
+    is ($publish_list->[2]->version, $latest_version_of_media, "--maintain-versions=0 on media");
+
+    # get assets using maintain-versions (which should yield published versions)
+    $publisher->_clear_asset_lists();
+    $publish_list = $publisher->asset_list(story => $story, mode => 'publish', maintain_versions => 1, version_check => 0);
+    is (scalar @$publish_list, 3);
+    is ($publish_list->[0]->story_id, $story->story_id);
+    is ($publish_list->[0]->version, $published_version_of_story, "--maintain-versions=1 on story");
+    ok ($publish_list->[1]->story_id != $story->story_id);
+    is ($publish_list->[2]->media_id, $media->media_id);
+    is ($publish_list->[2]->version, $published_version_of_media, "--maintain-versions=1 on media");
 }
 
 sub test_story_unpublish {
