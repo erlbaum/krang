@@ -60,6 +60,13 @@ Site
 
 <tbody class="demi">
 
+<tmpl_unless add_mode>
+  <tr>
+  <th>ID</th>
+  <td><tmpl_var escape=html site_id></td>
+  </tr>
+</tmpl_unless>
+
 <tr<tmpl_if error_invalid_url> class="err"<tmpl_else><tmpl_if duplicate_url> class="err"</tmpl_if></tmpl_if>>
 <th>URL</th>
 <td><input name="url" value="<tmpl_var escape=html url>"></td>
