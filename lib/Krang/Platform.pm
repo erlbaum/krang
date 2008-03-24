@@ -5,6 +5,7 @@ use warnings;
 use File::Spec::Functions qw(catdir catfile canonpath);
 use Cwd qw(cwd);
 use Config;
+use Devel::CheckLib qw(assert_lib);
 
 =head1 NAME
 
@@ -76,12 +77,12 @@ sub verify_dependencies {
     my @incs = ($Config{usrinc}, '/include', '/usr/local/include');
 
     # check expat
-    $pkg->check_expat(lib_files => \@lib_files, includes => \@incs, mode => $mode);
+    $pkg->check_expat(mode => $mode);
 
     # check various image libs
-    $pkg->check_libjpeg(lib_files => \@lib_files, includes => \@incs, mode => $mode);
-    $pkg->check_libgif(lib_files => \@lib_files, includes => \@incs, mode => $mode);
-    $pkg->check_libpng(lib_files => \@lib_files, includes => \@incs, mode => $mode);
+    $pkg->check_libjpeg(mode => $mode);
+    $pkg->check_libgif(mode => $mode);
+    $pkg->check_libpng(mode => $mode);
 }
 
 =item C<check_perl()>
@@ -178,38 +179,19 @@ END
 }
 
 
-=item C<< check_expat(lib_files => \@libs, includes => \@incs, mode => $mode) >>
+=item C<< check_expat(libs => \@libs, includes => \@incs, mode => $mode) >>
 
-Checks to see that the Expat library is installed.  The default
-implementation looks in $Config{libpth} for libexpat.so.
+Checks to see that the Expat library is installed. 
 
 =cut
 
 sub check_expat {
     my ($pkg, %args) = @_;
-    my $mode = $args{mode};
-
-    unless (grep { /^libexpat\./ } @{$args{lib_files}}) {
-        die <<END;
-
-Expat XML parser library not found.  Install expat
-(http://expat.sf.net) and try again.
-
-END
-    }
-
-    # look for Expat headers, if building
-    if ($mode eq 'build' and not 
-        ( grep { -e catfile($_, 'expat.h') } @{$args{includes}}  )) {
-        die <<END;
-
-Expat XML parser header files not found, although the library is
-present.  Re-install expat (http://expat.sf.net), or install the
-appropriate devel package and try again.
-
-END
-    }
-
+    $pkg->_check_libs(%args,
+                      module => 'XML::Parser',
+                      name => 'libexpat',
+                      lib   => 'expat',
+                      h    => 'expat.h');
 }
 
 =item C<< check_libjpeg(lib_files => \@libs, includes => \@incs, mode => $mode) >>
@@ -229,8 +211,9 @@ sub check_libjpeg {
     my ($pkg, %args) = @_;
 
     $pkg->_check_libs(%args,
+                      module => 'Imager',
                       name => 'libjpeg',
-                      so   => 'libjpeg.so',
+                      lib   => 'jpeg',
                       h    => 'jpeglib.h');
 
 
@@ -259,16 +242,18 @@ sub check_libgif {
     # check first for libgif.
     eval {
         $pkg->_check_libs(%args,
+                          module => 'Imager',
                           name => 'libgif',
-                          so   => 'libgif.so',
+                          lib   => 'gif',
                           h    => 'gif_lib.h');
     };
 
     # if that fails, check for libungif (just as good).
     if ($@) {
         $pkg->_check_libs(%args,
+                          module => 'Imager',
                           name => 'libungif',
-                          so   => 'libungif.so',
+                          lib  => 'ungif',
                           h    => 'gif_lib.h');
     }
 
@@ -294,8 +279,9 @@ sub check_libpng {
     my ($pkg, %args) = @_;
 
     $pkg->_check_libs(%args,
+                      module => 'Imager',
                       name => 'libpng',
-                      so   => 'libpng.so',
+                      lib  => 'png',
                       h    => 'png.h');
 
 }
@@ -962,27 +948,31 @@ sub build_params {
 #
 
 sub _check_libs {
-
     my ($pkg, %args) = @_;
+
     my $mode = $args{mode};
-
     my $name = $args{name};
-    my $so   = $args{so};
+    my $lib   = $args{lib};
     my $h    = $args{h};
+    my $module  = $args{module};
 
-    my $re = qr/^$so/;
+    if ($lib) {
+        my @libs;
+        push(@libs, @{$args{libs}}) if $args{libs}; # extra dirs supplied when called
+        eval { assert_lib(lib => $lib, libpath => \@libs, debug => 1) };
+        die "\n\n$name is missing from your system or Krang could not find it."
+            . "\nThis library is required by Krang.\n\n" if $@;
+    }
 
-    die "\n\n$name is missing from your system.\n".
-      "This library is required by Krang.\n\n"
-        unless grep { /^$re/ } @{$args{lib_files}};
-    die <<END unless $mode eq 'install' or grep { -e catfile($_, $h) } @{$args{includes}};
-
-The header file for $name, '$h', is missing from your system.
-This file is needed to compile the Imager module which uses $name.
-
-END
-
-
+    if ($h && $mode eq 'build') {
+        my @incs;
+        push(@incs, @{$args{includes}}) if $args{includes}; # extra dirs supplied when called
+        my $msg = "The header file for $name, '$h', is missing from your system "
+         . "or Krang can't find it.";
+        $msg .= "\nThis file is needed to compile the $module module which uses $name." if ($module && $name);
+        eval { assert_lib(header => $h, incpath => \@incs, debug => 1) };
+        die "$msg\n" if $@;
+    }
 }
 
 
@@ -990,7 +980,7 @@ END
 sub _load_expect {
     # load Expect - don't load at compile time because this module is
     # used during install when Expect isn't needed
-    eval "use Expect;";
+    eval "require Expect";
     die <<END if $@;
 
 Unable to load the Expect Perl module.  You must install Expect before
