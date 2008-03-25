@@ -1918,6 +1918,8 @@ sub _build_asset_list {
 
     my @objects = (ref $object eq 'ARRAY') ? @$object : ($object);
     foreach my $o (@objects) {
+        # don't publish (linked) objects that are archived or trashed
+        next if $o->can('wont_publish') && $o->wont_publish();
 	# handle 'maintain_versions' mode 
 	if ($maintain_versions) {
             unless ($o->checked_out && ($o->checked_out_by != $ENV{REMOTE_USER})) {
