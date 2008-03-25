@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item * 
 
+History mechanism is not tied to specific types of objects and can be extended
+by addons to include any other objects. [Michael Peters]
+
+=item * 
+
 Added display of IDs to Site & Category's Find screens, and 
 to Site's Edit & View screens. [Noam Weinstein]
 
