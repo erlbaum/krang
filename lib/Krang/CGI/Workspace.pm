@@ -380,16 +380,19 @@ sub goto_log {
     my $obj = $self->_id2obj($query->param('id'));
 
     # redirect as appropriate
-    my $id_param;
+    my $id_meth = $obj->id_meth;
+    my $id = $obj->$id_meth;
+    my $class = ref $obj;
     if ($obj->isa('Krang::Story')) {
-        $id_param = 'story_id=' . $obj->story_id;
+        $class = 'Story';
     } elsif ($obj->isa('Krang::Media')) {
-        $id_param = 'media_id=' . $obj->media_id;
-    } else {
-        $id_param = 'template_id=' . $obj->template_id;
+        $class = 'Media';
+    } elsif( $obj->isa('Krang::Template')) {
+        $class = 'Template';
     }
 
-    my $uri = "history.pl?${id_param}&history_return_script=workspace.pl&history_return_params=rm&history_return_params=show";
+    my $uri = "history.pl?id=$id&id_meth=$id_meth&class=$class&history_return_script=workspace.pl"
+        . "&history_return_params=rm&history_return_params=show";
     
     # mix in pager params for return
     foreach my $name (grep { /^krang_pager/ } $query->param) {

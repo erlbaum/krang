@@ -137,31 +137,41 @@ In addition to tracking actions on objects, the user who performed the action is
 =cut
 
 sub add_history {
-    my %args = @_;
+    my %args   = @_;
     my $object = delete $args{'object'};
     croak("No object specified") unless ($object);
 
     my $history = pkg('History')->new(%args);
 
-    $history->{version} = $object->version() if (($args{action} eq 'save') || ($args{action} eq 'revert'));
+    my $version;
+    eval {
+        $version = $object->version()
+          if (($args{action} eq 'save') || ($args{action} eq 'revert'));
+    };
+    $history->{version} = $version if $version;
     $history->{user_id} = $ENV{REMOTE_USER};
-   
+
     my $object_type = ref $object;
     $history->{object_type} = $object_type;
-  
-    my $object_id_type = lc((split('::', $object_type))[-1]).'_id'; 
-    $history->{object_id} = $object->$object_id_type; 
+
+    my $object_id_meth = $object->id_meth;
+    $history->{object_id} = $object->$object_id_meth;
     $history->_save();
 
     # log this event
-    my $info_string = $history->{object_type}." ".$history->{object_id}." ".$history->{action}." by user ".$history->{user_id};
-    $info_string  .= " (version ".$history->{version}.")" if $history->{version};
-    $info_string  .= " to desk '".$history->{desk_id}."'" if $history->{desk_id};
-    info(__PACKAGE__." - ".$info_string);
+    my $info_string =
+        $history->{object_type} . " "
+      . $history->{object_id} . " "
+      . $history->{action}
+      . " by user "
+      . $history->{user_id};
+    $info_string .= " (version " . $history->{version} . ")" if $history->{version};
+    $info_string .= " to desk '" . $history->{desk_id} . "'" if $history->{desk_id};
+    info(__PACKAGE__ . " - " . $info_string);
 
     # check if should trigger alert
     if ($object_type eq pkg('Story')) {
-        pkg('Alert')->check_alert( history => $history, story => $object);
+        pkg('Alert')->check_alert(history => $history, story => $object);
     }
 }
 
@@ -211,12 +221,10 @@ sub find {
     my $object = delete $args{'object'};
     croak("No object specified") unless ($object);
 
+    my $id_meth = $object->id_meth;
+    $args{object_id} = $object->$id_meth;
     $args{object_type} = ref $object;
     
-    my $object_id_type = lc((split('::', $args{object_type}))[-1]).'_id';
-    $args{object_id} = $object->$object_id_type;
-
-
     my @where;
     my @history_object;
 
@@ -288,11 +296,10 @@ sub delete {
     my %args = @_;
     my $dbh = dbh;
 
-    my $object = delete $args{'object'};
+    my $object      = delete $args{'object'};
+    my $id_meth     = $object->id_meth;
     my $object_type = ref $object;
-
-    my $object_id_type = lc((split('::', $object_type))[-1]).'_id';
-    my $object_id = $object->$object_id_type;
+    my $object_id   = $object->$id_meth;
 
     $dbh->do('DELETE from history where object_id = ? and object_type = ?', undef, $object_id, $object_type);
  

@@ -2,18 +2,20 @@
 
 <script type="text/javascript">
 Krang.onload( function() {
-  Krang.Help.set( 'template_find' );
+  Krang.Help.set('template_find');
 } );
 
-do_return = function()
-{
-  Krang.Form.submit( 'return_form' );
+do_return = function() {
+  Krang.Form.submit('return_form');
+}
+
+view_log = function() {
+  Krang.Form.submit('view_log_form');
 }
 
 <tmpl_unless is_old_version><tmpl_if can_edit>
-  do_edit_template = function()
-  {
-    Krang.Form.submit( 'edit_template_form' );
+  do_edit_template = function() {
+    Krang.Form.submit('edit_template_form');
   }
 </tmpl_if></tmpl_unless>
 
@@ -24,9 +26,9 @@ Krang.onload( function() {
 
 </script>
 
-<!--[p class="cram east"]
-(db2)add 'View Log' here
-[/p]-->
+<p class="cram east">
+  <input value="View Log" onclick="view_log()" type="button" class="button">
+</p>
 
 <h2>
 View Template
@@ -99,6 +101,13 @@ Content
   <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
   </form>
 </tmpl_if></tmpl_unless>
+
+<form name="view_log_form" method="post" action="template.pl">
+<input name="rm" value="view_log" type="hidden">
+<input name="return_rm" value="view" type="hidden">
+<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+</form>
+
 
 <tmpl_include footer.tmpl>
 

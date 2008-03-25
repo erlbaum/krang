@@ -5,8 +5,7 @@ Krang.onload( function() {
   Krang.Help.set( 'story_find' );
 } );
 
-show_advanced_search = function( show_advanced )
-{
+show_advanced_search = function( show_advanced ) {
   Krang.Form.submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
 }
 
@@ -23,20 +22,17 @@ other_search_rm = function() {
 }
 
 <tmpl_if do_advanced_search>
-  clear_advanced_search = function()
-  {
+  clear_advanced_search = function() {
     Krang.Form.submit( 'clear_advanced_search_form', {}, { to_top: false } );
   }
 </tmpl_if>
 
 <tmpl_if row_count>
-  edit_story = function( id )
-  {
+  edit_story = function( id ) {
     Krang.Form.submit( 'find_story', { rm: 'checkout_and_edit', story_id: id } );
   }
 
-  view_story = function( id )
-  {
+  view_story = function( id ) {
     Krang.Form.submit( 'find_story', { rm: 'view', story_id: id } );
   }
 
@@ -44,8 +40,7 @@ other_search_rm = function() {
     Krang.Form.submit('find_story', { rm: 'copy', story_id: id });
   }
 
-  delete_selected = function()
-  {
+  delete_selected = function() {
       var question = '';
       var num_rows_checked = Krang.pager_row_checked();
 
@@ -63,8 +58,7 @@ other_search_rm = function() {
       }
   }
 
-  checkout_selected = function()
-  {
+  checkout_selected = function() {
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to check out!' );
     else
@@ -72,8 +66,7 @@ other_search_rm = function() {
   }
 
   <tmpl_if may_publish>
-  publish_selected = function()
-  {
+  publish_selected = function() {
       var question = '';
       var num_rows_checked = Krang.pager_row_checked();
 
@@ -93,8 +86,7 @@ other_search_rm = function() {
   }
   </tmpl_if>
 
-  archive_story = function(id)
-  {
+  archive_story = function(id) {
     if (confirm('Are you SURE you want to archive this Story?'))
       Krang.Form.submit('find_story', { rm: 'archive', story_id: id });
   }
@@ -261,7 +253,9 @@ Search Results
 
 <tmpl_if row_count>
   <form name="view_story_log_form" action="history.pl" method="post">
-  <input name="story_id" type="hidden">
+  <input name="id" type="hidden">
+  <input name="class" value="Story" type="hidden">
+  <input name="id_meth" value="story_id" type="hidden">
   <input name="history_return_script" value="story.pl" type="hidden">
   <input name="history_return_params" value="rm" type="hidden">
   <input name="history_return_params" value="find" type="hidden">

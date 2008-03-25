@@ -8,8 +8,7 @@ Krang.onload( function() {
   Krang.Help.set( 'story_find' );
 } );
 
-view_log = function()
-{
+view_log = function() {
   Krang.Form.submit( 'view_log_form' );
 }
 
@@ -149,7 +148,9 @@ View Story
 </form>
 
 <form name="view_log_form" action="history.pl" method="post">
-<input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="id" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="class" value="Story" type="hidden">
+<input name="id_meth" value="story_id" type="hidden">
 <input name="archived" value="<tmpl_var escape=html archived>" type="hidden">
 <input name="history_return_script" value="story.pl" type="hidden">
 <input name="history_return_script" value="return_script" type="hidden">

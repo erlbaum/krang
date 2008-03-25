@@ -1172,12 +1172,14 @@ sub save_and_view_log {
     # call internal _save and return output from it on error
     my $output = $self->_save();
     return $output if length $output;
+    my $id = $session{story}->story_id;
 
-    $self->header_props(-uri =>
-          'history.pl?history_return_script=story.pl&history_return_params=rm&history_return_params=edit&story_id='
-          . $session{story}->story_id);
+    my $url = "history.pl?history_return_script=story.pl&history_return_params=rm"
+        . "&history_return_params=edit&id=$id&id_meth=story_id&class=Story";
+
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
-    return "";
+    return "Redirect: <a href=\"$url\">$url</a>";
 }
 
 =item save_and_edit_schedule

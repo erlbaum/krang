@@ -205,7 +205,9 @@ Search Results
 
 <tmpl_if row_count>
   <form name="view_story_log_form" action="history.pl" method="post">
-  <input name="story_id" type="hidden">
+  <input name="id" type="hidden">
+  <input name="id_methd" value="story_id" type="hidden">
+  <input name="class" value="Story" type="hidden">
   <input name="history_return_script" value="story.pl" type="hidden">
   <input name="history_return_params" value="rm" type="hidden">
   <input name="history_return_params" value="list_archived" type="hidden">

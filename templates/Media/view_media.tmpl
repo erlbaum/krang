@@ -8,14 +8,20 @@ Krang.onload( function() {
   Krang.Help.set( 'media_find' );
 } );
 
-do_return = function()
-{
+do_return = function() {
   Krang.Form.submit( 'return_form' );
 }
 
+view_log = function() {
+    Krang.Form.submit('view_log_form');
+}
+
+edit_schedule = function() {
+    Krang.Form.submit('view_log_form', { rm: 'edit_schedule' });
+}
+
 <tmpl_unless is_old_version><tmpl_if can_edit>
-  do_edit_media = function()
-  {
+  do_edit_media = function() {
     Krang.Form.submit( 'edit_media_form' );
   }
 </tmpl_if></tmpl_unless>
@@ -27,9 +33,9 @@ Krang.onload( function() {
 
 </script>
 
-<!--[p class="east"]
-(db2)add 'View Log' here
-[/p]-->
+<p class="cram east">
+  <input value="View Log" onclick="view_log()" type="button" class="button">
+</p>
 
 <h2>
 View Media
@@ -168,6 +174,11 @@ Content
   <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
   </form>
 </tmpl_if></tmpl_unless>
+
+<form name="view_log_form" method="post" action="media.pl">
+<input name="rm" value="view_log" type="hidden">
+<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+</form>
 
 <tmpl_include footer.tmpl>
 

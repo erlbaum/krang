@@ -86,6 +86,7 @@ sub setup {
               list_archived
               revert_version
               save_and_view_log
+              view_log
               search
               view
               view_edit
@@ -677,11 +678,35 @@ sub save_and_view_log {
     # Update template object
     my $template = $session{template};
     $self->update_template($template) || return $self->redirect_to_workspace;
+    my $id = $template->template_id ;
 
     # Redirect to associate screen
-    my $url =
-      "history.pl?history_return_script=template.pl&history_return_params=rm&history_return_params=edit&template_id="
-      . $template->template_id;
+    my $url = "history.pl?history_return_script=template.pl"
+        . "&history_return_params=rm&history_return_params=edit"
+        . "&id=$id&class=Template&id_meth=template_id";
+    $self->header_props(-uri => $url);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$url\">$url</a>";
+}
+
+=item view_log
+
+The purpose of this mode is to hand the user off to the log viewng
+screen to view the template in question.
+
+=cut
+
+sub view_log {
+    my $self = shift;
+    my $q = $self->query();
+    my $id = $q->param('template_id');
+    my $return_rm = $q->param('return_rm'); 
+
+    # Redirect to associate screen
+    my $url = "history.pl?history_return_script=template.pl"
+        . "&history_return_params=rm&history_return_params=$return_rm"
+        . "&history_return_params=template_id&history_return_params=$id"
+        . "&id=$id&class=Template&id_meth=template_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$url\">$url</a>";

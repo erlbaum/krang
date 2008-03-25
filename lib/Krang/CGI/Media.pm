@@ -80,6 +80,7 @@ sub setup {
               save_and_publish
               save_and_preview
               view
+              view_log
               view_version
               revert_version
               save_and_edit_schedule
@@ -1153,7 +1154,7 @@ sub save_and_preview {
 
 =item save_and_view_log
 
-The purpose of this mode is to hand the user off to the log viewng
+The purpose of this mode is to hand the user off to the log viewing
 screen.  This mode writes changes back to the media object without
 calling save().  When done, it performs an HTTP redirect to
 history.pl.
@@ -1168,11 +1169,35 @@ sub save_and_view_log {
     # Update media object
     my $m = $session{media};
     $self->update_media($m) || return $self->redirect_to_workspace;
+    my $id = $m->media_id;
 
-    # Redirect to associate screen
-    my $url =
-      'history.pl?history_return_script=media.pl&history_return_params=rm&history_return_params=edit&media_id='
-      . $m->media_id;
+    # Redirect to history screen
+    my $url = "history.pl?history_return_script=media.pl"
+        . "&history_return_params=rm&history_return_params=edit&id=$id"
+        . "&class=Media&id_meth=media_id";
+    $self->header_props(-uri => $url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$url\">$url</a>";
+}
+
+=item view_log
+
+The purpose of this mode is to hand the user off to the log viewing
+screen but preserving where we came from.
+
+=cut
+
+sub view_log {
+    my $self = shift;
+    my $q = $self->query();
+    my $media_id = $q->param('media_id');
+
+    # Redirect to history screen
+    my $url = "history.pl?history_return_script=media.pl"
+        . "&history_return_params=rm&history_return_params=view"
+        . "&history_return_params=media_id&history_return_params=$media_id"
+        . "&id=$media_id&class=Media&id_meth=media_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
@@ -1182,7 +1207,6 @@ sub save_and_view_log {
 =item view
 
 Display the specified media object in a view form.
-
 
 =cut
 
