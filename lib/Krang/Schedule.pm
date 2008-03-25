@@ -1,3 +1,4 @@
+
 =head1 NAME
 
 Krang::Schedule - Module for scheduling events in Krang.
@@ -13,7 +14,7 @@ use warnings;
 use Carp qw(verbose croak);
 use File::Spec::Functions qw(catdir catfile);
 use File::Path qw(rmtree);
-require File::Find;  # File::Find exports a find() method if we use 'use'.
+require File::Find;    # File::Find exports a find() method if we use 'use'.
 
 use Storable qw/nfreeze thaw/;
 use Time::Piece;
@@ -21,8 +22,8 @@ use Time::Piece::MySQL;
 use Time::Seconds;
 
 use Krang::ClassLoader Conf => qw(KrangRoot);
-use Krang::ClassLoader DB => qw(dbh);
-use Krang::ClassLoader Log => qw(ASSERT assert critical debug info);
+use Krang::ClassLoader DB   => qw(dbh);
+use Krang::ClassLoader Log  => qw(ASSERT assert critical debug info);
 
 use Krang::ClassLoader 'Alert';
 use Krang::ClassLoader 'Media';
@@ -31,99 +32,106 @@ use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'Cache';
 
-
-
 =head1 SYNOPSIS
 
-  use Krang::ClassLoader 'Schedule';
+    use Krang::ClassLoader 'Schedule';
 
-  # publish a story at a specific date
-  $sched = pkg('Schedule')->new(object_type => 'story',
-                                object_id   => $story_id,
-                                action      => 'publish',
-                                repeat      => 'never',
-                                date        => $date);
+    # publish a story at a specific date
+    $sched = pkg('Schedule')->new(
+        object_type => 'story',
+        object_id   => $story_id,
+        action      => 'publish',
+        repeat      => 'never',
+        date        => $date
+    );
 
-  # publish a story at a specific date, specifying the version to be
-  # published
-  $sched = pkg('Schedule')->new(object_type => 'story',
-                                object_id   => $story_id,
-                                action      => 'publish',
-                                context     => [ version => $version ],
-                                date        => $date);
+    # publish a story at a specific date, specifying the version to be
+    # published
+    $sched = pkg('Schedule')->new(
+        object_type => 'story',
+        object_id   => $story_id,
+        action      => 'publish',
+        context     => [version => $version],
+        date        => $date
+    );
 
+    # save the schedule entry to the database
+    $sched->save();
 
-  # save the schedule entry to the database
-  $sched->save();
+    # get the ID for a schedule
+    $schedule_id = $schedule->schedule_id;
 
-  # get the ID for a schedule
-  $schedule_id = $schedule->schedule_id;
+    # Create an entry to publish a story every Monday at noon.
+    $sched = pkg('Schedule')->new(
+        object_type => 'story',
+        object_id   => $story_id,
+        action      => 'publish',
+        repeat      => 'weekly',
+        day_of_week => 1,
+        hour        => 12,
+        minute      => 0
+    );
 
-  # Create an entry to publish a story every Monday at noon.
-  $sched = pkg('Schedule')->new(object_type => 'story',
-                                object_id   => $story_id,
-                                action      => 'publish',
-                                repeat      => 'weekly',
-                                day_of_week => 1,
-                                hour        => 12,
-                                minute      => 0);
+    # Create an entry to publish a story at noon every day.
+    $sched = pkg('Schedule')->new(
+        object_type => 'story',
+        object_id   => $story_id,
+        action      => 'publish',
+        repeat      => 'daily',
+        hour        => 12,
+        minute      => 0
+    );
 
+    # Create an entry to publish a story every hour on the hour.
+    $sched = pkg('Schedule')->new(
+        object_type => 'story',
+        object_id   => $story_id,
+        action      => 'publish',
+        repeat      => 'hourly',
+        minute      => 0
+    );
 
-  # Create an entry to publish a story at noon every day.
-  $sched = pkg('Schedule')->new(object_type => 'story',
-                                object_id   => $story_id,
-                                action      => 'publish',
-                                repeat      => 'daily',
-                                hour        => 12,
-                                minute      => 0);
+    # get a list of schedule objects for a given story
+    @schedules = pkg('Schedule')->find(
+        object_type => 'story',
+        object_id   => 1
+    );
 
+    # load a schedule object by ID
+    ($schedule) = pkg('Schedule')->find(schedule_id => $schedule_id);
 
-  # Create an entry to publish a story every hour on the hour.
-  $sched = pkg('Schedule')->new(object_type => 'story',
-                                object_id   => $story_id,
-                                action      => 'publish',
-                                repeat      => 'hourly',
-                                minute      => 0);
+    # get the next execution time of a scheduled event
+    $date = $schedule->next_run;
 
+    # get the last execution time of a scheduled event
+    $date = $schedule->last_run;
 
-  # get a list of schedule objects for a given story
-  @schedules = pkg('Schedule')->find(object_type => 'story',
-                                     object_id   => 1);
+    # execute the task represented by the schedule object
+    $success = $schedule->execute();
 
+    # update the next_run field in the schedule object.
+    $schedule->update_execution_time();
 
-  # load a schedule object by ID
-  ($schedule) = pkg('Schedule')->find(schedule_id => $schedule_id);
+    # Find the default priority for a Krang::Schedule object
+    $priority = pkg('Schedule')->determine_priority(schedule => $schedule);
 
-  # get the next execution time of a scheduled event
-  $date = $schedule->next_run;
-
-  # get the last execution time of a scheduled event
-  $date = $schedule->last_run;
-
-
-  # execute the task represented by the schedule object
-  $success = $schedule->execute();
-
-  # update the next_run field in the schedule object.
-  $schedule->update_execution_time();
-
-
-  # Find the default priority for a Krang::Schedule object
-  $priority = pkg('Schedule')->determine_priority(schedule => $schedule);
-
-  # or for the current object
-  $priority = $schedule->determine_priority();
-
-
+    # or for the current object
+    $priority = $schedule->determine_priority();
 
 =head1 DESCRIPTION
 
-This module provides the API into the Krang scheduler.  It is responsible for handling events within Krang that have been scheduled by users.  At this time, those events fall into one of three categories: sending alerts, publishing content (stories and/or media), and expiring content (stories and/or media).
+This module provides the API into the Krang scheduler.  It is responsible
+for handling events within Krang that have been scheduled by users.
+At this time, those events fall into one of three categories: sending
+alerts, publishing content (stories and/or media), and expiring content
+(stories and/or media).
 
-Krang::Schedule is responsible for entering jobs into the system, and for handling the actual execution of a given job.  Determining when to run a job, and the allocation of resources to run that job are handled by L<Krang::Schedule::Daemon>.
+Krang::Schedule is responsible for entering jobs into the system, and
+for handling the actual execution of a given job.  Determining when to
+run a job, and the allocation of resources to run that job are handled
+by L<Krang::Schedule::Daemon>.
 
 =cut
-
 
 ####################
 # Package Variables
@@ -134,61 +142,59 @@ Krang::Schedule is responsible for entering jobs into the system, and for handli
 
 # Read-only fields
 use constant SCHEDULE_RO => qw(
-                               last_run
-			       next_run
-                               initial_date
-			       schedule_id
-                              );
+  last_run
+  next_run
+  initial_date
+  schedule_id
+);
 
 # Read-write fields
 use constant SCHEDULE_RW => qw(
-			       context
-			       object_id
-                               priority
-                              );
+  context
+  object_id
+  priority
+);
 
 # certain fields, when updated, require recalculation of
 # priority and next_run for the schedule object.
 use constant SCHEDULE_RW_NOTIFY => qw(
-                                      action
-                                      object_type
-                                      repeat
-                                      day_of_week
-                                      hour
-                                      minute
-                                     );
+  action
+  object_type
+  repeat
+  day_of_week
+  hour
+  minute
+);
 
 # valid object_types
 use constant TYPES => qw(alert media story tmp session analyze admin rate_limit);
 
-
 # Lexicals
 ###########
-my %types = map {$_, 1} TYPES;
-my %repeat2seconds = (daily => ONE_DAY,
-                      hourly => ONE_HOUR,
-                      weekly => ONE_WEEK,
-                      never => '');
+my %types = map { $_, 1 } TYPES;
+my %repeat2seconds = (
+    daily  => ONE_DAY,
+    hourly => ONE_HOUR,
+    weekly => ONE_WEEK,
+    never  => ''
+);
 
-my %schedule_cols = map {$_ => 1} SCHEDULE_RO, SCHEDULE_RW, SCHEDULE_RW_NOTIFY;
+my %schedule_cols = map { $_ => 1 } SCHEDULE_RO, SCHEDULE_RW, SCHEDULE_RW_NOTIFY;
 my $tmp_path = catdir(KrangRoot, 'tmp');
 
 # Constructor/Accessor/Mutator setup
-use Krang::ClassLoader MethodMaker => 
-  new_with_init => 'new',
-  new_hash_init => 'hash_init',
-  get => [SCHEDULE_RO],
-  get_set => [SCHEDULE_RW],
-  get_set_with_notify => [
-                          {
-                           method => '_notify',
-                           attr   => [SCHEDULE_RW_NOTIFY]
-                          }
-                         ];
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
+  new_hash_init                    => 'hash_init',
+  get                              => [SCHEDULE_RO],
+  get_set                          => [SCHEDULE_RW],
+  get_set_with_notify              => [
+    {
+        method => '_notify',
+        attr   => [SCHEDULE_RW_NOTIFY]
+    }
+  ];
 
 sub id_meth { 'schedule_id' }
-
-
 
 =head1 INTERFACE
 
@@ -215,8 +221,8 @@ The ID of the object of type object_type.
 
 =item C<repeat>
 
-Set to the recurrence interval of the action.  Must be 'never',
-'hourly', 'daily' or 'weekly'.
+Set to the recurrence interval of the action.  Must be C<never>, C<hourly>,
+C<daily> or C<weekly>.
 
 =back
 
@@ -226,28 +232,28 @@ The following options are also available:
 
 =item C<date>
 
-A Time::Piece datetime for a scheduled action.  If C<repeat> is set to
+A L<Time::Piece> datetime for a scheduled action.  If C<repeat> is set to
 'never' then you must set this option.
 
 =item C<hour>
 
-The hour to run a repeating action at.  Required for 'daily' and
-'weekly' tasks.  0 indicates 12 midnight.
+The hour to run a repeating action at.  Required for C<daily> and
+C<weekly> tasks. 0 indicates 12 midnight.
 
 =item C<minute>
 
-The minute to run a repeating action at.  Required for 'hourly',
-'daily' and 'weekly' tasks.
+The minute to run a repeating action at.  Required for C<hourly>, C<daily>
+and C<weekly> tasks.
 
 =item C<day_of_week>
 
-The day of the week to run a repeating action at.  Required for
-'weekly' tasks.  This is an integer from 0 (Sun) to 6 (Sat).
+The day of the week to run a repeating action at.  Required for C<weekly>
+tasks.  This is an integer from 0 (Sun) to 6 (Sat).
 
 =item C<context>
 
-An optional array ref containing extra data pertaining to the action
-to be performed.
+An optional array ref containing extra data pertaining to the action to
+be performed.
 
 =item C<test_date>
 
@@ -256,9 +262,15 @@ calculating 'next_run' to any point in the past or future.
 
 =item C<priority>
 
-An integer, with acceptable values from 1 to 10 (smaller numbers have higher priority).  By default, priority will vary based on the type of action, the object type, and the whether or not the action is to be repeated.  For instance, a one-time alert will have a priority of 2, a publish task that runs only once will have a priority of 8.
+An integer, with acceptable values from 1 to 10 (smaller numbers have
+higher priority).  By default, priority will vary based on the type
+of action, the object type, and the whether or not the action is to
+be repeated.  For instance, a one-time alert will have a priority of 2,
+a publish task that runs only once will have a priority of 8.
 
-Note that you should not worry about priority, except in special cases.  L<Krang::Schedule::Daemon> handles how jobs will make adjustments to priority if a scheduled task is running late.
+Note that you should not worry about priority, except in special cases.
+L<Krang::Schedule::Daemon> handles how jobs will make adjustments to
+priority if a scheduled task is running late.
 
 =back
 
@@ -279,18 +291,18 @@ sub init {
     my %args = @_;
     my @bad_args;
     my ($date, $day_of_week, $hour, $minute, $test_date, $priority) =
-      map {$args{$_}} qw/date day_of_week hour minute test_date priority/;
+      map { $args{$_} } qw/date day_of_week hour minute test_date priority/;
 
     my ($repeat, $action, $object_type);
 
-    my %schedule_args = map {$_ => 1} SCHEDULE_RW, SCHEDULE_RW_NOTIFY, qw/date/;
+    my %schedule_args = map { $_ => 1 } SCHEDULE_RW, SCHEDULE_RW_NOTIFY, qw/date/;
 
     # clean actions - object_id isn't used.  Set to 0.
     if (($args{action} eq 'clean') && (!exists($args{object_id}))) {
         $args{object_id} = 0;
     }
 
-    ## 
+    ##
     $args{object_id} ||= 0;
 
     # delete test_date and date -- they aren't actually fields in the object.
@@ -301,8 +313,11 @@ sub init {
         push @bad_args, $_ unless exists $schedule_args{$_};
     }
 
-    croak(__PACKAGE__ . "->init(): The following constructor args are " .
-          "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
+    croak(  __PACKAGE__
+          . "->init(): The following constructor args are "
+          . "invalid: '"
+          . join("', '", @bad_args) . "'")
+      if @bad_args;
 
     for (qw/action object_id object_type repeat/) {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
@@ -314,7 +329,7 @@ sub init {
     # ahead of time.
 
     # validate action field.
-    $action = lc $args{action};
+    $action         = lc $args{action};
     $args{action}   = $action;
     $self->{action} = $action;
 
@@ -324,15 +339,15 @@ sub init {
       unless exists $repeat2seconds{$repeat};
 
     if ($repeat eq 'never') {
-        croak(__PACKAGE__ . "->'date' argument required for non-repetitive " .
-              "Schedule objects")
+        croak(__PACKAGE__ . "->'date' argument required for non-repetitive " . "Schedule objects")
           unless $date;
         croak(__PACKAGE__ . "->init():'date' argument must be a Time::Piece object.")
           unless ref $date && $date->isa('Time::Piece');
         $date = $date->mysql_datetime;
     } else {
-        croak(__PACKAGE__ . "->init():'minute' argument required for hourly, daily, and " .
-              "weekly tasks.")
+        croak(  __PACKAGE__
+              . "->init():'minute' argument required for hourly, daily, and "
+              . "weekly tasks.")
           unless defined $minute;
         $self->{minute} = $minute;
 
@@ -349,7 +364,7 @@ sub init {
         }
 
     }
-    $args{repeat}   = $repeat;
+    $args{repeat} = $repeat;
     $self->{repeat} = $repeat;
 
     # context validation
@@ -357,6 +372,7 @@ sub init {
         my $context = $args{context};
         croak(__PACKAGE__ . "->init():'context' must be an array reference.")
           unless (ref $context && ref $context eq 'ARRAY');
+
         # setup field for holding frozen value
         $self->{_frozen_context} = '';
     }
@@ -365,12 +381,10 @@ sub init {
     # lowercase object_type to insure consistency for subsequent type
     # testing see lines 792-6
     $object_type = lc $args{object_type};
-    croak(__PACKAGE__ . "->init():Invalid object type '$object_type'!") unless
-      (exists $types{$object_type});
-    $args{object_type}   = $object_type;
+    croak(__PACKAGE__ . "->init():Invalid object type '$object_type'!")
+      unless (exists $types{$object_type});
+    $args{object_type} = $object_type;
     $self->{object_type} = $object_type;
-
-    
 
     # set _test_date if submitted.
     if ($test_date) {
@@ -379,18 +393,18 @@ sub init {
 
     $self->hash_init(%args);
 
-    $self->{next_run} = $repeat eq 'never' ? $date :
-      $self->_calc_next_run();
+    $self->{next_run} =
+        $repeat eq 'never'
+      ? $date
+      : $self->_calc_next_run();
 
     $self->{initial_date} = $self->{next_run};
 
     # determine priority
     $self->{priority} = $priority ? $priority : $self->determine_priority();
 
-
     return $self;
 }
-
 
 # called by get_set_with_notify attributes.
 # When anything affecting the priority attribute is changed, recalc priority.
@@ -401,8 +415,11 @@ sub _notify {
     # NOTE - appropriate fields must be defined for repeats.
     if ($which eq 'repeat') {
         if ($new eq 'weekly') {
-            croak(__PACKAGE__ . "->repeat(): cannot make 'weekly' without hour, minute, day_of_week set.")
-              unless (exists($self->{day_of_week}) && exists($self->{hour}) && exists($self->{minute}));
+            croak(__PACKAGE__
+                  . "->repeat(): cannot make 'weekly' without hour, minute, day_of_week set.")
+              unless (exists($self->{day_of_week})
+                && exists($self->{hour})
+                && exists($self->{minute}));
         } elsif ($new eq 'daily') {
             croak(__PACKAGE__ . "->repeat(): cannot make 'daily' without hour, minute set.")
               unless (exists($self->{hour}) && exists($self->{minute}));
@@ -412,6 +429,7 @@ sub _notify {
         }
     } elsif ($which eq 'action' && ($new eq 'send' || $new eq 'expire')) {
         unless ($self->{repeat} eq 'never') {
+
             # sanity check - if the new action is an alert or an expire, repeat = never.
             debug(__PACKAGE__ . "->action('$new'): resetting repeat() to 'never'.");
             $self->{repeat} = 'never';
@@ -428,18 +446,23 @@ sub _notify {
 
 }
 
-
-
-
 =item C<< determine_priority(schedule => $schedule) >>
 
-Given a L<Krang::Schedule> object, calculates the priority to be assigned to the object.  Returns an integer value from 1-10 (lower the number, higher the priority) representing the priority.  Priority is used by L<Krang::Schedule::Daemon> to determine the order in which scheduled tasks are executed.
+Given a L<Krang::Schedule> object, calculates the priority to be assigned
+to the object.  Returns an integer value from 1-10 (lower the number,
+higher the priority) representing the priority.  Priority is used by
+L<Krang::Schedule::Daemon> to determine the order in which scheduled
+tasks are executed.
 
-Realize that Krang::Schedule::Daemon will raise priority as needed if a scheduled task has not been executed on time.
+Realize that L<Krang::Schedule::Daemon> will raise priority as needed
+if a scheduled task has not been executed on time.
 
-B<NOTE>: This is not an accessor/mutator - to find the currently-set priority (or to set the priority manually) of a Krang::Schedule object, use C<< $schedule->priority() >>.
+B<NOTE>: This is not an accessor/mutator - to find the currently-set
+priority (or to set the priority manually) of a Krang::Schedule object,
+use C<< $schedule->priority() >>.
 
-Priority is determined based primarily on the C<action> being performed, with C<repeat> and C<object_type> modifying the final result.
+Priority is determined based primarily on the C<action> being performed,
+with C<repeat> and C<object_type> modifying the final result.
 
 =over
 
@@ -453,15 +476,19 @@ Expiration jobs have a default priority of 4.
 
 =item Publish
 
-Publish jobs have a default priority of 7 for Media objects, 8 for everything else.
+Publish jobs have a default priority of 7 for Media objects, 8 for
+everything else.
 
 =item Clean
 
 Maintenence cleanup jobs have a default priority of 10.
 
-If a job is repeated, the default priority is raised 1 for weekly, 2 for daily, and 3 for hourly.
+If a job is repeated, the default priority is raised 1 for weekly,
+2 for daily, and 3 for hourly.
 
-For example, a story published only once will have a priority of 8 (default), but a media object published hourly would have a priority of 4 (default 7 - 3 for hourly repeats = 4).
+For example, a story published only once will have a priority of 8
+(default), but a media object published hourly would have a priority of 4
+(default 7 - 3 for hourly repeats = 4).
 
 =back
 
@@ -485,7 +512,7 @@ sub determine_priority {
     } elsif ($action eq 'expire') {
         $priority = 4;
     } elsif ($action eq 'publish') {
-        $priority = ($sched->object_type eq 'media') ? 7 : 8 ;
+        $priority = ($sched->object_type eq 'media') ? 7 : 8;
 
         my $repeat = $sched->repeat();
 
@@ -532,10 +559,10 @@ sub _calc_next_run {
         $now = localtime unless $now;
     }
 
-    $repeat      = $self->repeat() unless $repeat;
+    $repeat      = $self->repeat()      unless $repeat;
     $day_of_week = $self->day_of_week() unless $day_of_week;
-    $hour        = $self->hour() unless $hour;
-    $minute      = $self->minute() unless $minute;
+    $hour        = $self->hour()        unless $hour;
+    $minute      = $self->minute()      unless $minute;
 
     # sanity check
     $skip_match = 0 unless (defined($args{skip_match}));
@@ -552,33 +579,37 @@ sub _calc_next_run {
 
     # align minutes -- all cases
     if ($next->minute > $minute) {
+
         # never roll clock back - roll up to the next hour.
-        $next += ( (ONE_HOUR - ($next->minute * ONE_MINUTE) ) + ( $minute * ONE_MINUTE ) );
+        $next += ((ONE_HOUR - ($next->minute * ONE_MINUTE)) + ($minute * ONE_MINUTE));
 
     } elsif ($next->minute < $minute) {
+
         # add the minutes up to the next runtime.
-        $next += ( ( $minute - $next->minute ) * ONE_MINUTE );
+        $next += (($minute - $next->minute) * ONE_MINUTE);
     }
 
     # align hours -- daily/weekly only
     if ($repeat eq 'daily' || $repeat eq 'weekly') {
         if ($next->hour > $hour) {
+
             # never roll the clock back.  Roll to the next day.
-            $next += ( (ONE_DAY - ($next->hour * ONE_HOUR) ) + ( $hour * ONE_HOUR ) );
+            $next += ((ONE_DAY - ($next->hour * ONE_HOUR)) + ($hour * ONE_HOUR));
 
         } elsif ($next->hour < $hour) {
-            $next += ( ( $hour - $next->hour ) * ONE_HOUR );
+            $next += (($hour - $next->hour) * ONE_HOUR);
         }
     }
 
     # align days -- weekly only
     if ($repeat eq 'weekly') {
         if ($next->day_of_week > $day_of_week) {
+
             # never roll the clock back.  Roll to the next week.
-            $next += ( (ONE_WEEK - ($next->day_of_week * ONE_DAY) ) + ( $day_of_week * ONE_DAY ) );
+            $next += ((ONE_WEEK - ($next->day_of_week * ONE_DAY)) + ($day_of_week * ONE_DAY));
 
         } elsif ($next->day_of_week < $day_of_week) {
-            $next += ( ( $day_of_week - $next->day_of_week ) * ONE_DAY );
+            $next += (($day_of_week - $next->day_of_week) * ONE_DAY);
         }
     }
 
@@ -591,16 +622,12 @@ sub _calc_next_run {
 
 }
 
-
-
-
-
 =item C<< $sched->delete >>
 
 =item C<< Krang::Schedule->delete( $schedule_id ) >>
 
 Removes the schedule from the database.  It will never run again.
-This happens to repeat => 'never' schedules automatically after they
+This happens to repeat => C<never> schedules automatically after they
 are run.
 
 =cut
@@ -610,12 +637,14 @@ sub delete {
     my $schedule_id = shift || $self->{schedule_id};
 
     my $query = "DELETE FROM schedule WHERE schedule_id = ?";
-    my $dbh = dbh();
+    my $dbh   = dbh();
     $dbh->do($query, undef, $schedule_id);
 
     if (ASSERT) {
-        my $count = pkg('Schedule')->find(schedule_id => $schedule_id,
-                                          count => 1);
+        my $count = pkg('Schedule')->find(
+            schedule_id => $schedule_id,
+            count       => 1
+        );
         assert($count == 0);
     }
 
@@ -627,8 +656,8 @@ sub delete {
 
 Finds schedules in the database based on supplied criteria.
 
-Fields may be matched using SQL matching.  Appending "_like" to a
-field name will specify a case-insensitive SQL match.
+Fields may be matched using SQL matching.  Appending "_like" to a field
+name will specify a case-insensitive SQL match.
 
 Available search options are:
 
@@ -704,48 +733,53 @@ sub find {
 
     # grab ascend/descending, limit, and offset args
     my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
-    my $limit = delete $args{limit} || '';
-    my $offset = delete $args{offset} || '';
+    my $limit    = delete $args{limit}    || '';
+    my $offset   = delete $args{offset}   || '';
     my $order_by = delete $args{order_by} || 'schedule_id';
 
     # set search fields
-    my $count = delete $args{count} || '';
+    my $count    = delete $args{count}    || '';
     my $ids_only = delete $args{ids_only} || '';
 
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
 
-    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
-          "Only one can be present.") if ($count && $ids_only);
+    croak(  __PACKAGE__
+          . "->find(): 'count' and 'ids_only' were supplied. "
+          . "Only one can be present.")
+      if ($count && $ids_only);
 
     # exclude 'element'
-    $fields = $count ? 'count(*)' :
-      ($ids_only ? 'schedule_id' : join(", ", map { "`$_`" } keys %schedule_cols));
+    $fields =
+      $count
+      ? 'count(*)'
+      : ($ids_only ? 'schedule_id' : join(", ", map { "`$_`" } keys %schedule_cols));
 
     # set up WHERE clause and @params, croak unless the args are in
     # SCHEDULE_RO, SCHEDULE_RW or SCHEDULE_RW_NOTIFY.
     my @invalid_cols;
     for my $arg (keys %args) {
         my $like = 1 if $arg =~ /_like$/;
-        ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
+        (my $lookup_field = $arg) =~ s/^(.+)_like$/$1/;
 
         push @invalid_cols, $arg
           unless (exists $schedule_cols{$lookup_field} || $arg =~ /^next_run/);
 
         if ($arg eq 'schedule_id' && ref $args{$arg} eq 'ARRAY') {
-            my $tmp = join(" OR ", map {"schedule_id = ?"} @{$args{$arg}});
+            my $tmp = join(" OR ", map { "schedule_id = ?" } @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
         }
+
         # handle next_run date comparisons
         elsif ($arg =~ /^next_run_(.+)$/) {
             my @gtltargs = split(/_/, $1);
 
             croak("'$arg' is and invalid 'next_run' field comparison.")
-              unless ($gtltargs[0] eq 'greater' ||
-                      $gtltargs[0] eq 'less' ||
-                      scalar @gtltargs == 1 ||
-                      scalar @gtltargs == 3);
+              unless ($gtltargs[0] eq 'greater'
+                || $gtltargs[0] eq 'less'
+                || scalar @gtltargs == 1
+                || scalar @gtltargs == 3);
 
             my $operator = $gtltargs[0] eq 'greater' ? '>' : '<';
             $operator .= '=' if scalar @gtltargs == 3;
@@ -759,26 +793,28 @@ sub find {
             }
 
         } else {
-            my $and = defined $where_clause && $where_clause ne '' ?
-              ' AND' : '';
+            my $and = defined $where_clause && $where_clause ne '' ? ' AND' : '';
             if (not defined $args{$arg}) {
                 $where_clause .= "$and `$lookup_field` IS NULL";
             } else {
-                $where_clause .= $like ? "$and `$lookup_field` LIKE ?" :
-                  "$and `$lookup_field` = ?";
+                $where_clause .=
+                  $like
+                  ? "$and `$lookup_field` LIKE ?"
+                  : "$and `$lookup_field` = ?";
                 push @params, $args{$arg};
             }
         }
     }
 
-    croak("The following passed search parameters are invalid: '" .
-          join("', '", @invalid_cols) . "'") if @invalid_cols;
+    croak(
+        "The following passed search parameters are invalid: '" . join("', '", @invalid_cols) . "'")
+      if @invalid_cols;
 
     # construct base query
     my $query = "SELECT $fields FROM schedule";
 
     # add WHERE and ORDER BY clauses, if any
-    $query .= " WHERE $where_clause" if $where_clause;
+    $query .= " WHERE $where_clause"        if $where_clause;
     $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
@@ -791,8 +827,8 @@ sub find {
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
 
-    debug(__PACKAGE__."->find() SQL: $query");
-    debug(__PACKAGE__."->find() SQL ARGS: @params");
+    debug(__PACKAGE__ . "->find() SQL: $query");
+    debug(__PACKAGE__ . "->find() SQL ARGS: @params");
 
     $sth->execute(@params);
 
@@ -804,11 +840,12 @@ sub find {
     if ($single_column) {
         $sth->bind_col(1, \$row);
     } else {
-        $sth->bind_columns(\( @$row{@{$sth->{NAME_lc}}} ));
+        $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     }
 
     # construct category objects from results
     while ($sth->fetchrow_arrayref()) {
+
         # if we just want count or ids
         if ($single_column) {
             push @schedules, $row;
@@ -827,9 +864,10 @@ sub find {
     # thaw contexts, if necessary
     unless ($count or $ids_only) {
         for (@schedules) {
+
             # store frozen value in '_frozen_context'
             $_->{_frozen_context} = $_->{context};
-            eval {$_->{context} = thaw($_->{context})};
+            eval { $_->{context} = thaw($_->{context}) };
             croak(__PACKAGE__ . "->find(): Unable to thaw context: $@") if $@;
         }
     }
@@ -838,24 +876,21 @@ sub find {
     return $count ? $schedules[0] : @schedules;
 }
 
-
-
 =item C<< $sched->save >>
 
-Saves the schedule to the database.  It will now be run at its
-appointed hour.
+Saves the schedule to the database. It will now be run at its appointed
+hour.
 
 =cut
 
 sub save {
-    my $self = shift;
-    my $id = $self->{schedule_id} || 0;
-    my @save_fields = grep {$_ ne 'schedule_id'} keys %schedule_cols;
+    my $self        = shift;
+    my $id          = $self->{schedule_id} || 0;
+    my @save_fields = grep { $_ ne 'schedule_id' } keys %schedule_cols;
     my ($query);
 
     # validate 'repeat'
-    croak(__PACKAGE__ . "->save(): 'repeat' field set to invalid setting - " .
-          "$self->{repeat}")
+    croak(__PACKAGE__ . "->save(): 'repeat' field set to invalid setting - " . "$self->{repeat}")
       unless exists $repeat2seconds{$self->{repeat}};
 
     # freeze context in '_frozen_context'
@@ -864,34 +899,39 @@ sub save {
         croak(__PACKAGE__ . "->save(): 'context' field is not an array ref")
           unless (ref $self->{context} && ref $self->{context} eq 'ARRAY');
 
-        eval {$self->{_frozen_context} = nfreeze($context)};
+        eval { $self->{_frozen_context} = nfreeze($context) };
         croak(__PACKAGE__ . "->save(): Unable to freeze context: $@") if $@;
     }
 
     # the object has already been saved once if $id
     if ($id) {
-        $query = "UPDATE schedule SET " .
-          join(", ", map {"`$_` = ?"} @save_fields) .
-            " WHERE schedule_id = ?";
+        $query =
+            "UPDATE schedule SET "
+          . join(", ", map { "`$_` = ?" } @save_fields)
+          . " WHERE schedule_id = ?";
     } else {
+
         # build insert query
-        $query = "INSERT INTO schedule (" . join(',', map { "`$_`" } @save_fields) .
-          ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
+        $query =
+            "INSERT INTO schedule ("
+          . join(',', map { "`$_`" } @save_fields)
+          . ") VALUES (?"
+          . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
     # bind parameters
-    my @params = map {$context && $_ eq 'context' ?
-                        $self->{_frozen_context} :
-                          $self->{$_}}
-      @save_fields;
+    my @params =
+      map { $context && $_ eq 'context' ? $self->{_frozen_context} : $self->{$_} } @save_fields;
 
     # need user_id for updates
     push @params, $id if $id;
 
     # croak if no rows are affected
     my $dbh = dbh();
-    croak(__PACKAGE__ . "->save(): Unable to save Schedule object " .
-          ($id ? "id '$id' " : '') . "to the DB.")
+    croak(  __PACKAGE__
+          . "->save(): Unable to save Schedule object "
+          . ($id ? "id '$id' " : '')
+          . "to the DB.")
       unless $dbh->do($query, undef, @params);
 
     $self->{schedule_id} = $dbh->{mysql_insertid} unless $id;
@@ -899,63 +939,59 @@ sub save {
     return $self;
 }
 
-
-
-
-
 =item $schedule->serialize_xml(writer => $writer, set => $set)
 
-Serialize as XML.  See Krang::DataSet for details.
+Serialize as XML. See L<Krang::DataSet> for details.
 
 =cut
 
 sub serialize_xml {
-    my ($self, %args) = @_;
-    my ($writer, $set) = @args{qw(writer set)};
+    my ($self,   %args) = @_;
+    my ($writer, $set)  = @args{qw(writer set)};
     local $_;
 
     # open up <schedule> linked to schema/schedule.xsd
-    $writer->startTag('schedule',
-                      "xmlns:xsi" =>
-                        "http://www.w3.org/2001/XMLSchema-instance",
-                      "xsi:noNamespaceSchemaLocation" =>
-                        'schedule.xsd');
+    $writer->startTag(
+        'schedule',
+        "xmlns:xsi"                     => "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation" => 'schedule.xsd'
+    );
 
-    $writer->dataElement( schedule_id => $self->{schedule_id} );
-    $writer->dataElement( object_type => $self->{object_type} );
-    $writer->dataElement( object_id => $self->{object_id} );
-    $writer->dataElement( action => $self->{action} );
-    $writer->dataElement( repeat => $self->{repeat} );
+    $writer->dataElement(schedule_id => $self->{schedule_id});
+    $writer->dataElement(object_type => $self->{object_type});
+    $writer->dataElement(object_id   => $self->{object_id});
+    $writer->dataElement(action      => $self->{action});
+    $writer->dataElement(repeat      => $self->{repeat});
     my $next_run = $self->{next_run} || '';
     $next_run =~ s/\s/T/;
-    $writer->dataElement( next_run => $next_run );
+    $writer->dataElement(next_run => $next_run);
     my $last_run = $self->{last_run} || '';
     $last_run =~ s/\s/T/;
-    $writer->dataElement( last_run => $last_run ) if $self->{last_run};
+    $writer->dataElement(last_run => $last_run) if $self->{last_run};
     my $initial_date = $self->{initial_date} || '';
     $initial_date =~ s/\s/T/;
-    $writer->dataElement( initial_date => $initial_date );
-    $writer->dataElement( hour => $self->{hour} ) if defined $self->{hour};
-    $writer->dataElement( minute => $self->{minute} )
+    $writer->dataElement(initial_date => $initial_date);
+    $writer->dataElement(hour         => $self->{hour}) if defined $self->{hour};
+    $writer->dataElement(minute       => $self->{minute})
       if defined $self->{minute};
-    $writer->dataElement( day_of_week => $self->{day_of_week} )
+    $writer->dataElement(day_of_week => $self->{day_of_week})
       if defined $self->{day_of_week};
 
-    $writer->dataElement( priority => $self->{priority} );
+    $writer->dataElement(priority => $self->{priority});
 
     # context
     if (my $context = $self->{context}) {
         my %c_hash = @$context;
-        for my $key (keys %c_hash ) {
+        for my $key (keys %c_hash) {
             $writer->startTag('context');
-            $writer->dataElement( key => $key );
-            $writer->dataElement( value => $c_hash{$key} );
+            $writer->dataElement(key   => $key);
+            $writer->dataElement(value => $c_hash{$key});
             $writer->endTag('context');
 
             $set->add(
                 object => (pkg('User')->find(user_id => $c_hash{user_id}))[0],
                 from   => $self
-            ) if($key eq 'user_id');
+            ) if ($key eq 'user_id');
         }
     }
 
@@ -963,13 +999,12 @@ sub serialize_xml {
     $writer->endTag('schedule');
 }
 
-
 =item C<< $schedule = Krang::Schedule->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
 
-Deserialize XML.  See Krang::DataSet for details.
+Deserialize XML. See L<Krang::DataSet> for details.
 
-If an incoming schedule has matching fields with an existing schedule, it
-is ignored (not duplicated).
+If an incoming schedule has matching fields with an existing schedule,
+it is ignored (not duplicated).
 
 Note that last_run is not imported, next_run is translated to 'date'.
 
@@ -977,60 +1012,68 @@ Note that last_run is not imported, next_run is translated to 'date'.
 
 sub deserialize_xml {
     my ($pkg, %args) = @_;
-    my ($xml, $set) = @args{qw(xml set)};
+    my ($xml, $set)  = @args{qw(xml set)};
 
     # divide FIELDS into simple and complex groups
     my (%complex, %simple);
 
     # strip out all fields we don't want updated or used.
-    @complex{qw(schedule_id object_id last_run context next_run initial_date)}
-      = ();
-    %simple = map { ($_,1) } grep { not exists $complex{$_} }
-      (SCHEDULE_RO,SCHEDULE_RW,SCHEDULE_RW_NOTIFY);
+    @complex{qw(schedule_id object_id last_run context next_run initial_date)} = ();
+    %simple =
+      map { ($_, 1) }
+      grep { not exists $complex{$_} } (SCHEDULE_RO, SCHEDULE_RW, SCHEDULE_RW_NOTIFY);
 
     # parse it up
-    my $data = pkg('XML')->simple(xml           => $xml,
-                                  suppressempty => 1);
+    my $data = pkg('XML')->simple(
+        xml           => $xml,
+        suppressempty => 1
+    );
 
     my $new_id = 0;
     if ($data->{object_id}) {
-        $new_id = $set->map_id(class => pkg(ucfirst($data->{object_type})),
-                               id => $data->{object_id});
+        $new_id = $set->map_id(
+            class => pkg(ucfirst($data->{object_type})),
+            id    => $data->{object_id}
+        );
     }
-        
+
     my $initial_date = $data->{initial_date};
     $initial_date =~ s/T/ /;
 
-    my %search_params = ( object_type => $data->{object_type},
-                          object_id => $new_id,
-                          action => $data->{action},
-                          repeat => $data->{repeat},
-                          initial_date => $initial_date );
+    my %search_params = (
+        object_type  => $data->{object_type},
+        object_id    => $new_id,
+        action       => $data->{action},
+        repeat       => $data->{repeat},
+        initial_date => $initial_date
+    );
 
     $initial_date = Time::Piece->from_mysql_datetime($initial_date);
-    $search_params{hour} = $data->{hour} if $data->{hour};
-    $search_params{minute} = $data->{minute} if $data->{minute};
+    $search_params{hour}        = $data->{hour}        if $data->{hour};
+    $search_params{minute}      = $data->{minute}      if $data->{minute};
     $search_params{day_of_week} = $data->{day_of_week} if $data->{day_of_week};
 
-    debug(__PACKAGE__."->deserialize_xml() : finding schedules with params- ".
-          join(',', (map { $search_params{$_} } keys %search_params) ));
+    debug(  __PACKAGE__
+          . "->deserialize_xml() : finding schedules with params- "
+          . join(',', (map { $search_params{$_} } keys %search_params)));
 
     # is there an existing object?
-    my $schedule = (pkg('Schedule')->find( %search_params ))[0] || '';
+    my $schedule = (pkg('Schedule')->find(%search_params))[0] || '';
 
     if (not $schedule) {
-        $schedule = pkg('Schedule')->new(   object_id => $new_id,
-                                            date => $initial_date,
-                                            (map {($_,$data->{$_})}
-                                             keys %simple));
+        $schedule = pkg('Schedule')->new(
+            object_id => $new_id,
+            date      => $initial_date,
+            (
+                map { ($_, $data->{$_}) }
+                  keys %simple
+            )
+        );
         $schedule->save;
     }
 
     return $schedule;
 }
-
-
-
 
 #
 # accessor/mutator for internal _test_date field.
@@ -1043,7 +1086,6 @@ sub _test_date {
     $self->{_test_date} = $_[0];
 
 }
-
 
 #
 # check to confirm that the object associated with the schedule job still exists.
@@ -1059,11 +1101,11 @@ sub _object_exists {
     my $object;
 
     if ($self->{action} eq 'send') {
-        my $alert = (pkg('Alert')->find( alert_id => $self->object_id ))[0];
-        return 1 if $alert; 
+        my $alert = (pkg('Alert')->find(alert_id => $self->object_id))[0];
+        return 1 if $alert;
     } else {
-        my $type = $self->object_type();
-        my $id   = $self->object_id();
+        my $type    = $self->object_type();
+        my $id      = $self->object_id();
         my %context = defined($self->{context}) ? @{$self->{context}} : ();
 
         if ($type eq 'media') {
@@ -1102,8 +1144,8 @@ sub _object_checked_out {
 
     if ($self->{object}) {
         $object = $self->{object};
-    }
-    else {
+    } else {
+
         # might not have been found yet.
         if ($self->_object_exists) {
             $object = $self->{object};
@@ -1125,7 +1167,6 @@ sub _object_checked_out {
 =back
 
 =cut
-
 
 "JAPH";
 
