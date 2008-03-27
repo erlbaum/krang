@@ -1857,11 +1857,9 @@ sub _build_story_single_category {
         }
 
 
-warn "\n$output_path/$block->{filename}\nBEFORE " . length($content) . "\n";
         if( $block->{post_process} ) {
             $block->{post_process}->(\$content);
         }
-warn "AFTER " . length($content) . "\n";
 
         my $output_filename = $self->_write_page(
             data     => $content,
