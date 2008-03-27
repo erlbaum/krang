@@ -367,40 +367,42 @@ sub publish_frontend_app_template {
     my $self = shift;
     my %args = @_;
 
-    my $publisher = $args{publisher} || croak ("No publisher specified");
-    my $filename = $args{filename} || croak("No filename specified");
-    my $use_category = $args{use_category} || 0;
-    my $tmpl_data = $args{tmpl_data} || 0;
+    my $publisher         = $args{publisher}         || croak("No publisher specified");
+    my $filename          = $args{filename}          || croak("No filename specified");
+    my $use_category      = $args{use_category}      || 0;
+    my $tmpl_data         = $args{tmpl_data}         || 0;
     my $fill_with_element = $args{fill_with_element} || 0;
-    my $output_filename = $args{output_filename} || $filename;
+    my $output_filename   = $args{output_filename}   || $filename;
 
     # Find template or die trying
-    my $tmpl = $self->find_template( filename  => $filename,
-                                     publisher => $publisher );
+    my $tmpl = $self->find_template(
+        filename  => $filename,
+        publisher => $publisher
+    );
 
     if ($fill_with_element) {
-        $fill_with_element->class->fill_template
-            ( tmpl => $tmpl,
-              publisher => $publisher,
-              element => $fill_with_element,
-            );
+        $fill_with_element->class->fill_template(
+            tmpl      => $tmpl,
+            publisher => $publisher,
+            element   => $fill_with_element,
+        );
     }
 
     # Put tmpl_data into template
     $tmpl->param(%$tmpl_data) if ($tmpl_data);
 
-    # Convert <DYN_*> to <TMPL_*>
-    my $html = $tmpl->output();
-    $self->_post_process_html(\$html);
 
     # Publish the template
     debug("Publishing template '$filename'");
-    $publisher->additional_content_block( filename => $output_filename,
-                                          content => $html,
-                                          use_category => $use_category );
-
+    $publisher->additional_content_block(
+        filename     => $output_filename,
+        content      => $tmpl->output(),
+        use_category => $use_category,
+        post_process => sub { $self->_post_process_html(shift) },
+    );
 }
 
+# Convert <DYN_*> to <TMPL_*>
 sub _post_process_html {
     my ($self, $html_ref) = @_;
 

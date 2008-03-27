@@ -1363,6 +1363,10 @@ of the file which is published.  The mode should be specified in
 octal (NOT a string).  If not specified, the mode of the published
 file will be based on the umask.
 
+An optional C<post_process> code ref may be supplied that will receive
+the created content as a scalarref after the optional category template
+has been applied.
+
 B<WARNING:> C<additional_content_block()> can be called as many times
 as desired, however it does not perform any sanity checks on
 C<filename> - if your output contains multiple blocks of additional
@@ -1384,6 +1388,8 @@ sub additional_content_block {
     croak __PACKAGE__ . ": missing required argument 'filename'" unless length $block{filename};
     $block{use_category} = exists($args{use_category}) ? $args{use_category} : 1;
     $block{mode}         = exists($args{mode})         ? $args{mode}         : undef;
+    croak __PACKAGE__ . ": post_process is not a code block" if $args{post_process} && !ref $args{post_process} eq 'CODE';
+    $block{post_process} = $args{post_process};
 
     push @{$self->{additional_content}}, \%block;
 
@@ -1849,6 +1855,14 @@ sub _build_story_single_category {
                 and not $story_element->class->publish_category_per_page());
             $content = $cat_header . $content . $cat_footer;
         }
+
+
+warn "\n$output_path/$block->{filename}\nBEFORE " . length($content) . "\n";
+        if( $block->{post_process} ) {
+            $block->{post_process}->(\$content);
+        }
+warn "AFTER " . length($content) . "\n";
+
         my $output_filename = $self->_write_page(
             data     => $content,
             filename => $block->{filename},
