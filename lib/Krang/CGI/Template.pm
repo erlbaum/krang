@@ -760,6 +760,7 @@ sub revert_version {
 
     # Redirect to edit
     $q->delete_all();
+    $q->param('reverted_to_version' => $selected_version);
     return $self->edit;
 }
 
@@ -979,6 +980,7 @@ sub get_tmpl_params {
 
     # loop through template fields
     $tmpl_params{$_} = ($template->$_ || '') for @fields;
+    $tmpl_params{reverted_to_version} = $q->param('reverted_to_version') || '';
     debug("FILENAME: $tmpl_params{filename}");
     $version = $template->version;
 

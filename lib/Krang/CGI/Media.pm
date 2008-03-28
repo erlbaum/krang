@@ -1163,12 +1163,9 @@ sub revert_version {
     add_message("message_revert_version", version => $selected_version);
 
     # Redirect to edit mode
-    my $url = $q->url(-relative=>1);
-    $url .= "?rm=edit";
-    $self->header_props(-uri => $url);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$url\">$url</a>";
+    $q->delete_all();
+    $q->param("reverted_to_version" => $selected_version);
+    return $self->edit;
 }
 
 
@@ -1440,6 +1437,7 @@ sub make_media_tmpl_data {
                                       length => 50 );
         $tmpl_data{published_version} = $m->published_version();
         $tmpl_data{version} = $m->version();
+	$tmpl_data{reverted_to_version} = $q->param('reverted_to_version') || '';
 
         # Display creation_date
         my $creation_date = $m->creation_date();

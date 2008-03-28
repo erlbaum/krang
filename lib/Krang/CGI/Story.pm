@@ -451,6 +451,7 @@ sub edit {
 			 show_slug         => ($story->class->slug_use ne 'prohibit'),
 			 require_slug      => ($story->class->slug_use eq 'require'),
 			 version           => $story->version,
+                         reverted_to_version => $query->param('reverted_to_version') || '',
 			 published_version => $story->published_version);
 
         # build select boxes
@@ -671,6 +672,7 @@ sub revert {
     add_message('reverted_story', version => $version);
 
     $query->delete_all();
+    $query->param(reverted_to_version => $version);
     return $self->edit();
 }
 
@@ -901,12 +903,12 @@ sub db_save_and_stay {
         die($@);
     }
 
-    
     add_message('story_save', story_id => $story->story_id,
                 url      => $story->url,
                 version  => $story->version);
 
     # return to edit
+    $self->query->delete('reverted_to_version'); # if it had a value, it is now defunct
     return $self->edit();
 }
 
