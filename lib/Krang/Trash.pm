@@ -28,8 +28,8 @@ use constant TRASH_OBJECT_FIELDS => qw(
 );
 
 # static part of SQL query
-our $QUERY;
-our $num_user_id = 3;
+our %SQL = ();
+our $NUM_USER_ID = 0;
 
 =head1 NAME
 
@@ -128,8 +128,22 @@ sub find {
         $order_by .= " $order_dir ";
     }
 
-    # built at INIT time
-    my $query = $QUERY;
+    # build overall SQL query
+    my $query = '';
+    my $num_user_id = $NUM_USER_ID;
+    my %perms = pkg('Group')->user_asset_permissions();
+    for my $class (keys %SQL) {
+        # skip hidden assets
+        next if $perms{$class} and $perms{$class} eq 'hide';
+
+        # core assets are all user-sensitive
+        $num_user_id++ if $class =~ /story|media|template/;
+
+        # unionize it
+        $query .= $query
+          ? ' UNION ' . $SQL{$class}
+            : $SQL{$class};
+    }
 
     # mix in order_by
     $query .= " ORDER BY $order_by " if $order_by and not $count;
@@ -171,9 +185,9 @@ sub find {
     return @objects;
 }
 
-# Default query for Krang's core objects
+# Default SQL for Krang's core objects
 # Order matters since this forms our Trash object fassade
-$QUERY = <<SQL;
+$SQL{story} = <<SQL;
 (
 SELECT s.story_id    AS id,
        'story'       AS type,
@@ -195,9 +209,9 @@ SELECT s.story_id    AS id,
  AND   s.trashed = 1
  AND   ucpc.may_see = 1
 )
+SQL
 
-UNION
-
+$SQL{media} = <<SQL;
 (
  SELECT media_id      AS id,
         'media'       AS type,
@@ -216,9 +230,9 @@ UNION
  AND   ucpc.may_see = 1
  AND   m.trashed    = 1
 )
+SQL
 
-UNION
-
+$SQL{template} = <<SQL;
 (
  SELECT template_id   AS id,
         'template'    AS type,
@@ -239,23 +253,41 @@ UNION
 )
 SQL
 
-=item C<< pkg('Trash')->register_find_sql(sql => $sql) >>
+=item C<< pkg('Trash')->register_find_sql(object => $moniker, user_sensitive => 0, sql => $sql) >>
 
 This class method allows custom objects other than Krang's core
 objects Story, Media and Template to register with the trashbin's
 find() method.  It should be called in a BEGIN block!
 
-The only argument C<sql> represents the SQL query to find those
-objects in the trashbin.
+=head2 ARGUMENTS
 
-B<Example for a custom object named "Mailing">
+=over
+
+=item object
+
+This should be the lowercase moniker of your object's class,
+e.g. 'mailing' for Krang::Mailing.
+
+=item sql
+
+This should be the SQL query used to find those objects in the
+trashbin.
+
+=item user_sensitive
+
+Set this flag to true if the sql argument includes a placeholder for
+the logged in user's ID. Defaults to 0.
+
+=back
+
+=item2 Example: A custom object class named "Krang::Mailing"
 
 The SQL select command forms a fassade, mapping asset fields to trash
 object fields.  Order matters!  All fields must be present, though
 they might contain the empty string (as the 'class' field in the
 example below.
 
-Also assumed int the custom objects database table is the presence of
+Also assumed in the custom objects' database table is the presence of
 a boolean column named 'trashed', which is supposed to be set to true
 if the object currently lives in the trashbin.
 
@@ -264,7 +296,7 @@ if the object currently lives in the trashbin.
 
  BEGIN {
 
-     pkg('Trash')->register_find_sql(sql => <<SQL);
+     pkg('Trash')->register_find_sql(object => 'mailing', user_sensitive => 0, sql => <<SQL);
  SELECT mailing_id   AS id,
         'mailing'    AS type,
         subject      AS title,
@@ -286,9 +318,16 @@ if the object currently lives in the trashbin.
 sub register_find_sql {
     my ($pkg, %args) = @_;
 
-    $QUERY .= 'UNION (' . $args{sql} . ')';
+    # got all we need?
+    my @missing = grep { $args{$_} ? 0 : $_ } qw(object sql);
+    croak(__PACKAGE__ . "::register_find_sql(): Missing argument(s): "
+          . join ', ', @missing) if scalar(@missing);
 
-    $num_user_id++;
+    # store sql
+    $SQL{$args{object}} = '(' . $args{sql} . ')';
+
+    # how many user_id placeholders will the query contain?
+    $NUM_USER_ID++ if $args{user_sensitive};
 }
 
 =item C<< pkg('Trash')->store(object => $story) >>

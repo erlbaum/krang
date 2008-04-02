@@ -28,7 +28,7 @@ BEGIN {
 }
 
 # trash object attribs
-my @trash_object_attribs = qw(id type title class url date version may_see may_edit forth_col linkto);
+my @trash_object_attribs = qw(id type title class url date version may_see may_edit linkto);
 
 BEGIN { use_ok(pkg('Trash')) }
 
