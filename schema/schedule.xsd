@@ -27,6 +27,7 @@
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="inactive" type="xs:boolean"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

@@ -124,10 +124,18 @@ my $num_stories = 5;
 
 my $now = localtime;
 my @stories;
-for (1..$num_stories) {
+my $trashed_story;
+for my $num (1..$num_stories) {
 
     my $story = $creator->create_story();
-    push @stories, $story;
+
+    # trashed stories should not publish
+    if ($num == 1) {
+        $story->trash;
+        $trashed_story = $story;
+    } else {
+        push @stories, $story;
+    }
 
     my $sched = pkg('Schedule')->new(
                                      action      => 'publish',
@@ -151,8 +159,31 @@ foreach my $story (@stories) {
     }
 }
 
+# trashed story should not be published
+for my $p ($creator->publish_paths(story => $trashed_story)) {
+    ok(!-e $p, "skipped scheduled publishing of trashed story");
+}
+
+# untrash and schedule-publish again
+pkg('Trash')->restore(object => $trashed_story);
+my $sched = pkg('Schedule')->new(
+                                 action      => 'publish',
+                                 object_id   => $trashed_story->story_id(),
+                                 object_type => 'story',
+                                 repeat      => 'never',
+                                 date        => $now
+                                );
+$sched->save();
+push @schedules, $sched;
+sleep 11;
+
+# trashed story now should be published
+for my $p ($creator->publish_paths(story => $trashed_story)) {
+    ok(-e $p, "story restored from trash has been published");
+}
 
 # test expiration
+push @stories, $trashed_story;
 foreach my $story (@stories) {
 
     my $sched = pkg('Schedule')->new(
@@ -168,7 +199,7 @@ foreach my $story (@stories) {
 
 }
 
-# wait to see if it got published.
+# wait to see if it got unpublished.
 sleep 10;
 
 foreach my $story (@stories) {

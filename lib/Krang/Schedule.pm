@@ -153,6 +153,7 @@ use constant SCHEDULE_RW => qw(
   context
   object_id
   priority
+  inactive
 );
 
 # certain fields, when updated, require recalculation of
@@ -272,6 +273,10 @@ Note that you should not worry about priority, except in special cases.
 L<Krang::Schedule::Daemon> handles how jobs will make adjustments to
 priority if a scheduled task is running late.
 
+=item C<inactive>
+
+If set to 1, the schedule will not be executed. Defaults to 0.
+
 =back
 
 =cut
@@ -292,6 +297,9 @@ sub init {
     my @bad_args;
     my ($date, $day_of_week, $hour, $minute, $test_date, $priority) =
       map { $args{$_} } qw/date day_of_week hour minute test_date priority/;
+
+    # per default a schedule is active
+    $args{inactive} = 0 unless defined($args{inactive});
 
     my ($repeat, $action, $object_type);
 
@@ -697,6 +705,11 @@ Options affecting the search and the results returned:
 
 =over
 
+=item inactive
+
+If set to 1, return only inactive schedules. Defaults to 0 (return
+only active schedules).
+
 =item ids_only
 
 Return only IDs, not full story objects.
@@ -741,6 +754,9 @@ sub find {
     my $count    = delete $args{count}    || '';
     my $ids_only = delete $args{ids_only} || '';
 
+    # find only active schedules per default
+    $args{inactive} = 0 unless defined($args{inactive});
+
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
 
@@ -765,9 +781,10 @@ sub find {
         push @invalid_cols, $arg
           unless (exists $schedule_cols{$lookup_field} || $arg =~ /^next_run/);
 
+        my $and = defined $where_clause && $where_clause ne '' ? ' AND' : '';
         if ($arg eq 'schedule_id' && ref $args{$arg} eq 'ARRAY') {
             my $tmp = join(" OR ", map { "schedule_id = ?" } @{$args{$arg}});
-            $where_clause .= " ($tmp)";
+            $where_clause .= "$and ($tmp)";
             push @params, @{$args{$arg}};
         }
 
@@ -775,7 +792,7 @@ sub find {
         elsif ($arg =~ /^next_run_(.+)$/) {
             my @gtltargs = split(/_/, $1);
 
-            croak("'$arg' is and invalid 'next_run' field comparison.")
+            croak("'$arg' is an invalid 'next_run' field comparison.")
               unless ($gtltargs[0] eq 'greater'
                 || $gtltargs[0] eq 'less'
                 || scalar @gtltargs == 1
@@ -784,7 +801,7 @@ sub find {
             my $operator = $gtltargs[0] eq 'greater' ? '>' : '<';
             $operator .= '=' if scalar @gtltargs == 3;
 
-            $where_clause .= "next_run $operator ";
+            $where_clause .= "$and next_run $operator ";
             if ($args{$arg} eq 'now()') {
                 $where_clause .= 'now()';
             } else {
@@ -793,7 +810,6 @@ sub find {
             }
 
         } else {
-            my $and = defined $where_clause && $where_clause ne '' ? ' AND' : '';
             if (not defined $args{$arg}) {
                 $where_clause .= "$and `$lookup_field` IS NULL";
             } else {
@@ -978,6 +994,7 @@ sub serialize_xml {
       if defined $self->{day_of_week};
 
     $writer->dataElement(priority => $self->{priority});
+    $writer->dataElement(inactive => $self->{inactive});
 
     # context
     if (my $context = $self->{context}) {
@@ -1073,6 +1090,50 @@ sub deserialize_xml {
     }
 
     return $schedule;
+}
+
+=item C<< pkg('Schedule')->activate(object_type => $type, object_id => $id) >>
+
+Activate any schedules on object $type having id $id.
+
+=cut
+
+sub activate {
+    shift->_toggle_inactive_flag(@_, action => 'activate');
+}
+
+=item C<< pkg('Schedule')->inactivate(object_type => $type, object_id => $id) >>
+
+Inactivate any schedules on object $type having id $id.
+
+=cut
+
+sub inactivate {
+    shift->_toggle_inactive_flag(@_, action => 'inactivate');
+}
+
+sub _toggle_inactive_flag {
+    my ($self, %args) = @_;
+
+    croak(__PACKAGE__ . "::$args{action}(): Missing argument '$_'")
+      if grep { not $args{$_} } qw(object_type object_id action);
+
+    my $flag = $args{action} eq 'activate' ? 0 : 1;
+
+    my $dbh = dbh();
+
+    my $query = <<SQL;
+UPDATE schedule SET inactive = ?
+WHERE  object_type = ?
+AND    object_id   = ?
+SQL
+
+    debug(__PACKAGE__ . "->find() SQL: $query");
+
+    $dbh->do($query, undef, $flag, $args{object_type}, $args{object_id})
+      or croak(__PACKAGE__ . "->find() Unable to $args{action} Schedule object via SQL $query");
+
+    return $self;
 }
 
 #

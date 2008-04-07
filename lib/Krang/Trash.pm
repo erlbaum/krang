@@ -259,6 +259,8 @@ This class method allows custom objects other than Krang's core
 objects Story, Media and Template to register with the trashbin's
 find() method.  It should be called in a BEGIN block!
 
+=back
+
 =head2 ARGUMENTS
 
 =over
@@ -280,7 +282,7 @@ the logged in user's ID. Defaults to 0.
 
 =back
 
-=item2 Example: A custom object class named "Krang::Mailing"
+=head2 Example: A custom object class named "Krang::Mailing"
 
 The SQL select command forms a fassade, mapping asset fields to trash
 object fields.  Order matters!  All fields must be present, though
@@ -330,6 +332,8 @@ sub register_find_sql {
     $NUM_USER_ID++ if $args{user_sensitive};
 }
 
+=over
+
 =item C<< pkg('Trash')->store(object => $story) >>
 
 =item C<< pkg('Trash')->store(object => $media) >>
@@ -346,11 +350,8 @@ level.  It must be called by the object's trash() method.
 sub store {
     my ($self, %args) = @_;
 
-    my $object  = $args{object};
-    my $type    = $object->moniker;
-    my $id_meth = $object->id_meth;
-    my $id      = $object->$id_meth;
-
+    my ($type, $id) = $self->_type_and_id_from_object(%args);
+    my $id_meth = $args{object}->id_meth;
     my $dbh = dbh();
 
     # set object's trashed flag
@@ -379,6 +380,9 @@ SQL
 
     # prune the trash
     $self->prune();
+
+    # inactivate schedules on the trashed object
+    pkg('Schedule')->inactivate(object_type => $type, object_id => $id);
 }
 
 =item C<< pkg('Trash')->prune() >>
@@ -448,13 +452,9 @@ sub prune {
             # delete from object table
             my ($object) = $pkg->find($type . '_id' => $id);
             $object->checkin if $object->checked_out;
-            local $ENV{REMOTE_USER} = 1;
+            local $ENV{REMOTE_USER} = pkg('User')->find(login    => 'system',
+                                                        ids_only => 1);
             $pkg->delete($id);
-
-            # delete from trash
-            my $query = "DELETE FROM trash WHERE object_type = ? AND object_id = ?";
-            debug(__PACKAGE__ . "::prune() SQL: " . $query . " ARGS: $type, $id");
-            $dbh->do($query, undef, $type, $id);
         };
         debug(__PACKAGE__ . "::prune() - ERROR: " . $@) if $@;
     }
@@ -498,6 +498,10 @@ sub restore {
     my ($self, %args) = @_;
 
     $args{object}->untrash;
+
+    # activate schedules
+    my ($type, $id) = $self->_type_and_id_from_object(%args);
+    pkg('Schedule')->activate(object_type => $type, object_id => $id);
 }
 
 =item C<< pkg('Trash')->remove(object => $object) >>
@@ -509,23 +513,25 @@ C<untrash()> and C<delete()> methods.
 =cut
 
 sub remove {
+    my $self = shift;
+    my ($type, $id) = $self->_type_and_id_from_object(@_);
+
+    my $query = "DELETE FROM trash WHERE object_type = ? AND object_id = ?";
+
+    debug(__PACKAGE__ . "::delete() SQL: $query, ARGS: $type, $id");
+
+    my $dbh = dbh();
+    $dbh->do($query, undef, $type, $id);
+}
+
+# get object_type and object_id from an object
+sub _type_and_id_from_object {
     my ($self, %args) = @_;
 
     my $object  = $args{object};
     my $id_meth = $object->id_meth;
-    my $id      = $object->$id_meth;
-    my $dbh     = dbh();
 
-    my $query = "DELETE FROM trash WHERE object_type = ? AND object_id = ?";
-
-    debug(  __PACKAGE__
-          . "::delete() SQL: "
-          . $query
-          . " ARGS: "
-          . $object->moniker . ', '
-          . $object->$id_meth);
-
-    $dbh->do($query, undef, $object->moniker, $object->$id_meth);
+    return ($object->moniker, $object->$id_meth);
 }
 
 1;

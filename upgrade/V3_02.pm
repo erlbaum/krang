@@ -31,6 +31,9 @@ sub per_instance {
     $dbh->do('Update group_permission SET admin_delete = 1 WHERE group_id = 1');
     $dbh->do('Update group_permission SET admin_delete = 1 WHERE group_id = 2');
 
+    # add 'inactive' flag to schedule table
+    $dbh->do('Alter TABLE schedule ADD COLUMN inactive BOOL NOT NULL DEFAULT 0');
+
     # create the trashbin table
     $dbh->do(<<SQL);
 CREATE TABLE trash (

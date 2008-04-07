@@ -551,6 +551,40 @@ is($#schedule_files, -1, 'deleting repeat(never) jobs');
 
 
 ##############################
+# test inactive flag 
+
+# new story
+$story = $creator->create_story(category => [$category], slug => 'inactive_flag_test');
+$story_id = $story->story_id;
+
+# create a schedule object to publish a story hourly.
+$sched = pkg('Schedule::Action::publish')->new(
+                              action      => 'publish',
+                              object_id   => $story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'hourly',
+                              minute      => 0,
+                              test_date   => $date
+                             );
+
+$sched->save();
+push @schedules, $sched;
+
+# move the story to the trashbin and test trashed flag
+$story->trash;
+is($story->trashed, 1, "Story scheduled for publishing moved to trashbin");
+
+# test 'inactive' flag of schedule object
+($sched) = $sched->find(schedule_id => $sched->schedule_id, inactive => 1);
+is($sched->inactive, 1, "Schedule for Story $story_id is inactive");
+
+# move story back to Live and test its scheduler object again
+pkg('Trash')->restore(object => $story);
+is($story->trashed, 0, "Story scheduled for publishing moved back to Live");
+($sched) = $sched->find(schedule_id => $sched->schedule_id);
+is($sched->inactive, 0, "Schedule for Story $story_id is inactive");
+
+##############################
 # alert
 
 

@@ -14,6 +14,7 @@ CREATE TABLE schedule (
         hour            INT UNSIGNED,
         minute          INT UNSIGNED,
         priority        INT UNSIGNED NOT NULL,
+        inactive        BOOL NOT NULL DEFAULT 0,
 
         PRIMARY KEY (schedule_id),
         INDEX       (object_type, object_id),
