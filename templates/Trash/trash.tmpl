@@ -6,8 +6,12 @@ Krang.onload( function() {
 } );
 
 <tmpl_if krang_pager_rows>
+
+  restore_object = function(type_id) {
+    Krang.Form.submit('krang_pager_form', { rm: 'restore_object', type_id : type_id });
+  }
   
-  <tmpl_if asset_may_restore>
+  <tmpl_if show_list_controls>
     restore_checked = function()
     {
       var question = '';
@@ -65,26 +69,26 @@ Trash
 <tmpl_unless krang_pager_rows>
 
   <p class="naught">
-  The Trashbin is currently empty.
+  The Trash is currently empty.
   </p>
 
 <tmpl_else>
 
   <form name="krang_pager_form" method="post" action="trash.pl">
 
-  <input name="rm"    type="hidden">
-  <input name="type"  type="hidden">
-  <input name="id"    type="hidden">
+  <input name="rm"      type="hidden">
+  <input name="type"    type="hidden">
+  <input name="id"      type="hidden">
+  <input name="type_id" type="hidden">
+
   <tmpl_include HTMLPager/pager-internals.tmpl>
 
-  <tmpl_if asset_may_restore><div class="panel capped"><tmpl_else><tmpl_if asset_may_restore><div class="panel capped"></tmpl_if></tmpl_if>
-  <tmpl_if asset_may_restore>
+  <tmpl_if show_list_controls><div class="panel capped">
     <input value="Restore" onclick="restore_checked()" type="button">
-  </tmpl_if>
-  <tmpl_if admin_may_delete>
-    <input value="Delete" onclick="delete_checked()" type="button">
-  </tmpl_if>
-  <tmpl_if asset_may_restore></div><tmpl_else><tmpl_if admin_may_delete></div</tmpl_if></tmpl_if>
+    <tmpl_if admin_may_delete>
+      <input value="Delete" onclick="delete_checked()" type="button">
+    </tmpl_if>
+  </div></tmpl_if>
 
   <tmpl_include HTMLPager/pager-pagination.tmpl>
 
@@ -111,7 +115,7 @@ Trash
       <tmpl_var colhead_url></th>
   <th></th>
   <th><tmpl_var colhead_date></th>
-  <th class="l tick"><tmpl_if show_list_checkbox><tmpl_var colhead_checkbox_column></tmpl_if></th>
+  <th class="l tick"><tmpl_if show_list_controls><tmpl_var colhead_checkbox_column></tmpl_if></th>
   </tr>
   </thead>
 
@@ -126,10 +130,13 @@ Trash
     <br><tmpl_var url><!--:markup-->
 
     <!-- story type and version -->
-    <br><tmpl_var escape=html class>(Version <tmpl_var escape=html version>)
+    <br><tmpl_if class><tmpl_var escape=html class> (</tmpl_if>Version <tmpl_var escape=html version><tmpl_if class>)</tmpl_if>
 
-    <!-- Commands -->
-    <br><input value="View Detail" onclick="view_object('<tmpl_var escape=html type>', <tmpl_var escape=html id>)" type="button" class="button">
+    <br><!-- Commands -->
+    <input value="View Detail" onclick="view_object('<tmpl_var escape=html type>', <tmpl_var escape=html id>)" type="button" class="button">
+    <tmpl_if may_edit>
+    <input value="Restore" onclick="restore_object('<tmpl_var escape=html type>_<tmpl_var escape=html id>')" type="button" class="button">
+    </tmpl_if>
     </td>
 
     <tmpl_if thumbnail_src>
@@ -140,7 +147,7 @@ Trash
 
     <td><tmpl_var date escape=html></td>
 
-    <td class="tick l"><tmpl_if show_checkbox>
+    <td class="tick l"><tmpl_if may_edit>
       <tmpl_var checkbox_column>
     </tmpl_if></td>
     </tr>
@@ -151,14 +158,12 @@ Trash
 
   <tmpl_include HTMLPager/pager-pagination.tmpl>
 
-  <tmpl_if asset_may_restore><div class="panel capped"><tmpl_else><tmpl_if asset_may_restore><div class="panel capped"></tmpl_if></tmpl_if>
-  <tmpl_if asset_may_restore>
+  <tmpl_if show_list_controls><div class="panel capped">
     <input value="Restore" onclick="restore_checked()" type="button">
-  </tmpl_if>
-  <tmpl_if admin_may_delete>
-    <input value="Delete" onclick="delete_checked()" type="button">
-  </tmpl_if>
-  <tmpl_if asset_may_restore></div><tmpl_else><tmpl_if admin_may_delete></div</tmpl_if></tmpl_if>
+    <tmpl_if admin_may_delete>
+      <input value="Delete" onclick="delete_checked()" type="button">
+    </tmpl_if>
+  </div></tmpl_if>
 
   </form>
 
