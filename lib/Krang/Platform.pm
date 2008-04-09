@@ -213,9 +213,7 @@ sub check_libjpeg {
     $pkg->_check_libs(%args,
                       module => 'Imager',
                       name => 'libjpeg',
-                      lib   => 'jpeg',
-                      h    => 'jpeglib.h');
-
+                      lib   => 'jpeg',);
 
 }
 
