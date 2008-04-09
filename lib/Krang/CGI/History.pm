@@ -5,18 +5,18 @@ use strict;
 use warnings;
 
 our %ACTION_LABELS = (
-    new       => 'Created',
-    save      => 'Saved',
-    checkin   => 'Checked In',
-    checkout  => 'Checked Out',
-    publish   => 'Published',
-    deploy    => 'Deployed',
-    move      => 'Moved',
-    revert    => 'Reverted',
-    archive   => 'Archived',
-    unarchive => 'Unarchived',
-    trash     => 'Trashed',
-    untrash   => 'Untrashed'
+    new       => 'created',
+    save      => 'saved',
+    checkin   => 'checked In',
+    checkout  => 'checked Out',
+    publish   => 'published',
+    deploy    => 'deployed',
+    move      => 'moved',
+    revert    => 'reverted',
+    archive   => 'archived',
+    unarchive => 'unarchived',
+    trash     => 'trashed',
+    untrash   => 'untrashed'
 );
 
 use Carp qw(croak);
