@@ -45,6 +45,7 @@ sub setup {
               goto_view
               delete_checked
               restore_checked
+              restore_object
               )
         ]
     );
@@ -69,19 +70,10 @@ sub find {
     );
 
     # admin delete permission
-    my %admin_permissions = pkg('Group')->user_admin_permissions();
-    my $admin_may_delete  = $admin_permissions{admin_delete};
-    $template->param(admin_may_delete => $admin_may_delete);
+    $template->param(admin_may_delete => pkg('Group')->user_admin_permissions('admin_delete'));
 
-    # category-specific restore permission
+    # asset permissions
     my %asset_permissions = pkg('Group')->user_asset_permissions();
-    my $asset_may_restore = grep { $asset_permissions{$_} eq 'edit' }
-      keys %asset_permissions;
-    $template->param(asset_may_restore => $asset_may_restore);
-
-    # maybe show list checkbox
-    $template->param(show_list_checkbox => 1)
-      if $admin_may_delete or $asset_may_restore;
 
     my %col_labels = (
         id    => 'ID',
@@ -99,7 +91,7 @@ sub find {
         column_labels    => \%col_labels,
         columns_sortable => [qw(id type title url date)],
         id_handler  => sub { $self->_id_handler(@_) },
-        row_handler => sub { $self->_row_handler(@_, \%asset_permissions, \%admin_permissions) },
+        row_handler => sub { $self->_row_handler(@_, \%asset_permissions) },
     );
 
     # Run the pager
@@ -110,21 +102,22 @@ sub find {
 sub _id_handler { return $_[1]->{type} . '_' . $_[1]->{id} }
 
 sub _row_handler {
-    my ($self, $row, $obj, $asset_permission_for, $admin_permission) = @_;
+    my ($self, $row, $obj, $pager, $asset_permission_for) = @_;
 
     # do the clone
     $row->{$_} = $obj->{$_} for keys %$obj;
 
-    # show the item's checkbox (determined by user's category permissions)
-    $row->{show_checkbox} = $obj->{may_edit};
+    # Uppercase story type
+    $row->{class} = ucfirst($row->{class});
 
-    # mix in user asset permission
-    $row->{show_checkbox} = 0
+    # correct may_edit flag
+    $row->{may_edit} = 0
       unless $asset_permission_for->{$obj->{type}} eq 'edit';
 
-    # anyway, show the checkbox if we have admin_delete permission
-    $row->{show_checkbox} = 1
-      if $admin_permission->{admin_delete};
+    # maybe show list controls
+    if ($row->{may_edit}) {
+        $pager->show_list_controls(1);
+    }
 
     # format date
     my $date = $obj->{date};
@@ -223,7 +216,7 @@ sub delete_checked {
 =item restore_checked
 
 Restore a list of checked ojects, bringing them back to Live or to the
-Archive.  Requires an 'id' parameter of the form 'type_id'.
+Archive.  Requires a 'krang_pager_rows_checked' param.
 
 =cut
 
@@ -251,6 +244,20 @@ sub restore_checked {
     $self->_register_msg(\@restored, \@failed);
 
     return $self->find;
+}
+
+=item restore_object
+
+Restore one object, bringing it back to Live or to the
+Archive.  Requires an 'type_id' param.
+
+=cut
+
+sub restore_object {
+    my $self  = shift;
+    my $query = $self->query;
+    $query->param(krang_pager_rows_checked => $query->param('type_id'));
+    return $self->restore_checked;
 }
 
 #
