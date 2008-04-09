@@ -89,7 +89,7 @@ Edit Category
 <!--:ElementEditor/edit.tmpl-->
 
 <div class="panel capped">
-<input class="west" type="button" onclick="cancel_category_change()" value="Cancel Category Edit"/>
+<input class="west" type="button" onclick="cancel_category_change()" value="Cancel"/>
 
 <tmpl_if bulk_edit> 
   <input value="Done Bulk Editing <tmpl_var name_of_this_element>" onclick="save_and_leave()" type="button" class="west">
@@ -97,16 +97,17 @@ Edit Category
 <tmpl_else>
 
   <tmpl_if is_root>
-    <input value="Delete Category" onclick="remove_category()" type="button">
+    <input value="Save &amp; Stay" onclick="db_save_and_stay()" type="button">
+    <input value="Save" onclick="db_save()" type="button">
+    <input value="Delete" onclick="remove_category()" type="button">
   <tmpl_else>
     <input value="Done Editing <tmpl_var name_of_this_element>" onclick="save_and_leave()" type="button" class="west">
+    <input value="Save &amp; Stay" onclick="db_save_and_stay()" type="button">
+    <input value="Save" onclick="db_save()" type="button">
     <tmpl_unless bulk_edit><tmpl_if allow_delete>
-      <input value="Delete <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
+      <input value="Delete <tmpl_var name_of_this_element>" onclick="remove_element()" type="button">
     </tmpl_if></tmpl_unless>
   </tmpl_if>
-
-  <input value="Save Category &amp; Stay" onclick="db_save_and_stay()" type="button">
-  <input value="Save Category" onclick="db_save()" type="button">
 
 </tmpl_if>
 
