@@ -69,6 +69,7 @@ use Krang::ClassLoader MethodMaker => (
                                                row_handler
                                                id_handler
                                                max_page_links
+                                               show_list_controls
                                              ) ],
                        );
 
@@ -127,6 +128,7 @@ sub init {
                     command_column_commands => [],
                     command_column_labels => {},
                     max_page_links => 10,
+                    show_list_controls => 0,
                    );
 
     # finish the object
@@ -576,6 +578,13 @@ set to "descending"  If not set, this property will
 default to "0" and sort order will consequently default
 to "ascending".
 
+=item show_list_controls
+
+  show_list_controls => 1
+
+A boolean filled into the template. It may be used as a tmpl_if to
+control the display of list controls (see the following documentation
+on row_handler). Defaults to 0.
 
 =item row_handler
 
@@ -583,18 +592,24 @@ to "ascending".
 
 A subroutine reference pointing to a custom function to process each
 row of data.  This function will receive, as arguments, a hashref into
-which row data should be placed and a reference to the object to be
-displayed on this row.  The job of your custom function is to convert
-the object attributes into template data and set that data in the 
-hashref.  For example:
+which row data should be placed, a reference to the object to be
+displayed on this row and a reference to the pager object.  The job of
+your custom function is to convert the object attributes into template
+data and set that data in the hashref.  For example:
 
   sub my_row_handler {
-    my ($self, $row_hashref, $row_obj) = @_;
+    my ($self, $row_hashref, $row_obj, $pager) = @_;
     $row_hashref->{first_middle} = $row_obj->first() . " " . $row_obj->middle();
     $row_hashref->{last} = $row_obj->last();
     $row_hashref->{type} = join(", ", ($row_obj->contrib_type_names()) );
+    $pager->show_list_controls(1) if $row_obj->may_edit;
   }
 
+The purpose of passing in the pager object is to make the display of
+list controls (list checkbox and buttons) dependant on some row object
+attribute.  The Trash for example may contain stories, media and
+templates. If a user has only template edit permission, but the trash
+contains no templates, the list controls should not be displayed.
 
 =item id_handler
 
@@ -1062,7 +1077,7 @@ sub get_pager_view {
 
         # Call row_handler
         my $row_handler = $self->row_handler();
-        $row_handler->(\%row_data, $fobj);
+        $row_handler->(\%row_data, $fobj, $self);
 
         # Propagate to template
         push(@krang_pager_rows, \%row_data);
@@ -1090,6 +1105,7 @@ sub get_pager_view {
                       next_page_number   => $next_page_number,
                       krang_pager_rows   => \@krang_pager_rows,
                       other_search_place => ($q->param('other_search_place') || ''),
+                      show_list_controls => $self->{show_list_controls},
                      );
 
     return \%pager_view;
