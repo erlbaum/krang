@@ -128,7 +128,7 @@ sub init {
                     command_column_commands => [],
                     command_column_labels => {},
                     max_page_links => 10,
-                    show_list_controls => 0,
+                    show_list_controls => undef,
                    );
 
     # finish the object
@@ -584,7 +584,7 @@ to "ascending".
 
 A boolean filled into the template. It may be used as a tmpl_if to
 control the display of list controls (see the following documentation
-on row_handler). Defaults to 0.
+on row_handler). Defaults to undef.
 
 =item row_handler
 
@@ -1105,8 +1105,10 @@ sub get_pager_view {
                       next_page_number   => $next_page_number,
                       krang_pager_rows   => \@krang_pager_rows,
                       other_search_place => ($q->param('other_search_place') || ''),
-                      show_list_controls => $self->{show_list_controls},
                      );
+
+    $pager_view{show_list_controls} = $self->{show_list_controls}
+      if defined($self->{show_list_controls});
 
     return \%pager_view;
 }
