@@ -333,7 +333,7 @@ sub install {
     pkg('ClassFactory')->reload_configuration();
 
     # perform upgrades if necessary
-    $pkg->_upgrade(%args) if $old;
+    $pkg->upgrade(%args, old_version => $old->version) if $old;
 
     # run the post install script if required
     system("KRANG_ROOT=" . KrangRoot . " $^X " . 
@@ -349,18 +349,16 @@ sub install {
 #
 
 # do upgrades if necessary
-sub _upgrade {
+sub upgrade {
     my ($pkg, %args) = @_;
-    my ($source, $verbose, $force, $conf, $old) = 
-      @args{('src', 'verbose', 'force', 'conf', 'old')};
+    my ($verbose, $old_version) = @args{qw(verbose old_version)};
 
     return unless -d 'upgrade';
-    my $old_version = $old->version;
     
     # get list of potential upgrades
     opendir(UDIR, 'upgrade') or die $!;
     my @mod = grep {
-        /^V(\d+)\_(\d+)(?:_(\d+))\.pm$/
+        /^V(\d+)\_(\d+)(?:_(\d+))?\.pm$/
           and $pkg->_compare_versions("$1.$2" . ($3 ? ".$3" : ''), '>', $old_version)
       }
       sort readdir(UDIR);
