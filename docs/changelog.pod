@@ -8,6 +8,16 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Added C<Krang::Schedule::Action::archive> to allow scheduled archiving
+of stories and media. [Bodo Schulze]
+
+=item *
+
+Script F<bin/krang_upload_templates> uploads templates as UTF-8 if
+Charset is UTF-8. [Bodo Schulze]
+
 =item * 
 
 History mechanism is not tied to specific types of objects and can be extended
