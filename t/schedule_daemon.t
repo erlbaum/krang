@@ -183,7 +183,6 @@ for my $p ($creator->publish_paths(story => $trashed_story)) {
 }
 
 # test expiration
-push @stories, $trashed_story;
 foreach my $story (@stories) {
 
     my $sched = pkg('Schedule')->new(
@@ -209,3 +208,23 @@ foreach my $story (@stories) {
         ok(!-e $p, 'story expired');
     }
 }
+
+# test archiving
+$sched = pkg('Schedule')->new(
+                              action      => 'archive',
+                              object_id   => $trashed_story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'never',
+                              date        => $now
+                             );
+$sched->save();
+push @schedules, $sched;
+sleep 11;
+
+# story should now be archived
+for my $p ($creator->publish_paths(story => $trashed_story)) {
+    ok(! -e $p, "previously published story has been archived (removed from website)");
+}
+
+($trashed_story) = pkg('Story')->find(story_id => $trashed_story->story_id);
+is($trashed_story->archived, 1, "previously published story has been archived (still exists in database)");

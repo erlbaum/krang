@@ -87,6 +87,7 @@ use_ok(pkg('Schedule::Action::publish'));
 use_ok(pkg('Schedule::Action::send'));
 use_ok(pkg('Schedule::Action::clean'));
 use_ok(pkg('Schedule::Action::expire'));
+use_ok(pkg('Schedule::Action::archive'));
 
 
 # create story and media object.
@@ -582,7 +583,7 @@ is($sched->inactive, 1, "Schedule for Story $story_id is inactive");
 pkg('Trash')->restore(object => $story);
 is($story->trashed, 0, "Story scheduled for publishing moved back to Live");
 ($sched) = $sched->find(schedule_id => $sched->schedule_id);
-is($sched->inactive, 0, "Schedule for Story $story_id is inactive");
+is($sched->inactive, 0, "Schedule for Story $story_id is again active");
 
 ##############################
 # alert
