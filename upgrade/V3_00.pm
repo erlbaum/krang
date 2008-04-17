@@ -25,9 +25,9 @@ sub per_instance {
     my $dbh = dbh();
 
     # add the 'use_autocomplete' preference
-    $dbh->do('INSERT INTO pref (id, value) VALUES ("use_autocomplete", "1")');
+#    $dbh->do('INSERT INTO pref (id, value) VALUES ("use_autocomplete", "1")');
     # add the 'message_timeout' preference
-    $dbh->do('INSERT INTO pref (id, value) VALUES ("message_timeout", "5")');
+#    $dbh->do('INSERT INTO pref (id, value) VALUES ("message_timeout", "5")');
     # change sessions and story_version tables to handle UTF-8
     $dbh->do('ALTER TABLE sessions CHANGE COLUMN a_session a_session BLOB');
     $dbh->do('ALTER TABLE story_version CHANGE COLUMN data data BLOB');
