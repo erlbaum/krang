@@ -99,6 +99,8 @@ sub edit {
         )
     );
 
+    $template->param(password_spec => pkg('PasswordHandler')->_password_spec);
+
     return $template->output; 
 }
 

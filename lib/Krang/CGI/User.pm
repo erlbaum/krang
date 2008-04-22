@@ -115,6 +115,8 @@ sub add {
 
     $t->param($self->get_user_params($user));
 
+    $t->param(password_spec => pkg('PasswordHandler')->_password_spec);
+
     return $t->output();
 }
 
@@ -395,6 +397,8 @@ sub edit {
     $t->param(%ui_messages) if %ui_messages;
 
     $t->param($self->get_user_params($user));
+
+    $t->param(password_spec => pkg('PasswordHandler')->_password_spec);
 
     return $t->output();
 }
