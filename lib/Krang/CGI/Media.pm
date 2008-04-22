@@ -1406,7 +1406,7 @@ sub list_active_row_handler {
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
         $row->{thumbnail} =
-          "<a href='javascript:Krang.preview('media', $media_id)'><img src=\"$thumbnail_path\" border=0></a>";
+          qq{<a href="javascript:Krang.preview('media', $media_id)"><img src="$thumbnail_path" border="0" class="thumbnail"></a>};
     } else {
         $row->{thumbnail} = "&nbsp;";
     }
