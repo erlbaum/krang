@@ -239,7 +239,7 @@ $@ ? fail('Krang::Schedule->repeat()') : pass('Krang::Schedule->repeat()');
 is($sched->next_run(), $publish_date->mysql_datetime, 'Krang::Schedule->next_run()');
 
 # change date to 2003-03-01 12:00:00 (publish time)
-# next publish should be 2003-03-02 12:00:00
+# next publish should be 2003-03-01 12:00:00
 _check_calc_next_run($sched, '2003-03-01 12:00:00', '2003-03-01 12:00:00');
 
 # change date to 2003-03-01 12:01:00 (one minute after publish)-
@@ -291,6 +291,192 @@ _check_calc_next_run($sched, '2003-03-01 00:30:00', '2003-03-01 01:00:00');
 # next publish should be 2003-03-01 01:00:00
 _check_calc_next_run($sched, '2003-03-01 00:31:00', '2003-03-01 01:00:00');
 
+##################################################
+##################################################
+#
+# Monthly and interval calculations
+#
+
+# reset internal test date -- 2003-03-01 00:00:00
+$date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
+
+# Create new story publish job - repeats monthly on the 3rd at noon.
+$sched = pkg('Schedule::Action::publish')->new(
+                              action      => 'publish',
+                              object_id   => $story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'monthly',
+                              day_of_month => 3,
+                              hour        => 12,
+                              minute      => 0,
+                              test_date   => $date
+                             );
+
+isa_ok($sched, 'Krang::Schedule');
+isa_ok($sched, 'Krang::Schedule::Action');
+isa_ok($sched, 'Krang::Schedule::Action::publish');
+
+# save test
+isa_ok($sched->save(), 'Krang::Schedule');
+
+push @schedules, $sched;
+
+# check next run - should be 2003-03-3 12:00:00.
+$publish_date = Time::Piece->from_mysql_datetime('2003-03-03 12:00:00');
+
+is($sched->next_run(), $publish_date->mysql_datetime, 'monthly - Krang::Schedule next_run()');
+
+# change date to 2003-03-03 12:00:00 (publish time).
+# Next publish should be 2003-03-03 12:00:00.
+_check_calc_next_run($sched, '2003-03-03 12:00:00', '2003-03-03 12:00:00');
+
+# change date to 2003-03-03 12:01:00 (1 minute past publish).
+# Next publish should be 2003-04-03 12:00:00.
+_check_calc_next_run($sched, '2003-03-03 12:01:00', '2003-04-03 12:00:00');
+
+# change date to 2003-03-03 13:01:00 (1 hour, 1 minute past publish).
+# Next publish should be 2003-04-03 12:00:00.
+_check_calc_next_run($sched, '2003-03-03 13:01:00', '2003-04-03 12:00:00');
+
+# change date to 2003-03-03 11:59:00 (1 minute before publish).
+# Next publish should be 2003-03-03 12:00:00.
+_check_calc_next_run($sched, '2003-03-03 11:59:00', '2003-03-03 12:00:00');
+
+# change date to 2003-05-02 12:01:00 (one day before publish, some time in the future).
+# Next publish should be 2003-05-03 12:00:00
+_check_calc_next_run($sched, '2003-05-02 12:01:00', '2003-05-03 12:00:00');
+
+##############################
+#
+# test negative values
+#
+
+# reset internal test date -- 2003-03-01 00:00:00
+$date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
+
+$sched->_test_date($date);
+$sched->day_of_month(-4);
+
+# check next run - should be 2003-03-28 12:00:00.
+$publish_date = Time::Piece->from_mysql_datetime('2003-03-28 12:00:00');
+
+is($sched->next_run(), $publish_date->mysql_datetime, 'monthly - Krang::Schedule next_run()');
+
+# change date to 2003-03-28 12:00:00 (publish time).
+# Next publish should be 2003-03-28 12:00:00.
+_check_calc_next_run($sched, '2003-03-28 12:00:00', '2003-03-28 12:00:00');
+
+# change date to 2003-03-28 12:00:00 (publish time).
+# Next publish should be 2003-03-28 12:00:00.
+_check_calc_next_run($sched, '2003-03-28 12:00:00', '2003-03-28 12:00:00');
+
+# change date to 2003-03-28 12:01:00 (1 minute past publish).
+# Next publish should be 2003-04-27 12:00:00.
+_check_calc_next_run($sched, '2003-03-28 12:01:00', '2003-04-27 12:00:00');
+
+# change date to 2003-03-03 13:01:00 (1 hour, 1 minute past publish).
+# Next publish should be 2003-04-03 12:00:00.
+_check_calc_next_run($sched, '2003-03-28 13:01:00', '2003-04-27 12:00:00');
+
+# change date to 2003-03-03 11:59:00 (1 minute before publish).
+# Next publish should be 2003-03-03 12:00:00.
+_check_calc_next_run($sched, '2003-03-28 11:59:00', '2003-03-28 12:00:00');
+
+# change date to 2003-05-26 12:01:00 (one day before publish, some time in the future).
+# Next publish should be 2003-05-28 12:00:00
+_check_calc_next_run($sched, '2003-05-27 12:01:00', '2003-05-28 12:00:00');
+
+##############################
+#
+# Intervals
+#
+
+# reset internal test date -- 2003-03-01 00:00:00
+$date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
+
+# Create new story publish job - repeats every 10 days
+$sched = pkg('Schedule::Action::publish')->new(
+                              action      => 'publish',
+                              object_id   => $story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'interval',
+                              day_interval => 10,
+                              date        => $date,
+                              test_date   => $date,
+                             );
+
+isa_ok($sched, 'Krang::Schedule');
+isa_ok($sched, 'Krang::Schedule::Action');
+isa_ok($sched, 'Krang::Schedule::Action::publish');
+
+# save test
+isa_ok($sched->save(), 'Krang::Schedule');
+
+push @schedules, $sched;
+
+# check next run - should be 2003-03-10 12:00:00.
+$publish_date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
+
+is($sched->next_run(), $publish_date->mysql_datetime, 'interval - Krang::Schedule next_run()');
+
+# change date to 2003-03-01 12:01:00 (1 minute past publish).
+# Next publish should be 2003-03-11 12:00:00.
+_check_calc_next_run($sched, '2003-03-01 12:01:00', '2003-03-11 12:00:00');
+
+# change date to 2003-03-01 13:01:00 (1 hour, 1 minute past publish).
+# Next publish should be 2003-03-11 12:00:00.
+_check_calc_next_run($sched, '2003-03-01 13:01:00', '2003-03-11 12:00:00');
+
+# change date to 2003-03-01 11:59:00 (1 minute before publish).
+# Next publish should be 2003-03-01 12:00:00.
+_check_calc_next_run($sched, '2003-03-01 11:59:00', '2003-03-01 12:00:00');
+
+# change date to 2003-03-20 12:01:00 (one day before publish, some time in the future).
+# Next publish should be 2003-03-21 12:00:00
+_check_calc_next_run($sched, '2003-03-20 12:01:00', '2003-03-21 12:00:00');
+
+
+##################################################
+##################################################
+#
+# Testing expirations
+#
+
+# reset internal test date -- 2003-03-01 00:00:00
+$date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
+my $expires = Time::Piece->from_mysql_datetime('2003-03-15 12:00:00');
+
+# Create new story publish job - repeats weekly - Mondays at noon.
+$sched = pkg('Schedule::Action::publish')->new(
+                              action      => 'publish',
+                              object_id   => $story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'weekly',
+                              day_of_week => 1,
+                              hour        => 12,
+                              minute      => 0,
+                              test_date   => $date,
+                              expires     => $expires,
+                             );
+
+isa_ok($sched, 'Krang::Schedule');
+isa_ok($sched, 'Krang::Schedule::Action');
+isa_ok($sched, 'Krang::Schedule::Action::publish');
+
+# save test
+isa_ok($sched->save(), 'Krang::Schedule');
+
+push @schedules, $sched;
+
+# check next run - should be 2003-03-3 12:00:00.
+$publish_date = Time::Piece->from_mysql_datetime('2003-03-03 12:00:00');
+
+is($sched->next_run(), $publish_date->mysql_datetime, 'Krang::Schedule next_run()');
+
+# check that expires is right
+my $expires_date = Time::Piece->from_mysql_datetime('2003-03-15 12:00:00');
+
+is($sched->expires, $expires_date->mysql_datetime, 'Krang::Schedule->expires');
 
 ##################################################
 ##################################################
@@ -348,7 +534,7 @@ _check_calc_next_run($sched, '2003-03-01 23:59:00', '2003-03-02 00:00:00');
 eval { $sched->repeat('weekly'); };
 $@ ? pass('Krang::Schedule->repeat()') : fail('Krang::Schedule->repeat()');
 
-# set hour - should pass now.
+# set day_of_week - should pass now.
 $sched->day_of_week(1);
 eval { $sched->repeat('weekly'); };
 $@ ? fail('Krang::Schedule->repeat()') : pass('Krang::Schedule->repeat()');
@@ -357,6 +543,20 @@ $@ ? fail('Krang::Schedule->repeat()') : pass('Krang::Schedule->repeat()');
 _check_calc_next_run($sched, '2003-03-01 00:00:00', '2003-03-03 00:00:00');
 _check_calc_next_run($sched, '2003-03-03 00:01:00', '2003-03-10 00:00:00');
 _check_calc_next_run($sched, '2003-03-09 23:59:00', '2003-03-10 00:00:00');
+
+# change repeat to monthly - it should croak.
+eval { $sched->repeat('monthly'); };
+$@ ? pass('Krang::Schedule->repeat()') : fail('Krang::Schedule->repeat()');
+
+# set day_of_month - should pass now.
+$sched->day_of_month(3);
+eval { $sched->repeat('monthly'); };
+$@ ? fail('Krang::Schedule->repeat()') : pass('Krang::Schedule->repeat()');
+
+# confirm nextrun is still correct.
+_check_calc_next_run($sched, '2003-03-01 00:00:00', '2003-03-03 00:00:00');
+_check_calc_next_run($sched, '2003-03-03 00:01:00', '2003-04-03 00:00:00');
+_check_calc_next_run($sched, '2003-04-09 23:59:00', '2003-05-03 00:00:00');
 
 
 ##################################################

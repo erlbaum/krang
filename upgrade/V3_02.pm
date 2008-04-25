@@ -44,6 +44,12 @@ CREATE TABLE trash (
 ) TYPE=MyISAM;
 SQL
 
+    # add new columns to Schedule
+    $dbh->do('ALTER TABLE schedule ADD expires DATETIME AFTER next_run');
+    $dbh->do('ALTER TABLE schedule ADD day_of_month INT AFTER expires');
+    $dbh->do('ALTER TABLE schedule ADD day_interval INT UNSIGNED AFTER day_of_week');
+    $dbh->do("ALTER TABLE schedule CHANGE COLUMN `repeat` `repeat` ENUM('never', 'hourly', 'daily', 'weekly', 'monthly', 'interval') NOT NULL");
+
 }
 
 1;
