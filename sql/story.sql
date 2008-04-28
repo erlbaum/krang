@@ -25,7 +25,7 @@ CREATE TABLE story (
         desk_id         SMALLINT UNSIGNED,
         last_desk_id    SMALLINT UNSIGNED,
 
-        archived        BOOL NOT NULL DEFAULT 0,
+        retired        BOOL NOT NULL DEFAULT 0,
         trashed         BOOL NOT NULL DEFAULT 0,
 
         INDEX(desk_id),

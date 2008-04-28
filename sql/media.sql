@@ -23,7 +23,7 @@ CREATE TABLE media (
 	published_version       mediumint unsigned default NULL,
 	publish_date            datetime default NULL,
 	checked_out_by          smallint unsigned default NULL,
-	archived                bool NOT NULL DEFAULT 0,
+	retired                bool NOT NULL DEFAULT 0,
 	trashed                 bool NOT NULL DEFAULT 0,
 	PRIMARY KEY (media_id),
 	KEY (category_id),
