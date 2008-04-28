@@ -489,7 +489,7 @@ sub delete {
 =item C<< pkg('Trash')->restore(object => $other) >>
 
 Restores the specified object from the trashbin back to live or to the
-archive (depending from where it has been deleted).  The object must
+retired section (depending from where it has been deleted).  The object must
 implement a method named C<untrash()> that does the heavy lifting.
 
 =cut

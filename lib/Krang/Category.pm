@@ -537,7 +537,7 @@ sub dependent_check {
           ? (category_id => $id, show_hidden => 1)
           : (category_id => $id);
 
-        @find_args{qw(include_archived include_trashed)} = (1, 1);
+        @find_args{qw(include_retired include_trashed)} = (1, 1);
 
         for ("Krang::$type"->find(%find_args)) {
             my $field = lc $type . "_id";
@@ -607,11 +607,11 @@ SQL
 
     # 2) check for story that has our URL
     $query = <<SQL;
-SELECT s.story_id, archived, trashed
+SELECT s.story_id, retired, trashed
 FROM   story s
 LEFT   JOIN story_category as sc
 ON     s.story_id = sc.story_id
-WHERE  archived = 0 AND trashed = 0
+WHERE  retired = 0 AND trashed = 0
 AND    url = ?
 SQL
 

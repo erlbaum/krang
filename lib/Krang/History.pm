@@ -327,7 +327,7 @@ Override this method to extend the list.
 =cut
 
 sub actions {
-    return qw( new save checkin checkout publish deploy undeploy move revert delete archive unarchive trash untrash);
+    return qw( new save checkin checkout publish deploy undeploy move revert delete retire unretire trash untrash);
 }
 
 1;

@@ -313,7 +313,7 @@ sub _format_msg {
     my $msg = ucfirst($type) . ' ' . $id . ' ' . $object->url;
 
     # sucess
-    return $msg . ' (restored to ' . ($object->archived ? 'Archive' : 'Live') . ')'
+    return $msg . ' (restored to ' . ($object->retired ? 'Retired' : 'Live') . ')'
       unless $ex;
 
     my $ex_type = $ex->moniker;

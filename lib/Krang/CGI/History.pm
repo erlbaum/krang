@@ -13,8 +13,8 @@ our %ACTION_LABELS = (
     deploy    => 'deployed',
     move      => 'moved',
     revert    => 'reverted',
-    archive   => 'archived',
-    unarchive => 'unarchived',
+    retire   => 'retired',
+    unretire => 'unretired',
     trash     => 'trashed',
     untrash   => 'untrashed'
 );

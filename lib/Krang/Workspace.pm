@@ -122,7 +122,7 @@ sub find {
         s.title AS title,
         class
  FROM story AS s LEFT JOIN story_category AS sc USING (story_id) 
- WHERE s.checked_out_by = ? AND sc.ord = 0 AND s.archived = 0 AND s.trashed = 0)
+ WHERE s.checked_out_by = ? AND sc.ord = 0 AND s.retired = 0 AND s.trashed = 0)
 
 UNION 
 
@@ -133,7 +133,7 @@ UNION
         title,
         '' as class
  FROM media AS m
- WHERE checked_out_by = ? AND m.archived = 0 AND m.trashed = 0)
+ WHERE checked_out_by = ? AND m.retired = 0 AND m.trashed = 0)
 
 UNION 
 

@@ -1,10 +1,10 @@
 =head1 NAME
 
-Krang::Schedule::Action::archive - Scheduler Action class which implements scheduler archive functions
+Krang::Schedule::Action::retire - Scheduler Action class which implements scheduler retire functions
 
 =cut
 
-package Krang::Schedule::Action::archive;
+package Krang::Schedule::Action::retire;
 
 use Krang::ClassFactory qw(pkg);
 use strict;
@@ -16,11 +16,11 @@ use Carp qw(verbose croak);
 
 =head1 SYNOPSIS
 
-Concrete Krang::Scheduler::Action class which archives stories and media
+Concrete Krang::Scheduler::Action class which retires stories and media
 
 =head1 DESCRIPTION
 
-This class archives stories and media (removing them from the website,
+This class retires stories and media (removing them from the website,
 without deleting them from the database).  It is instantiated in the
 scheduler depending on action type.
 
@@ -38,7 +38,7 @@ sub execute { }
 Action method for class.  Must be defined in Krang::Scheduler::Action
 classes.  This method serves as the entry point method in
 Krang::Scheduler::Action class implementations.  In this class it
-functions to archive media and stories.  Archiving means removing
+functions to retire media and stories.  Archiving means removing
 objects from the website without deleting them from the database.
 
 =back
@@ -68,9 +68,9 @@ sub execute {
 
 =over
 
-=item  C<< $schedule->_archive() >>
+=item  C<< $schedule->_retire() >>
 
-Runs an archive job on object_type-object_id.
+Runs an retire job on object_type-object_id.
 
 Will throw a croak() if it cannot find the appropriate object, or
 will propegate errors thrown by the object itself.
@@ -84,8 +84,8 @@ sub _expire {
     my $self = shift;
     my $obj = $self->{object};
 
-    $obj->archive();
-    debug(sprintf("%s->_archive(): Archived %s id '%i'.",
+    $obj->retire();
+    debug(sprintf("%s->_retire(): Retired %s id '%i'.",
                  __PACKAGE__, $self->{object_type}, $self->{object_id}));
 
 }

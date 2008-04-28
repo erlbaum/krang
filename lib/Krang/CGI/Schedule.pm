@@ -23,7 +23,7 @@ BEGIN {
     %OBJECT_ACTION_LABELS = (
         publish => 'Publish',
         expire  => 'Expire',
-        archive => 'Archive',
+        retire  => 'Retire',
     );
 
     my @object_addons = pkg('AddOn')->find(condition => 'EnableObjectSchedulerActions');
