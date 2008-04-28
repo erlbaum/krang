@@ -1,3 +1,4 @@
+
 =head1 NAME
 
 Krang::Schedule::Action::retire - Scheduler Action class which implements scheduler retire functions
@@ -11,7 +12,7 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'Schedule::Action';
-use Krang::ClassLoader Log => qw(ASSERT assert critical debug info);
+use Krang::ClassLoader Log  => qw(ASSERT assert critical debug info);
 use Carp qw(verbose croak);
 
 =head1 SYNOPSIS
@@ -51,12 +52,21 @@ sub execute {
     ## side effect of stuffing {object} in _object_exists()
     if ($self->_object_exists()) {
         if ($self->_object_checked_out()) {
-            info(sprintf("%s->execute(): Cannot run Schedule id '%i'.  %s id='%i' is checked out.",
-                __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
+            info(
+                sprintf(
+                    "%s->execute(): Cannot run Schedule id '%i'.  %s id='%i' is checked out.",
+                    __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id
+                )
+            );
             return;
         }
     } else {
-        info(sprintf("%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found. Deleting scheduled job.", __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
+        info(
+            sprintf(
+                "%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found. Deleting scheduled job.",
+                __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id
+            )
+        );
         $self->delete();
         return;
     }
@@ -82,11 +92,15 @@ will propegate errors thrown by the object itself.
 sub _expire {
 
     my $self = shift;
-    my $obj = $self->{object};
+    my $obj  = $self->{object};
 
     $obj->retire();
-    debug(sprintf("%s->_retire(): Retired %s id '%i'.",
-                 __PACKAGE__, $self->{object_type}, $self->{object_id}));
+    debug(
+        sprintf(
+            "%s->_retire(): Retired %s id '%i'.",
+            __PACKAGE__, $self->{object_type}, $self->{object_id}
+        )
+    );
 
 }
 

@@ -5,18 +5,18 @@ use strict;
 use warnings;
 
 our %ACTION_LABELS = (
-    new       => 'created',
-    save      => 'saved',
-    checkin   => 'checked In',
-    checkout  => 'checked Out',
-    publish   => 'published',
-    deploy    => 'deployed',
-    move      => 'moved',
-    revert    => 'reverted',
+    new      => 'created',
+    save     => 'saved',
+    checkin  => 'checked In',
+    checkout => 'checked Out',
+    publish  => 'published',
+    deploy   => 'deployed',
+    move     => 'moved',
+    revert   => 'reverted',
     retire   => 'retired',
     unretire => 'unretired',
-    trash     => 'trashed',
-    untrash   => 'untrashed'
+    trash    => 'trashed',
+    untrash  => 'untrashed'
 );
 
 use Carp qw(croak);
@@ -58,9 +58,13 @@ sub setup {
 
     $self->start_mode('show');
 
-    $self->run_modes([qw(
-                         show
-                        )]);
+    $self->run_modes(
+        [
+            qw(
+              show
+              )
+        ]
+    );
 
     $self->tmpl_path('History/');
 }
@@ -105,25 +109,25 @@ might be used:
 =cut
 
 sub show {
-    my $self = shift;
-    my $query = $self->query;
+    my $self     = shift;
+    my $query    = $self->query;
     my $template = $self->load_tmpl('show.tmpl', associate => $query, loop_context_vars => 1);
 
     # load params
-    my $id = $query->param('id') or croak("Missing required id");
-    my $class = $query->param('class') or croak("Missing required class param");
+    my $id      = $query->param('id')      or croak("Missing required id");
+    my $class   = $query->param('class')   or croak("Missing required class param");
     my $id_meth = $query->param('id_meth') or croak("Missing required id_meth param");
-    my $history_return_script = $query->param('history_return_script') 
-        or croak("Missing required history_return_script");
-    my @history_return_params = $query->param('history_return_params') 
-        or croak("Missing required history_return_params");
-    my $label = $query->param('label') || (split('::', $class))[-1]; # from the query or class
-    $self->param(label => $label);  # save for our row_handler
+    my $history_return_script = $query->param('history_return_script')
+      or croak("Missing required history_return_script");
+    my @history_return_params = $query->param('history_return_params')
+      or croak("Missing required history_return_params");
+    my $label = $query->param('label') || (split('::', $class))[-1];    # from the query or class
+    $self->param(label => $label);                                      # save for our row_handler
 
     # we assume the class needs to run through pkg(); if it doesn't work, just use the class name
     my $real_class = pkg($class);
     eval "require $real_class";
-    if( $@ ) {
+    if ($@) {
         $real_class = $class;
         eval "require $real_class";
         croak("Unable to load class $real_class: $@") if $@;
@@ -146,7 +150,7 @@ sub show {
     $template->param(
         return_script => $history_return_script,
         return_hidden => $return_hidden,
-        label => $label,
+        label         => $label,
     );
 
     # setup the pager
@@ -185,19 +189,20 @@ sub show {
 }
 
 sub show_row_handler {
-    my $self = shift;
-    my $q    = $self->query;
+    my $self  = shift;
+    my $q     = $self->query;
     my $label = $self->param('label');
     my ($row, $history) = @_;
-    
+
     # setup action
     $row->{action} = $q->escapeHTML("$label " . $self->action_label($history->action));
-    
+
     # setup user
     my ($user) = pkg('User')->find(user_id => $history->user_id);
     if ($user) {
         $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
     } else {
+
         # user does not exist, might have been deleted
         $row->{user} = "Unknown User";
     }
@@ -209,7 +214,8 @@ sub show_row_handler {
     my $attr = "";
     $attr .= "Version: " . $history->version
       if $history->version;
-    $attr .= "Desk: " . (pkg('Desk')->find( desk_id => $history->desk_id))[0]->name if $history->desk_id;
+    $attr .= "Desk: " . (pkg('Desk')->find(desk_id => $history->desk_id))[0]->name
+      if $history->desk_id;
     $row->{attr} = $q->escapeHTML($attr);
 }
 
@@ -217,7 +223,6 @@ sub action_label {
     my ($self, $action) = @_;
     return $ACTION_LABELS{$action} || $action;
 }
-
 
 =back
 

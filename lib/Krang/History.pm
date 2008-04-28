@@ -4,15 +4,16 @@ use strict;
 use warnings;
 
 BEGIN {
+
     # declare exportable functions
     use Exporter;
-    our @ISA = qw(Exporter);
+    our @ISA       = qw(Exporter);
     our @EXPORT_OK = qw( add_history );
 }
 
-use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Log => qw( info debug );
+use Krang::ClassLoader Log     => qw( info debug );
 use Krang::ClassLoader 'Alert';
 use Carp qw(croak);
 use Time::Piece;
@@ -84,12 +85,12 @@ Override this method to extend the list
     sub fields {
         return qw( object_type object_id action version desk_id user_id timestamp );
     }
-    
+
 }
 
 use Krang::ClassLoader MethodMaker => new_with_init => 'new',
-                        new_hash_init => 'hash_init',
-                        get_set       => [fields()];
+  new_hash_init                    => 'hash_init',
+  get_set                          => [fields()];
 
 sub init {
     my $self = shift;
@@ -103,26 +104,33 @@ sub init {
 
 sub _save {
     my $self = shift;
-    my $dbh = dbh;
+    my $dbh  = dbh;
 
     # Valid object type?
-    my $object_type = $self->{object_type};
+    my $object_type        = $self->{object_type};
     my @valid_object_types = $self->object_types();
-    croak ("Invalid object type '$object_type' (expecting: ". join(", ", @valid_object_types) .")") 
+    croak("Invalid object type '$object_type' (expecting: " . join(", ", @valid_object_types) . ")")
       unless (grep { $object_type->isa($_) } @valid_object_types);
 
     # Valid action?
-    my $action = $self->{action};
+    my $action        = $self->{action};
     my @valid_actions = $self->actions();
-    croak ("Invalid action '$action' (expecting: ". join(", ", @valid_actions) .")") 
+    croak("Invalid action '$action' (expecting: " . join(", ", @valid_actions) . ")")
       unless (grep { $_ eq $action } @valid_actions);
 
-    my $time = localtime();   
+    my $time = localtime();
     $self->{timestamp} = $time->mysql_datetime();
- 
+
     my @fields = $self->fields();
 
-    $dbh->do('INSERT INTO history ('.join(',', @fields).') VALUES (?'.",?" x (scalar @fields - 1).")", undef, map { $self->{$_} } @fields);
+    $dbh->do(
+        'INSERT INTO history ('
+          . join(',', @fields)
+          . ') VALUES (?'
+          . ",?" x (scalar @fields - 1) . ")",
+        undef,
+        map { $self->{$_} } @fields
+    );
 
 }
 
@@ -216,27 +224,27 @@ count - return only a count if this is set to true.
 sub find {
     my $self = shift;
     my %args = @_;
-    my $dbh = dbh;
+    my $dbh  = dbh;
 
     my $object = delete $args{'object'};
     croak("No object specified") unless ($object);
 
     my $id_meth = $object->id_meth;
-    $args{object_id} = $object->$id_meth;
+    $args{object_id}   = $object->$id_meth;
     $args{object_type} = ref $object;
-    
+
     my @where;
     my @history_object;
 
     # set defaults if need be
-    my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'timestamp';
-    my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
-    my $limit = $args{'limit'} ? $args{'limit'} : undef;
-    my $offset = $args{'offset'} ? $args{'offset'} : 0;
+    my $order_by   = $args{'order_by'}   ? $args{'order_by'} : 'timestamp';
+    my $order_desc = $args{'order_desc'} ? 'desc'            : 'asc';
+    my $limit      = $args{'limit'}      ? $args{'limit'}    : undef;
+    my $offset     = $args{'offset'}     ? $args{'offset'}   : 0;
 
     # set simple keys
     foreach my $key (keys %args) {
-        if ( ($key eq 'user_id') || ($key eq 'object_type') || ($key eq 'object_id') ) {            
+        if (($key eq 'user_id') || ($key eq 'object_type') || ($key eq 'object_id')) {
             push @where, $key;
         }
     }
@@ -251,18 +259,20 @@ sub find {
     }
 
     my $sql = "select $select_string from history";
-    $sql .= " where ".$where_string if $where_string;
+    $sql .= " where " . $where_string if $where_string;
     $sql .= " order by $order_by $order_desc";
 
-    # add limit and/or offset if defined 
+    # add limit and/or offset if defined
     if ($limit) {
-       $sql .= " limit $offset, $limit";
+        $sql .= " limit $offset, $limit";
     } elsif ($offset) {
         $sql .= " limit $offset, -1";
     }
 
     debug(__PACKAGE__ . "::find() SQL: " . $sql);
-    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { defined $args{$_} ? $args{$_} : 'undef' } @where));
+    debug(  __PACKAGE__
+          . "::find() SQL ARGS: "
+          . join(', ', map { defined $args{$_} ? $args{$_} : 'undef' } @where));
 
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
@@ -275,14 +285,14 @@ sub find {
             $obj = bless {%$row}, $self;
 
             # make date readable
-            $obj->{timestamp} = Time::Piece->from_mysql_datetime( $obj->{timestamp} );
+            $obj->{timestamp} = Time::Piece->from_mysql_datetime($obj->{timestamp});
 
-            push (@history_object,$obj);
+            push(@history_object, $obj);
         }
     }
     $sth->finish();
     return @history_object;
-    
+
 }
 
 =item delete()
@@ -294,15 +304,16 @@ Deletes all entries from history with object_id and object_type from passed in $
 sub delete {
     my $self = shift;
     my %args = @_;
-    my $dbh = dbh;
+    my $dbh  = dbh;
 
     my $object      = delete $args{'object'};
     my $id_meth     = $object->id_meth;
     my $object_type = ref $object;
     my $object_id   = $object->$id_meth;
 
-    $dbh->do('DELETE from history where object_id = ? and object_type = ?', undef, $object_id, $object_type);
- 
+    $dbh->do('DELETE from history where object_id = ? and object_type = ?',
+        undef, $object_id, $object_type);
+
 }
 
 =item C<< $history->object_types() >>
@@ -313,10 +324,10 @@ Override this method to extend the list.
 =cut
 
 sub object_types {
-    return qw( Krang::Story 
-               Krang::Media
-               Krang::Template 
-             );
+    return qw( Krang::Story
+      Krang::Media
+      Krang::Template
+    );
 }
 
 =item C<< $history->actions() >>
@@ -327,8 +338,9 @@ Override this method to extend the list.
 =cut
 
 sub actions {
-    return qw( new save checkin checkout publish deploy undeploy move revert delete retire unretire trash untrash);
+    return
+      qw( new save checkin checkout publish deploy undeploy move revert delete retire unretire trash untrash);
 }
 
 1;
- 
+

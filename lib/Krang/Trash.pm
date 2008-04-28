@@ -28,7 +28,7 @@ use constant TRASH_OBJECT_FIELDS => qw(
 );
 
 # static part of SQL query
-our %SQL = ();
+our %SQL         = ();
 our $NUM_USER_ID = 0;
 
 =head1 NAME
@@ -129,10 +129,11 @@ sub find {
     }
 
     # build overall SQL query
-    my $query = '';
+    my $query       = '';
     my $num_user_id = $NUM_USER_ID;
-    my %perms = pkg('Group')->user_asset_permissions();
+    my %perms       = pkg('Group')->user_asset_permissions();
     for my $class (keys %SQL) {
+
         # skip hidden assets
         next if $perms{$class} and $perms{$class} eq 'hide';
 
@@ -140,9 +141,10 @@ sub find {
         $num_user_id++ if $class =~ /story|media|template/;
 
         # unionize it
-        $query .= $query
+        $query .=
+          $query
           ? ' UNION ' . $SQL{$class}
-            : $SQL{$class};
+          : $SQL{$class};
     }
 
     # mix in order_by
@@ -322,8 +324,8 @@ sub register_find_sql {
 
     # got all we need?
     my @missing = grep { $args{$_} ? 0 : $_ } qw(object sql);
-    croak(__PACKAGE__ . "::register_find_sql(): Missing argument(s): "
-          . join ', ', @missing) if scalar(@missing);
+    croak(__PACKAGE__ . "::register_find_sql(): Missing argument(s): " . join ', ', @missing)
+      if scalar(@missing);
 
     # store sql
     $SQL{$args{object}} = '(' . $args{sql} . ')';
@@ -352,7 +354,7 @@ sub store {
 
     my ($type, $id) = $self->_type_and_id_from_object(%args);
     my $id_meth = $args{object}->id_meth;
-    my $dbh = dbh();
+    my $dbh     = dbh();
 
     # set object's trashed flag
     my $query = <<SQL;
@@ -452,8 +454,10 @@ sub prune {
             # delete from object table
             my ($object) = $pkg->find($type . '_id' => $id);
             $object->checkin if $object->checked_out;
-            local $ENV{REMOTE_USER} = pkg('User')->find(login    => 'system',
-                                                        ids_only => 1);
+            local $ENV{REMOTE_USER} = pkg('User')->find(
+                login    => 'system',
+                ids_only => 1
+            );
             $pkg->delete($id);
         };
         debug(__PACKAGE__ . "::prune() - ERROR: " . $@) if $@;

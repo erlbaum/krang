@@ -448,9 +448,9 @@ sub publish_story {
     # set internal mode - publish, not preview.
     $self->_set_publish_mode();
 
-    my $story             = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
-    my $unsaved           = (exists($args{unsaved})) ? $args{unsaved} : 0;
-    my $version_check     = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
+    my $unsaved           = (exists($args{unsaved}))           ? $args{unsaved}           : 0;
+    my $version_check     = (exists($args{version_check}))     ? $args{version_check}     : 1;
     my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
 
     # callbacks
@@ -465,7 +465,7 @@ sub publish_story {
 
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
-    
+
     # build the list of assets to publish.
     if ($no_related_check) {
         debug(__PACKAGE__ . ": disabling related_assets checking for publish");
@@ -474,32 +474,37 @@ sub publish_story {
         } else {
             push @$publish_list, $story;
         }
-	# normally _build_asset_list() handles the 'maintain_version' option, so 
-	# when running in 'disable_related_assets' mode we need to handle it here
-	if ($maintain_versions) {
-	    my @stories;
-	    foreach my $s (@$publish_list) {
+
+        # normally _build_asset_list() handles the 'maintain_version' option, so
+        # when running in 'disable_related_assets' mode we need to handle it here
+        if ($maintain_versions) {
+            my @stories;
+            foreach my $s (@$publish_list) {
                 if ($s->checked_out && ($s->checked_out_by != $user_id)) {
+
                     # if story is checked out to another user, it shouldn't get published anyway
                     # (doing so would clear the checked-out flag), so we don't get old version
                     push @stories, $s;
                 } else {
+
                     # story is not checked out, so we grab last-published version (if any)
                     my $v = $s->published_version;
                     next unless $v;
                     if ($v == $s->version) {
                         push @stories, $s;
-		    } else {
+                    } else {
                         push @stories, pkg('Story')->find(story_id => $s->story_id, version => $v);
-		    }
+                    }
                 }
-	    }
-	    $publish_list = \@stories;
-	}
+            }
+            $publish_list = \@stories;
+        }
     } else {
-        $publish_list = $self->asset_list(story            => $story,
-                                          version_check    => $version_check,
-                                          maintain_versions => $maintain_versions);
+        $publish_list = $self->asset_list(
+            story             => $story,
+            version_check     => $version_check,
+            maintain_versions => $maintain_versions
+        );
     }
 
     $self->_process_assets(
@@ -541,8 +546,7 @@ sub unpublish_story {
         next unless -f $path;
 
         # make sure this path isn't claimed by another story
-        my ($claimed) =
-          $dbh->selectrow_array(
+        my ($claimed) = $dbh->selectrow_array(
             "SELECT 1 FROM publish_story_location " . "WHERE path = ? AND story_id != ?",
             undef, $path, $story->story_id);
 
@@ -759,10 +763,10 @@ sub publish_media {
     $self->_set_publish_mode();
 
     # callbacks
-    my $callback          = $args{callback};
-    my $skip_callback     = $args{skip_callback};
+    my $callback      = $args{callback};
+    my $skip_callback = $args{skip_callback};
 
-    my $maintain_versions = $args{maintain_versions} || 0;
+    my $maintain_versions = $args{maintain_versions}   || 0;
     my $keep_asset_list   = $args{remember_asset_list} || 0;
 
     my $publish_list;
@@ -797,12 +801,13 @@ sub publish_media {
             }
         }
 
-	# if requested, re-publish last-published (instead of latest) version
-	if ($maintain_versions) {
-	    my $v = $media_object->published_version;
-	    next unless $v;
+        # if requested, re-publish last-published (instead of latest) version
+        if ($maintain_versions) {
+            my $v = $media_object->published_version;
+            next unless $v;
             if ($v != $media_object->version) {
-                my ($media_object) = pkg('Media')->find(media_id => $media_object->media_id, version => $v);
+                my ($media_object) =
+                  pkg('Media')->find(media_id => $media_object->media_id, version => $v);
             }
         }
 
@@ -925,7 +930,7 @@ sub asset_list {
 
     #    my $keep_list     = $args{keep_asset_list} || 0;
     #    my $keep_list = 0;
-    my $version_check     = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
 
     # check publish mode.
     if ($mode) {
@@ -941,11 +946,12 @@ sub asset_list {
     }
     my $maintain_versions = (($mode eq 'publish') && $args{maintain_versions}) ? 1 : 0;
 
-    my @publish_list = $self->_build_asset_list(object           => $story,
-                                                version_check    => $version_check,
-						maintain_versions => $maintain_versions,
-                                                initial_assets   => 1
-                                               );
+    my @publish_list = $self->_build_asset_list(
+        object            => $story,
+        version_check     => $version_check,
+        maintain_versions => $maintain_versions,
+        initial_assets    => 1
+    );
 
     #     unless ($keep_list) {
     #         $self->_clear_asset_lists();
@@ -1388,7 +1394,8 @@ sub additional_content_block {
     croak __PACKAGE__ . ": missing required argument 'filename'" unless length $block{filename};
     $block{use_category} = exists($args{use_category}) ? $args{use_category} : 1;
     $block{mode}         = exists($args{mode})         ? $args{mode}         : undef;
-    croak __PACKAGE__ . ": post_process is not a code block" if $args{post_process} && !ref $args{post_process} eq 'CODE';
+    croak __PACKAGE__ . ": post_process is not a code block"
+      if $args{post_process} && !ref $args{post_process} eq 'CODE';
     $block{post_process} = $args{post_process};
 
     push @{$self->{additional_content}}, \%block;
@@ -1856,8 +1863,7 @@ sub _build_story_single_category {
             $content = $cat_header . $content . $cat_footer;
         }
 
-
-        if( $block->{post_process} ) {
+        if ($block->{post_process}) {
             $block->{post_process}->(\$content);
         }
 
@@ -1920,9 +1926,9 @@ sub _cat_content {
 sub _build_asset_list {
     my ($self, %args) = @_;
 
-    my $object         = $args{object};
-    my $version_check  = (exists($args{version_check})) ? $args{version_check} : 1;
-    my $initial_assets = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
+    my $object            = $args{object};
+    my $version_check     = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $initial_assets    = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
     my $maintain_versions = (exists($args{maintain_versions})) ? $args{maintain_versions} : 0;
 
     my @asset_list;
@@ -1930,40 +1936,44 @@ sub _build_asset_list {
 
     my @objects = (ref $object eq 'ARRAY') ? @$object : ($object);
     foreach my $o (@objects) {
+
         # don't publish (linked) objects that are retired or trashed
         next if $o->can('wont_publish') && $o->wont_publish();
-	# handle 'maintain_versions' mode 
-	if ($maintain_versions) {
+
+        # handle 'maintain_versions' mode
+        if ($maintain_versions) {
             unless ($o->checked_out && ($o->checked_out_by != $ENV{REMOTE_USER})) {
                 my $v = $o->published_version;
                 next unless $v;
-		if ($v != $o->version) {
-		    if ($o->isa('Krang::Story')) {
-			($o) = pkg('Story')->find(story_id => $o->story_id, version => $v);
-		    } else {
-			($o) = pkg('Media')->find(media_id => $o->media_id, version => $v);
-		    }
-		}
+                if ($v != $o->version) {
+                    if ($o->isa('Krang::Story')) {
+                        ($o) = pkg('Story')->find(story_id => $o->story_id, version => $v);
+                    } else {
+                        ($o) = pkg('Media')->find(media_id => $o->media_id, version => $v);
+                    }
+                }
             }
         }
-	my ($publish_ok, $check_links) =
-          $self->_check_asset_status( object => $o,
-                                      version_check  => $version_check,
-                                      initial_assets => $initial_assets
-                                    );
-	push @asset_list, $o if ($publish_ok);
-	if ($check_links) {
-	    push @check_list, $o->linked_stories;
-	    push @check_list, $o->linked_media;
-	}
+        my ($publish_ok, $check_links) = $self->_check_asset_status(
+            object         => $o,
+            version_check  => $version_check,
+            initial_assets => $initial_assets
+        );
+        push @asset_list, $o if ($publish_ok);
+        if ($check_links) {
+            push @check_list, $o->linked_stories;
+            push @check_list, $o->linked_media;
+        }
     }
 
     # if there are objects to be checked, check 'em.
-    push @asset_list, $self->_build_asset_list( object            => \@check_list,
-                                                version_check     => $version_check,
-                                                maintain_versions => $maintain_versions,
-                                                initial_assets    => 0,
-                                              ) if (@check_list);
+    push @asset_list,
+      $self->_build_asset_list(
+        object            => \@check_list,
+        version_check     => $version_check,
+        maintain_versions => $maintain_versions,
+        initial_assets    => 0,
+      ) if (@check_list);
 
     return @asset_list;
 }
@@ -2246,7 +2256,7 @@ sub _write_story {
     my $story       = $args{story} || croak __PACKAGE__ . ": missing argument 'story'";
     my $pages       = $args{pages} || croak __PACKAGE__ . ": missing argument 'pages'";
     my $output_path = $args{path}  || croak __PACKAGE__ . ": missing argument 'path'";
-    my $class = $story->element->class;
+    my $class       = $story->element->class;
     my $mode_fn = $class->can('file_mode') || sub { };
 
     my @created_files;

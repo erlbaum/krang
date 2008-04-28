@@ -330,7 +330,8 @@ sub _format_msg {
               scalar(@cats) > 1
               ? ' URL conflict with <br/>'
               : ' URL conflict with <br/>';
-            return $msg 
+            return
+                $msg 
               . '<br/>(' 
               . $reason
               . join('<br/>', map { "Category $_->{id} &ndash; $_->{url}" } @cats) . ' )';
@@ -340,7 +341,8 @@ sub _format_msg {
               scalar(@stories) > 1
               ? ' URL conflict with <br/>'
               : ' URL conflict with <br/>';
-            return $msg 
+            return
+                $msg 
               . '<br/>(' 
               . $reason
               . join('<br/>', map { "Story $_->{id} &ndash; $_->{url}" } @stories) . ' )';
