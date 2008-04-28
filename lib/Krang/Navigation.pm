@@ -187,8 +187,8 @@ sub default_tree {
     $sub->link('story.pl?rm=list_active');
 
     $sub  = $node->new_daughter();
-    $sub->name('Archived Stories');
-    $sub->link('story.pl?rm=list_archived');
+    $sub->name('Retired Stories');
+    $sub->link('story.pl?rm=list_retired');
 
     my @desks = pkg('Desk')->find(order_by => 'order');
     my $user_desk_permissions = $perms->{desk};
@@ -225,8 +225,8 @@ sub default_tree {
     $sub->link('media.pl?rm=list_active');    
 
     $sub  = $node->new_daughter();
-    $sub->name('Archived Media');
-    $sub->link('media.pl?rm=list_archived');
+    $sub->name('Retired Media');
+    $sub->link('media.pl?rm=list_retired');
 
     $sub  = $node->new_daughter();
     $sub->name('Bulk Upload');
@@ -252,8 +252,8 @@ sub default_tree {
     $sub->link('template.pl?rm=list_active');
 
     $sub  = $node->new_daughter();
-    $sub->name('Archived Templates');
-    $sub->link('template.pl?rm=list_archived');
+    $sub->name('Retired Templates');
+    $sub->link('template.pl?rm=list_retired');
 
     # setup template FTP link (which is dynamic) unless it's disabled
     if( EnableFTP ) {
