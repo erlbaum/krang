@@ -324,7 +324,7 @@ sub default_tree {
 
     $sub = $node->new_daughter();
     $sub->name('Scheduler');
-    $sub->link('schedule.pl?advanced_schedule=1&rm=edit_admin');
+    $sub->link('schedule.pl?advanced_schedule=1&amp;rm=edit_admin');
     $sub->condition(
         sub { 
             shift->{admin}{admin_scheduler} 
