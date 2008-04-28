@@ -1172,9 +1172,10 @@ sub save_and_view_log {
     my $id = $m->media_id;
 
     # Redirect to history screen
-    my $url = "history.pl?history_return_script=media.pl"
-        . "&history_return_params=rm&history_return_params=edit&id=$id"
-        . "&class=Media&id_meth=media_id";
+    my $url =
+        "history.pl?history_return_script=media.pl"
+      . "&history_return_params=rm&history_return_params=edit&id=$id"
+      . "&class=Media&id_meth=media_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
@@ -1189,15 +1190,16 @@ screen but preserving where we came from.
 =cut
 
 sub view_log {
-    my $self = shift;
-    my $q = $self->query();
+    my $self     = shift;
+    my $q        = $self->query();
     my $media_id = $q->param('media_id');
 
     # Redirect to history screen
-    my $url = "history.pl?history_return_script=media.pl"
-        . "&history_return_params=rm&history_return_params=view"
-        . "&history_return_params=media_id&history_return_params=$media_id"
-        . "&id=$media_id&class=Media&id_meth=media_id";
+    my $url =
+        "history.pl?history_return_script=media.pl"
+      . "&history_return_params=rm&history_return_params=view"
+      . "&history_return_params=media_id&history_return_params=$media_id"
+      . "&id=$media_id&class=Media&id_meth=media_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
@@ -1467,7 +1469,7 @@ sub update_media {
     # Make sure object hasn't been modified elsewhere
     if (my $id = $m->media_id) {
         if (my ($media_in_db) = pkg('Media')->find(media_id => $id)) {
-            if (   !$media_in_db->checked_out
+            if (  !$media_in_db->checked_out
                 || $media_in_db->checked_out_by ne $ENV{REMOTE_USER}
                 || $media_in_db->version > $m->version)
             {

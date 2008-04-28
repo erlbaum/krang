@@ -367,6 +367,7 @@ sub categories {
     $self->{url_cache} = [];
 
     unless ($self->{slug} eq '_TEMP_SLUG_FOR_CONVERSION_') {
+
         # make sure this change didn't cause a conflict
         $self->_verify_unique();
     }
@@ -527,7 +528,7 @@ sub init {
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
     $self->{cover_date}        = Time::Piece->new();
     $self->{story_uuid}        = pkg('UUID')->new;
-    $self->{retired}          = 0;
+    $self->{retired}           = 0;
     $self->{trashed}           = 0;
 
     # Set up temporary permissions
@@ -1169,13 +1170,13 @@ or bin/ scripts make calls to C<find()>!
         # get search parameters out of args, leaving just field specifiers
         my $order_by = delete $args{order_by} || 's.story_id';
         my $order_dir = delete $args{order_desc} ? 'DESC' : 'ASC';
-        my $limit            = delete $args{limit}            || 0;
-        my $offset           = delete $args{offset}           || 0;
-        my $count            = delete $args{count}            || 0;
-        my $ids_only         = delete $args{ids_only}         || 0;
-        my $include_retired  = delete $args{include_retired}  || 0;
-        my $include_trashed  = delete $args{include_trashed}  || 0;
-        my $include_live     = delete $args{include_live};
+        my $limit           = delete $args{limit}           || 0;
+        my $offset          = delete $args{offset}          || 0;
+        my $count           = delete $args{count}           || 0;
+        my $ids_only        = delete $args{ids_only}        || 0;
+        my $include_retired = delete $args{include_retired} || 0;
+        my $include_trashed = delete $args{include_trashed} || 0;
+        my $include_live    = delete $args{include_live};
         $include_live = 1 unless defined($include_live);
 
         # determine whether or not to display hidden stories.
@@ -1513,7 +1514,7 @@ or bin/ scripts make calls to C<find()>!
         # include live/retired/trashed
         unless ($args{story_id}) {
             if ($include_live) {
-                push(@where, 's.retired = 0') unless $include_retired;
+                push(@where, 's.retired = 0')  unless $include_retired;
                 push(@where, 's.trashed  = 0') unless $include_trashed;
             } else {
                 if ($include_retired) {
@@ -2208,7 +2209,7 @@ sub clone {
 
     # unset retired and trashed flag
     $copy->{retired} = 0;
-    $copy->{trashed}  = 0;
+    $copy->{trashed} = 0;
 
     # unset (last_)desk_id
     $copy->{desk_id}      = undef;
@@ -2415,7 +2416,7 @@ sub serialize_xml {
     $writer->dataElement(version    => $self->version);
     $writer->dataElement(cover_date => $self->cover_date->datetime);
     $writer->dataElement(notes      => $self->notes);
-    $writer->dataElement(retired   => $self->retired);
+    $writer->dataElement(retired    => $self->retired);
     $writer->dataElement(trashed    => $self->trashed);
 
     # categories

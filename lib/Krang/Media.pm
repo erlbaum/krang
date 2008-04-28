@@ -286,7 +286,7 @@ sub init {
     $self->{preview_version}   = 0;
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
     $self->{creation_date} = localtime unless defined $self->{creation_date};
-    $self->{retired}      = 0;
+    $self->{retired}       = 0;
     $self->{trashed}       = 0;
 
     # Set up temporary permissions
@@ -1049,7 +1049,7 @@ sub find {
         mime_type         => 1,
         mime_type_like    => 1,
         include_live      => 1,
-        include_retired  => 1,
+        include_retired   => 1,
         include_trashed   => 1,
     );
 
@@ -1063,8 +1063,8 @@ sub find {
     my $order_by   = $args{'order_by'}   ? $args{'order_by'} : 'media_id';
     my $order_desc = $args{'order_desc'} ? 'desc'            : 'asc';
     my $include_retired = delete $args{include_retired} || 0;
-    my $include_trashed  = delete $args{include_trashed}  || 0;
-    my $include_live     = delete $args{include_live};
+    my $include_trashed = delete $args{include_trashed} || 0;
+    my $include_live    = delete $args{include_live};
     $include_live = 1 unless defined($include_live);
 
     # Put table name "media." in front of each orderby, and $order_desc after
@@ -1367,10 +1367,9 @@ sub find {
             }
 
             # add contrib ids to object
-            my $sth2 =
-              $dbh->prepare(
+            my $sth2 = $dbh->prepare(
                 'select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord'
-              );
+            );
             $sth2->execute($row->{media_id});
             $obj->{contrib_ids} = [];
             while (my ($contrib_id, $contrib_type_id) = $sth2->fetchrow_array()) {
@@ -1967,7 +1966,7 @@ sub serialize_xml {
     $writer->dataElement(publish_date  => $self->{publish_date}->datetime)
       if $self->{publish_date};
     $writer->dataElement(retired => $self->retired);
-    $writer->dataElement(trashed  => $self->trashed);
+    $writer->dataElement(trashed => $self->trashed);
 
     # add category to set
     $set->add(object => $self->category, from => $self);
@@ -2442,7 +2441,7 @@ sub clone {
     $copy->{preview_version}   = 0;
     $copy->{published_version} = 0;
     $copy->{publish_date}      = undef;
-    $copy->{retired}          = 0;
+    $copy->{retired}           = 0;
     $copy->{trashed}           = 0;
     $copy->{url_cache}         = undef;
     $copy->{cat_cache}         = undef;

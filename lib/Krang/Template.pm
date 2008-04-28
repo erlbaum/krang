@@ -744,8 +744,8 @@ sub find {
 
     # set search includes
     my $include_retired = delete $args{include_retired} || 0;
-    my $include_trashed  = delete $args{include_trashed}  || 0;
-    my $include_live     = delete $args{include_live};
+    my $include_trashed = delete $args{include_trashed} || 0;
+    my $include_live    = delete $args{include_live};
     $include_live = 1 unless defined($include_live);
 
     # set search fields
@@ -1032,7 +1032,7 @@ sub init {
     $self->{testing}        = 0;
     $self->{creation_date}  = localtime();
     $self->{template_uuid}  = pkg('UUID')->new();
-    $self->{retired}       = 0;
+    $self->{retired}        = 0;
     $self->{trashed}        = 0;
 
     $self->hash_init(%args);
@@ -1366,7 +1366,7 @@ sub serialize_xml {
     $writer->dataElement(deployed_version => $self->{deployed_version})
       if $self->{deployed_version};
     $writer->dataElement(retired => $self->retired);
-    $writer->dataElement(trashed  => $self->trashed);
+    $writer->dataElement(trashed => $self->trashed);
 
     # add category to set
     $set->add(object => $self->category, from => $self)
@@ -1748,7 +1748,7 @@ sub clone {
     $copy->{deploy_date}      = undef;
     $copy->{deployed}         = 0;
     $copy->{deployed_version} = 0;
-    $copy->{retired}         = 0;
+    $copy->{retired}          = 0;
     $copy->{trashed}          = 0;
     $copy->{url}              = '';                   # is set by save()
     $copy->{checked_out}      = 1;

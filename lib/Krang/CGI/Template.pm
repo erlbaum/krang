@@ -678,12 +678,13 @@ sub save_and_view_log {
     # Update template object
     my $template = $session{template};
     $self->update_template($template) || return $self->redirect_to_workspace;
-    my $id = $template->template_id ;
+    my $id = $template->template_id;
 
     # Redirect to associate screen
-    my $url = "history.pl?history_return_script=template.pl"
-        . "&history_return_params=rm&history_return_params=edit"
-        . "&id=$id&class=Template&id_meth=template_id";
+    my $url =
+        "history.pl?history_return_script=template.pl"
+      . "&history_return_params=rm&history_return_params=edit"
+      . "&id=$id&class=Template&id_meth=template_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -697,16 +698,17 @@ screen to view the template in question.
 =cut
 
 sub view_log {
-    my $self = shift;
-    my $q = $self->query();
-    my $id = $q->param('template_id');
-    my $return_rm = $q->param('return_rm'); 
+    my $self      = shift;
+    my $q         = $self->query();
+    my $id        = $q->param('template_id');
+    my $return_rm = $q->param('return_rm');
 
     # Redirect to associate screen
-    my $url = "history.pl?history_return_script=template.pl"
-        . "&history_return_params=rm&history_return_params=$return_rm"
-        . "&history_return_params=template_id&history_return_params=$id"
-        . "&id=$id&class=Template&id_meth=template_id";
+    my $url =
+        "history.pl?history_return_script=template.pl"
+      . "&history_return_params=rm&history_return_params=$return_rm"
+      . "&history_return_params=template_id&history_return_params=$id"
+      . "&id=$id&class=Template&id_meth=template_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -1344,7 +1346,7 @@ sub update_template {
     # make sure template is still checked out to us (and hasn't been saved in another window)
     if (my $id = $template->template_id) {
         if (my ($template_in_db) = pkg('Template')->find(template_id => $id)) {
-            if (   !$template_in_db->checked_out
+            if (  !$template_in_db->checked_out
                 || $template_in_db->checked_out_by ne $ENV{REMOTE_USER}
                 || $template_in_db->version > $template->version)
             {

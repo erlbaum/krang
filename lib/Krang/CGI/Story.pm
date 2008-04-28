@@ -61,7 +61,7 @@ sub setup {
         revert                        => 'revert',
         find                          => 'find',
         list_active                   => 'list_active',
-        list_retired                 => 'list_retired',
+        list_retired                  => 'list_retired',
         cancel                        => 'cancel',
         delete                        => 'delete',
         delete_selected               => 'delete_selected',
@@ -91,8 +91,8 @@ sub setup {
         save_and_find_story_link      => 'save_and_find_story_link',
         save_and_find_media_link      => 'save_and_find_media_link',
         autocomplete                  => 'autocomplete',
-        retire                       => 'retire',
-        unretire                     => 'unretire',
+        retire                        => 'retire',
+        unretire                      => 'unretire',
     );
 
     $self->tmpl_path('Story/');
@@ -122,7 +122,7 @@ sub new_story {
 
     # sort the type by their display name, not their real name
     @types = sort {
-        lc pkg('ElementLibrary')->top_level(name   => $a)->display_name cmp
+        lc pkg('ElementLibrary')->top_level(name => $a)->display_name cmp
           lc pkg('ElementLibrary')->top_level(name => $b)->display_name
     } @types;
 
@@ -464,8 +464,8 @@ sub edit {
     # set fields shown everywhere
     $template->param(
         story_id => $story->story_id || "N/A",
-        type => $story->element->display_name,
-        url  => $story->url
+        type     => $story->element->display_name,
+        url      => $story->url
         ? format_url(
             url    => $story->url,
             linkto => "javascript:preview_and_stay()",
@@ -1175,7 +1175,7 @@ sub save_and_view_log {
     my $id = $session{story}->story_id;
 
     my $url = "history.pl?history_return_script=story.pl&history_return_params=rm"
-        . "&history_return_params=edit&id=$id&id_meth=story_id&class=Story";
+      . "&history_return_params=edit&id=$id&id_meth=story_id&class=Story";
 
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
@@ -2164,7 +2164,7 @@ sub steal_selected {
         if (@owned_ids) {
             (@owned_ids > 1)
               ? add_message('multiple_stories_yours', ids => join(' & ', @owned_ids))
-              : add_message('one_story_yours', id => $owned_ids[0]);
+              : add_message('one_story_yours',        id  => $owned_ids[0]);
         }
         if (@stolen_ids) {
             (@stolen_ids > 1)
