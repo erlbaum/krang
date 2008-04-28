@@ -83,7 +83,7 @@ sub setup {
               edit_checkin
               edit_save_stay
               list_active
-              list_archived
+              list_retired
               revert_version
               save_and_view_log
               view_log
@@ -93,8 +93,8 @@ sub setup {
               view_version
               autocomplete
               template_chooser_node
-              archive
-              unarchive
+              retire
+              unretire
               /
         ]
     );
@@ -410,7 +410,7 @@ sub delete_selected {
         add_message('message_selected_deleted');
     }
 
-    return $q->param('archived') ? $self->list_archived : $self->search;
+    return $q->param('retired') ? $self->list_retired : $self->search;
 }
 
 =item deploy
@@ -721,7 +721,7 @@ simple search, the 'element', 'site', and 'url' fields are searched.
 The run mode accepts the parameter "search_filter" which is used to perform
 simple searches.
 
-From this paging view the user may choose to view, edit or archive an
+From this paging view the user may choose to view, edit or retire an
 object, or select a set of objects to be deployed or deleted
 (depending on the user's permission set).
 
@@ -740,9 +740,9 @@ sub search {
     $self->_do_search(%args);
 }
 
-=item list_archived
+=item list_retired
 
-Displays a list of archived Template objects based on the passed
+Displays a list of retired Template objects based on the passed
 search criteria.  If no criteria are passed, a list of all templates
 on the system are returned.  As a simple search, the 'element',
 'site', and 'url' fields are searched.
@@ -750,20 +750,20 @@ on the system are returned.  As a simple search, the 'element',
 The run mode accepts the parameter "search_filter" which is used to perform
 simple searches.
 
-From this paging view the user may choose to view or unarchive an
+From this paging view the user may choose to view or unretire an
 object, or select a set of objects to be deleted (depending on the
 user's permission set).
 
 =cut
 
-sub list_archived {
+sub list_retired {
     my $self = shift;
 
     $self->query->param('other_search_place' => 'Search in Live');
 
     my %args = (
-        tmpl_file         => 'list_archived.tmpl',
-        include_in_search => 'archived'
+        tmpl_file         => 'list_retired.tmpl',
+        include_in_search => 'retired'
     );
 
     $self->_do_search(%args);
@@ -817,22 +817,22 @@ sub _do_simple_search {
     # search in Archive or in Live?
     my $include = $args{include_in_search};
 
-    # find archived stories?
-    my $archived = $include eq 'archived' ? 1 : 0;
+    # find retired stories?
+    my $retired = $include eq 'retired' ? 1 : 0;
 
-    # find live or archived stories?
-    my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
+    # find live or retired stories?
+    my %include_options = $retired ? (include_live => 0, include_retired => 1) : ();
 
     my $find_params = {simple_search => $search_filter, may_see => 1, %include_options};
     my $persist_vars = {
-        rm => ($archived ? 'list_archived' : 'search'),
+        rm => ($retired ? 'list_retired' : 'search'),
         search_filter      => $search_filter,
         $include           => 1,
         do_advanced_search => 0,
     };
 
     # setup pager
-    my $pager = $self->make_pager($persist_vars, $find_params, $archived);
+    my $pager = $self->make_pager($persist_vars, $find_params, $retired);
     my $pager_tmpl = $self->load_tmpl(
         'list_view_pager.tmpl',
         associate         => $q,
@@ -876,16 +876,16 @@ sub _do_advanced_search {
     # search in Archive or in Live?
     my $include = $args{include_in_search};
 
-    # find archived stories?
-    my $archived = $include eq 'archived' ? 1 : 0;
+    # find retired stories?
+    my $retired = $include eq 'retired' ? 1 : 0;
 
-    # find live or archived stories?
-    my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
+    # find live or retired stories?
+    my %include_options = $retired ? (include_live => 0, include_retired => 1) : ();
 
     my $find_params = \%include_options;
 
     my $persist_vars = {
-        rm => ($archived ? 'list_archived' : 'search'),
+        rm => ($retired ? 'list_retired' : 'search'),
         do_advanced_search => 1,
         $include           => 1,
     };
@@ -937,7 +937,7 @@ sub _do_advanced_search {
     }
 
     # Run pager
-    my $pager = $self->make_pager($persist_vars, $find_params, $archived);
+    my $pager = $self->make_pager($persist_vars, $find_params, $retired);
     my $pager_tmpl = $self->load_tmpl(
         'list_view_pager.tmpl',
         associate         => $q,
@@ -1162,7 +1162,7 @@ sub get_tmpl_params {
             not($template->may_edit)
             or ($template->checked_out
                 and ($template->checked_out_by ne $ENV{REMOTE_USER}))
-            or $template->archived
+            or $template->retired
             or $template->trashed
           );
 
@@ -1213,7 +1213,7 @@ sub make_history_return_params {
 # Given a persist_vars and find_params, return the pager object
 sub make_pager {
     my $self = shift;
-    my ($persist_vars, $find_params, $archived) = @_;
+    my ($persist_vars, $find_params, $retired) = @_;
 
     my %user_permissions = (pkg('Group')->user_asset_permissions);
 
@@ -1244,7 +1244,7 @@ sub make_pager {
         columns          => \@columns,
         column_labels    => \%column_labels,
         columns_sortable => ['template_id', 'filename', 'url',],
-        row_handler      => sub { $self->search_row_handler(@_, archived => $archived) },
+        row_handler      => sub { $self->search_row_handler(@_, retired => $retired) },
         id_handler => sub { return $_[0]->template_id },
     );
 
@@ -1255,8 +1255,8 @@ sub make_pager {
 sub search_row_handler {
     my ($self, $row, $template, %args) = @_;
 
-    my $list_archived        = $args{archived};
-    my $may_edit_and_archive = (
+    my $list_retired        = $args{retired};
+    my $may_edit_and_retire = (
         not($template->may_edit)
           or (  ($template->checked_out)
             and ($template->checked_out_by ne $ENV{REMOTE_USER}))
@@ -1280,15 +1280,15 @@ sub search_row_handler {
     }
 
     # Buttons and status continued
-    if ($list_archived) {
+    if ($list_retired) {
 
         # Archived Template screen
-        if ($template->archived) {
+        if ($template->retired) {
             $row->{commands_column} .= ' '
-              . qq|<input value="Unarchive" onclick="unarchive_template('|
+              . qq|<input value="Unretire" onclick="unretire_template('|
               . $template->template_id
               . qq|')" type="button" class="button">|
-              if $may_edit_and_archive;
+              if $may_edit_and_retire;
             $row->{deployed} = '';
             $row->{status}   = '&nbsp;';
         } else {
@@ -1303,23 +1303,23 @@ sub search_row_handler {
     } else {
 
         # Find Template screen
-        if ($template->archived) {
+        if ($template->retired) {
 
-            # Template is archived
+            # Template is retired
             $row->{deployed}        = '';
             $row->{status}          = 'Archive';
             $row->{checkbox_column} = "&nbsp;";
         } else {
 
-            # Template is not archived: Maybe we may edit and archive
+            # Template is not retired: Maybe we may edit and retire
             $row->{commands_column} .= ' '
               . qq|<input value="Edit" onclick="edit_template('|
               . $template->template_id
               . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="Archive" onclick="archive_template('|
+              . qq|<input value="Archive" onclick="retire_template('|
               . $template->template_id
               . qq|')" type="button" class="button">|
-              if $may_edit_and_archive;
+              if $may_edit_and_retire;
             if ($template->checked_out) {
                 $row->{status} = "Checked out by <b>"
                   . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
@@ -1330,7 +1330,7 @@ sub search_row_handler {
         }
     }
 
-    unless ($may_edit_and_archive) {
+    unless ($may_edit_and_retire) {
         $row->{checkbox_column} = "&nbsp;";
     }
 }
@@ -1503,13 +1503,13 @@ sub template_chooser_node {
     return $chooser->handle_get_node(query => $query);
 }
 
-=item archive
+=item retire
 
-Move template to the archive and return to the Find Template screen
+Move template to the retire and return to the Find Template screen
 
 =cut
 
-sub archive {
+sub retire {
     my $self = shift;
     my $q    = $self->query;
 
@@ -1518,49 +1518,49 @@ sub archive {
     croak("No template_id found in CGI params when archiving template.")
       unless $template_id;
 
-    # load template from DB and archive it
+    # load template from DB and retire it
     my ($template) = pkg('Template')->find(template_id => $template_id);
 
     croak("Unable to load Template '" . $template_id . "'.")
       unless $template;
 
-    $template->archive();
+    $template->retire();
 
-    add_message('template_archived', id => $template_id, url => $template->url);
+    add_message('template_retired', id => $template_id, url => $template->url);
 
     $q->delete('template_id');
 
     return $self->search();
 }
 
-=item unarchive
+=item unretire
 
-Move template from archive back to live. If a DuplicateURL conflict
-occurs, leave the template archived and alert the user.
+Move template from retire back to live. If a DuplicateURL conflict
+occurs, leave the template retired and alert the user.
 
 =cut
 
-sub unarchive {
+sub unretire {
     my $self = shift;
     my $q    = $self->query;
 
     my $template_id = $q->param('template_id');
 
-    croak("No template_id found in CGI params when trying to unarchive template.")
+    croak("No template_id found in CGI params when trying to unretire template.")
       unless $template_id;
 
-    # load template from DB and unarchive it
+    # load template from DB and unretire it
     my ($template) = pkg('Template')->find(template_id => $template_id);
 
     croak("Unable to load template '" . $template_id . "'.")
       unless $template;
 
-    eval { $template->unarchive() };
+    eval { $template->unretire() };
 
     if ($@ and ref($@)) {
         if ($@->isa('Krang::Template::DuplicateURL')) {
             add_alert(
-                'duplicate_url_on_unarchive',
+                'duplicate_url_on_unretire',
                 id       => $template_id,
                 other_id => $@->template_id,
                 url      => $template->url
@@ -1570,14 +1570,14 @@ sub unarchive {
             # param tampering
 ##	    return $self->access_forbidden();
             # or perhaps a permission change
-            add_alert('access_denied_on_unarchive', id => $template_id, url => $template->url);
+            add_alert('access_denied_on_unretire', id => $template_id, url => $template->url);
         }
-        return $self->list_archived;
+        return $self->list_retired;
     }
 
-    add_message('template_unarchived', id => $template_id, url => $template->url);
+    add_message('template_unretired', id => $template_id, url => $template->url);
 
-    return $self->list_archived;
+    return $self->list_retired;
 
 }
 

@@ -2,7 +2,7 @@
 
 <script type="text/javascript">
 Krang.onload( function() {
-  Krang.Help.set( 'media_archived' );
+  Krang.Help.set( 'media_retired' );
 } );
 
 do_search = function(chbx) {
@@ -16,7 +16,7 @@ show_advanced_search = function( show_advanced )
 }
 
 other_search_rm = function() {
-  Krang.Form.submit('search_form', { rm: 'find', other_search_place: 'Search in Archive' });
+  Krang.Form.submit('search_form', { rm: 'find', other_search_place: 'Search in Retire' });
 }
 
 <tmpl_if do_advanced_search>
@@ -29,7 +29,7 @@ other_search_rm = function() {
 <tmpl_if row_count>
   view_media = function( id )
   {
-    Krang.Form.submit( 'find_media', { rm: 'view', media_id: id, archived: 1 } );
+    Krang.Form.submit( 'find_media', { rm: 'view', media_id: id, retired: 1 } );
   }
 
   delete_selected = function()
@@ -51,21 +51,21 @@ other_search_rm = function() {
       }
   }
 
-  unarchive_media = function(id)
+  unretire_media = function(id)
   {
-    if (confirm('Are you SURE you want to unarchive this Media?'))
-      Krang.Form.submit('find_media', { rm: 'unarchive', media_id: id });
+    if (confirm('Are you SURE you want to unretire this Media?'))
+      Krang.Form.submit('find_media', { rm: 'unretire', media_id: id });
   }
 </tmpl_if>
 </script>
 
 <h2>
-Archived Media
+Retired Media
 </h2>
 
 <form id="search_form" name="search_form" action="media.pl" method="post">
 
-<input name="rm" value="list_archived" type="hidden">
+<input name="rm" value="list_retired" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
@@ -199,7 +199,7 @@ Search Results
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" action="media.pl" method="post">
-  <input name="rm" value="list_archived" type="hidden">
+  <input name="rm" value="list_retired" type="hidden">
   <input name="do_advanced_search" value="1" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
@@ -211,7 +211,7 @@ Search Results
   <form name="find_media" action="media.pl" method="post">
   <input name="rm" value="view" type="hidden">
   <input name="media_id" type="hidden">
-  <input name="archived" value="1" type="hidden">
+  <input name="retired" value="1" type="hidden">
   <input name="return_script" value="media.pl" type="hidden">
   <tmpl_var return_params>
   </form>

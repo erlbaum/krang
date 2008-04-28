@@ -20,7 +20,7 @@ show_advanced_search = function( show_advanced )
 }
 
 other_search_rm = function() {
-  Krang.Form.submit('search_form', { rm: 'list_archived', other_search_place: 'Search in Live' });
+  Krang.Form.submit('search_form', { rm: 'list_retired', other_search_place: 'Search in Live' });
 }
 
 <tmpl_if do_advanced_search>
@@ -90,10 +90,10 @@ other_search_rm = function() {
   }
   </tmpl_if>
 
-  archive_media = function(id)
+  retire_media = function(id)
   {
-    if (confirm('Are you SURE you want to archive this Media?'))
-      Krang.Form.submit('find_media', { rm: 'archive', media_id: id });
+    if (confirm('Are you SURE you want to retire this Media?'))
+      Krang.Form.submit('find_media', { rm: 'retire', media_id: id });
   }
 </tmpl_if>
 </script>
@@ -113,7 +113,7 @@ Find Media
 <tmpl_if do_advanced_search>
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
 </tmpl_if>
-<input name="other_search_place" value="Search in Archive" type="hidden">
+<input name="other_search_place" value="Search in Retire" type="hidden">
 
 <div class="tabset finder">
 

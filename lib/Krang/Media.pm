@@ -29,7 +29,7 @@ use FileHandle;
 use constant THUMBNAIL_SIZE     => 35;
 use constant MED_THUMBNAIL_SIZE => 200;
 use constant FIELDS =>
-  qw(media_id media_uuid title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by archived trashed);
+  qw(media_id media_uuid title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by retired trashed);
 
 # setup exceptions
 use Exception::Class (
@@ -256,7 +256,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
       creation_date
       may_see
       may_edit
-      archived
+      retired
       trashed
       )
   ];
@@ -286,7 +286,7 @@ sub init {
     $self->{preview_version}   = 0;
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
     $self->{creation_date} = localtime unless defined $self->{creation_date};
-    $self->{archived}      = 0;
+    $self->{retired}      = 0;
     $self->{trashed}       = 0;
 
     # Set up temporary permissions
@@ -987,13 +987,13 @@ C<undef>, specifying no limit in that direction.
 =item * include_live
 
 Include live media in the search result. Live media are media
-that are neither archived nor have been moved to the trashbin. Set
+that are neither retired nor have been moved to the trashbin. Set
 this option to 0, if find() should not return live media.  The
 default is 1.
 
-=item * include_archived
+=item * include_retired
 
-Set this option to 1 if you want to include archived media in the
+Set this option to 1 if you want to include retired media in the
 search result. The default is 0.
 
 =item  * include_trashed
@@ -1049,7 +1049,7 @@ sub find {
         mime_type         => 1,
         mime_type_like    => 1,
         include_live      => 1,
-        include_archived  => 1,
+        include_retired  => 1,
         include_trashed   => 1,
     );
 
@@ -1062,7 +1062,7 @@ sub find {
     # set defaults if need be
     my $order_by   = $args{'order_by'}   ? $args{'order_by'} : 'media_id';
     my $order_desc = $args{'order_desc'} ? 'desc'            : 'asc';
-    my $include_archived = delete $args{include_archived} || 0;
+    my $include_retired = delete $args{include_retired} || 0;
     my $include_trashed  = delete $args{include_trashed}  || 0;
     my $include_live     = delete $args{include_live};
     $include_live = 1 unless defined($include_live);
@@ -1296,25 +1296,25 @@ sub find {
         $group_by++;
     }
 
-    # include live/archived/trashed
+    # include live/retired/trashed
     unless ($args{media_id}) {
         if ($include_live) {
-            unless ($include_archived) {
+            unless ($include_retired) {
                 $where_string .= ' and ' if $where_string;
-                $where_string .= ' media.archived = 0';
+                $where_string .= ' media.retired = 0';
             }
             unless ($include_trashed) {
                 $where_string .= ' and ' if $where_string;
                 $where_string .= ' media.trashed  = 0';
             }
         } else {
-            if ($include_archived) {
+            if ($include_retired) {
                 if ($include_trashed) {
                     $where_string .= ' and ' if $where_string;
-                    $where_string .= ' media.archived = 1 AND media.trashed = 1';
+                    $where_string .= ' media.retired = 1 AND media.trashed = 1';
                 } else {
                     $where_string .= ' and ' if $where_string;
-                    $where_string .= ' media.archived = 1 AND media.trashed = 0';
+                    $where_string .= ' media.retired = 1 AND media.trashed = 0';
                 }
             } else {
                 if ($include_trashed) {
@@ -1813,7 +1813,7 @@ sub duplicate_check {
 SELECT media_id
 FROM   media
 WHERE  url = ?
-AND    archived = 0
+AND    retired = 0
 AND    trashed  = 0
 SQL
 
@@ -1966,7 +1966,7 @@ sub serialize_xml {
     $writer->dataElement(creation_date => $self->{creation_date}->datetime);
     $writer->dataElement(publish_date  => $self->{publish_date}->datetime)
       if $self->{publish_date};
-    $writer->dataElement(archived => $self->archived);
+    $writer->dataElement(retired => $self->retired);
     $writer->dataElement(trashed  => $self->trashed);
 
     # add category to set
@@ -2014,7 +2014,7 @@ sub deserialize_xml {
     my (%complex, %simple);
     @complex{
         qw(media_id filename publish_date creation_date checked_out_by
-          version url published_version category_id media_uuid trashed archived)
+          version url published_version category_id media_uuid trashed retired)
       }
       = ();
     %simple = map { ($_, 1) } grep { not exists $complex{$_} } (FIELDS);
@@ -2199,18 +2199,18 @@ sub STORABLE_thaw {
     return $self;
 }
 
-=item C<< $media->archive() >>
+=item C<< $media->retire() >>
 
-=item C<< Krang::Media->archive(media_id => $media_id) >>
+=item C<< Krang::Media->retire(media_id => $media_id) >>
 
 Archive the media, i.e. remove it from its publish/preview location
 and don't show it on the Find Media screen.  Throws a
-Krang::Media::NoEditAccess exception if user may not archive this
+Krang::Media::NoEditAccess exception if user may not retire this
 media. Croaks if the media is checked out by another user.
 
 =cut
 
-sub archive {
+sub retire {
     my ($self, %args) = @_;
     unless (ref $self) {
         my $media_id = $args{media_id};
@@ -2230,11 +2230,11 @@ sub archive {
     # unpublish
     pkg('Publisher')->new->unpublish_media(media => $self);
 
-    # archive the media
+    # retire the media
     my $dbh = dbh();
     $dbh->do(
         "UPDATE media
-              SET    archived = 1
+              SET    retired = 1
               WHERE  media_id = ?", undef,
         $self->{media_id}
     );
@@ -2243,30 +2243,30 @@ sub archive {
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
         undef, 'media', $self->{media_id});
 
-    # living in archive
-    $self->{archived} = 1;
+    # living in retire
+    $self->{retired} = 1;
 
     $self->checkin();
 
     add_history(
         object => $self,
-        action => 'archive'
+        action => 'retire'
     );
 }
 
-=item C<< $media->unarchive() >>
+=item C<< $media->unretire() >>
 
-=item C<< Krang::Media->unarchive(media_id => $media_id) >>
+=item C<< Krang::Media->unretire(media_id => $media_id) >>
 
-Unarchive the media, i.e. show it again on the Find Media screen, but
+Unretire the media, i.e. show it again on the Find Media screen, but
 don't republish it. Throws a Krang::Media::NoEditAccess exception if
-user may not unarchive this media. Throws a Krang::Media::DuplicateURL
+user may not unretire this media. Throws a Krang::Media::DuplicateURL
 exception if a media with the same URL has been created in Live.
 Croaks if the media is checked out by another user.
 
 =cut
 
-sub unarchive {
+sub unretire {
     my ($self, %args) = @_;
     unless (ref $self) {
         my $media_id = $args{media_id};
@@ -2287,20 +2287,20 @@ sub unarchive {
     $self->checkout;
 
     # alive again
-    $self->{archived} = 0;
+    $self->{retired} = 0;
 
-    # unarchive the media
+    # unretire the media
     my $dbh = dbh();
     $dbh->do(
         'UPDATE media
-              SET    archived = 0
+              SET    retired = 0
               WHERE  media_id = ?', undef,
         $self->{media_id}
     );
 
     add_history(
         object => $self,
-        action => 'unarchive',
+        action => 'unretire',
     );
 
     # check it back in
@@ -2380,7 +2380,7 @@ sub untrash {
     ) unless $self->may_edit;
 
     # make sure no other media occupies our initial place (URL)
-    $self->duplicate_check() unless $self->archived;
+    $self->duplicate_check() unless $self->retired;
 
     # make sure we are the one
     $self->checkout;
@@ -2397,7 +2397,7 @@ sub untrash {
     # remove from trash
     pkg('Trash')->remove(object => $self);
 
-    # maybe in archive, maybe alive again
+    # maybe in retire, maybe alive again
     $self->{trashed} = 0;
 
     # check back in
@@ -2411,12 +2411,12 @@ sub untrash {
 
 =item C<< $media->wont_publish() >>
 
-Convenience method returning true if media has been archived or
+Convenience method returning true if media has been retired or
 trashed.
 
 =cut
 
-sub wont_publish { return $_[0]->archived || $_[0]->trashed }
+sub wont_publish { return $_[0]->retired || $_[0]->trashed }
 
 =item C<< $media->clone(category_id => $category_id) >>
 
@@ -2442,7 +2442,7 @@ sub clone {
     $copy->{preview_version}   = 0;
     $copy->{published_version} = 0;
     $copy->{publish_date}      = undef;
-    $copy->{archived}          = 0;
+    $copy->{retired}          = 0;
     $copy->{trashed}           = 0;
     $copy->{url_cache}         = undef;
     $copy->{cat_cache}         = undef;

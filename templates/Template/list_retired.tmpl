@@ -2,11 +2,11 @@
 
 <script type="text/javascript">
 Krang.onload( function() {
-  Krang.Help.set( 'template_archived' );
+  Krang.Help.set( 'template_retired' );
 } );
 
 other_search_rm = function() {
-  Krang.Form.submit('template_search_form', { rm: 'search', other_search_place: 'Search in Archive' });
+  Krang.Form.submit('template_search_form', { rm: 'search', other_search_place: 'Search in Retire' });
 }
 
 show_advanced_search = function( show_advanced )
@@ -45,21 +45,21 @@ show_advanced_search = function( show_advanced )
         }
       }
   }
-  unarchive_template = function(id)
+  unretire_template = function(id)
   {
-    Krang.Form.submit('find_template', { rm: 'unarchive', template_id: id });
+    Krang.Form.submit('find_template', { rm: 'unretire', template_id: id });
   }
 
 </tmpl_if>
 </script>
 
 <h2>
-Archived Templates
+Retired Templates
 </h2>
 
 <form name="template_search_form" method="post" action="template.pl">
 
-<input name="rm" value="list_archived" type="hidden">
+<input name="rm" value="list_retired" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
@@ -169,7 +169,7 @@ Search Results
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" method="post" action="template.pl">
-  <input name="rm" value="list_archived" type="hidden">
+  <input name="rm" value="list_retired" type="hidden">
   <input name="search_filter" value="" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
   <input name="do_advanced_search" value="1" type="hidden">
@@ -180,7 +180,7 @@ Search Results
   <form name="find_template" method="post" action="template.pl">
   <input name="rm" value="view" type="hidden">
   <input name="template_id" type="hidden">
-  <input name="archived" value="1" type="hidden">
+  <input name="retired" value="1" type="hidden">
   <input name="return_script" value="template.pl" type="hidden">
   <tmpl_var history_return_params>
   </form>

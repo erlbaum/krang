@@ -45,7 +45,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
       may_see
       may_edit
       hidden
-      archived
+      retired
       trashed
       )
   ],
@@ -86,7 +86,7 @@ use constant STORY_FIELDS => qw( story_id
   desk_id
   last_desk_id
   hidden
-  archived
+  retired
   trashed
 );
 
@@ -527,7 +527,7 @@ sub init {
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
     $self->{cover_date}        = Time::Piece->new();
     $self->{story_uuid}        = pkg('UUID')->new;
-    $self->{archived}          = 0;
+    $self->{retired}          = 0;
     $self->{trashed}           = 0;
 
     # Set up temporary permissions
@@ -897,13 +897,13 @@ sub _verify_unique {
         }
     }
 
-    # then look for stories that have one of our URLs without being archived nor trashed
+    # then look for stories that have one of our URLs without being retired nor trashed
     my $query =
-        'SELECT s.story_id, url, archived, trashed '
+        'SELECT s.story_id, url, retired, trashed '
       . 'FROM   story s '
       . 'LEFT   JOIN story_category as sc '
       . 'ON     s.story_id = sc.story_id '
-      . 'WHERE  archived = 0 AND trashed = 0 AND ('
+      . 'WHERE  retired = 0 AND trashed = 0 AND ('
       . join(' OR ', ('url = ?') x @urls) . ')'
       . ($self->{story_id} ? ' AND s.story_id != ?' : '');
     my $result =
@@ -1118,13 +1118,13 @@ Results will be in sorted in ascending order unless this is set to 1
 =item include_live
 
 Include live stories in the search result. Live stories are stories
-that are neither archived nor have been moved to the trashbin. Set
+that are neither retired nor have been moved to the trashbin. Set
 this option to 0, if find() should not return live stories.  The
 default is 1.
 
-=item include_archived
+=item include_retired
 
-Set this option to 1 if you want to include archived stories in the
+Set this option to 1 if you want to include retired stories in the
 search result. The default is 0.
 
 =item include_trashed
@@ -1173,7 +1173,7 @@ or bin/ scripts make calls to C<find()>!
         my $offset           = delete $args{offset}           || 0;
         my $count            = delete $args{count}            || 0;
         my $ids_only         = delete $args{ids_only}         || 0;
-        my $include_archived = delete $args{include_archived} || 0;
+        my $include_retired  = delete $args{include_retired}  || 0;
         my $include_trashed  = delete $args{include_trashed}  || 0;
         my $include_live     = delete $args{include_live};
         $include_live = 1 unless defined($include_live);
@@ -1510,17 +1510,17 @@ or bin/ scripts make calls to C<find()>!
         # always restrict perm checking to primary category
         push(@where, 'sc_p.ord = 0');
 
-        # include live/archived/trashed
+        # include live/retired/trashed
         unless ($args{story_id}) {
             if ($include_live) {
-                push(@where, 's.archived = 0') unless $include_archived;
+                push(@where, 's.retired = 0') unless $include_retired;
                 push(@where, 's.trashed  = 0') unless $include_trashed;
             } else {
-                if ($include_archived) {
+                if ($include_retired) {
                     if ($include_trashed) {
-                        push(@where, 's.archived = 1 AND s.trashed = 1');
+                        push(@where, 's.retired = 1 AND s.trashed = 1');
                     } else {
-                        push(@where, 's.archived = 1 AND s.trashed = 0');
+                        push(@where, 's.retired = 1 AND s.trashed = 0');
                     }
                 } else {
                     push(@where, 's.trashed = 1') if $include_trashed;
@@ -2206,8 +2206,8 @@ sub clone {
     # get a new UUID
     $copy->{story_uuid} = pkg('UUID')->new;
 
-    # unset archived and trashed flag
-    $copy->{archived} = 0;
+    # unset retired and trashed flag
+    $copy->{retired} = 0;
     $copy->{trashed}  = 0;
 
     # unset (last_)desk_id
@@ -2415,7 +2415,7 @@ sub serialize_xml {
     $writer->dataElement(version    => $self->version);
     $writer->dataElement(cover_date => $self->cover_date->datetime);
     $writer->dataElement(notes      => $self->notes);
-    $writer->dataElement(archived   => $self->archived);
+    $writer->dataElement(retired   => $self->retired);
     $writer->dataElement(trashed    => $self->trashed);
 
     # categories
@@ -2637,9 +2637,9 @@ sub deserialize_xml {
     return $story;
 }
 
-=item C<< $story->archive() >>
+=item C<< $story->retire() >>
 
-=item C<< Krang::Story->archive(story_id => $story_id) >>
+=item C<< Krang::Story->retire(story_id => $story_id) >>
 
 Archive the story, i.e. remove it from its publish/preview location
 and don't show it on the Find Story screen.  Throws a
@@ -2648,7 +2648,7 @@ story. Croaks if the story is checked out by another user.
 
 =cut
 
-sub archive {
+sub retire {
     my ($self, %args) = @_;
     unless (ref $self) {
         my $story_id = $args{story_id};
@@ -2668,11 +2668,11 @@ sub archive {
     # unpublish
     pkg('Publisher')->new->unpublish_story(story => $self);
 
-    # archive the story
+    # retire the story
     my $dbh = dbh();
     $dbh->do(
         "UPDATE story
-              SET    archived = 1
+              SET    retired = 1
               WHERE  story_id = ?", undef,
         $self->{story_id}
     );
@@ -2681,22 +2681,22 @@ sub archive {
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
         undef, 'story', $self->{story_id});
 
-    # living in archive
-    $self->{archived} = 1;
+    # living in retire
+    $self->{retired} = 1;
 
     $self->checkin();
 
     add_history(
         object => $self,
-        action => 'archive'
+        action => 'retire'
     );
 }
 
-=item C<< $story->unarchive() >>
+=item C<< $story->unretire() >>
 
-=item C<< Krang::Story->unarchive(story_id => $story_id) >>
+=item C<< Krang::Story->unretire(story_id => $story_id) >>
 
-Unarchive the story, i.e. show it again on the Find Story screen, but
+Unretire the story, i.e. show it again on the Find Story screen, but
 don't republish it. Throws a Krang::Story::NoEditAccess exception if
 user may not edit this story. Throws a Krang::Story::DuplicateURL
 exception if a story with the same URL has been created in
@@ -2704,7 +2704,7 @@ Live. Croaks if the story is checked out by another user.
 
 =cut
 
-sub unarchive {
+sub unretire {
     my ($self, %args) = @_;
     unless (ref $self) {
         my $story_id = $args{story_id};
@@ -2724,24 +2724,24 @@ sub unarchive {
     # make sure no other story occupies our initial place (URL)
     $self->_verify_unique;
 
-    # unarchive the story
+    # unretire the story
     my $dbh = dbh();
     $dbh->do(
         'UPDATE story
-              SET    archived = 0
+              SET    retired = 0
               WHERE  story_id = ?', undef,
         $self->{story_id}
     );
 
     # alive again
-    $self->{archived} = 0;
+    $self->{retired} = 0;
 
     # check it back in
     $self->checkin() unless $args{dont_checkin};
 
     add_history(
         object => $self,
-        action => 'unarchive',
+        action => 'unretire',
     );
 }
 
@@ -2818,7 +2818,7 @@ sub untrash {
     ) unless ($self->may_edit);
 
     # make sure no other story occupies our initial place (URL)
-    $self->_verify_unique unless $self->archived;
+    $self->_verify_unique unless $self->retired;
 
     # make sure we are the one
     $self->checkout;
@@ -2835,7 +2835,7 @@ sub untrash {
     # remove from trash
     pkg('Trash')->remove(object => $self);
 
-    # maybe in archive, maybe alive again
+    # maybe in retire, maybe alive again
     $self->{trashed} = 0;
 
     # check back in
@@ -2849,12 +2849,12 @@ sub untrash {
 
 =item C<< $story->wont_publish() >>
 
-Convenience method returning true if story has been archived or
+Convenience method returning true if story has been retired or
 trashed.
 
 =cut
 
-sub wont_publish { return $_[0]->archived || $_[0]->trashed }
+sub wont_publish { return $_[0]->retired || $_[0]->trashed }
 
 =item C<< $story->turn_into_category_index(category => $category) >>
 

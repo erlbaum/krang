@@ -72,7 +72,7 @@ sub setup {
               save_edit
               save_stay_edit
               list_active
-              list_archived
+              list_retired
               delete
               delete_selected
               save_and_associate_media
@@ -85,8 +85,8 @@ sub setup {
               revert_version
               save_and_edit_schedule
               autocomplete
-              archive
-              unarchive
+              retire
+              unretire
               )
         ]
     );
@@ -103,7 +103,7 @@ sub setup {
 The find mode allows the user to run simple and advanced searches on
 live media objects, which will be listed on paging view 'Find Media'.
 
-From this paging view the user may choose to view, edit or archive an
+From this paging view the user may choose to view, edit or retire an
 object, or select a set of objects to be checked out to the workspace,
 published or deleted (depending on the user's permission set).
 
@@ -122,26 +122,26 @@ sub find {
     $self->_do_find(%args);
 }
 
-=item list_archived
+=item list_retired
 
-The list_archived mode allows the user to run simple and advanced
-searches on archived media objects, which will be listed on paging
+The list_retired mode allows the user to run simple and advanced
+searches on retired media objects, which will be listed on paging
 view 'Archived Media'.
 
-From this paging view the user may choose to view or unarchive an
+From this paging view the user may choose to view or unretire an
 object, or select a set of objects to be deleteted (depending on the
 user's permission set).
 
 =cut
 
-sub list_archived {
+sub list_retired {
     my $self = shift;
 
     $self->query->param('other_search_place' => 'Search in Live');
 
     my %args = (
-        tmpl_file         => 'list_archived.tmpl',
-        include_in_search => 'archived'
+        tmpl_file         => 'list_retired.tmpl',
+        include_in_search => 'retired'
     );
 
     $self->_do_find(%args);
@@ -178,8 +178,8 @@ sub _do_simple_find {
     # search in Archive or in Live?
     my $include = $args{include_in_search};
 
-    # find archived stories?
-    my $archived = $include eq 'archived' ? 1 : 0;
+    # find retired stories?
+    my $retired = $include eq 'retired' ? 1 : 0;
 
     my $t = $self->load_tmpl($args{tmpl_file}, associate => $q);
     $t->param(do_advanced_search => 0);
@@ -190,7 +190,7 @@ sub _do_simple_find {
 
     # admin perms to determine appearance of Publish button and row checkbox
     my %user_admin_permissions = pkg('Group')->user_admin_permissions;
-    $t->param(may_publish => $user_admin_permissions{may_publish}) unless $archived;
+    $t->param(may_publish => $user_admin_permissions{may_publish}) unless $retired;
 
     # Persist data for return from view in "return_params"
     my @return_param_list = qw(
@@ -229,11 +229,11 @@ sub _do_simple_find {
         $search_filter = '';
     }
 
-    # find live or archived stories?
-    my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
+    # find live or retired stories?
+    my %include_options = $retired ? (include_live => 0, include_retired => 1) : ();
 
     my $persist_vars = {
-        rm => ($archived ? 'list_archived' : 'find'),
+        rm => ($retired ? 'list_retired' : 'find'),
         search_filter      => $search_filter,
         show_thumbnails    => $show_thumbnails,
         asset_type         => 'media',
@@ -247,7 +247,7 @@ sub _do_simple_find {
         %include_options
     };
 
-    my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails, $archived);
+    my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails, $retired);
     my $pager_tmpl = $self->load_tmpl(
         'list_view_pager.tmpl',
         associate         => $q,
@@ -301,8 +301,8 @@ sub _do_advanced_find {
     # search in Archive or in Live?
     my $include = $args{include_in_search};
 
-    # find archived stories?
-    my $archived = $include eq 'archived' ? 1 : 0;
+    # find retired stories?
+    my $retired = $include eq 'retired' ? 1 : 0;
 
     my $t = $self->load_tmpl($args{tmpl_file}, associate => $q);
     $t->param(do_advanced_search => 1);
@@ -313,7 +313,7 @@ sub _do_advanced_find {
 
     # admin perms to determine appearance of Publish button and row checkbox
     my %user_admin_permissions = pkg('Group')->user_admin_permissions;
-    $t->param(may_publish => $user_admin_permissions{may_publish}) unless $archived;
+    $t->param(may_publish => $user_admin_permissions{may_publish}) unless $retired;
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
@@ -345,13 +345,13 @@ sub _do_advanced_find {
 
     $t->param(return_params => $self->make_return_params(@return_param_list));
 
-    # find live or archived stories?
-    my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
+    # find live or retired stories?
+    my %include_options = $retired ? (include_live => 0, include_retired => 1) : ();
 
     my $find_params = \%include_options;
 
     my $persist_vars = {
-        rm => ($archived ? 'list_archived' : 'find'),
+        rm => ($retired ? 'list_retired' : 'find'),
         asset_type         => 'media',
         do_advanced_search => 1,
         $include           => 1,
@@ -478,7 +478,7 @@ sub _do_advanced_find {
     $t->param(search_no_attributes => $search_no_attributes);
 
     # Run pager
-    my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails, $archived);
+    my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails, $retired);
     my $pager_tmpl = $self->load_tmpl(
         'list_view_pager.tmpl',
         associate         => $q,
@@ -1028,7 +1028,7 @@ sub delete_selected {
 
     add_message('message_selected_deleted');
 
-    return $q->param('archived') ? $self->list_archived : $self->find;
+    return $q->param('retired') ? $self->list_retired : $self->find;
 }
 
 =item save_and_edit_schedule
@@ -1804,7 +1804,7 @@ sub make_media_view_tmpl_data {
     $tmpl_data{can_edit} = 1
       unless (not($m->may_edit)
         or ($m->checked_out and ($m->checked_out_by ne $ENV{REMOTE_USER}))
-        or $m->archived
+        or $m->retired
         or $m->trashed);
 
     # Send data back to caller for inclusion in template
@@ -1855,7 +1855,7 @@ sub make_return_params {
 # Given a persist_vars and find_params, return the pager object
 sub make_pager {
     my $self = shift;
-    my ($persist_vars, $find_params, $show_thumbnails, $archived) = @_;
+    my ($persist_vars, $find_params, $show_thumbnails, $retired) = @_;
 
     # read-only users don't see checkbox column....
     my %user_permissions = (pkg('Group')->user_asset_permissions);
@@ -1901,7 +1901,7 @@ sub make_pager {
         column_labels    => \%column_labels,
         columns_sortable => [qw( media_id title url creation_date )],
         row_handler =>
-          sub { $self->find_media_row_handler($show_thumbnails, @_, archived => $archived); },
+          sub { $self->find_media_row_handler($show_thumbnails, @_, retired => $retired); },
         id_handler => sub { return $_[0]->media_id },
     );
 
@@ -1913,8 +1913,8 @@ sub find_media_row_handler {
     my $self = shift;
     my ($show_thumbnails, $row, $media, %args) = @_;
 
-    my $list_archived        = $args{archived};
-    my $may_edit_and_archive = (
+    my $list_retired        = $args{retired};
+    my $may_edit_and_retire = (
         not($media->may_edit)
           or (  ($media->checked_out)
             and ($media->checked_out_by ne $ENV{REMOTE_USER}))
@@ -1962,15 +1962,15 @@ sub find_media_row_handler {
     }
 
     # Buttons and status continued
-    if ($list_archived) {
+    if ($list_retired) {
 
         # Archived Media screen
-        if ($media->archived) {
+        if ($media->retired) {
             $row->{commands_column} .= ' '
-              . qq|<input value="Unarchive" onclick="unarchive_media('|
+              . qq|<input value="Unretire" onclick="unretire_media('|
               . $media->media_id
               . qq|')" type="button" class="button">|
-              if $may_edit_and_archive;
+              if $may_edit_and_retire;
             $row->{pub_status} = '';
             $row->{status}     = '&nbsp;';
         } else {
@@ -1985,23 +1985,23 @@ sub find_media_row_handler {
     } else {
 
         # Find Media screen
-        if ($media->archived) {
+        if ($media->retired) {
 
-            # Media is archived
+            # Media is retired
             $row->{pub_status}      = '';
             $row->{status}          = 'Archive';
             $row->{checkbox_column} = "&nbsp;";
         } else {
 
-            # Media is not archived: Maybe we may edit and archive
+            # Media is not retired: Maybe we may edit and retire
             $row->{commands_column} .= ' '
               . qq|<input value="Edit" onclick="edit_media('|
               . $media->media_id
               . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="Archive" onclick="archive_media('|
+              . qq|<input value="Archive" onclick="retire_media('|
               . $media->media_id
               . qq|')" type="button" class="button">|
-              if $may_edit_and_archive;
+              if $may_edit_and_retire;
             if ($media->checked_out) {
                 $row->{status} = "Checked out by <b>"
                   . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
@@ -2012,7 +2012,7 @@ sub find_media_row_handler {
         }
     }
 
-    unless ($may_edit_and_archive) {
+    unless ($may_edit_and_retire) {
         $row->{checkbox_column} = "&nbsp;";
     }
 }
@@ -2062,13 +2062,13 @@ sub autocomplete {
     );
 }
 
-=item archive
+=item retire
 
-Move media to the archive and return to the Find Media screen.
+Move media to the retire and return to the Find Media screen.
 
 =cut
 
-sub archive {
+sub retire {
     my $self = shift;
     my $q    = $self->query;
 
@@ -2077,49 +2077,49 @@ sub archive {
     croak("No media_id found in CGI params when archiving media.")
       unless $media_id;
 
-    # load media from DB and archive it
+    # load media from DB and retire it
     my ($media) = pkg('Media')->find(media_id => $media_id);
 
     croak("Unable to load Media '" . $media_id . "'.")
       unless $media;
 
-    $media->archive();
+    $media->retire();
 
-    add_message('media_archived', id => $media_id, url => $media->url);
+    add_message('media_retired', id => $media_id, url => $media->url);
 
     $q->delete('media_id');
 
     return $self->find();
 }
 
-=item unarchive
+=item unretire
 
-Move media from archive back to live. If a DuplicateURL conflict
-occurs, leave the media archived and alert the user.
+Move media from retire back to live. If a DuplicateURL conflict
+occurs, leave the media retired and alert the user.
 
 =cut
 
-sub unarchive {
+sub unretire {
     my $self = shift;
     my $q    = $self->query;
 
     my $media_id = $q->param('media_id');
 
-    croak("No media_id found in CGI params when trying to unarchive media.")
+    croak("No media_id found in CGI params when trying to unretire media.")
       unless $media_id;
 
-    # load media from DB and unarchive it
+    # load media from DB and unretire it
     my ($media) = pkg('Media')->find(media_id => $media_id);
 
     croak("Unable to load media '" . $media_id . "'.")
       unless $media;
 
-    eval { $media->unarchive() };
+    eval { $media->unretire() };
 
     if ($@ and ref($@)) {
         if ($@->isa('Krang::Media::DuplicateURL')) {
             add_alert(
-                'duplicate_url_on_unarchive',
+                'duplicate_url_on_unretire',
                 id       => $media_id,
                 other_id => $@->media_id,
                 url      => $media->url
@@ -2129,14 +2129,14 @@ sub unarchive {
             # param tampering
 ##	    return $self->access_forbidden();
             # or perhaps a permission change
-            add_alert('access_denied_on_unarchive', id => $media_id, url => $media->url);
+            add_alert('access_denied_on_unretire', id => $media_id, url => $media->url);
         }
-        return $self->list_archived;
+        return $self->list_retired;
     }
 
-    add_message('media_unarchived', id => $media_id, url => $media->url);
+    add_message('media_unretired', id => $media_id, url => $media->url);
 
-    return $self->list_archived;
+    return $self->list_retired;
 
 }
 

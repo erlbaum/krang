@@ -15,7 +15,7 @@ show_advanced_search = function( show_advanced )
 }
 
 other_search_rm = function() {
-  Krang.Form.submit('template_search_form', { rm: 'list_archived', other_search_place: 'Search in Live' });
+  Krang.Form.submit('template_search_form', { rm: 'list_retired', other_search_place: 'Search in Live' });
 }
 
 <tmpl_if do_advanced_search>
@@ -52,10 +52,10 @@ other_search_rm = function() {
       Krang.Form.submit('krang_pager_form', { rm: 'deploy_selected' }, { to_top: false });
   }
 
-  archive_template = function(id)
+  retire_template = function(id)
   {
-    if (confirm('Are you SURE you want to archive this Template?'))
-      Krang.Form.submit('find_template', { rm: 'archive', template_id: id });
+    if (confirm('Are you SURE you want to retire this Template?'))
+      Krang.Form.submit('find_template', { rm: 'retire', template_id: id });
   }
 </tmpl_if>
 </script>
@@ -75,7 +75,7 @@ Find Templates
 <tmpl_if do_advanced_search>
   <input name="search_filter" value="" type="hidden">
 </tmpl_if>
-<input name="other_search_place" value="Search in Archive" type="hidden">
+<input name="other_search_place" value="Search in Retire" type="hidden">
 
 <div class="tabset finder">
 

@@ -61,7 +61,7 @@ sub setup {
         revert                        => 'revert',
         find                          => 'find',
         list_active                   => 'list_active',
-        list_archived                 => 'list_archived',
+        list_retired                 => 'list_retired',
         cancel                        => 'cancel',
         delete                        => 'delete',
         delete_selected               => 'delete_selected',
@@ -91,8 +91,8 @@ sub setup {
         save_and_find_story_link      => 'save_and_find_story_link',
         save_and_find_media_link      => 'save_and_find_media_link',
         autocomplete                  => 'autocomplete',
-        archive                       => 'archive',
-        unarchive                     => 'unarchive',
+        retire                       => 'retire',
+        unretire                     => 'unretire',
     );
 
     $self->tmpl_path('Story/');
@@ -737,7 +737,7 @@ sub view {
       if ($story->checked_out
         and ($story->checked_out_by ne $ENV{REMOTE_USER}))
       or not $story->may_edit
-      or $story->archived
+      or $story->retired
       or $story->trashed;
 
     return $template->output();
@@ -1565,7 +1565,7 @@ sub replace_category {
           ;    # so radio-button remains!
 
         # get rid of old category if it has been created while handling a DuplicateURL conflict
-        # that had occured when unarchive()'ing a category index story [ see unarchive() case 3 ]
+        # that had occured when unretire()'ing a category index story [ see unretire() case 3 ]
         if ($old_category->dir eq $story->story_uuid) {
 
             # Save the story with its new category here...
@@ -1582,7 +1582,7 @@ sub replace_category {
             }
 
             add_message(
-                'tmp_category_on_unarchived_category_index_deleted',
+                'tmp_category_on_unretired_category_index_deleted',
                 id  => $old_category->category_id,
                 url => $old_category->url
             );
@@ -1690,7 +1690,7 @@ sub delete {
 =item find
 
 List live stories which match the search criteria.  Provide buttons to
-view, edit, copy and archive each story (depending on the user's story
+view, edit, copy and retire each story (depending on the user's story
 asset permissions).
 
 Also, provide checkboxes next to each story through which the user may
@@ -1708,10 +1708,10 @@ sub find {
     );
 }
 
-=item list_archived
+=item list_retired
 
 List live stories which match the search criteria.  Provide buttons to
-view, copy and unarchive each story (depending on the user's story
+view, copy and unretire each story (depending on the user's story
 asset permissions).
 
 Also, provide checkboxes next to each story through which the user may
@@ -1720,18 +1720,18 @@ permissions).
 
 =cut
 
-sub list_archived {
+sub list_retired {
     my $self = shift;
     $self->query->param('other_search_place' => 'Search in Live');
     return $self->_do_find(
-        tmpl_file         => 'list_archived.tmpl',
-        include_in_search => 'archived'
+        tmpl_file         => 'list_retired.tmpl',
+        include_in_search => 'retired'
     );
 }
 
 #
 # the workhorse who does the actual find operation for find() and
-# list_archived()
+# list_retired()
 #
 sub _do_find {
     my ($self, %args) = @_;
@@ -1744,8 +1744,8 @@ sub _do_find {
     # finding in Live or in Archive?
     my $include = $args{include_in_search};
 
-    # find archived stories?
-    my $archived = $include eq 'archived' ? 1 : 0;
+    # find retired stories?
+    my $retired = $include eq 'retired' ? 1 : 0;
 
     # read-only users don't see everything....
     my %user_asset_permissions = (pkg('Group')->user_asset_permissions);
@@ -1754,7 +1754,7 @@ sub _do_find {
 
     # admin perms to determine appearance of Publish button and row checkbox
     my %user_admin_permissions = pkg('Group')->user_admin_permissions;
-    $tmpl_data{may_publish} = $user_admin_permissions{may_publish} unless $archived;
+    $tmpl_data{may_publish} = $user_admin_permissions{may_publish} unless $retired;
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
@@ -1778,8 +1778,8 @@ sub _do_find {
       : $session{KRANG_PERSIST}{pkg('Story')}{do_advanced_search};
     $template->param('do_advanced_search' => $do_advanced_search);
 
-    # find live or archived stories?
-    my %include_options = $archived ? (include_live => 0, include_archived => 1) : ();
+    # find live or retired stories?
+    my %include_options = $retired ? (include_live => 0, include_retired => 1) : ();
 
     # Set up persist_vars for pager
     my %persist_vars = (
@@ -1835,7 +1835,7 @@ sub _do_find {
             my $from = decode_datetime(query => $q, name => $datetype . '_from');
             my $to = decode_datetime(no_time_is_end => 1, query => $q, name => $datetype . '_to');
 
-            unless ($archived) {
+            unless ($retired) {
                 if ($from || $to) {
                     my $key = $datetype . '_date';
                     my $val = [$from, $to];
@@ -1885,7 +1885,7 @@ sub _do_find {
         $tmpl_data{date_chooser_cover_to} =
           datetime_chooser(query => $q, name => 'cover_to', nochoice => 1);
 
-        unless ($archived) {
+        unless ($retired) {
             $tmpl_data{date_chooser_publish_from} =
               datetime_chooser(query => $q, name => 'publish_from', nochoice => 1);
             $tmpl_data{date_chooser_publish_to} =
@@ -1944,7 +1944,7 @@ sub _do_find {
             status          => 'Status',
         },
         columns_sortable => [qw( story_id title url cover_date )],
-        row_handler      => sub { $self->find_story_row_handler(@_, archived => $archived); },
+        row_handler      => sub { $self->find_story_row_handler(@_, retired => $retired); },
         id_handler => sub { return $_[0]->story_id },
     );
 
@@ -2049,7 +2049,7 @@ sub delete_selected {
     }
 
     add_message('selected_stories_deleted');
-    return $q->param('archived') ? $self->list_archived : $self->find();
+    return $q->param('retired') ? $self->list_retired : $self->find();
 }
 
 =item checkout_selected
@@ -2200,8 +2200,8 @@ sub find_story_row_handler {
     my $q                     = $self->query;
     my $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
 
-    my $list_archived        = $args{archived};
-    my $may_edit_and_archive = (
+    my $list_retired        = $args{retired};
+    my $may_edit_and_retire = (
         ($story->checked_out) and ($story->checked_out_by ne $ENV{REMOTE_USER})
           or not $story->may_edit
     ) ? 0 : 1;
@@ -2247,15 +2247,15 @@ sub find_story_row_handler {
       if $story->may_edit;
 
     # other buttons and status cols
-    if ($list_archived) {
+    if ($list_retired) {
 
         # Archived Stories screen
-        if ($story->archived) {
+        if ($story->retired) {
             $row->{commands_column} .= ' '
-              . qq|<input value="Unarchive" onclick="unarchive_story('|
+              . qq|<input value="Unretire" onclick="unretire_story('|
               . $story->story_id
               . qq|')" type="button" class="button">|
-              if $may_edit_and_archive;
+              if $may_edit_and_retire;
             $row->{pub_status} = '';
             $row->{status}     = '&nbsp;';
         } else {
@@ -2275,7 +2275,7 @@ sub find_story_row_handler {
     } else {
 
         # Find Story screen
-        if ($story->archived) {
+        if ($story->retired) {
             $row->{pub_status}      = '';
             $row->{status}          = 'Archive';
             $row->{checkbox_column} = "&nbsp;";
@@ -2284,10 +2284,10 @@ sub find_story_row_handler {
               . qq|<input value="Edit" onclick="edit_story('|
               . $story->story_id
               . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="Archive" onclick="archive_story('|
+              . qq|<input value="Archive" onclick="retire_story('|
               . $story->story_id
               . qq|')" type="button" class="button">|
-              if $may_edit_and_archive;
+              if $may_edit_and_retire;
             if ($story->checked_out) {
                 $row->{status} = "Checked out by <b>"
                   . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
@@ -2301,7 +2301,7 @@ sub find_story_row_handler {
         }
     }
 
-    unless ($may_edit_and_archive) {
+    unless ($may_edit_and_retire) {
         $row->{checkbox_column} = "&nbsp;";
     }
 }
@@ -2578,10 +2578,10 @@ sub make_sure_story_is_still_ours {
     return 0;
 }
 
-=item archive
+=item retire
 
 Usage:      Runmode.
-Purpose:    Move story to the archive and return to the Find Story screen.
+Purpose:    Move story to the retire and return to the Find Story screen.
 Parameters: Requires a story ID in CGI param 'story_id'.
 Throws:     None.
 Croaks:     If the story can't be loaded from the database.
@@ -2589,7 +2589,7 @@ Returns:    Find Story screen.
 
 =cut
 
-sub archive {
+sub retire {
     my $self = shift;
     my $q    = $self->query;
 
@@ -2598,25 +2598,25 @@ sub archive {
     croak("No story_id found in CGI params when archiving story.")
       unless $story_id;
 
-    # load story from DB and archive it
+    # load story from DB and retire it
     my ($story) = pkg('Story')->find(story_id => $story_id);
 
     croak("Unable to load story '" . $story_id . "'.")
       unless $story;
 
-    $story->archive();
+    $story->retire();
 
-    add_message('story_archived', id => $story_id, url => $story->url);
+    add_message('story_retired', id => $story_id, url => $story->url);
 
     $q->delete('story_id');
 
     return $self->find();
 }
 
-=item unarchive
+=item unretire
 
 Usage:      Runmode.
-Purpose:    Move story from archive back to live.
+Purpose:    Move story from retire back to live.
 Parameters: Requires a story ID in CGI param 'story_id'.
 Throws:     None.
 Croaks:     If the story can't be loaded from the database.
@@ -2628,22 +2628,22 @@ Comments:   Modify the story's slug or clear its categories if it
 
 =cut
 
-sub unarchive {
+sub unretire {
     my $self = shift;
     my $q    = $self->query;
 
     my $story_id = $q->param('story_id');
 
-    croak("No story_id found in CGI params when trying to unarchive story.")
+    croak("No story_id found in CGI params when trying to unretire story.")
       unless $story_id;
 
-    # load story from DB and unarchive it
+    # load story from DB and unretire it
     my ($story) = pkg('Story')->find(story_id => $story_id);
 
     croak("Unable to load story '" . $story_id . "'.")
       unless $story;
 
-    eval { $story->unarchive() };    # may through a Krang::Story::DuplicateURL exception
+    eval { $story->unretire() };    # may through a Krang::Story::DuplicateURL exception
 
     my @conflict_cats    = ();
     my @conflict_stories = ();
@@ -2662,12 +2662,12 @@ sub unarchive {
         my $site_id = $story->category->site_id;
 
         # resolve the conflict
-        $story->resolve_url_conflict(story => $story, append => 'unarchived');
+        $story->resolve_url_conflict(story => $story, append => 'unretired');
 
         # find the user message for the three possible conflict resolution cases
         if (@conflict_cats) {    # case 1: slug has been modified
             add_alert(
-                'duplicate_cat_url_on_unarchive',
+                'duplicate_cat_url_on_unretire',
                 id       => $story->story_id,
                 new_slug => $story->slug,
                 s        => (scalar(@conflict_cats) == 1 ? '' : 's'),
@@ -2677,7 +2677,7 @@ sub unarchive {
         } else {
             if (@{$story->{category_ids}}) {    # case 2: slug has been modified
                 add_alert(
-                    'duplicate_url_of_slugstory_on_unarchive',
+                    'duplicate_url_of_slugstory_on_unretire',
                     id       => $story->story_id,
                     new_slug => $story->slug,
                     s        => (scalar(@conflict_stories) == 1 ? '' : 's'),
@@ -2686,7 +2686,7 @@ sub unarchive {
                 );
             } else {    # case 3: slugless story: clearing the category_*[] slots and url_cache[]
                 add_alert(
-                    'duplicate_url_of_slugless_story_on_unarchive',
+                    'duplicate_url_of_slugless_story_on_unretire',
                     id => $story->story_id,
                     story_list =>
                       join('<br/>', map { "Story $_->{id} &ndash; $_->{url}" } @conflict_stories)
@@ -2714,8 +2714,8 @@ sub unarchive {
         # save the modified URL
         $story->save();
 
-        # unarchive again to unset the archived flag and add history entry
-        eval { $story->unarchive(dont_checkin => 1) };
+        # unretire again to unset the retired flag and add history entry
+        eval { $story->unretire(dont_checkin => 1) };
 
         # goto Edit screen
         $q->delete('story_id');
@@ -2724,9 +2724,9 @@ sub unarchive {
         return $self->edit;
     }
 
-    add_message('story_unarchived', id => $story_id, url => $story->url);
+    add_message('story_unretired', id => $story_id, url => $story->url);
 
-    return $self->list_archived;
+    return $self->list_retired;
 }
 
 1;

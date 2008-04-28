@@ -123,7 +123,7 @@ use constant TEMPLATE_RO => qw(template_id
   testing
   url
   version
-  archived
+  retired
   trashed);
 
 # Read-write fields
@@ -527,7 +527,7 @@ sub duplicate_check {
 SELECT template_id
 FROM   template
 WHERE  url = '$self->{url}'
-AND    archived = 0
+AND    retired = 0
 AND    trashed  = 0
 SQL
     $query .= "AND template_id != $id" if $id;
@@ -706,13 +706,13 @@ descending order, by default results sort in ascending order
 =item * include_live
 
 Include live templates in the search result. Live templates are
-templates that are neither archived nor have been moved to the
+templates that are neither retired nor have been moved to the
 trashbin. Set this option to 0, if find() should not return live
 templates.  The default is 1.
 
-=item * include_archived
+=item * include_retired
 
-Set this option to 1 if you want to include archived templates in the
+Set this option to 1 if you want to include retired templates in the
 search result. The default is 0.
 
 =item  * include_trashed
@@ -743,7 +743,7 @@ sub find {
     my $order_by = "t." . (delete $args{order_by} || 'template_id');
 
     # set search includes
-    my $include_archived = delete $args{include_archived} || 0;
+    my $include_retired = delete $args{include_retired} || 0;
     my $include_trashed  = delete $args{include_trashed}  || 0;
     my $include_live     = delete $args{include_live};
     $include_live = 1 unless defined($include_live);
@@ -878,25 +878,25 @@ sub find {
         $fields .= ", " . join(", ", @may_fields);
     }
 
-    # include live/archived/trashed
+    # include live/retired/trashed
     unless ($args{template_id}) {
         if ($include_live) {
-            unless ($include_archived) {
+            unless ($include_retired) {
                 $where_clause .= ' and ' if $where_clause;
-                $where_clause .= ' t.archived = 0';
+                $where_clause .= ' t.retired = 0';
             }
             unless ($include_trashed) {
                 $where_clause .= ' and ' if $where_clause;
                 $where_clause .= ' t.trashed  = 0';
             }
         } else {
-            if ($include_archived) {
+            if ($include_retired) {
                 if ($include_trashed) {
                     $where_clause .= ' and ' if $where_clause;
-                    $where_clause .= ' t.archived = 1 AND t.trashed = 1';
+                    $where_clause .= ' t.retired = 1 AND t.trashed = 1';
                 } else {
                     $where_clause .= ' and ' if $where_clause;
-                    $where_clause .= ' t.archived = 1 AND t.trashed = 0';
+                    $where_clause .= ' t.retired = 1 AND t.trashed = 0';
                 }
             } else {
                 if ($include_trashed) {
@@ -1032,7 +1032,7 @@ sub init {
     $self->{testing}        = 0;
     $self->{creation_date}  = localtime();
     $self->{template_uuid}  = pkg('UUID')->new();
-    $self->{archived}       = 0;
+    $self->{retired}       = 0;
     $self->{trashed}        = 0;
 
     $self->hash_init(%args);
@@ -1365,7 +1365,7 @@ sub serialize_xml {
     $writer->dataElement(version       => $self->{version});
     $writer->dataElement(deployed_version => $self->{deployed_version})
       if $self->{deployed_version};
-    $writer->dataElement(archived => $self->archived);
+    $writer->dataElement(retired => $self->retired);
     $writer->dataElement(trashed  => $self->trashed);
 
     # add category to set
@@ -1401,7 +1401,7 @@ sub deserialize_xml {
     @complex{
         qw(template_id deploy_date creation_date url
           checked_out checked_out_by version deployed testing
-          deployed_version category_id template_uuid trashed archived)
+          deployed_version category_id template_uuid trashed retired)
       }
       = ();
     %simple = map { ($_, 1) } grep { not exists $complex{$_} } (TEMPLATE_RO, TEMPLATE_RW);
@@ -1515,9 +1515,9 @@ sub verify_checkout {
 
 sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url; }
 
-=item C<< $template->archive() >>
+=item C<< $template->retire() >>
 
-=item C<< Krang::Template->archive(template_id => $template_id) >>
+=item C<< Krang::Template->retire(template_id => $template_id) >>
 
 Archive the template, i.e. undeploy it and don't show it on the Find
 Template screen.  Throws a Krang::Template::NoEditAccess exception if
@@ -1526,7 +1526,7 @@ by another user.
 
 =cut
 
-sub archive {
+sub retire {
     my ($self, %args) = @_;
     unless (ref $self) {
         my $template_id = $args{template_id};
@@ -1546,31 +1546,31 @@ sub archive {
     # undeploy
     pkg('Publisher')->new->undeploy_template(template => $self);
 
-    # archive the template
+    # retire the template
     my $dbh = dbh();
     $dbh->do(
         "UPDATE template
-              SET    archived = 1
+              SET    retired = 1
               WHERE  template_id = ?", undef,
         $self->{template_id}
     );
 
-    # living in archive
-    $self->{archived} = 1;
+    # living in retire
+    $self->{retired} = 1;
 
     $self->checkin();
 
     add_history(
         object => $self,
-        action => 'archive'
+        action => 'retire'
     );
 }
 
-=item C<< $template->unarchive() >>
+=item C<< $template->unretire() >>
 
-=item C<< Krang::Template->unarchive(template_id => $template_id) >>
+=item C<< Krang::Template->unretire(template_id => $template_id) >>
 
-Unarchive the template, i.e. show it again on the Find Template
+Unretire the template, i.e. show it again on the Find Template
 screen, but don't redeploy it. Throws a Krang::Template::NoEditAccess
 exception if user may not edit this template. Throws a
 Krang::Template::DuplicateURL exception if a template with the same
@@ -1579,7 +1579,7 @@ another user.
 
 =cut
 
-sub unarchive {
+sub unretire {
     my ($self, %args) = @_;
     unless (ref $self) {
         my $template_id = $args{template_id};
@@ -1600,20 +1600,20 @@ sub unarchive {
     $self->checkout;
 
     # alive again
-    $self->{archived} = 0;
+    $self->{retired} = 0;
 
-    # unarchive the template
+    # unretire the template
     my $dbh = dbh();
     $dbh->do(
         'UPDATE template
-              SET    archived = 0
+              SET    retired = 0
               WHERE  template_id = ?', undef,
         $self->{template_id}
     );
 
     add_history(
         object => $self,
-        action => 'unarchive',
+        action => 'unretire',
     );
 
     # check it back in
@@ -1692,7 +1692,7 @@ sub untrash {
     ) unless ($self->may_edit);
 
     # make sure no other template occupies our initial place (URL)
-    $self->duplicate_check unless $self->archived;
+    $self->duplicate_check unless $self->retired;
 
     # make sure we are the one
     $self->checkout;
@@ -1709,7 +1709,7 @@ sub untrash {
     # remove from trash
     pkg('Trash')->remove(object => $self);
 
-    # maybe in archive, maybe alive again
+    # maybe in retire, maybe alive again
     $self->{trashed} = 0;
 
     # check back in
@@ -1748,7 +1748,7 @@ sub clone {
     $copy->{deploy_date}      = undef;
     $copy->{deployed}         = 0;
     $copy->{deployed_version} = 0;
-    $copy->{archived}         = 0;
+    $copy->{retired}         = 0;
     $copy->{trashed}          = 0;
     $copy->{url}              = '';                   # is set by save()
     $copy->{checked_out}      = 1;

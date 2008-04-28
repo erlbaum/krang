@@ -2,7 +2,7 @@
 
 <script type="text/javascript">
 Krang.onload( function() {
-  Krang.Help.set( 'story_archived' );
+  Krang.Help.set( 'story_retired' );
 } );
 
 show_advanced_search = function( show_advanced )
@@ -15,7 +15,7 @@ do_search = function() {
 }
 
 other_search_rm = function() {
-  Krang.Form.submit('search_form', { rm: 'find', other_search_place: 'Search in Archive' });
+  Krang.Form.submit('search_form', { rm: 'find', other_search_place: 'Search in Retire' });
 }
 
 <tmpl_if do_advanced_search>
@@ -28,11 +28,11 @@ other_search_rm = function() {
 <tmpl_if row_count>
   view_story = function( id )
   {
-    Krang.Form.submit('find_story', { rm: 'view', story_id: id, archived: 1 });
+    Krang.Form.submit('find_story', { rm: 'view', story_id: id, retired: 1 });
   }
 
   copy_story = function(id) {
-    Krang.Form.submit('find_story', { rm: 'copy', story_id: id, archived: 1 });
+    Krang.Form.submit('find_story', { rm: 'copy', story_id: id, retired: 1 });
   }
 
   delete_selected = function()
@@ -54,20 +54,20 @@ other_search_rm = function() {
       }
   }
 
-  unarchive_story = function(id)
+  unretire_story = function(id)
   {
-    Krang.Form.submit('find_story', { rm: 'unarchive', story_id: id });
+    Krang.Form.submit('find_story', { rm: 'unretire', story_id: id });
   }
 </tmpl_if>
 </script>
 
 <h2>
-Archived Stories
+Retired Stories
 </h2>
 
 <form name="search_form" method="post" action="story.pl">
 
-<input name="rm" value="list_archived" type="hidden">
+<input name="rm" value="list_retired" type="hidden">
 <input name="krang_pager_curr_page_num" value="" type="hidden">
 <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
@@ -197,7 +197,7 @@ Search Results
 
 <tmpl_if do_advanced_search>
   <form name="clear_advanced_search_form" method="post" action="story.pl">
-  <input name="rm" value="list_archived" type="hidden">
+  <input name="rm" value="list_retired" type="hidden">
   <input name="do_advanced_search" value="1" type="hidden">
   <input name="clear_search_form" value="1" type="hidden">
   </form>
@@ -210,7 +210,7 @@ Search Results
   <input name="class" value="Story" type="hidden">
   <input name="history_return_script" value="story.pl" type="hidden">
   <input name="history_return_params" value="rm" type="hidden">
-  <input name="history_return_params" value="list_archived" type="hidden">
+  <input name="history_return_params" value="list_retired" type="hidden">
   <tmpl_if do_advanced_search>
     <input name="history_return_params" value="search_title" type="hidden">
     <input name="history_return_params" value="<tmpl_var escape=html search_title>" type="hidden">
@@ -271,13 +271,13 @@ Search Results
   </form>
 
   <form name="find_story" method="post" action="story.pl">
-  <input name="rm" value="list_archived" type="hidden">
+  <input name="rm" value="list_retired" type="hidden">
   <input name="story_id" type="hidden">
-  <input name="archived" value="1" type="hidden">
+  <input name="retired" value="1" type="hidden">
   <input name="return_script" value="story.pl" type="hidden">
   <input name="return_params" value="rm" type="hidden">
-  <input name="return_params" value="list_archived" type="hidden">
-  <input name="return_params" value="archived" type="hidden">
+  <input name="return_params" value="list_retired" type="hidden">
+  <input name="return_params" value="retired" type="hidden">
   <input name="return_params" value="1" type="hidden">
   <tmpl_if do_advanced_search>
     <input name="return_params" value="search_title" type="hidden">

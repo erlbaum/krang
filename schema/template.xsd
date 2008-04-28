@@ -20,7 +20,7 @@
                 <xs:element name="deploy_date" type="xs:dateTime" minOccurs="0"/>
                 <xs:element name="version" type="xs:int"/>
                 <xs:element name="deployed_version" type="xs:int" minOccurs="0"/>
-                <xs:element name="archived" type="xs:boolean"/>
+                <xs:element name="retired" type="xs:boolean"/>
                 <xs:element name="trashed"  type="xs:boolean"/>
             </xs:sequence>
         </xs:complexType>
