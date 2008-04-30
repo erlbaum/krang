@@ -6,6 +6,7 @@ use File::Spec::Functions qw(catdir catfile canonpath);
 use Cwd qw(cwd);
 use Config;
 use Devel::CheckLib qw(assert_lib);
+my $DEBUG = 0;
 
 =head1 NAME
 
@@ -957,7 +958,7 @@ sub _check_libs {
     if ($lib) {
         my @libs;
         push(@libs, @{$args{libs}}) if $args{libs}; # extra dirs supplied when called
-        eval { assert_lib(lib => $lib, libpath => \@libs, debug => 1) };
+        eval { assert_lib(lib => $lib, libpath => \@libs, debug => $DEBUG) };
         die "\n\n$name is missing from your system or Krang could not find it."
             . "\nThis library is required by Krang.\n\n" if $@;
     }
@@ -968,7 +969,7 @@ sub _check_libs {
         my $msg = "The header file for $name, '$h', is missing from your system "
          . "or Krang can't find it.";
         $msg .= "\nThis file is needed to compile the $module module which uses $name." if ($module && $name);
-        eval { assert_lib(header => $h, incpath => \@incs, debug => 1) };
+        eval { assert_lib(header => $h, incpath => \@incs, debug => $DEBUG) };
         die "$msg\n" if $@;
     }
 }
