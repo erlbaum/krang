@@ -110,6 +110,8 @@ Output results of upgrade to console.
 
  --no-backup         - Skip making a backup before running the upgrade.
 
+ --no-start          - Skip starting the Krang services after the upgrade
+
  --help              - Show usage
 
  --man               - Show full man page
@@ -198,7 +200,7 @@ sub do_upgrade {
     update_db_version();
     clear_sessions();
 
-    start_krang();
+    start_krang() unless $options{'no-start'};
     output_report();
 }
 
