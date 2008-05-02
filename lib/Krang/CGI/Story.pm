@@ -1944,7 +1944,7 @@ sub _do_find {
             status          => 'Status',
         },
         columns_sortable => [qw( story_id title url cover_date )],
-        row_handler      => sub { $self->find_story_row_handler(%args, retired => $retired); },
+        row_handler      => sub { $self->find_story_row_handler(@_, retired => $retired); },
         id_handler => sub { return $_[0]->story_id },
     );
 
@@ -2196,7 +2196,7 @@ sub steal_selected {
 # Pager row handler for story find run-mode
 sub find_story_row_handler {
     my $self = shift;
-    my ($row, $story, %args) = @_;
+    my ($row, $story, $pager, %args) = @_;
     my $q                     = $self->query;
     my $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
 
