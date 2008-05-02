@@ -1944,7 +1944,7 @@ sub _do_find {
             status          => 'Status',
         },
         columns_sortable => [qw( story_id title url cover_date )],
-        row_handler      => sub { $self->find_story_row_handler(@_, retired => $retired); },
+        row_handler      => sub { $self->find_story_row_handler(%args, retired => $retired); },
         id_handler => sub { return $_[0]->story_id },
     );
 
