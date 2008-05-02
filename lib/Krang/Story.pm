@@ -1029,7 +1029,8 @@ stories.
 
 =item story_uuid
 
-Load a story by UUID.
+Load a story by UUID. Given an array of story UUIDs, loads all the identified
+stories.
 
 =item version
 
@@ -1212,6 +1213,15 @@ or bin/ scripts make calls to C<find()>!
 
                 # an array of IDs selects a list of stories by ID
                 push @where, 's.story_id IN (' . join(',', ("?") x @$value) . ')';
+                push @param, @$value;
+                next;
+            }
+
+            # handle story_uuid => [1, 2, 3]
+            if ($key eq 'story_uuid' and ref($value) and ref($value) eq 'ARRAY') {
+
+                # an array of IDs selects a list of stories by ID
+                push @where, 's.story_uuid IN (' . join(',', ("?") x @$value) . ')';
                 push @param, @$value;
                 next;
             }
