@@ -112,6 +112,11 @@ Output results of upgrade to console.
 
  --no-start          - Skip starting the Krang services after the upgrade
 
+ --no-chown          - Skip re-chowning all of the files to the KrangUser
+                       and KrangGroup. This is useful if you have a lot of
+                       data files and you know that nothing has changed the
+                       ownership of the files
+
  --help              - Show usage
 
  --man               - Show full man page
@@ -443,6 +448,7 @@ sub install_new_krang {
     # Krang which had links to install directory.  It'd be nice to
     # write an upgrade module to weed them out but upgrade modules
     # don't run until after the chown...
+    return if $options{'skip-chown'};
     my $chown = $CHOWN_BIN ." -R  --no-dereference $KrangUser\:$KrangGroup ";
     find({ no_chdir => 1,
            follow   => 0,
