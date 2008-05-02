@@ -170,6 +170,16 @@ default implementation does nothing.
 
 sub delete_hook {}
 
+=item C<< $class->trash_hook(element => $element) >>
+
+Called just before the story containing the element tree is moved to
+the trash bin. This routine can be used to do any necessary cleanup.
+The default implementation does nothing.
+
+=cut
+
+sub trash_hook {}
+
 =item C<< $bool = $class->publish_check(element => $element) >>
 
 This method is called before publishing the story via a scheduled
