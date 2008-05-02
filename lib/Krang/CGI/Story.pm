@@ -1701,7 +1701,7 @@ deleted (also depending on the user's permissions).
 
 sub find {
     my $self = shift;
-    $self->query->param('other_search_place' => 'Search in Archive');
+    $self->query->param('other_search_place' => 'Search in Retired');
     return $self->_do_find(
         tmpl_file         => 'find.tmpl',
         include_in_search => 'live'
@@ -1741,7 +1741,7 @@ sub _do_find {
     my $template = $self->load_tmpl($args{tmpl_file}, associate => $q);
     my %tmpl_data = ();
 
-    # finding in Live or in Archive?
+    # finding in Live or in Retired?
     my $include = $args{include_in_search};
 
     # find retired stories?
@@ -2249,7 +2249,7 @@ sub find_story_row_handler {
     # other buttons and status cols
     if ($list_retired) {
 
-        # Archived Stories screen
+        # Retired Stories screen
         if ($story->retired) {
             $row->{commands_column} .= ' '
               . qq|<input value="Unretire" onclick="unretire_story('|
@@ -2277,14 +2277,14 @@ sub find_story_row_handler {
         # Find Story screen
         if ($story->retired) {
             $row->{pub_status}      = '';
-            $row->{status}          = 'Archive';
+            $row->{status}          = 'Retired';
             $row->{checkbox_column} = "&nbsp;";
         } else {
             $row->{commands_column} .= ' '
               . qq|<input value="Edit" onclick="edit_story('|
               . $story->story_id
               . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="Archive" onclick="retire_story('|
+              . qq|<input value="Retired" onclick="retire_story('|
               . $story->story_id
               . qq|')" type="button" class="button">|
               if $may_edit_and_retire;
@@ -2624,7 +2624,7 @@ Returns:    See Comments.
 Comments:   Modify the story's slug or clear its categories if it
             url-conflicts with a live story or category. If a URL
             conflict occures, return to Edit Story, otherwise return
-            to Archived Stories.
+            to Retired Stories.
 
 =cut
 
