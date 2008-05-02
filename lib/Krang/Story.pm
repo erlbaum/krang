@@ -1512,7 +1512,7 @@ or bin/ scripts make calls to C<find()>!
         push(@where, 'sc_p.ord = 0');
 
         # include live/retired/trashed
-        unless ($args{story_id}) {
+        unless ($args{story_id} or $args{story_uuid} ) {
             if ($include_live) {
                 push(@where, 's.retired = 0')  unless $include_retired;
                 push(@where, 's.trashed  = 0') unless $include_trashed;
@@ -1672,7 +1672,20 @@ sub transform_stories {
             # load each old version, give it to the callback and then replace what's in the db
             foreach my $v (@{$story->all_versions}) {
                 next if $v == $story->version;
-                my ($old_story) = $pkg->_load_version($story_id, $v);
+                my $old_story;
+                eval { ($old_story) = $pkg->_load_version($story_id, $v) };
+
+                # if we can't even load, just skip it
+                if ($@) {
+                    if ($args{prune_corrupt_versions}) {
+                        warn "Removing corrupt story $story_id version $v";
+                        $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version = ?',
+                            undef, $story_id, $v);
+                    } else {
+                        warn "Can't load version $v of story $story_id: $@\n";
+                    }
+                    next;
+                }
                 $old_story = $callback->(story => $old_story, live => 0);
 
                 # re-save version
@@ -1711,7 +1724,13 @@ sub transform_stories_xml {
             my $dbh = dbh;
             foreach my $v ($story->all_versions) {
                 next unless $v == $story->version;
-                my $old_story = $pkg->_load_version($story_id, $v);
+                my $old_story;
+                eval { $old_story = $pkg->_load_version($story_id, $v) };
+                # if we can't even load, just skip it
+                if($@) {
+                    warn "Can't load version $v of story $story_id: $@\n";
+                    next;
+                }
                 $old_story = $callback->({story => $story, live => 0});
 
                 # re-save version
