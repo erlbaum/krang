@@ -2804,7 +2804,7 @@ sub trash {
     # make sure we are the one
     $self->checkout;
     my $element = $self->element;
-    $element->class->trash_hook($element);
+    $element->class->trash_hook(element => $element);
 
     # unpublish
     pkg('Publisher')->new->unpublish_story(story => $self);
