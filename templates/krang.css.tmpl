@@ -515,9 +515,14 @@ div.autocomplete li.selected { background-color: <tmpl_var HilightColor>; }
 #C .err td *, #C div.err input { background: <tmpl_var XHilightColor>; color: <tmpl_var InvalidColor>; }
 /*(db2)Bugzilla/edit ONLY:*/
 #C .err td p, #C .err td dl * { background: <tmpl_var BackgroundColor>; }/*:hack(db2)*/
-/*(db2)HTML::PopupTreeSelect:*/
-#C .err .hpts-outer, #C .err .hpts-outer * { background: <tmpl_var BackgroundColor>; color: <tmpl_var TextColor>; }
-#C .err .hpts-title { background: #999; color: #fff; }
-#C .err .hpts-label-selected a { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
-#C .err .hpts-bbar { background: #999 url("/static/<tmpl_var krang_install_id>/images/bottom-right-corner-resize.gif") right no-repeat; color: <tmpl_var TextColor>; }
-#C .err .hpts-botbar { background: transparent; }
+/* override error styles for .hpts-outer and children */
+#C .err td .hpts-outer, #C .err .hpts-outer * { background: <tmpl_var BackgroundColor>; color: <tmpl_var TextColor>; }
+#C .err td .hpts-title { background: #999; color: #fff; }
+#C .err td .hpts-label-selected a { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
+#C .err td .hpts-bbar { background: #999 url("/static/<tmpl_var krang_install_id>/images/bottom-right-corner-resize.gif") right no-repeat; color: <tmpl_var TextColor>; }
+#C .err td .hpts-botbar { background: transparent; }
+#C .err td .hpts-inner span a { text-decoration: none; color: <tmpl_var LinkColor>;}
+#C .err td .hpts-inner span a:hover, #C .err td .hpts-inner span a:focus { background-color: <tmpl_var HilightColor>; color: <tmpl_var LinkColor>; }
+#C .err td .hpts-inner span.hpts-label-selected a { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
+#C .err td .hpts-inner span.hpts-label-selected a:hover, #C .err td .hpts-inner span.hpts-label-selected a:active { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
+
