@@ -2309,7 +2309,7 @@ sub find_story_row_handler {
 # Pager row handler for story list active run-mode
 sub list_active_row_handler {
     my $self = shift;
-    my ($row, $story) = @_;
+    my ($row, $story, $pager) = @_;
     my $q = $self->query;
 
     # Columns:

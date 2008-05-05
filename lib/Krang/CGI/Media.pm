@@ -1394,7 +1394,7 @@ sub validate_media {
 # Pager row handler for media list active run-mode
 sub list_active_row_handler {
     my $self = shift;
-    my ($row, $media) = @_;
+    my ($row, $media, $pager) = @_;
     my $q = $self->query;
 
     # Columns:
@@ -1913,7 +1913,7 @@ sub make_pager {
 # Pager row handler for media find run-modes
 sub find_media_row_handler {
     my $self = shift;
-    my ($show_thumbnails, $row, $media, %args) = @_;
+    my ($show_thumbnails, $row, $media, $pager, %args) = @_;
 
     my $list_retired        = $args{retired};
     my $may_edit_and_retire = (

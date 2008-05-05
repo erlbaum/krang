@@ -1255,7 +1255,7 @@ sub make_pager {
 
 # Handles rows for search run mode
 sub search_row_handler {
-    my ($self, $row, $template, %args) = @_;
+    my ($self, $row, $template, $pager, %args) = @_;
 
     my $list_retired        = $args{retired};
     my $may_edit_and_retire = (
@@ -1465,7 +1465,7 @@ sub _save {
 sub list_active_row_handler {
     my $self = shift;
     my $q    = $self->query;
-    my ($row, $template) = @_;
+    my ($row, $template, $pager) = @_;
 
     # Columns:
     #
