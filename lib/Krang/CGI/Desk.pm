@@ -145,7 +145,7 @@ sub show {
 }
 
 sub _row_handler {
-    my ($self, $row, $obj, $desk_loop) = @_;
+    my ($self, $row, $obj, $pager, $desk_loop) = @_;
     $row->{desk_loop}  = $desk_loop;
     $row->{story_id}   = $obj->story_id;
     $row->{title}      = $obj->title;
