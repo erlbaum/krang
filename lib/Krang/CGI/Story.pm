@@ -1725,7 +1725,8 @@ sub list_retired {
     $self->query->param('other_search_place' => 'Search in Live');
     return $self->_do_find(
         tmpl_file         => 'list_retired.tmpl',
-        include_in_search => 'retired'
+        include_in_search => 'retired',
+        hide_status_column => 1,
     );
 }
 
@@ -1956,6 +1957,7 @@ sub _do_find {
         associate         => $q,
     );
     $pager->fill_template($pager_tmpl);
+    $pager_tmpl->param(hide_status_column => $args{hide_status_column});
 
     # Set up output
     $template->param(
@@ -2284,7 +2286,7 @@ sub find_story_row_handler {
               . qq|<input value="Edit" onclick="edit_story('|
               . $story->story_id
               . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="Retired" onclick="retire_story('|
+              . qq|<input value="Retire" onclick="retire_story('|
               . $story->story_id
               . qq|')" type="button" class="button">|
               if $may_edit_and_retire;
