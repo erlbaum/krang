@@ -2356,7 +2356,7 @@ sub trash {
 =item C<< Krang::Media->untrash(media_id => $media_id) >>
 
 Restore the media from the trashbin, i.e. show it again on the Find
-Media screen or Archived Media screens (depending on the location from
+Media screen or Retired Media screens (depending on the location from
 where it was deleted).  Throws a Krang::Media::NoRestoreAccess
 exception if user may not edit this media. Croaks if the media is
 checked out by another user. This method is called by
