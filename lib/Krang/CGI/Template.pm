@@ -732,7 +732,7 @@ object, or select a set of objects to be deployed or deleted
 sub search {
     my $self = shift;
 
-    $self->query->param('other_search_place' => 'Search in Archive');
+    $self->query->param('other_search_place' => 'Search in Retired');
 
     my %args = (
         tmpl_file         => 'list_view.tmpl',
@@ -816,7 +816,7 @@ sub _do_simple_search {
     # ensure that $search_filter is at the very least defined.
     $search_filter = '' unless ($search_filter);
 
-    # search in Archive or in Live?
+    # search in Retired or in Live?
     my $include = $args{include_in_search};
 
     # find retired stories?
@@ -875,7 +875,7 @@ sub _do_advanced_search {
     $t->param(do_advanced_search    => 1);
     $t->param(history_return_params => $self->make_history_return_params(@history_param_list));
 
-    # search in Archive or in Live?
+    # search in Retired or in Live?
     my $include = $args{include_in_search};
 
     # find retired stories?
@@ -1284,7 +1284,7 @@ sub search_row_handler {
     # Buttons and status continued
     if ($list_retired) {
 
-        # Archived Template screen
+        # Retired Template screen
         if ($template->retired) {
             $row->{commands_column} .= ' '
               . qq|<input value="Unretire" onclick="unretire_template('|
@@ -1309,7 +1309,7 @@ sub search_row_handler {
 
             # Template is retired
             $row->{deployed}        = '';
-            $row->{status}          = 'Archive';
+            $row->{status}          = 'Retired';
             $row->{checkbox_column} = "&nbsp;";
         } else {
 
@@ -1318,7 +1318,7 @@ sub search_row_handler {
               . qq|<input value="Edit" onclick="edit_template('|
               . $template->template_id
               . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="Archive" onclick="retire_template('|
+              . qq|<input value="Retire" onclick="retire_template('|
               . $template->template_id
               . qq|')" type="button" class="button">|
               if $may_edit_and_retire;

@@ -112,7 +112,7 @@ published or deleted (depending on the user's permission set).
 sub find {
     my $self = shift;
 
-    $self->query->param('other_search_place' => 'Search in Archive');
+    $self->query->param('other_search_place' => 'Search in Retired');
 
     my %args = (
         tmpl_file         => 'list_view.tmpl',
@@ -126,7 +126,7 @@ sub find {
 
 The list_retired mode allows the user to run simple and advanced
 searches on retired media objects, which will be listed on paging
-view 'Archived Media'.
+view 'Retired Media'.
 
 From this paging view the user may choose to view or unretire an
 object, or select a set of objects to be deleteted (depending on the
@@ -175,7 +175,7 @@ sub _do_simple_find {
 
     my $q = $self->query;
 
-    # search in Archive or in Live?
+    # search in Retired or in Live?
     my $include = $args{include_in_search};
 
     # find retired stories?
@@ -298,7 +298,7 @@ sub _do_advanced_find {
 
     my $q = $self->query();
 
-    # search in Archive or in Live?
+    # search in Retired or in Live?
     my $include = $args{include_in_search};
 
     # find retired stories?
@@ -1966,7 +1966,7 @@ sub find_media_row_handler {
     # Buttons and status continued
     if ($list_retired) {
 
-        # Archived Media screen
+        # Retired Media screen
         if ($media->retired) {
             $row->{commands_column} .= ' '
               . qq|<input value="Unretire" onclick="unretire_media('|
@@ -1991,7 +1991,7 @@ sub find_media_row_handler {
 
             # Media is retired
             $row->{pub_status}      = '';
-            $row->{status}          = 'Archive';
+            $row->{status}          = 'Retired';
             $row->{checkbox_column} = "&nbsp;";
         } else {
 
@@ -2000,7 +2000,7 @@ sub find_media_row_handler {
               . qq|<input value="Edit" onclick="edit_media('|
               . $media->media_id
               . qq|')" type="button" class="button">| . ' '
-              . qq|<input value="Archive" onclick="retire_media('|
+              . qq|<input value="Retire" onclick="retire_media('|
               . $media->media_id
               . qq|')" type="button" class="button">|
               if $may_edit_and_retire;

@@ -2202,7 +2202,7 @@ sub STORABLE_thaw {
 
 =item C<< Krang::Media->retire(media_id => $media_id) >>
 
-Archive the media, i.e. remove it from its publish/preview location
+Retire the media, i.e. remove it from its publish/preview location
 and don't show it on the Find Media screen.  Throws a
 Krang::Media::NoEditAccess exception if user may not retire this
 media. Croaks if the media is checked out by another user.

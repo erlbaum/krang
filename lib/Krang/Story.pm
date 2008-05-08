@@ -2671,7 +2671,7 @@ sub deserialize_xml {
 
 =item C<< Krang::Story->retire(story_id => $story_id) >>
 
-Archive the story, i.e. remove it from its publish/preview location
+Retire the story, i.e. remove it from its publish/preview location
 and don't show it on the Find Story screen.  Throws a
 Krang::Story::NoEditAccess exception if user may not edit this
 story. Croaks if the story is checked out by another user.
@@ -2827,7 +2827,7 @@ sub trash {
 =item C<< Krang::Story->untrash(story_id => $story_id) >>
 
 Restore the story from the trashbin, i.e. show it again on the Find
-Story screen or Archived Stories screens (depending on the location
+Story screen or Retired Stories screens (depending on the location
 from where it was deleted).  Throws a Krang::Story::NoRestoreAccess
 exception if user may not edit this story. Croaks if the story is
 checked out by another user. This method is called by

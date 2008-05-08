@@ -215,8 +215,8 @@ sub delete_checked {
 
 =item restore_checked
 
-Restore a list of checked ojects, bringing them back to Live or to the
-Archive.  Requires a 'krang_pager_rows_checked' param.
+Restore a list of checked ojects, bringing them back to Live or to
+Retired.  Requires a 'krang_pager_rows_checked' param.
 
 =cut
 
@@ -248,8 +248,8 @@ sub restore_checked {
 
 =item restore_object
 
-Restore one object, bringing it back to Live or to the
-Archive.  Requires an 'type_id' param.
+Restore one object, bringing it back to Live or to Retired.  Requires
+an 'type_id' param.
 
 =cut
 
