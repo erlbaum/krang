@@ -112,7 +112,7 @@ sub show {
 }
 
 sub _row_handler {
-    my ( $self, $row, $obj ) = @_;
+    my ( $self, $row, $obj, $pager ) = @_;
 
     my $date;
     if($obj->isa('Krang::Story')) {

@@ -558,7 +558,7 @@ sub find_story_link {
 sub find_story_link_row_handler {
     my $self = shift;
     my $q = $self->query;
-    my ($row, $story) = @_;
+    my ($row, $story, $pager) = @_;
 
     # Columns:
     #
@@ -736,7 +736,7 @@ sub find_media_link {
 # Pager row handler for media find run-mode
 sub find_media_link_row_handler {
     my $self = shift;
-    my ($row, $media) = @_;
+    my ($row, $media, $pager) = @_;
 
     # Columns:
     #

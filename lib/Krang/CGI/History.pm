@@ -192,7 +192,7 @@ sub show_row_handler {
     my $self  = shift;
     my $q     = $self->query;
     my $label = $self->param('label');
-    my ($row, $history) = @_;
+    my ($row, $history, $pager) = @_;
 
     # setup action
     $row->{action} = $q->escapeHTML("$label " . $self->action_label($history->action));

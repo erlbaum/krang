@@ -478,9 +478,8 @@ sub search {
                                        view_site => 'View Detail',
                                        edit_site => 'Edit',
                                       },
-                                      row_handler => \&search_row_handler,
-                                      id_handler =>
-                                      sub {return $_[0]->site_id},
+                                      row_handler => sub { $self->search_row_handler(@_) },
+                                      id_handler  => sub { return $_[0]->site_id},
                                      );
 
     # fill the template
@@ -568,7 +567,7 @@ sub make_history_return_params {
 
 # Handles rows for search run mode
 sub search_row_handler {
-    my ($row, $site) = @_;
+    my ($self, $row, $site, $pager) = @_;
     $row->{site_id} = $site->site_id();
     $row->{url} = $site->url();
     $row->{preview_url} = $site->preview_url();

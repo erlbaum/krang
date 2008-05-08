@@ -127,7 +127,7 @@ sub find {
 }
 
 sub find_row_handler {
-    my ($self, $row, $category) = @_;
+    my ($self, $row, $category, $pager) = @_;
     $row->{category_id} = $category->category_id();
     $row->{url} = format_url(url => $category->url(), length => 60);
     unless ($category->may_edit) {

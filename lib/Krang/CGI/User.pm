@@ -797,7 +797,7 @@ sub validate_user {
 
 # Handles rows for search run mode
 sub search_row_handler {
-    my ($self, $row, $user) = @_;
+    my ($self, $row, $user, $pager) = @_;
     my $q = $self->query;
     $row->{login} = $q->escapeHTML($user->login);
     $row->{last}  = $q->escapeHTML($user->last_name);
