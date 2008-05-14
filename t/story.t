@@ -105,7 +105,7 @@ can_ok($story, qw/title slug cover_date class element category categories
                   checkin checkout checked_out checked_out_by revert
                   linked_stories linked_media move_to_desk publish_path preview_path
                   delete clone serialize_xml deserialize_xml story_uuid
-                  archive unarchive trash untrash/);
+                  retire unretire trash untrash/);
 
 
 
