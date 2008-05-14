@@ -1095,10 +1095,15 @@ sub serialize_xml {
     $writer->dataElement(last_run => $last_run) if $self->{last_run};
     my $initial_date = $self->{initial_date} || '';
     $initial_date =~ s/\s/T/;
-    my $expires = $self->{expires} || '';
-    $expires =~ s/\s/T/;
     $writer->dataElement(initial_date => $initial_date);
-    $writer->dataElement(expires => $expires);
+
+    # an expiration date is optional
+    my $expires = $self->{expires};
+    if( $expires ) {
+        $expires =~ s/\s/T/;
+        $writer->dataElement(expires => $expires);
+    }
+
     $writer->dataElement(hour         => $self->{hour}) if defined $self->{hour};
     $writer->dataElement(minute       => $self->{minute})
       if defined $self->{minute};
@@ -1173,7 +1178,7 @@ sub deserialize_xml {
     my $initial_date = $data->{initial_date};
     $initial_date =~ s/T/ /;
     my $expires = $data->{expires};
-    $expires =~ s/T/ /;
+    $expires =~ s/T/ / if $expires;
 
     my %search_params = (
         object_type  => $data->{object_type},
