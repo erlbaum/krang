@@ -44,8 +44,8 @@ END {
 my $site = $creator->create_site(
     preview_url  => 'trash_test.preview.com',
     publish_url  => 'trash_test.com',
-    preview_path => '/tmp/trash_and_archive_test_preview',
-    publish_path => '/tmp/trash_and_archive_test_publish'
+    preview_path => '/tmp/trash_and_retire_test_preview',
+    publish_path => '/tmp/trash_and_retire_test_publish'
 );
 
 isa_ok($site, 'Krang::Site');
@@ -56,20 +56,20 @@ isa_ok($category, 'Krang::Category');
 
 # setup group with asset permissions
 my $group = pkg('Group')->new(
-			      name           => 'Has no restore permissions',
-			      asset_story    => 'read-only',
-			      asset_media    => 'read-only',
-			      asset_template => 'read-only',
-			     );
+    name           => 'Has no restore permissions',
+    asset_story    => 'read-only',
+    asset_media    => 'read-only',
+    asset_template => 'read-only',
+);
 $group->save();
 END { $group->delete }
 
 # put a user into this group
 my $user = pkg('User')->new(
-			    login     => 'bob',
-			    password  => 'bobspass',
-			    group_ids => [$group->group_id],
-			   );
+    login     => 'bob',
+    password  => 'bobspass',
+    group_ids => [$group->group_id],
+);
 $user->save();
 END { $user->delete }
 
@@ -80,234 +80,244 @@ test_media_trashing();
 
 sub test_story_trashing {
   SKIP: {
-	skip('Story tests only work for TestSet1', 1)
-	  unless (InstanceElementSet eq 'TestSet1');
+        skip('Story tests only work for TestSet1', 1)
+          unless (InstanceElementSet eq 'TestSet1');
 
-	# create 12 stories
-	my @stories;
-	push @stories, $creator->create_story() for 1..12;
+        # create 12 stories
+        my @stories;
+        push @stories, $creator->create_story() for 1 .. 12;
 
-	# move them to the trashbin (may hold TrashMaxItems, set to 12)
-	$_->trash, sleep 1 for @stories;
+        # move them to the trashbin (may hold TrashMaxItems, set to 12)
+        $_->trash, sleep 1 for @stories;
 
-	# test trash find with stories
-	my @trash = pkg('Trash')->find();
+        # test trash find with stories
+        my @trash = pkg('Trash')->find();
 
-	ok(not grep { not defined $_ } @trash);
+        ok(not grep { not defined $_ } @trash);
 
-	# trash objects have required attribs
-	is(defined($trash[0]{$_}), 1, "Story trash object attrib '$_' is defined")
-	  for @trash_object_attribs;
+        # trash objects have required attribs
+        is(defined($trash[0]{$_}), 1, "Story trash object attrib '$_' is defined")
+          for @trash_object_attribs;
 
-	foreach my $story (@stories) {
-	    ok(grep { $story->story_id == $_->{id} } @trash);
-	}
+        foreach my $story (@stories) {
+            ok(grep { $story->story_id == $_->{id} } @trash);
+        }
 
-	# verify that they have entries in the trash table
-	for my $story (@stories) {
-	    my $story_id = $story->story_id;
-	    my $found    = $dbh->selectall_arrayref(<<SQL);
+        # verify that they have entries in the trash table
+        for my $story (@stories) {
+            my $story_id = $story->story_id;
+            my $found    = $dbh->selectall_arrayref(<<SQL);
 SELECT * FROM trash
 WHERE  object_type = 'story'
 AND    object_id   = $story_id
 SQL
-	    is(@$found, 1, "Found Story $story_id in trash");
-	}
+            is(@$found, 1, "Found Story $story_id in trash");
+        }
 
-	# create one more store and trash it
-	my $story = $creator->create_story();
-	push(@stories, $story);
-	$story->trash();
+        # create one more store and trash it
+        my $story = $creator->create_story();
+        push(@stories, $story);
+        $story->trash();
 
-	# Story 0 should be gone
-	my $sid0  = $stories[0]->story_id;
-	my $found = $dbh->selectall_arrayref(<<SQL);
+        # Story 0 should be gone
+        my $sid0  = $stories[0]->story_id;
+        my $found = $dbh->selectall_arrayref(<<SQL);
 SELECT * FROM trash
 WHERE  object_type = 'story'
 AND    object_id   = $sid0
 SQL
-	is(@$found, 0, "Story $sid0 has been pruned (gone from the trash table.");
+        is(@$found, 0, "Story $sid0 has been pruned (gone from the trash table.");
 
-	$found = $dbh->selectall_arrayref(<<SQL);
+        $found = $dbh->selectall_arrayref(<<SQL);
 SELECT * from story
 WHERE  story_id = $sid0
 SQL
-	is(@$found, 0, "Story $sid0 has been pruned (gone from the story table.");
+        is(@$found, 0, "Story $sid0 has been pruned (gone from the story table.");
 
-	# Story 12 should be there
-	my $sid12 = $stories[12]->story_id;
-	$found = $dbh->selectall_arrayref(<<SQL);
+        # Story 12 should be there
+        my $sid12 = $stories[12]->story_id;
+        $found = $dbh->selectall_arrayref(<<SQL);
 SELECT * FROM trash
 WHERE  object_type = 'story'
 AND    object_id   = $sid12
 SQL
-	is(@$found, 1, "Found Story $sid12 in Trash.");
+        is(@$found, 1, "Found Story $sid12 in Trash.");
 
-	# restore them to live
-	pkg('Trash')->restore(object => $_) for @stories;
+        # restore them to live
+        pkg('Trash')->restore(object => $_) for @stories;
 
-	# stories' trashed flag should be 0
-	is($_->trashed, 0, "Story ".$_->story_id." trashed flag is zero after restore") for @stories;
+        # stories' trashed flag should be 0
+        is($_->trashed, 0, "Story " . $_->story_id . " trashed flag is zero after restore")
+          for @stories;
 
-	### test exceptions on restore
-	#
-	diag("");
-	diag("1. Test restoring slug-provided story when its URL is occupied by another story");
-	diag("");
-	$story = $stories[3];
-	my $sid = $story->story_id;
-	$story->trash;
+        ### test exceptions on restore
+        #
+        diag("");
+        diag("1. Test restoring slug-provided story when its URL is occupied by another story");
+        diag("");
+        $story = $stories[3];
+        my $sid = $story->story_id;
+        $story->trash;
 
-	# should be trashed
-	is($story->trashed, 1, "Story $sid lives in trash");
+        # should be trashed
+        is($story->trashed, 1, "Story $sid lives in trash");
 
-	# create another story of type 'article' with the same URL
-	my $dupe = pkg('Story')->new(
-				     categories => [$story->categories],
-				     title      => $story->title,
-				     slug       => $story->slug,
-				     class      => $story->class->name
-				    );
-	$dupe->save;
+        # create another story of type 'article' with the same URL
+        my $dupe = pkg('Story')->new(
+            categories => [$story->categories],
+            title      => $story->title,
+            slug       => $story->slug,
+            class      => $story->class->name
+        );
+        $dupe->save;
 
-	diag("Created another story having a slug with the same URL as Story $sid");
+        diag("Created another story having a slug with the same URL as Story $sid");
 
-	# try to restore our story
-	diag("Try to restore Story $sid - should throw Krang::Story::DuplicateURL exception");
-	eval { pkg('Trash')->restore(object => $story) };
-	isa_ok($@, 'Krang::Story::DuplicateURL');
-	is(ref($@->stories), 'ARRAY', "Stories array of Krang::Story::DuplicateURL exception is set");
-	is($dupe->url, ${$@->stories}[0]{url}, "Our dupe found in exception's story list");
-	_verify_flag_status($story, 1);
+        # try to restore our story
+        diag("Try to restore Story $sid - should throw Krang::Story::DuplicateURL exception");
+        eval { pkg('Trash')->restore(object => $story) };
+        isa_ok($@, 'Krang::Story::DuplicateURL');
+        is(ref($@->stories), 'ARRAY',
+            "Stories array of Krang::Story::DuplicateURL exception is set");
+        is($dupe->url, ${$@->stories}[0]{url}, "Our dupe found in exception's story list");
+        _verify_flag_status($story, 1);
 
-	# delete dupe and try again
-	$dupe->delete;
-	eval { pkg('Trash')->restore(object => $story) };
-	ok(!$@) and diag "After deleting dupe, restoring Story $sid was successful";
-	_verify_flag_status($story);
+        # delete dupe and try again
+        $dupe->delete;
+        eval { pkg('Trash')->restore(object => $story) };
+        ok(!$@) and diag "After deleting dupe, restoring Story $sid was successful";
+        _verify_flag_status($story);
 
-	diag("");
-	diag("2. Test story restoring when story's URL is occupied by a category");
-	diag("");
-	$story->trash;
+        diag("");
+        diag("2. Test story restoring when story's URL is occupied by a category");
+        diag("");
+        $story->trash;
 
-	# should be trashed again
-	is($story->trashed, 1, "Story $sid lives in trash again");
+        # should be trashed again
+        is($story->trashed, 1, "Story $sid lives in trash again");
 
-	# create category having the story's URL
-	my $dupe_cat = pkg('Category')->new(
-					    site_id   => $site->site_id,
-					    parent_id => $story->category->category_id,
-					    dir       => $story->slug
-					   );
-	$dupe_cat->save;
-	my $cid = $dupe_cat->category_id;
+        # create category having the story's URL
+        my $dupe_cat = pkg('Category')->new(
+            site_id   => $site->site_id,
+            parent_id => $story->category->category_id,
+            dir       => $story->slug
+        );
+        $dupe_cat->save;
+        my $cid = $dupe_cat->category_id;
 
-	(my $cat_url = $dupe_cat->url) =~ s{/$}{};
-	is($cat_url, $story->url, "Created category $cid with same URL as Story $sid");
+        (my $cat_url = $dupe_cat->url) =~ s{/$}{};
+        is($cat_url, $story->url, "Created category $cid with same URL as Story $sid");
 
-	diag("Try to restore the story - should throw a Krang::Story::DuplicateURL exception");
-	eval { pkg('Trash')->restore(object => $story) };
-	isa_ok($@, 'Krang::Story::DuplicateURL');
-	is(ref($@->categories), 'ARRAY',
-	   "Categories array of Krang::Story::DuplicateURL exception is set");
-	is(
-	   $dupe_cat->url,
-	   ${$@->categories}[0]{url},
-	   "Our category $cid found in exception's category list"
-	  );
-	_verify_flag_status($story, 1);
+        diag("Try to restore the story - should throw a Krang::Story::DuplicateURL exception");
+        eval { pkg('Trash')->restore(object => $story) };
+        isa_ok($@, 'Krang::Story::DuplicateURL');
+        is(ref($@->categories), 'ARRAY',
+            "Categories array of Krang::Story::DuplicateURL exception is set");
+        is(
+            $dupe_cat->url,
+            ${$@->categories}[0]{url},
+            "Our category $cid found in exception's category list"
+        );
+        _verify_flag_status($story, 1);
 
-	# delete dupe and try again
-	$dupe_cat->delete;
-	eval { pkg('Trash')->restore(object => $story) };
-	ok(!$@) and diag "After deleting dupe category $cid, restoring Story $sid was successful";
-	_verify_flag_status($story);
+        # delete dupe and try again
+        $dupe_cat->delete;
+        eval { pkg('Trash')->restore(object => $story) };
+        ok(!$@) and diag "After deleting dupe category $cid, restoring Story $sid was successful";
+        _verify_flag_status($story);
 
-	diag("");
-	diag("3. Test restoring slugless story when its URL is occupied by another story");
-	diag("");
+        diag("");
+        diag("3. Test restoring slugless story when its URL is occupied by another story");
+        diag("");
 
-	# create a slugless story
-	$story = $creator->create_story(slug => '');
-	unshift @stories, $story;
-	$sid = $story->story_id;
-	$story->trash;
+        # create a slugless story
+        $story = $creator->create_story(slug => '');
+        unshift @stories, $story;
+        $sid = $story->story_id;
+        $story->trash;
 
-	# should be trashed
-	is($story->trashed, 1, "Story $sid lives in trash");
+        # should be trashed
+        is($story->trashed, 1, "Story $sid lives in trash");
 
-	# create another slugless story with the same URL
-	$dupe = pkg('Story')->new(
-				  categories => [$story->categories],
-				  title      => $story->title,
-				  slug       => $story->slug,
-				  class      => $story->class->name
-				 );
-	$dupe->save;
-	my $did = $dupe->story_id;
+        # create another slugless story with the same URL
+        $dupe = pkg('Story')->new(
+            categories => [$story->categories],
+            title      => $story->title,
+            slug       => $story->slug,
+            class      => $story->class->name
+        );
+        $dupe->save;
+        my $did = $dupe->story_id;
 
-	diag("Created another slugless story $did with the same URL as Story $sid");
+        diag("Created another slugless story $did with the same URL as Story $sid");
 
-	# try to restore our story
-	diag("Try to restore Story $sid - should throw Krang::Story::DuplicateURL exception");
-	eval { pkg('Trash')->restore(object => $story) };
-	isa_ok($@, 'Krang::Story::DuplicateURL');
-	is(ref($@->stories), 'ARRAY', "Stories array of Krang::Story::DuplicateURL exception is set");
-	is($dupe->url, ${$@->stories}[0]{url}, "Our dupe Story $did found in exception's story list");
-	_verify_flag_status($story, 1);
+        # try to restore our story
+        diag("Try to restore Story $sid - should throw Krang::Story::DuplicateURL exception");
+        eval { pkg('Trash')->restore(object => $story) };
+        isa_ok($@, 'Krang::Story::DuplicateURL');
+        is(ref($@->stories), 'ARRAY',
+            "Stories array of Krang::Story::DuplicateURL exception is set");
+        is(
+            $dupe->url,
+            ${$@->stories}[0]{url},
+            "Our dupe Story $did found in exception's story list"
+        );
+        _verify_flag_status($story, 1);
 
-	# delete dupe and try again
-	$dupe->delete;
-	eval { pkg('Trash')->restore(object => $story) };
-	ok(!$@) and diag "After deleting dupe story $did, restoring Story $sid was successful";
-	_verify_flag_status($story);
+        # delete dupe and try again
+        $dupe->delete;
+        eval { pkg('Trash')->restore(object => $story) };
+        ok(!$@) and diag "After deleting dupe story $did, restoring Story $sid was successful";
+        _verify_flag_status($story);
 
-	diag("");
-	diag("4. Test restoring Story without restore permission");
-	diag("");
-	$story->trash;
+        diag("");
+        diag("4. Test restoring Story without restore permission");
+        diag("");
+        $story->trash;
 
-	# should be trashed
-	is($story->trashed, 1, "Story $sid lives in trash");
+        # should be trashed
+        is($story->trashed, 1, "Story $sid lives in trash");
 
-	{
-	    diag("We are now a user without restore permissions");
-	    local $ENV{REMOTE_USER} = $user->user_id;
+        {
+            diag("We are now a user without restore permissions");
+            local $ENV{REMOTE_USER} = $user->user_id;
 
-	    diag("Trying to restore Story $sid - should throw a Krang::Story::NoRestoreAccess exception"
-		);
+            diag(
+                "Trying to restore Story $sid - should throw a Krang::Story::NoRestoreAccess exception"
+            );
 
-	    # fetch it again, so that may_edit flag is correctly set on $story object
-	    my ($story) = pkg('Story')->find(story_id => $sid);
+            # fetch it again, so that may_edit flag is correctly set on $story object
+            my ($story) = pkg('Story')->find(story_id => $sid);
 
-	    eval { pkg('Trash')->restore(object => $story) };
+            eval { pkg('Trash')->restore(object => $story) };
 
-	    isa_ok($@, 'Krang::Story::NoRestoreAccess');
-	    _verify_flag_status($story, 1);
-	}
+            isa_ok($@, 'Krang::Story::NoRestoreAccess');
+            _verify_flag_status($story, 1);
+        }
 
-	pkg('Trash')->restore(object => $_) for @stories;
+        pkg('Trash')->restore(object => $_) for @stories;
     }
 }
 
 sub test_media_trashing {
+
     # create 12 media
     my @media;
 
     # first media (will be pruned from trashbin)
-    my $media0 = pkg('Media')->new(category_id => $category->category_id,
-				   title       => 'some title',
-				   media_type_id => 1,
-				  );
+    my $media0 = pkg('Media')->new(
+        category_id   => $category->category_id,
+        title         => 'some title',
+        media_type_id => 1,
+    );
     isa_ok($media0, 'Krang::Media');
-    my $mfp = catfile(KrangRoot,'t','media','krang.jpg');
+    my $mfp = catfile(KrangRoot, 't', 'media', 'krang.jpg');
     my $mfh = new FileHandle $mfp;
     $media0->upload_file(filename => 'krang.jpg', filehandle => $mfh);
     $media0->save;
     isa_ok($media0, 'Krang::Media');
 
-    push @media, $creator->create_media(format => 'png') for 1..11;
+    push @media, $creator->create_media(format => 'png') for 1 .. 11;
 
     # move them all to the trashbin (may hold TrashMaxItems, set to 12)
     $media0->trash;
@@ -323,18 +333,18 @@ sub test_media_trashing {
       for @trash_object_attribs;
 
     foreach my $media (@media) {
-	ok(grep { $media->media_id == $_->{id} } @trash);
+        ok(grep { $media->media_id == $_->{id} } @trash);
     }
 
     # verify that they have entries in the trash table
     for my $media (@media) {
-	my $media_id = $media->media_id;
-	my $found    = $dbh->selectall_arrayref(<<SQL);
+        my $media_id = $media->media_id;
+        my $found    = $dbh->selectall_arrayref(<<SQL);
 SELECT * FROM trash
 WHERE  object_type = 'media'
 AND    object_id   = $media_id
 SQL
-	is(@$found, 1, "Found Media $media_id in trash");
+        is(@$found, 1, "Found Media $media_id in trash");
     }
 
     # create one more store and trash it
@@ -344,7 +354,7 @@ SQL
 
     # Media 0 should be gone
     my $media0_id = $media0->media_id;
-    my $found = $dbh->selectall_arrayref(<<SQL);
+    my $found     = $dbh->selectall_arrayref(<<SQL);
 SELECT * FROM trash
 WHERE  object_type = 'media'
 AND    object_id   = $media0_id
@@ -388,10 +398,11 @@ SQL
     # create another media of type 'article' with the same URL
     (my $filename = $media->filename) =~ s/\.png$//;
 
-    my $dupe = pkg('Media')->new(category_id => $media->category_id,
-				 title       => $media->title,
-				 media_type_id => $media->media_type_id,
-				);
+    my $dupe = pkg('Media')->new(
+        category_id   => $media->category_id,
+        title         => $media->title,
+        media_type_id => $media->media_type_id,
+    );
     isa_ok($dupe, 'Krang::Media');
     my $fn = $media->file_path;
     my $fh = new FileHandle $fn;
@@ -422,19 +433,19 @@ SQL
     is($media->trashed, 1, "Media $mid lives in trash");
 
     {
-	diag("We are now a user without restore permissions");
-	local $ENV{REMOTE_USER} = $user->user_id;
+        diag("We are now a user without restore permissions");
+        local $ENV{REMOTE_USER} = $user->user_id;
 
-	diag("Trying to restore Media $mid - should throw a Krang::Media::NoRestoreAccess exception"
-	    );
+        diag("Trying to restore Media $mid - should throw a Krang::Media::NoRestoreAccess exception"
+        );
 
-	# fetch it again, so that may_edit flag is correctly set on $media object
-	my ($media) = pkg('Media')->find(media_id => $mid);
+        # fetch it again, so that may_edit flag is correctly set on $media object
+        my ($media) = pkg('Media')->find(media_id => $mid);
 
-	eval { pkg('Trash')->restore(object => $media) };
+        eval { pkg('Trash')->restore(object => $media) };
 
-	isa_ok($@, 'Krang::Media::NoRestoreAccess');
-	_verify_flag_status($media, 1);
+        isa_ok($@, 'Krang::Media::NoRestoreAccess');
+        _verify_flag_status($media, 1);
     }
 
     pkg('Trash')->restore(object => $_) for @media;
@@ -443,9 +454,13 @@ SQL
 sub _verify_flag_status {
     my ($object, $trashed) = @_;
     my $id_meth = $object->id_meth;
-    my $oid = $object->$id_meth;
-    my $Object = ucfirst($object->moniker);
-    is($object->checked_out,    0, "$Object $oid flag checked_out    0") unless $Object eq 'Media';
+    my $oid     = $object->$id_meth;
+    my $Object  = ucfirst($object->moniker);
+    is($object->checked_out, 0, "$Object $oid flag checked_out    0") unless $Object eq 'Media';
     isnt($object->checked_out_by, 1, "$Object $oid flag checked_out_by 0");
-    is($object->trashed, ($trashed ? 1 : 0), "$Object $oid flag trashed        " . ($trashed ? 1 : 0));
+    is(
+        $object->trashed,
+        ($trashed ? 1 : 0),
+        "$Object $oid flag trashed        " . ($trashed ? 1 : 0)
+    );
 }
