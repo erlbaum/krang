@@ -21,7 +21,9 @@ view_log = function() {
 
 // Register CodePress's onload event:
 Krang.onload( function() { 
-  CodePress.run();
+  if (! Prototype.Browser.WebKit) {
+    CodePress.run();
+  }
 } );
 
 </script>
