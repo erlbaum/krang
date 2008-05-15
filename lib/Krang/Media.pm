@@ -1128,10 +1128,12 @@ sub find {
     # add media_id(s) if needed
     if ($args{media_id}) {
         if (ref $args{media_id} eq 'ARRAY') {
-            $where_string .= " and " if $where_string;
-            $where_string .= "("
-              . join(" OR ", map { " media.media_id = " . $dbh->quote($_) } @{$args{media_id}})
-              . ')';
+            if( scalar(@{$args{media_id}}) > 0 ) {
+                $where_string .= " and " if $where_string;
+                $where_string .= "("
+                  . join(" OR ", map { " media.media_id = " . $dbh->quote($_) } @{$args{media_id}})
+                  . ')';
+            }
         } else {
             $where_string .= " and " if $where_string;
             $where_string .= "media.media_id = " . $dbh->quote($args{media_id});
@@ -1170,7 +1172,9 @@ sub find {
         $where_string .= ' and ' if $where_string;
         $where_string .= "(media.category_id = category.category_id) AND ";
         if (ref $args{site_id} eq 'ARRAY') {
-            $where_string .= 'category.site_id IN (' . join(',', @{$args{site_id}}) . ')';
+            if( scalar(@{$args{site_id}}) > 0 ) {
+                $where_string .= 'category.site_id IN (' . join(',', @{$args{site_id}}) . ')';
+            }
         } else {
             $where_string .= "(category.site_id=?)";
             push @where, 'site_id';

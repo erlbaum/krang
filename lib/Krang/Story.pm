@@ -1209,7 +1209,7 @@ or bin/ scripts make calls to C<find()>!
             $like = ($key =~ s/_like$//) ? 1 : 0;
 
             # handle story_id => [1, 2, 3]
-            if ($key eq 'story_id' and ref($value) and ref($value) eq 'ARRAY') {
+            if ($key eq 'story_id' && ref($value) && ref($value) eq 'ARRAY' && scalar(@$value) > 0) {
 
                 # an array of IDs selects a list of stories by ID
                 push @where, 's.story_id IN (' . join(',', ("?") x @$value) . ')';
@@ -1218,7 +1218,7 @@ or bin/ scripts make calls to C<find()>!
             }
 
             # handle story_uuid => [1, 2, 3]
-            if ($key eq 'story_uuid' and ref($value) and ref($value) eq 'ARRAY') {
+            if ($key eq 'story_uuid' && ref($value) && ref($value) eq 'ARRAY' && scalar(@$value) > 0) {
 
                 # an array of IDs selects a list of stories by ID
                 push @where, 's.story_uuid IN (' . join(',', ("?") x @$value) . ')';
@@ -1227,7 +1227,7 @@ or bin/ scripts make calls to C<find()>!
             }
 
             # handle class => ['article', 'cover']
-            if ($key eq 'class' and ref($value) and ref($value) eq 'ARRAY') {
+            if ($key eq 'class' && ref($value) && ref($value) eq 'ARRAY' && scalar(@$value) > 0) {
 
                 # an array of classes selects a list of stories by class
                 push @where, 's.class IN (' . join(',', ("?") x @$value) . ')';
