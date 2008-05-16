@@ -41,7 +41,6 @@ use Krang::ClassLoader Conf => qw(
     InstanceApachePort
     InstanceDisplayName
     InstanceHostName
-    MaxConcurrentKrangSessions
     PasswordChangeTime
     Secret
     SMTPServer
