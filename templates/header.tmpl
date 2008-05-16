@@ -72,7 +72,7 @@ div.autocomplete { height: expression( ( this.scrollHeight > 154 ) ? '154px' : '
 
 <script type="text/javascript">
 Krang.instance = '<tmpl_var escape=js instance_display_name>';
-Krang.Window.init();
+Krang.Window.init('<tmpl_var window_id>');
 </script>
 
 </head><body>
@@ -135,19 +135,7 @@ if( Prototype.Browser.WebKit ) {
 
 <li class="menu l" onclick="Krang.Window.log_out();"><b class="logout">
 Log Out
-</b><ul>
-
-<li class="logout"><a class="def" id="lo1" href="#" onclick="Krang.Window.log_out(); Event.stop(event);">
-Window
-</a></li>
-
-<li class="logout"><a href="#" onclick="Krang.Window.log_out_all(); Event.stop(event);"
-	        onmouseover="document.getElementById('lo1').className=''"     
-		onmouseout="document.getElementById('lo1').className='def'">   
-All Logins
-</a></li>
-
-</ul></li>
+</b></li>
 
 <li id="menu-help" class="menu"><b>
 Help
@@ -163,7 +151,7 @@ Help with this Page
 
 </ul></li>
 
-<li><a href="login.pl?rm=new_window" target='_blank' onclick="Krang.Window.pass_id()">
+<li><a href="workspace.pl" target="_blank">
 New Window 
 </a></li>
 

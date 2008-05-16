@@ -427,7 +427,6 @@ sub preview_story {
     my $scheme = PreviewSSL ? 'https' : 'http';
     print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
       if $url;
-
 }
 
 # update the progress bar during preview or publish
@@ -524,11 +523,9 @@ sub preview_media {
 	return $self->redirect_to_workspace;
     } else {
         # redirect to preview
-        $self->header_type('redirect');
-
         my $scheme = PreviewSSL ? 'https' : 'http';
-        $self->header_props(-uri => "$scheme://$url");
-        return "Redirecting to <a href='$scheme://$url'>$scheme://$url</a>.";
+        print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
+          if $url;
     }
 }
 
@@ -744,7 +741,7 @@ sub _publish_assets_now {
     print qq|
     <script type="text/javascript">
         setTimeout(
-            function() { Krang.Window.pass_id(); location.replace('workspace.pl') },
+            function() { location.replace("workspace.pl?window_id=$ENV{KRANG_WINDOW_ID}") },
             10
         )
     </script>

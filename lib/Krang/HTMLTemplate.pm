@@ -105,6 +105,9 @@ sub output {
       }
     }
 
+    $template->param(window_id => $ENV{KRANG_WINDOW_ID})
+      if $template->query(name => 'window_id') && $ENV{KRANG_WINDOW_ID};
+
     $template->param(charset => Charset)
       if $template->query(name => 'charset') && Charset;
 

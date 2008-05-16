@@ -168,10 +168,10 @@ Object.extend(PopupTreeSelect.prototype, {
             } else {
                 params = 'id=' + id;
             }
-	    Krang.Window.pass_id();
+
             new Ajax.Updater(
                 this.name + "-desc-" + id, 
-                this.dynamic_url, 
+                Krang.Window.pass_id(this.dynamic_url),
                 { method: 'get', parameters: params, evalScripts: true }
             );
         } else {
@@ -204,10 +204,10 @@ Object.extend(PopupTreeSelect.prototype, {
     /* it's showtime! */
     show : function() {
         document.getElementById(this.name + "-inner").innerHTML = '';
-	Krang.Window.pass_id();
+
         new Ajax.Updater(
             this.name + '-inner', 
-            this.dynamic_url, 
+            Krang.Window.pass_id(this.dynamic_url),
             { method: 'get', parameters: this.dynamic_params, evalScripts: true  }
         );
 
