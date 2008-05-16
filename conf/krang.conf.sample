@@ -124,11 +124,6 @@ PreviewSSL 0
 Secret 'ad0243-1j!@LdaAWEOIGFa-39021-:skj'
 
 #
-# This variable prevents the user from creating an unreliable number
-# of session cookies. (When absent, the default is 10.)
-MaxConcurrentKrangSessions 10
-
-#
 # This directive determines the maximum number of items allowed to
 # live in the trashbin.  When this limit is reached and exceeded, the
 # oldest items get deleted.
