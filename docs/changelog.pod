@@ -8,6 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed known issues with multiple windows/tabs.  Login/Logout is now
+browser-global not window/tab-specific. Use one authentication cookie
+to store window_id/session_id mapping for all windows and use
+QUERY/tmpl_var communication channel to pass the window_id around.
+Also removed config directive MaxConcurrentKrangSessions. [Bodo Schulze]
+
+=item *
+
 Add Fedora 8 as a platform for building. [Michael Peters]
 
 =item *
