@@ -221,5 +221,5 @@ for my $p ($creator->publish_paths(story => $trashed_story)) {
 }
 
 ($trashed_story) = pkg('Story')->find(story_id => $trashed_story->story_id);
-is($trashed_story - retired,
+is($trashed_story->retired,
     1, "previously published story has been retired (still exists in database)");
