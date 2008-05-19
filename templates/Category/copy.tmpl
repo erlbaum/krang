@@ -23,7 +23,11 @@ copy = function(non_conflicting) {
 	var fieldname = box.name.replace(/_cbx$/, '');
 	$(fieldname).value = box.checked ? 1 : 0;
     })
-    Krang.Form.submit('copy_category', { rm: 'execute_copy', non_conflicting: non_conflicting });
+    if (! cbx.find(function(box) { return box.checked == true }) ) {
+        alert("No content was copied because no content was selected.");
+    } else {
+        Krang.Form.submit('copy_category', { rm: 'execute_copy', non_conflicting: non_conflicting });
+    }
 }
 </script>
 
