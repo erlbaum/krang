@@ -310,15 +310,17 @@ sub _format_msg {
     my $id_meth = $object->id_meth;
     my $id      = $object->$id_meth;
 
+    # Success
+    unless ($ex) {
+        my ($msg) = $object->retired ? ("The retired " . $type) : ucfirst($type);
+        $msg .= ' ' . $id . ' has been restored.';
+        return $msg;
+    }
+
     my $msg = ucfirst($type) . ' ' . $id . ' ' . $object->url;
-
-    # sucess
-    return $msg . ' (restored to ' . ($object->retired ? 'Retired' : 'Live') . ')'
-      unless $ex;
-
     my $ex_type = $ex->moniker;
 
-    # missing restore permission
+    # No restore permission
     return $msg . " (no restore permission)"
       if $ex_type eq 'norestoreaccess';
 
@@ -326,26 +328,16 @@ sub _format_msg {
     if ($ex_type eq 'duplicateurl') {
         if ($ex->can('categories') and $ex->categories) {
             my @cats = @{$ex->categories};
-            my $reason =
-              scalar(@cats) > 1
-              ? ' URL conflict with <br/>'
-              : ' URL conflict with <br/>';
             return
                 $msg 
-              . '<br/>(' 
-              . $reason
-              . join('<br/>', map { "Category $_->{id} &ndash; $_->{url}" } @cats) . ' )';
+              . '<br/>( URL conflict with <br/>'
+              . join('<br/>', map { "Category $_->{id} $_->{url}" } @cats) . ' )';
         } elsif ($ex->can('stories') and $ex->stories) {
             my @stories = @{$ex->stories};
-            my $reason =
-              scalar(@stories) > 1
-              ? ' URL conflict with <br/>'
-              : ' URL conflict with <br/>';
             return
                 $msg 
-              . '<br/>(' 
-              . $reason
-              . join('<br/>', map { "Story $_->{id} &ndash; $_->{url}" } @stories) . ' )';
+              . '<br/>( URL conflict with <br/>'
+              . join('<br/>', map { "Story $_->{id} $_->{url}" } @stories) . ' )';
         } elsif (my $id = $ex->$id_meth) {
             return $msg . '<br/>(URL conflict with ' . ucfirst($type) . ' ' . $id . ')';
         } else {
