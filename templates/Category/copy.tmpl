@@ -5,7 +5,7 @@ Krang.onload( function() {
     Krang.Nav.edit_mode();
     Krang.Help.set( 'category_copy' );
     <tmpl_if confirm_copy>
-    if (confirm("Some Objects you want to copy conflict with existing ones.\n\nIf you wish to copy those who don't conflict, press OK.\n\nTo abort and return to the Category listing press Cancel.")) {
+    if (confirm("Some items you want to copy conflict with existing ones.\n\nIf you wish to copy those that don't conflict, click OK.\n\nIf not, click Cancel.")) {
         copy('non_conflicting');
     } else {
         Krang.Form.submit('copy_category', { rm: 'prepare_copy' });
