@@ -900,7 +900,7 @@ sub replace_dupes {
             # delete it entirely
             add_message('dupe_story_deleted', id => $dupe_story->story_id);
             $dupe_story->checkin;
-            $dupe_story->delete;
+            $dupe_story->trash;
         } else {
 
             # otherwise, replace full list of cats with list of non-dupe cats
