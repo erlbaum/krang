@@ -666,20 +666,8 @@ sub prepare_copy {
     $session{KRANG_PERSIST}{pkg('Category')}{category_copy_dst} = $dst_cat
       if $dst_cat;
 
-    # copy assets? overwrite exististing files?
-    for my $checkbox (qw(copy_story copy_media copy_template overwrite)) {
-        my $param       = $q->param($checkbox);
-        my $session_val = $session{KRANG_PERSIST}{pkg('Category')}{$checkbox};
-
-        my $final_val =
-            defined($param)       ? $param
-          : defined($session_val) ? $session_val
-          : $checkbox eq 'overwrite' ? 0
-          :                            1;
-
-        $session{KRANG_PERSIST}{pkg('Category')}{$checkbox} = $final_val;
-        $t->param($checkbox => $final_val);
-    }
+    # preserve checkbox state
+    $self->_preserve_copy_checkbox_state($t);
 
     # destination category chooser
     my ($cat_chooser_button, $cat_chooser_logic) = category_chooser(
@@ -718,6 +706,9 @@ sub execute_copy {
 
     # load template
     my $t = $self->load_tmpl('copy.tmpl', associate => $query);
+
+    # preserve checkbox state
+    $self->_preserve_copy_checkbox_state($t);
 
     # load source category
     my $src_cat = $self->_load_category(param => 'src_category_id');
@@ -803,6 +794,24 @@ sub autocomplete {
         table  => 'category',
         fields => [qw(category_id url)],
     );
+}
+
+sub _preserve_copy_checkbox_state {
+    my ($self, $template) = @_;
+    # copy assets? overwrite exististing files?
+    for my $checkbox (qw(copy_story copy_media copy_template overwrite)) {
+        my $param       = $self->query->param($checkbox);
+        my $session_val = $session{KRANG_PERSIST}{pkg('Category')}{$checkbox};
+
+        my $final_val =
+            defined($param)       ? $param
+          : defined($session_val) ? $session_val
+          : $checkbox eq 'overwrite' ? 0
+          :                            1;
+
+        $session{KRANG_PERSIST}{pkg('Category')}{$checkbox} = $final_val;
+        $template->param($checkbox => $final_val);
+    }
 }
 
 sub _load_category {
