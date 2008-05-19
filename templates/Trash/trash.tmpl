@@ -141,7 +141,7 @@ Trash
 
     <tmpl_if thumbnail_src>
       <td>
-      <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail_src>"></a>
+      <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail_src>" class="thumbnail"></a>
       </td>
     </tmpl_if>
 
@@ -178,6 +178,11 @@ Trash
   </form>
 
 </tmpl_unless>
+
+<!-- tooltips for media previews: -->
+<div id="tooltip"><img id="tooltip-img" src="/images/icon-loading-small.gif" /></div>
+<img id="tooltip-pointer" src="/images/tooltip_arrow.gif" />
+<!-- :tooltips for media previews -->
 
 <tmpl_include footer.tmpl>
 
