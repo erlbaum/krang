@@ -1938,7 +1938,7 @@ sub _build_asset_list {
     foreach my $o (@objects) {
 
         # don't publish (linked) objects that are retired or trashed
-        next if $o->can('wont_publish') && $o->wont_publish();
+        next if $self->is_publish() && $o->can('wont_publish') && $o->wont_publish();
 
         # handle 'maintain_versions' mode
         if ($maintain_versions) {
