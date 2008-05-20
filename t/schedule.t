@@ -724,7 +724,8 @@ foreach my $p (@story_paths) {
 }
 
 my @storyfiles = pkg('Story')->find(story_id => [$story_id]);
-is($#storyfiles, -1, 'Krang::Schedule::Action::expire->execute(expire)');
+is($#storyfiles, 0, 'Krang::Schedule::Action::expire->execute(expire)');
+is($storyfiles[0]->trashed, 1, 'Expired Story is in trash');
 
 # make sure that it removed itself.
 my @schedule_files = pkg('Schedule')->find(schedule_id => [$sched_id]);
