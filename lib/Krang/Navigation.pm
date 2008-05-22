@@ -120,7 +120,7 @@ sub render {
     # format name with link
     my $name =
       ($link ?
-       qq{<a href="javascript:Krang.Nav.goto_url('} . $link . qq{')">} : "") .
+       qq{<a href="} . $link . qq{" class="nav_link">} : "") .
       $node->name .
       ($link ? qq{</a>} : '');
     my $class = lc($node->name);

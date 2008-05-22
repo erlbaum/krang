@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Open application in a new window/tab if clicking on a navigation link
+with the CTRL key pressed or when middle-clicking. [Bodo Schulze]
+
+=item *
+
 Fixed known issues with multiple windows/tabs.  Login/Logout is now
 browser-global not window/tab-specific. Use one authentication cookie
 to store window_id/session_id mapping for all windows and use

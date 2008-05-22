@@ -1634,6 +1634,18 @@ var rules = {
             Event.stop(event);
         }.bindAsEventListener(el));
     },
+    'a.nav_link' : function(el) {
+        el.observe('click', function(event) {
+            if (event.ctrlKey
+                || (Prototype.Browser.IE && event.button == 4)
+                || event.button == 1) {
+                el.setAttribute('target', '_blank');
+            } else {
+                Krang.Nav.goto_url(el.getAttribute('href'));
+                Event.stop(event);
+            }
+        });
+    },
     'form' : function(el) {
         // if we have an on submit handler, then we don't want to
         // do anything automatically
