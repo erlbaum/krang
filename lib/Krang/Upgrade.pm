@@ -82,6 +82,17 @@ The upgrade() method is called by the krang_upgrade script to implement
 an upgrade.  This method calls C<per_installation()>, and then calls 
 C<per_instance()> once for each installed instance.
 
+The following named parameters may be passed which will then get passed
+along to C<per_installation()> and C<per_instance()>.
+
+=over
+
+=item * no_db
+
+This tells the upgrade module that the upgrade should not make changes to
+the database.
+
+=back
 
 =back
 
@@ -115,10 +126,10 @@ sub new {
 
 
 sub upgrade {
-    my $self = shift;
+    my ($self, %args) = @_;
 
     # Run per_installation() method
-    $self->per_installation();
+    $self->per_installation(%args);
 
     # Run per_instance() method, for each instance
     my @instances = pkg('Conf')->instances();
@@ -130,7 +141,7 @@ sub upgrade {
         my $dbh = dbh(ignore_version=>1);
 
         # Call per_instance(), now that the environment has been established
-        $self->per_instance();
+        $self->per_instance(%args);
     }
 }
 

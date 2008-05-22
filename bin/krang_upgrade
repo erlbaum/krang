@@ -117,6 +117,10 @@ Output results of upgrade to console.
                        data files and you know that nothing has changed the
                        ownership of the files
 
+ --no-db             - Skip any database related changes for the upgrade. This
+                       is mainly used if you have multiple machines running Krang
+                       but which share a common database.
+
  --help              - Show usage
 
  --man               - Show full man page
@@ -202,8 +206,8 @@ sub do_upgrade {
     install_new_krang();
     apply_upgrades();
     update_version();
-    update_db_version();
-    clear_sessions();
+    update_db_version() unless $options{'no-db'};
+    clear_sessions() unless $options{'no-db'};
 
     start_krang() unless $options{'no-start'};
     output_report();
@@ -494,9 +498,10 @@ sub apply_upgrades {
         # Get package name by trimming off ".pm"
         my $package = $module;
         $package =~ s/\.pm$//;
+        my $no_db = $options{'no-db'} ? 1 : 0;
 
         my $upgrade_cmd = "KRANK_CONF_NOCHECK=1 KRANG_ROOT=$KrangRoot PERL5LIB=$perl5lib $PERL_BIN";
-        $upgrade_cmd .= " -M$package -e 'my \$ug = $package->new(); \$ug->upgrade()'";
+        $upgrade_cmd .= " -M$package -e 'my \$ug = $package->new(); \$ug->upgrade(no_db => $no_db)'";
         system($upgrade_cmd) && die("Error using upgrade module '$module'");
     }
     

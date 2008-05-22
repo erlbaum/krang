@@ -21,7 +21,8 @@ sub per_installation {
 
 
 sub per_instance {
-    my $self = shift;
+    my ($self, %args) = @_;
+    return if $args{no_db};
     my $dbh = dbh();
 
     # add the 'use_autocomplete' preference
