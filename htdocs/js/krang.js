@@ -137,7 +137,7 @@ Krang.Window = {
     
     log_out : function() {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
-            window.location = 'login.pl?rm=logout';//&window='+Krang.Window.get_id();
+            window.location = 'login.pl?rm=logout';
             window.name = '';
         }    
     },
