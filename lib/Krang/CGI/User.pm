@@ -570,21 +570,21 @@ sub search {
                                       },
                                       columns => [
                                                   'login',
-                                                  'last',
                                                   'first',
+                                                  'last',
                                                   'command_column',
                                                   'checkbox_column',
                                                  ],
                                       column_labels => {login => 'User Name',
-                                                        last => 'Last Name',
                                                         first => 'First Name',
+                                                        last => 'Last Name',
                                                        },
                                       columns_sortable =>
                                       [qw(login last first)],
                                       columns_sort_map => {
-                                                           last => 'last_name',
                                                            first =>
-                                                           'first_name'
+                                                           'first_name',
+                                                           last => 'last_name',
                                                           },
                                       command_column_commands =>
                                       [qw(edit_user)],
