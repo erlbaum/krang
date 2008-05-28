@@ -598,16 +598,22 @@ sub exit_error {
 
 
 sub setup_getopts {
+
     # Copy the original args for re-invoking later
     @original_args = @ARGV;
 
-    pod2usage(2) unless
-        GetOptions( 'help'          => \$help,
-                    'man'           => \$man,
-                    'no-backup'     => \$options{'no-backup'},
-                    (map { $_."=s"  => \$options{$_} } @opt_params) );
+    pod2usage(2)
+      unless GetOptions(
+              'help'      => \$help,
+              'man'       => \$man,
+              'no-backup' => \$options{'no-backup'},
+              'no-start'  => \$options{'no-start'},
+              'no-chown'  => \$options{'no-chown'},
+              'no-db'     => \$options{'no-db'},
+              (map { $_ . "=s" => \$options{$_} } @opt_params)
+      );
 
-    pod2usage(1)             if $help;
+    pod2usage(1) if $help;
     pod2usage(-verbose => 2) if $man;
 
     # Set opt defaults
