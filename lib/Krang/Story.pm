@@ -1666,6 +1666,7 @@ sub transform_stories {
     my $callback = delete $args{callback}
       or croak('You must provide a callback for transform_stories()');
     my $past_versions = delete $args{past_versions};
+    my $prune_corrupt = delete $args{prune_corrupt_versions};
 
     # make find() do all the hard stuff
     my @stories = $pkg->find(%args);
@@ -1687,7 +1688,7 @@ sub transform_stories {
 
                 # if we can't even load, just skip it
                 if ($@) {
-                    if ($args{prune_corrupt_versions}) {
+                    if ($prune_corrupt) {
                         warn "Removing corrupt story $story_id version $v";
                         $dbh->do('DELETE FROM story_version WHERE story_id = ? AND version = ?',
                             undef, $story_id, $v);
