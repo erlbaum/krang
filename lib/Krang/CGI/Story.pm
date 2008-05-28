@@ -522,7 +522,7 @@ sub edit {
         }
         $template->param(contribs_loop => \@contribs_loop);
 
-# figure out where to position 'replace' radio-button (use primary cat unless user selected something else)
+        # figure out where to position 'replace' radio-button (use primary cat unless user selected something else)
         my @categories = $story->categories;
         my $selected_for_replace_id =
           ($query->param('category_to_replace_id') || (@categories && $categories[0]->category_id));
@@ -588,11 +588,11 @@ sub edit {
             )
         );
 
-        # permissions
-        my %admin_perms = pkg('Group')->user_admin_permissions();
-        $template->param(may_publish => $admin_perms{may_publish});
-
     }
+
+    # permissions
+    my %admin_perms = pkg('Group')->user_admin_permissions();
+    $template->param(may_publish => $admin_perms{may_publish});
 
     # get desks for checkin selector
     my $last_desk_id = $story->last_desk_id;
