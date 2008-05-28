@@ -2148,7 +2148,7 @@ sub steal_selected {
     }
 
     # if there's only one story, grab it so we can check access
-    my ($single_story) = Krang::Story->find(story_id => $story_ids[0])
+    my ($single_story) = pkg('Story')->find(story_id => $story_ids[0])
       if (@story_ids) == 1;
 
     # explain our actions to user
