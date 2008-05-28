@@ -452,7 +452,7 @@ sub install_new_krang {
     # Krang which had links to install directory.  It'd be nice to
     # write an upgrade module to weed them out but upgrade modules
     # don't run until after the chown...
-    return if $options{'skip-chown'};
+    return if $options{'no-chown'};
     my $chown = $CHOWN_BIN ." -R  --no-dereference $KrangUser\:$KrangGroup ";
     find({ no_chdir => 1,
            follow   => 0,
