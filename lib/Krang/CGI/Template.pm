@@ -1077,12 +1077,22 @@ sub list_active {
         id_handler       => sub { return $_[0]->template_id },
     );
 
+    my $pager_tmpl = $self->load_tmpl(
+        'list_active_pager.tmpl',
+        die_on_bad_params => 0,
+        loop_context_vars => 1,
+        global_vars       => 1,
+        associate         => $q,
+    );
+    $pager->fill_template($pager_tmpl);
+
     # Set up output
     my $template = $self->load_tmpl('list_active.tmpl', associate => $q);
-    $template->param(pager_html      => $pager->output());
-    $template->param(row_count       => $pager->row_count());
-    $template->param(may_checkin_all => $may_checkin_all);
-
+    $template->param(
+        pager_html            => $pager_tmpl->output,
+        row_count             => $pager->row_count,
+        may_checkin_all       => $may_checkin_all,
+    );
     return $template->output;
 }
 
