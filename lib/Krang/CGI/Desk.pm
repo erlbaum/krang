@@ -158,6 +158,10 @@ sub _row_handler {
 
     # setup version
     $row->{version} = $obj->version;
+
+    # cover_date
+    my $tp = $obj->cover_date;
+    $row->{cover_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 }
 
 =item checkout_checked
