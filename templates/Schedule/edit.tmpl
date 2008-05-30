@@ -5,6 +5,11 @@ Krang.onload( function() {
   Krang.Help.set('schedule');
 } );
 
+schedule_action = function()
+{ 
+  Krang.Form.submit('add_schedule_form');
+}
+
 save_and_view = function()
 {
   Krang.Form.submit('add_schedule_form', { rm: 'save_and_view' });
@@ -258,7 +263,7 @@ Current Schedule
 </table>
 
 <div class="panel">
-<input value="Schedule Action" type="submit">
+<input value="Schedule Action" onclick="schedule_action()" type="button">
 </div>
 
 </div></div>
