@@ -209,13 +209,15 @@ sub edit {
 
     }
 
-    my %version_labels = map { $_ => $_ }[0 .. $object->version];
+    
+    my $all_versions = $object->all_versions;
+    my %version_labels = map { $_ => $_ } [@$all_versions];
     $version_labels{0} = 'Newest Version';
 
     $template->param(
         version_selector => scalar $query->popup_menu(
             -name    => 'version',
-            -values  => [0 .. $object->version],
+            -values  => [0, @$all_versions],
             -labels  => \%version_labels,
             -default => 0
         )
