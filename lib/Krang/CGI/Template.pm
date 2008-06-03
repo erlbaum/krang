@@ -1107,7 +1107,7 @@ sub get_tmpl_params {
     my $q        = $self->query();
     my @fields   = qw/content filename template_id testing url
       version deployed_version/;
-    my $rm = $q->param('rm');
+    my $rm = $q->param('rm') || $self->start_mode();
     my (%tmpl_params, $version);
 
     # loop through template fields
