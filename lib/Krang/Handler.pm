@@ -362,6 +362,20 @@ sub authen_handler ($$) {
         return OK;
     }
 
+    # This section needs some clarification. A Krang user can have multiple windows open at
+    # the same time. Each window has it's own session so that we don't stomp over what's going
+    # on in another window. So we store the window-id/session-id mapping in the instance cookie.
+    # But since a cookie can only hold 4096 bytes we need to make sure we never get bigger than
+    # that or strange things can happen. To do this we need to do a Least-Recently-Used (LRU) list.
+    # So we store the timestamp (in epoch seconds) for each window/session pair as well.
+    # Here's the math we're using:
+    # 4000 bytes total (minus 96 to deal with the original session_id, user_id and instance name)
+    # 42 bytes for each window/session mapping (32 bytes for the session_id and 10 for the label)
+    # 20 bytes for each window/timestamp mapping (10 bytes for the timestamp and 10 for the label)
+    # 62 bytes per window
+    # 64 active windows max
+    my $max_active_windows = 64;
+
     # Get window_id from query
     my %args = $r->args();
     my $window_id = $args{window_id} || '';
@@ -369,23 +383,45 @@ sub authen_handler ($$) {
     # Get session_id for window_id
     if ($window_id) {
         # existing window
-        $session_id = $cookie{'wid_'.$window_id};
-
+        $session_id = $cookie{"wid_$window_id"};
+        
         # if there's no $session_id for this window, logout happened in other window
         undef $window_id unless $session_id;
     }
 
     # No window ID means no session for this window: create a new one
     unless ($window_id) {
+
         # new window ID
         $window_id = $cookie{next_wid}++;
         # new session
         $session_id = pkg('Session')->create();
         # store mapping between new window ID and new session ID in cookie
-        $cookie{'wid_'.$window_id} = $session_id;
-        $cookies{$instance}->value([%cookie]);
-        Apache::Cookie->new($r, -name => $instance, -value => \%cookie, -path => '/')->bake;
+        $cookie{"wid_$window_id"} = $session_id;
+
+        # if there are more than $max_active_windows windows then we need to get rid
+        # of the LRU
+        if(keys %cookie > $max_active_windows) {
+            info("Too many window/session combinations.");
+            my @ids = grep { $_ =~ /^wid_/ } keys %cookie;
+            @ids = map { $_ =~ /^wid_(\d+)/; $1; } @ids;
+            @ids = sort { ($cookie{"wts_$a"} || 0) <=> ($cookie{"wts_$b"} || 0) } @ids;
+            my $lru = $ids[0];
+
+            # remove the session and the data about it in the cookie
+            my $lru_session_id = delete $cookie{"wid_$lru"};
+            pkg('Session')->delete($lru_session_id);
+            delete $cookie{"wts_$lru"};
+            info("Deleted LRU window #$lru");
+        }
     }
+
+    # update the timestamp on the window/session combo
+    $cookie{"wts_$window_id"} = time;
+
+    # the window/session mapping cookie has changed, so update the client
+    $cookies{$instance}->value([%cookie]);
+    Apache::Cookie->new($r, -name => $instance, -value => \%cookie, -path => '/')->bake;
 
     # Check for invalid session
     unless (pkg('Session')->validate($session_id)) {
