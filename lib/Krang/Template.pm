@@ -1266,7 +1266,7 @@ sub save {
     if ($id) {
         $query =
             "UPDATE template SET "
-          . join(', ', map { "$_=?" } @save_fields)
+          . join(', ', map { " $_=? " } @save_fields)
           . "WHERE template_id = ?";
     } else {
         $query =
