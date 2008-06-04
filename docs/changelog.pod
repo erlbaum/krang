@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Element classes can now override sort order of available children. [Noam Weinstein]
+
+=item *
+
 Open application in a new window/tab if clicking on a navigation link
 with the CTRL key pressed or when middle-clicking. [Bodo Schulze]
 

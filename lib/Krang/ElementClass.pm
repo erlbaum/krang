@@ -1030,6 +1030,20 @@ sub thaw_data_xml {
 }
 
 
+=item C<< $class->order_of_available_children() >>
+
+This optional method allows an element class to override Krang's default
+behavior of sorting available children (in the 'Add' dropdown) by
+display name. If present it should return an array containing
+the names of optional elements in the desired order.
+
+=cut
+
+sub order_of_available_children {
+    return ();
+}
+
+
 # setup defaults and check for required paramters
 sub init {
     my $self = shift;

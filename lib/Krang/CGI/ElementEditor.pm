@@ -297,7 +297,18 @@ sub element_edit {
     # whip up child element picker from available classes
     my @available =  $element->available_child_classes();
     if (@available) {
-        my @values = map { $_->name } sort { $a->display_name cmp $b->display_name } @available;
+        my @values;
+        if (my @element_order = $element->class->order_of_available_children) {
+            # if the element class defines the order, use it 
+            my %element_order;
+            for (my $i = 0; $i < @element_order; ++$i) {
+                $element_order{$element_order[$i]} = $i;
+            }
+            @values = sort { ($element_order{$a} || 0) <=> ($element_order{$b} || 0) } map { $_->name } @available;
+        } else {
+            # otherwise sort by display name
+            @values = map { $_->name } sort { $a->display_name cmp $b->display_name } @available;
+        }
         my %labels = map { ($_->name, $_->display_name) } @available;
         $template->param(child_select => 
                          $query->popup_menu(-name   => "child",
