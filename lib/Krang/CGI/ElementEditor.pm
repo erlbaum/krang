@@ -298,11 +298,11 @@ sub element_edit {
     my @available =  $element->available_child_classes();
     if (@available) {
         my @values;
-        if (my @element_order = $element->class->order_of_available_children) {
+        if (my @elements_in_order = $element->class->order_of_available_children) {
             # if the element class defines the order, use it 
             my %element_order;
-            for (my $i = 0; $i < @element_order; ++$i) {
-                $element_order{$element_order[$i]} = $i;
+            for (my $i = 0; $i < @elements_in_order; ++$i) {
+                $element_order{$elements_in_order[$i]} = $i;
             }
             @values = sort { ($element_order{$a} || 0) <=> ($element_order{$b} || 0) } map { $_->name } @available;
         } else {
