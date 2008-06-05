@@ -1701,7 +1701,7 @@ deleted (also depending on the user's permissions).
 
 sub find {
     my $self = shift;
-    $self->query->param('other_search_place' => 'Search in Retired');
+    $self->query->param('other_search_place' => 'Search Retired Stories');
     return $self->_do_find(
         tmpl_file         => 'find.tmpl',
         include_in_search => 'live'
@@ -1722,7 +1722,7 @@ permissions).
 
 sub list_retired {
     my $self = shift;
-    $self->query->param('other_search_place' => 'Search in Live');
+    $self->query->param('other_search_place' => 'Search Live Stories');
     return $self->_do_find(
         tmpl_file         => 'list_retired.tmpl',
         include_in_search => 'retired',
