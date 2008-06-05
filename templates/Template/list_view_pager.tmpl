@@ -20,8 +20,10 @@
 <col>
 <!-- 'commands_column' -->
 <col>
+<tmpl_unless hide_status_column>
 <!-- 'status' column -->
 <col class="c-stat">
+</tmpl_unless>
 <!-- 'checkbox_column' column -->
 <col class="tick">
 </colgroup>
@@ -36,7 +38,7 @@
   <tmpl_var colhead_url>
 </th>
 <th></th>
-<th><tmpl_var colhead_status></th>
+<tmpl_unless hide_status_column><th><tmpl_var colhead_status></th></tmpl_unless>
 <th class="l"><tmpl_var colhead_checkbox_column></th>
 </tr>
 </thead>
@@ -52,7 +54,7 @@
 <td>
   <tmpl_var commands_column>
 </td>
-<td><tmpl_var status></td>
+<tmpl_unless hide_status_column><td><tmpl_var status></td></tmpl_unless>
 <td class="l"><tmpl_var checkbox_column></td>
 </tr>
 </tmpl_loop></tbody>

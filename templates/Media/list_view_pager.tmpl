@@ -24,8 +24,10 @@
 <col>
 <!-- 'creation_date' column -->
 <col class="c-date">
+<tmpl_unless hide_status_column>
 <!-- 'status' column -->
 <col class="c-stat">
+</tmpl_unless>
 <!-- 'checkbox_column' column -->
 <col class="tick">
 </colgroup>
@@ -43,7 +45,7 @@
   <tmpl_var colhead_url>
 </th>
 <th><tmpl_var colhead_creation_date></th>
-<th><tmpl_var colhead_status></th>
+<tmpl_unless hide_status_column><th><tmpl_var colhead_status></th></tmpl_unless>
 <th class="l"><tmpl_var colhead_checkbox_column></th>
 </tr>
 </thead>
@@ -61,7 +63,7 @@
   <br><tmpl_var commands_column>
 </td>
 <td><tmpl_var creation_date></td>
-<td><tmpl_var status></td>
+<tmpl_unless hide_status_column><td><tmpl_var status></td></tmpl_unless>
 <td class="l"><tmpl_var checkbox_column></td>
 </tr>
 </tmpl_loop></tbody>

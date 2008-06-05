@@ -765,7 +765,8 @@ sub list_retired {
 
     my %args = (
         tmpl_file         => 'list_retired.tmpl',
-        include_in_search => 'retired'
+        include_in_search => 'retired',
+        hide_status_column => 1,
     );
 
     $self->_do_search(%args);
@@ -843,6 +844,7 @@ sub _do_simple_search {
         die_on_bad_params => 0,
     );
     $pager->fill_template($pager_tmpl);
+    $pager_tmpl->param(hide_status_column => $args{hide_status_column});
 
     # get pager output
     $t->param(pager_html => $pager_tmpl->output());
@@ -948,6 +950,7 @@ sub _do_advanced_search {
         die_on_bad_params => 0,
     );
     $pager->fill_template($pager_tmpl);
+    $pager_tmpl->param(hide_status_column => $args{hide_status_column});
 
     $t->param(pager_html => $pager_tmpl->output());
     $t->param(row_count  => $pager->row_count());
