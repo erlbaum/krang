@@ -602,6 +602,13 @@ sub _build_asset_list {
         }
     }
 
+    # add the even flag to stories and media
+    my $even = 0;
+    foreach my $asset (@stories, @media) {
+        $asset->{even} = $even;
+        $even = !$even;
+    }
+
     return (\@stories, \@media, $checked_out_assets);
 
 }
