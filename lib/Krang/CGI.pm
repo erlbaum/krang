@@ -410,7 +410,7 @@ sub _check_assets {
 
 =head1 RUN MODES
 
-This base class provides two runmodes:
+This base class provides three runmodes:
 
   * access_forbidden
 
