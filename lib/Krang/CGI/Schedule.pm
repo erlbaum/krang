@@ -435,6 +435,8 @@ sub convert_hour {
 
     if ($hour >= 13) {
         return ($hour - 12), 'PM';
+    } elsif ($hour == 12) {
+        return $hour, 'PM';
     } elsif ($hour == 0) {
         return 12, 'AM';
     } else {
@@ -523,7 +525,7 @@ sub add {
     } elsif ($repeat eq 'daily') {
         my ($hour, $minute) = decode_time(name => 'daily_time', query => $q);
         $minute = 0 if (!defined $minute);
-        unless ($hour) {
+        unless (defined $hour) {
             add_alert('no_hour');
             return $self->edit('no_hour');
         }
@@ -552,7 +554,7 @@ sub add {
     } elsif ($repeat eq 'weekly') {
         my ($hour, $minute) = decode_time(name => 'weekly_time', query => $q);
         $minute = 0 if (!defined $minute);
-        unless ($hour) {
+        unless (defined $hour) {
             add_alert('no_hour');
             return $self->edit('no_weekly_hour');
         }
@@ -676,7 +678,7 @@ sub add_admin {
     } elsif ($repeat eq 'daily') {
         my ($hour, $minute) = decode_time(name => 'daily_time', query => $q);
         $minute = 0 if (!defined $minute);
-        unless ($hour) {
+        unless (defined $hour) {
             add_alert('no_hour');
             return $self->edit_admin('no_hour');
         }
@@ -705,7 +707,7 @@ sub add_admin {
     } elsif ($repeat eq 'weekly') {
         my ($hour, $minute) = decode_time(name => 'weekly_time', query => $q);
         $minute = 0 if (!defined $minute);
-        unless ($hour) {
+        unless (defined $hour) {
             add_alert('no_hour');
             return $self->edit_admin('no_weekly_hour');
         }
