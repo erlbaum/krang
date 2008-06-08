@@ -474,7 +474,7 @@ sub decode_time {
       unless $name and $query;
 
     my $value = $query->param($name);
-    my ($hour, $minute,, $ampm);
+    my ($hour, $minute, $ampm);
     if( $value && $value =~ /^(\d+):(\d+)\s?(am|pm)$/i ) {
         $hour = $1;
         $minute = $2;
