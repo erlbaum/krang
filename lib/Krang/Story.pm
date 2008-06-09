@@ -1661,6 +1661,57 @@ or bin/ scripts make calls to C<find()>!
     }
 }
 
+=item C<< Krang::Story->transform_stories(%args) >>
+
+Transform desired stories. This method is useful for performing
+bulk transforms of stories. You can do things like add new elements 
+or delete existing elements which makes it really handy for doing
+element library changes or upgrades.
+
+It takes the following named arguments:
+
+=over
+
+=item * callback
+
+A subroutine that actually performs the translation of the story. It 
+receives that story being transformed and a flag indicating whether or
+not the story is a live current version (and not a past version).
+
+This subroutine is expected to return the transformed version of the story.
+
+=item * past_versions
+
+A boolean flag indicating whether or not you want to operate on past versions
+of stories. If this is false, then you will just be given the current version.
+
+=item * prune_corrupt_versions
+
+If for some reason a past version of a story cannot be thawed out (this can happen
+if the element libraries change too drastically) then there's not much that
+can be done for that version of the story. If this flag is true, then we will delete
+that version of the story completely from the database.
+
+=back
+
+Any other arguments passed in will be sent to the C<find()> method.
+
+    # add a foo element to all stories of the "bar" class
+    pkg('Story')->transform_stories(
+        class => ['bar'],
+        past_versions => 1,
+        callback => sub {
+            my %args = @_;
+            my ( $story, $live ) = @args{ qw( story live ) };
+            my $element = $story->element;
+            $element->add_child(class => 'foo', value => 'blah, blah');
+
+            return $story;
+        },
+    );
+
+=cut
+
 sub transform_stories {
     my ($pkg, %args) = @_;
     my $callback = delete $args{callback}
@@ -1702,54 +1753,6 @@ sub transform_stories {
                 # re-save version
                 $dbh->do('REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)',
                     undef, $story_id, $v, nfreeze($old_story));
-            }
-        }
-    }
-}
-
-sub transform_stories_xml {
-    my ($pkg, %args) = @_;
-    my $callback = delete $args{callback}
-      or croak('You must provide a callback for transform_stories()');
-    my $past_versions = delete $args{past_versions};
-
-    # make find() do all the hard stuff
-    my @stories = $pkg->find(%args);
-    foreach my $story (@stories) {
-        my $story_id = $story->story_id;
-
-        # turn this story into XML
-        my $xml = '';
-        my $writer = pkg('XML')->writer(string => \$xml);
-        $writer->xmlDecl();
-        $story->serialize_xml(no_elements => 1, writer => $writer);
-        $writer->end();
-
-        # transform the XML via callback
-        $xml = $callback->({xml => $xml, live => 1});
-
-        # now flip the XML back into a Story
-        $story->save(keep_version => 1, no_history => 1);
-
-        if ($past_versions) {
-            my $dbh = dbh;
-            foreach my $v ($story->all_versions) {
-                next unless $v == $story->version;
-                my $old_story;
-                eval { $old_story = $pkg->_load_version($story_id, $v) };
-                # if we can't even load, just skip it
-                if($@) {
-                    warn "Can't load version $v of story $story_id: $@\n";
-                    next;
-                }
-                $old_story = $callback->({story => $story, live => 0});
-
-                # re-save version
-                $dbh->do(
-                    'REPLACE INTO story_version (story_id, version, data) VALUES (?,?,?)',
-                    undef, $old_story->{story_id},
-                    $old_story->{version}, nfreeze($old_story)
-                );
             }
         }
     }
