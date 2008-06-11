@@ -42,43 +42,54 @@ View Template
 <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
 <input name="retired" value="<tmpl_var escape=html retired>" type="hidden">
 
-<h3>
-Properties
-</h3>
-
-<table class="result" summary="">
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
 <col class="c-label">
 <col>
-<col class="c-label">
-<col>
 </colgroup>
+
+<thead>
+<tr>
+<th class="f">Properties</th>
+<th class="l"></th>
+</tr>
+</thead>
 
 <tbody>
 
 <tr>
-<th>URL</th>
-<td colspan="3"><tmpl_var escape=html url></td>
+<td class="f">URL</td>
+<td class="l"><tmpl_var escape=html url></td>
 </tr>
 
 <tr>
-<th>Template ID</th>
-<td><tmpl_var escape=html template_id></td>
-<th>Current Version</th>
-<td><tmpl_var escape=html version></td>
+<td class="f">File Name</td>
+<td class="l"><tmpl_var escape=html filename></td>
 </tr>
 
 <tr>
-<th>File Name</th>
-<td><tmpl_var escape=html filename></td>
-<th>Deployed Version</th>
-<td><tmpl_unless deployed_version>[n/a]<tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
+<td class="f">Template ID</td>
+<td class="l"><tmpl_var escape=html template_id></td>
+</tr>
+
+<tr>
+<td class="f">Current Version</td>
+<td class="l"><tmpl_var escape=html version></td>
+</tr>
+
+<tr>
+<td class="f">Deployed Version</td>
+<td class="l"><tmpl_unless deployed_version>[n/a]<tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
 </tr>
 
 </tbody>
 
 </table>
+</div>
 
 <h3>
 Content
