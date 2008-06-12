@@ -469,6 +469,8 @@ Krang.Ajax.update = function(args) {
                      Defaults to true.
         target     : the id of an element for which the content is intended
                      for
+        onComplete : a callback to be executed when the request is finished
+                     (only works with AJAX requests)
 
     *NOTE* - This should not be used by the onclick handler of
     an input of type 'button' if the form is not of the 'non_ajax'
@@ -535,10 +537,11 @@ Krang.Form = {
                 }
 
                 Krang.Ajax.update({
-                    url    : url,
-                    params : Form.serialize(form, true),
-                    target : options.target,
-                    to_top : options.to_top
+                    url        : url,
+                    params     : Form.serialize(form, true),
+                    target     : options.target,
+                    to_top     : options.to_top,
+                    onComplete : options['onComplete']
                 });
             } else {
                 form.action = Krang.Window.pass_id(form.action);
@@ -894,14 +897,16 @@ Krang.Pager = {
     input_key     : function(key) {
         Krang.Pager._form = Krang.Pager._get_form(key);
     },
+    init          : function() {
+        Krang.Pager.target = null;
+        Krang.Pager._form  = null;
+    },
     goto_page     : function(num) {
         Krang.Form.submit(
             Krang.Pager._form, 
             { krang_pager_curr_page_num : num }, 
             { to_top : false, target: Krang.Pager.target }
         );
-        // reset the target so it defaults to null
-        Krang.Pager.target = null;
     },
     sort          : function(field, desc) {
         Krang.Form.set( 
