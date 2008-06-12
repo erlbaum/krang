@@ -110,9 +110,9 @@ sub _row_handler {
     # Uppercase story type
     $row->{class} = ucfirst($row->{class});
 
-    # correct may_edit flag
-    $row->{may_edit} = 0
-      unless $asset_permission_for->{$obj->{type}} eq 'edit';
+    # set may_edit flag
+    $row->{may_edit} = 1
+      if $asset_permission_for->{$obj->{type}} eq 'edit';
 
     # maybe show list controls
     if ($row->{may_edit}) {
