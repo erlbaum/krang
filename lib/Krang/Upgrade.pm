@@ -8,6 +8,7 @@ use Krang::ClassLoader 'Conf';
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'AddOn';
 use Carp qw(croak);
+use File::Spec::Functions qw(catfile);
 
 # call the init-handler of any AddOns being used
 BEGIN {
@@ -94,36 +95,48 @@ the database.
 
 =back
 
-=back
+=item remove_files()
 
+This convenience method is provided to help remove old files during the upgrade.
+It's best to call this method in the C<per_installation()> method since files
+are per-installation. File names are given relative to C<KRANG_ROOT>.
+
+    $self->remove_files(
+        'lib/Krang/Foo.pm',
+        'src/Foo-1.00.tar.gz',
+    );
+
+=back
 
 =head1 SEE ALSO
 
 Releasing Krang: Creating Upgrade Modules  F<docs/release.pod>
 
-
-
 =cut
-
 
 sub per_installation {
     my $self = shift;
     croak("No per_installation() method implemented in $self");
 }
 
-
 sub per_instance {
     my $self = shift;
     croak("No per_instance() method implemented in $self");
 }
 
+sub remove_files {
+    my ($self, @files) = @_;
+    foreach my $file (@files) {
+        $file = catfile($ENV{KRANG_ROOT}, $file);
+        system("rm -rf $file") if -e $file;
+    }
+}
 
 # Create a trivial object
 sub new {
     my $class = shift;
     bless({}, $class);
 }
-
 
 sub upgrade {
     my ($self, %args) = @_;
@@ -144,8 +157,5 @@ sub upgrade {
         $self->per_instance(%args);
     }
 }
-
-
-
 
 1;
