@@ -55,6 +55,10 @@ find(
 print STDERR "Pre-loading AddOns...\n";
 pkg('AddOn')->call_handler('PreloadHandler');
 
+# these modules are lazy loaded so they don't get preloaded by default unless we do it explicitly
+use Apache::Registry;
+use Storable qw(freeze thaw);
+
 print STDERR "Krang Pre-load complete.\n";
 
 1;
