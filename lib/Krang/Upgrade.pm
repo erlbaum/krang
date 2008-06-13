@@ -128,7 +128,7 @@ sub remove_files {
     my ($self, @files) = @_;
     foreach my $file (@files) {
         $file = catfile($ENV{KRANG_ROOT}, $file);
-        system("rm -rf $file") if -e $file;
+        system("rm -rf $file") if (-e $file || -d $file)
     }
 }
 
