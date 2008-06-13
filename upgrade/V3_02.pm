@@ -7,7 +7,31 @@ use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 
 sub per_installation {
-
+    my ($self, %args) = @_;
+    # remove old files
+    $self->remove_files(
+        qw(
+          htdocs/images/closed_node.png
+          htdocs/images/L.png
+          htdocs/images/minus.png
+          htdocs/images/open_node.png
+          htdocs/images/plus.png
+          lib/Krang/Test/Apache.pm
+          platform/RHEL_AS3/README.RHEL_ES3
+          platform/RHEL_AS4/README.RHEL_ES4
+          platform/RHEL_ES4/README.RHEL_AS4
+          skins/Default/images/logo.gif
+          skins/Gunmetal
+          skins/Mono
+          skins/Red
+          src/CGI.pm-2.89.tar.gz
+          src/Image-BioChrome-1.16.tar.gz
+          src/libapreq-1.3.tar.gz
+          src/MIME-Base64-2.16.tar.gz
+          src/Test-Harness-2.46.tar.gz
+          src/YAML-0.58.tar.gz
+          )
+    );
 }
 
 sub per_instance {
