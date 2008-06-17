@@ -447,6 +447,11 @@ sub init {
     # dates set first
     $self->hash_init(%args);
 
+    # but hash_init updates next run, which interval doesn't need
+    if ($repeat eq 'interval') {
+       $self->{next_run} = $self->{initial_date};
+    }
+
     # determine priority
     $self->{priority} = $priority ? $priority : $self->determine_priority();
 
