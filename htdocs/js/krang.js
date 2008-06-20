@@ -243,6 +243,15 @@ Krang.Ajax = {
             }
         }
         params.base64 = 1;
+    },
+    toQueryParams : function(str) {
+        var params;
+        if( str.match(/;/) ) {
+            params = str.toQueryParams(';');
+        } else {
+            params = str.toQueryParams();
+        }
+        return params;
     }
 };
 /*
@@ -665,16 +674,10 @@ Krang.Nav = {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);
-                var query   = matches[2];
-                var params;
-                if( query.match(/;/) ) {
-                    params = query.toQueryParams(';');
-                } else {
-                    params = query.toQueryParams();
-                }
+                var query   = matches[2] || '';
                 Krang.Ajax.update({
                     url    : Krang.Window.pass_id(matches[1]),
-                    params : params
+                    params : Krang.Ajax.toQueryParams(matches[2]),
                 });
             } else {
                 Krang.show_indicator();
@@ -1639,7 +1642,7 @@ var rules = {
             var matches = this.href.match(/(.*)\?(.*)/);
             Krang.Ajax.update({
                 url       : matches[1],
-                params    : matches[2].toQueryParams(),
+                params    : Krang.Ajax.toQueryParams(matches[2]),
                 div       : Krang.class_suffix(el, 'for_'),
                 indicator : Krang.class_suffix(el, 'show_')
             });
