@@ -665,9 +665,16 @@ Krang.Nav = {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);
+                var query   = matches[2];
+                var params;
+                if( query.match(/;/) ) {
+                    params = query.toQueryParams(';');
+                } else {
+                    params = query.toQueryParams();
+                }
                 Krang.Ajax.update({
                     url    : Krang.Window.pass_id(matches[1]),
-                    params : matches[2].toQueryParams()
+                    params : params
                 });
             } else {
                 Krang.show_indicator();
