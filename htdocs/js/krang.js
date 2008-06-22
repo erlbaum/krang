@@ -677,7 +677,7 @@ Krang.Nav = {
                 var query   = matches[2] || '';
                 Krang.Ajax.update({
                     url    : Krang.Window.pass_id(matches[1]),
-                    params : Krang.Ajax.toQueryParams(matches[2]),
+                    params : Krang.Ajax.toQueryParams(matches[2])
                 });
             } else {
                 Krang.show_indicator();
