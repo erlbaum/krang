@@ -524,8 +524,9 @@ sub preview_media {
     } else {
         # redirect to preview
         my $scheme = PreviewSSL ? 'https' : 'http';
-        print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
-          if $url;
+        $self->header_props(-uri => $scheme . '://' . $url);
+        $self->header_type('redirect');
+        return "Redirect: <a href=\"$url\">$url</a>";
     }
 }
 
