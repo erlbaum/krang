@@ -179,12 +179,18 @@ sub upload {
         $q->param('category_id' => '');
         
         # remove tempdir 
-        rmtree($opened_root);    
+        rmtree($opened_root);
+
+        # redirect to workspace
+        my $url = 'workspace.pl';
+        $self->header_props(-uri => $url);
+        $self->header_type('redirect');
+        return "Redirect: <a href=\"$url\">$url</a>";
     } else {
         add_alert('no_file');
+        return $self->choose();
     } 
 
-    return $self->choose();
 }
 
 =item create_media
