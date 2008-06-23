@@ -299,16 +299,20 @@ sub category_chooser_object {
       if defined( $query->param($field) );
 
     # setup category loop
-    my %find_params = ( order_by => 'url' );
+    my %find_params = ();
     $find_params{site_id}  = $site_id if ($site_id);
     $find_params{may_see}  = 1        if $may_see;
     $find_params{may_edit} = 1        if $may_edit;
 
     # get list of all cats
     my @cats = pkg('Category')->find(%find_params);
-
+    
     # if there are no cats then there can't be any chooser
     return unless @cats;
+
+    # we used to sort on url in find, but the trailing slash would screw up
+    # the order of directories named numerically (e.g. 7 would come after 7.10)
+    @cats = sort { substr($a->url, 0, -1) cmp substr($b->url, 0, -1) } @cats;
 
     # build up data structure used by HTML::PopupTreeSelect::Dynamic
     my $data = { children => [], label => "", open => 1 };
