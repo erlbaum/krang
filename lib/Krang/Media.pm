@@ -22,7 +22,7 @@ use File::stat;
 use Time::Piece;
 use Time::Piece::MySQL;
 use File::Temp qw/ tempdir /;
-use Image::Info qw( image_info dim );
+use Image::Size;
 use FileHandle;
 
 # constants
@@ -676,7 +676,7 @@ Return width of image in pixels.
 sub width {
     my $self = shift;
     if ($self->file_path()) {
-        my ($w, $h) = dim(image_info($self->file_path()));
+        my ($w, $h) = imgsize($self->file_path());
         return $w;
     } else {
         return;
@@ -692,7 +692,7 @@ Return height of image in pixels.
 sub height {
     my $self = shift;
     if ($self->file_path()) {
-        my ($w, $h) = dim(image_info($self->file_path()));
+        my ($w, $h) = imgsize($self->file_path());
         return $h;
     } else {
         return;
