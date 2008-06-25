@@ -7,8 +7,9 @@ use warnings;
 our %ACTION_LABELS = (
     new      => 'created',
     save     => 'saved',
-    checkin  => 'checked In',
-    checkout => 'checked Out',
+    checkin  => 'checked in',
+    checkout => 'checked out',
+    steal    => 'stolen',
     publish  => 'published',
     deploy   => 'deployed',
     move     => 'moved',

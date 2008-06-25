@@ -5,6 +5,7 @@ use warnings;
 
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader Log     => qw(debug assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Message => qw(add_message add_alert clear_messages clear_alerts);
@@ -2146,14 +2147,17 @@ sub steal_selected {
     foreach my $story_id (@story_ids) {
         my ($s) = pkg('Story')->find(story_id => $story_id);
         if ($s->checked_out_by ne $ENV{REMOTE_USER}) {
+	    # this story was checked out to someone else; steal it and keep track of victim
             my ($victim) = pkg('User')->find(user_id => $s->checked_out_by);
             my $victim_name = $q->escapeHTML($victim->first_name . ' ' . $victim->last_name);
-            $s->checkin();     # this story was checked out to someone
-            $s->checkout();    # else; steal it and keep track of victim
+	    add_history(object => $s, action => 'steal');
+            $s->checkin(); 
+	    $s->checkout();    
             $victims{$victim_name} = 1;
             push @stolen_ids, $story_id;
         } else {
-            push @owned_ids, $story_id;    # this story was already ours!
+            # this story was already ours!
+            push @owned_ids, $story_id;    
         }
     }
 

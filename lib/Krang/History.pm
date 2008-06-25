@@ -339,7 +339,7 @@ Override this method to extend the list.
 
 sub actions {
     return
-      qw( new save checkin checkout publish deploy undeploy move revert delete retire unretire trash untrash);
+      qw( new save checkin checkout steal publish deploy undeploy move revert delete retire unretire trash untrash );
 }
 
 1;
