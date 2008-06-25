@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed broken templates.kds in Default element library. [Noam Weinstein]
+
+=item *
+
 Stealing a story now logs a discrete action for the theft. [Noam Weinstein]
 
 =item *
