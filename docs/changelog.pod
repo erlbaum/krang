@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Stealing a story now logs a discrete action for the theft. [Noam Weinstein]
+
+=item *
+
 Element classes can now override sort order of available children. [Noam Weinstein]
 
 =item *
