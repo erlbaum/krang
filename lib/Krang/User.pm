@@ -484,6 +484,8 @@ characters must surround the sub-striqng).  The valid search fields are:
 
 =over 4
 
+=item * login
+
 =item * email
 
 =item * first_name
@@ -504,7 +506,7 @@ characters must surround the sub-striqng).  The valid search fields are:
 
 =item * simple_search
 
-Seaches first_name, last_name for matching LIKE strings
+Seaches first_name, last_name and login for matching LIKE strings
 
 =back
 
@@ -620,13 +622,8 @@ sub find {
         } elsif ($arg eq 'simple_search') {
             my @words = split(/\s+/, $args{$arg});
             for (@words) {
-                if ($where_clause) {
-                    $where_clause .= " AND concat(u.first_name, ' ', " .
-                      "u.last_name) LIKE ?";
-                } else {
-                    $where_clause = "concat(u.first_name, ' ', u.last_name) " .
-                      "LIKE ?";
-                }
+		$where_clause .= ($where_clause ? " AND " : '') .
+                                 "concat(u.first_name, ' ', u.last_name, ' ', u.login) LIKE ?";
                 push @params, "%" . $_ . "%";
             }
         } else {

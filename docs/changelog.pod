@@ -6,6 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item
+
+Made user search check for matches with login instead of just first and last name. [Noam Weinstein]
+
 =item *
 
 Fixed broken templates.kds in Default element library. [Noam Weinstein]
