@@ -8,6 +8,7 @@ use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Log     => qw(debug);
 use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader Conf    => qw(TrashMaxItems);
+use Krang::ClassLoader 'Group';
 
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -180,6 +181,9 @@ sub find {
             my ($media) = pkg('Media')->find(media_id => $obj->{id});
             $obj->{thumbnail_src} = $media->thumbnail_path(relative => 1);
         }
+
+        # merge in user asset permission
+        $obj->{may_edit} = 0 unless $perms{$obj->{type}} eq 'edit';
 
         push @objects, $obj;
     }
