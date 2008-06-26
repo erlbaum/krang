@@ -72,9 +72,6 @@ sub find {
     # admin delete permission
     $template->param(admin_may_delete => pkg('Group')->user_admin_permissions('admin_delete'));
 
-    # asset permissions
-    my %asset_permissions = pkg('Group')->user_asset_permissions();
-
     my %col_labels = (
         id    => 'ID',
         type  => 'Type',
@@ -91,7 +88,7 @@ sub find {
         column_labels    => \%col_labels,
         columns_sortable => [qw(id type title url date)],
         id_handler  => sub { $self->_id_handler(@_) },
-        row_handler => sub { $self->_row_handler(@_, \%asset_permissions) },
+        row_handler => sub { $self->_row_handler(@_)},
     );
 
     # Run the pager
@@ -102,7 +99,7 @@ sub find {
 sub _id_handler { return $_[1]->{type} . '_' . $_[1]->{id} }
 
 sub _row_handler {
-    my ($self, $row, $obj, $pager, $asset_permission_for) = @_;
+    my ($self, $row, $obj, $pager) = @_;
 
     # do the clone
     $row->{$_} = $obj->{$_} for keys %$obj;
