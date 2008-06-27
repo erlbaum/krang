@@ -6,7 +6,7 @@ use File::Spec::Functions qw(catdir catfile canonpath);
 use Cwd qw(cwd);
 use Config;
 use Devel::CheckLib qw(assert_lib);
-my $DEBUG = 0;
+my $DEBUG = 1;
 
 =head1 NAME
 
@@ -188,103 +188,86 @@ Checks to see that the Expat library is installed.
 
 sub check_expat {
     my ($pkg, %args) = @_;
-    $pkg->_check_libs(%args,
-                      module => 'XML::Parser',
-                      name => 'libexpat',
-                      lib   => 'expat',
-                      h    => 'expat.h');
+    $pkg->_check_libs(
+        %args,
+        module => 'XML::Parser',
+        name   => 'libexpat',
+        lib    => 'expat',
+        h      => 'expat.h'
+    );
 }
 
 =item C<< check_libjpeg(lib_files => \@libs, includes => \@incs, mode => $mode) >>
 
 Checks for the existance of the libjpeg shared object and header files.
-
-Looks for libjpeg.so in $Config{libpth}
-
-Looks for libjpeg.h in $Config{usrinc} and /usr/local/include.
-
-libjpeg.h is not needed for an install.
+Header files are not needed for install.
 
 =cut
 
 sub check_libjpeg {
-
     my ($pkg, %args) = @_;
 
-    $pkg->_check_libs(%args,
-                      module => 'Imager',
-                      name => 'libjpeg',
-                      lib   => 'jpeg',);
-
+    $pkg->_check_libs(
+        %args,
+        module => 'Imager',
+        name   => 'libjpeg',
+        lib    => 'jpeg',
+        # not sure why this fails to compile on Linux, but Imager has no problem with it...
+        #h      => 'jpeglib.h',
+    );
 }
 
 =item C<< check_libgif(lib_files => \@libs, includes => \@incs, mode => $mode) >>
 
 Checks for the existance of the libgif or libungif shared object and header files.
-
-Looks for libgif.so and libungif.so in $Config{libpth}
-
-Looks for libgif.h and libungif.h in $Config{usrinc} and /usr/local/include.
-
 Header files are not needed for install.
-
-Either libgif or libungif will suffice.
 
 =cut
 
 sub check_libgif {
-
-
     my ($pkg, %args) = @_;
-
 
     # check first for libgif.
     eval {
-        $pkg->_check_libs(%args,
-                          module => 'Imager',
-                          name => 'libgif',
-                          lib   => 'gif',
-                          h    => 'gif_lib.h');
+        $pkg->_check_libs(
+            %args,
+            module => 'Imager',
+            name   => 'libgif',
+            lib    => 'gif',
+            h      => 'gif_lib.h'
+        );
     };
 
     # if that fails, check for libungif (just as good).
     if ($@) {
-        $pkg->_check_libs(%args,
-                          module => 'Imager',
-                          name => 'libungif',
-                          lib  => 'ungif',
-                          h    => 'gif_lib.h');
+        $pkg->_check_libs(
+            %args,
+            module => 'Imager',
+            name   => 'libungif',
+            lib    => 'ungif',
+            h      => 'gif_lib.h'
+        );
     }
-
-
 }
-
 
 =item C<< check_libpng(lib_files => \@libs, includes => \@incs, mode => $mode) >>
 
 Checks for the existance of the libpng shared object and header files.
-
-Looks for libpng.so in $Config{libpth}
-
-Looks for libpng.h in $Config{usrinc} and /usr/local/include.
-
-libpng.h is not needed for an install.
+Header files are not needed for install.
 
 =cut
 
 sub check_libpng {
-
-
     my ($pkg, %args) = @_;
 
-    $pkg->_check_libs(%args,
-                      module => 'Imager',
-                      name => 'libpng',
-                      lib  => 'png',
-                      h    => 'png.h');
-
+    $pkg->_check_libs(
+        %args,
+        module => 'Imager',
+        name   => 'libpng',
+        lib    => 'png',
+        h      => 'png.h'
+    );
 }
-
 
 =back
 
@@ -938,43 +921,37 @@ sub build_params {
 
 =cut
 
-
-
-#
-# internal method to actually search for libraries.
-# takes 'so' and 'h' args for the files to look for.
-# takes 'includes' and 'lib_files' as the directories to search for.
-#
-
+# use Devel::CheckLib to look for external C libs and header files
 sub _check_libs {
     my ($pkg, %args) = @_;
 
-    my $mode = $args{mode};
-    my $name = $args{name};
-    my $lib   = $args{lib};
-    my $h    = $args{h};
-    my $module  = $args{module};
+    my $mode   = $args{mode};
+    my $name   = $args{name};
+    my $lib    = $args{lib};
+    my $h      = $args{h};
+    my $module = $args{module};
 
     if ($lib) {
         my @libs;
-        push(@libs, @{$args{libs}}) if $args{libs}; # extra dirs supplied when called
+        push(@libs, @{$args{libs}}) if $args{libs};    # extra dirs supplied when called
         eval { assert_lib(lib => $lib, libpath => \@libs, debug => $DEBUG) };
-        die "\n\n$name is missing from your system or Krang could not find it."
-            . "\nThis library is required by Krang.\n\n" if $@;
+        die "\n\n$name is missing from your system, "
+          . "Krang could not find it or we couldn't include it."
+          . "\nThis library is required by Krang.\n\n"
+          if $@;
     }
 
     if ($h && $mode eq 'build') {
         my @incs;
-        push(@incs, @{$args{includes}}) if $args{includes}; # extra dirs supplied when called
+        push(@incs, @{$args{includes}}) if $args{includes};    # extra dirs supplied when called
         my $msg = "The header file for $name, '$h', is missing from your system "
-         . "or Krang can't find it.";
-        $msg .= "\nThis file is needed to compile the $module module which uses $name." if ($module && $name);
+          . ", Krang can't find it or we couldn't include it.";
+        $msg .= "\nThis file is needed to compile the $module module which uses $name."
+          if ($module && $name);
         eval { assert_lib(header => $h, incpath => \@incs, debug => $DEBUG) };
-        die "$msg\n" if $@;
+        die "$msg: $@\n" if $@;
     }
 }
-
-
 
 sub _load_expect {
     # load Expect - don't load at compile time because this module is
