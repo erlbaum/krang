@@ -6,7 +6,7 @@ use File::Spec::Functions qw(catdir catfile canonpath);
 use Cwd qw(cwd);
 use Config;
 use Devel::CheckLib qw(assert_lib);
-my $DEBUG = 1;
+my $DEBUG = 0;
 
 =head1 NAME
 
