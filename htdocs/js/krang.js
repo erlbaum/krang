@@ -99,7 +99,6 @@ document.onunload = function() {
     oldOnUnload();
 }
 
-
 /*
     // Initialize the name and title of current window
     Krang.Window.init();
@@ -306,8 +305,6 @@ Krang.Ajax.request = function(args) {
     // pass window ID to handler
     url = Krang.Window.pass_id(url);
 
-    Krang.unload();
-
     new Ajax.Request(
         url,
         {
@@ -402,8 +399,10 @@ Krang.Ajax.update = function(args) {
     url = Krang.Window.pass_id(url);
 
     // the default target
-    if( target == null || target == '' )
-        target = 'C';
+    if( target == null || target == '' ) target = 'C';
+
+    // run the unloader if we are targetting C
+    if( target == 'C' ) Krang.unload();
 
     new Ajax.Updater(
         { success : target },
@@ -461,6 +460,10 @@ Krang.Ajax.update = function(args) {
     Select a form (can be either the name of the form, or the form object
     itself) and set the values of its inputs
 
+    Krang.Form.get(form, input);
+    Select a form (can be either the name of the form, or the form object
+    itself) and get the value of an input
+
     Krang.Form.submit(form, { input: 'value' }, { new_window: true })
     Select a form (can either be the name of the form, or the form object
     itself) optionally sets the values of those elements and then submits 
@@ -490,7 +493,6 @@ Krang.Ajax.update = function(args) {
     to set the values and let the form take care of the rest.
 */
 Krang.Form = {
-
     set : function(form, inputs) {
         form = typeof form == 'object' ? form : document.forms[form];
         var err = 'Krang.Form.set(): ';
@@ -504,6 +506,14 @@ Krang.Form = {
                 el.value = pair.value;
             });
         }
+    },
+    get : function(form, input) {
+        form = typeof form == 'object' ? form : document.forms[form];
+        var err = 'Krang.Form.get(): ';
+
+        if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
+        if( !form.elements[input] ) alert(err + 'input "' + input + '" does not exist in form "' + form.name + '"!');
+        return form.elements[input].value;
     },
     submit : function(form, inputs, options) {
         form = typeof form == 'object' ? form : document.forms[form];
@@ -1072,10 +1082,11 @@ Object.extend( Krang.Navigation.prototype, {
             var contents = panel.childNodes[ 1 ];
 
             // is this panel opened?
-            if ( this.opened_panels.indexOf( pos ) == -1 )
+            if ( this.opened_panels.indexOf(pos) == -1 ) {
               Element.hide( contents );
-            else
+            } else {
               Element.show( contents );
+            }
 
             // set the onclick handler to record that a panel has been
             // opened or closed, and to use Krang.Widget.BlindUpDown to
@@ -1096,6 +1107,7 @@ Object.extend( Krang.Navigation.prototype, {
         }
     },
     save_opened_panels: function(positions) {
+        positions = $A(positions).uniq();
         Krang.Cookie.set(this.cookie_name, positions.join(','));
         this.opened_panels = positions;
     },
@@ -1122,7 +1134,8 @@ Object.extend( Krang.Navigation.prototype, {
 
         // if we have nav cookie, then just use what it gives us
         if ( value && value != '' ) {
-            panels = value.split(',');
+            // make sure what we get are Ints not strings
+            panels = $A(value.split(',')).map(function(s) { parseInt(s) }).toArray();
         } else { // just show the first panel
             panels = [ 0 ];
         }
