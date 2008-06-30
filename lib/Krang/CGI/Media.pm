@@ -152,7 +152,6 @@ sub list_retired {
     my %args = (
         tmpl_file         => 'list_retired.tmpl',
         include_in_search => 'retired',
-        hide_status_column => 1,
     );
 
     $self->_do_find(%args);
@@ -268,7 +267,6 @@ sub _do_simple_find {
     );
     $pager->fill_template($pager_tmpl);
     $pager_tmpl->param(show_thumbnails => $show_thumbnails);
-    $pager_tmpl->param(hide_status_column => $args{hide_status_column});
 
     # Run pager
     $t->param(
@@ -500,7 +498,6 @@ sub _do_advanced_find {
     );
     $pager->fill_template($pager_tmpl);
     $pager_tmpl->param(show_thumbnails => $show_thumbnails);
-    $pager_tmpl->param(hide_status_column => $args{hide_status_column});
 
     $t->param(
         pager_html       => $pager_tmpl->output(),
@@ -1932,6 +1929,7 @@ sub make_pager {
         columns          => \@columns,
         column_labels    => \%column_labels,
         columns_sortable => [qw( media_id title url creation_date )],
+        columns_hidden   => [qw( status )],
         row_handler =>
           sub { $self->find_media_row_handler($show_thumbnails, @_, retired => $retired); },
         id_handler => sub { return $_[0]->media_id },
@@ -1988,6 +1986,7 @@ sub find_media_row_handler {
 
     # short-circuit for trashed media
     if ($media->trashed) {
+        $pager->column_display(status => 1);
         $row->{status}          = 'Trash';
         $row->{checkbox_column} = "&nbsp;";
         return 1;
@@ -2006,6 +2005,7 @@ sub find_media_row_handler {
             $row->{pub_status} = '';
             $row->{status}     = '&nbsp;';
         } else {
+            $pager->column_display(status => 1);
             if ($media->checked_out) {
                 $row->{status} = "Live <br/> Checked out by <b>"
                   . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login . '</b>';
@@ -2017,6 +2017,7 @@ sub find_media_row_handler {
     } else {
 
         # Find Media screen
+        $pager->column_display(status => 1);
         if ($media->retired) {
 
             # Media is retired

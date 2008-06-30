@@ -1727,7 +1727,6 @@ sub list_retired {
     return $self->_do_find(
         tmpl_file         => 'list_retired.tmpl',
         include_in_search => 'retired',
-        hide_status_column => 1,
     );
 }
 
@@ -1946,6 +1945,7 @@ sub _do_find {
             status          => 'Status',
         },
         columns_sortable => [qw( story_id title url cover_date )],
+        columns_hidden   => [qw( status )],
         row_handler      => sub { $self->find_story_row_handler(@_, retired => $retired); },
         id_handler => sub { return $_[0]->story_id },
     );
@@ -1958,7 +1958,6 @@ sub _do_find {
         associate         => $q,
     );
     $pager->fill_template($pager_tmpl);
-    $pager_tmpl->param(hide_status_column => $args{hide_status_column});
 
     # Set up output
     $template->param(
@@ -2250,6 +2249,7 @@ sub find_story_row_handler {
 
     # short-circuit for trashed stories
     if ($story->trashed) {
+        $pager->column_display(status => 1);
         $row->{status}          = 'Trash';
         $row->{checkbox_column} = "&nbsp;";
         return 1;
@@ -2275,6 +2275,7 @@ sub find_story_row_handler {
             $row->{pub_status} = '';
             $row->{status}     = '&nbsp;';
         } else {
+            $pager->column_display(status => 1);
             if ($story->checked_out) {
                 $row->{status} = "Live <br/> Checked out by <b>"
                   . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login . '</b>';
@@ -2291,6 +2292,7 @@ sub find_story_row_handler {
     } else {
 
         # Find Story screen
+        $pager->column_display(status => 1);
         if ($story->retired) {
             $row->{pub_status}      = '';
             $row->{status}          = 'Retired';

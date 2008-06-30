@@ -766,7 +766,6 @@ sub list_retired {
     my %args = (
         tmpl_file         => 'list_retired.tmpl',
         include_in_search => 'retired',
-        hide_status_column => 1,
     );
 
     $self->_do_search(%args);
@@ -844,7 +843,6 @@ sub _do_simple_search {
         die_on_bad_params => 0,
     );
     $pager->fill_template($pager_tmpl);
-    $pager_tmpl->param(hide_status_column => $args{hide_status_column});
 
     # get pager output
     $t->param(pager_html => $pager_tmpl->output());
@@ -950,7 +948,6 @@ sub _do_advanced_search {
         die_on_bad_params => 0,
     );
     $pager->fill_template($pager_tmpl);
-    $pager_tmpl->param(hide_status_column => $args{hide_status_column});
 
     $t->param(pager_html => $pager_tmpl->output());
     $t->param(row_count  => $pager->row_count());
@@ -1258,7 +1255,8 @@ sub make_pager {
         find_params      => $find_params,
         columns          => \@columns,
         column_labels    => \%column_labels,
-        columns_sortable => ['template_id', 'filename', 'url',],
+        columns_sortable => [qw(template_id filename url)],
+        columns_hidden   => [qw(status)],
         row_handler      => sub { $self->search_row_handler(@_, retired => $retired) },
         id_handler => sub { return $_[0]->template_id },
     );
@@ -1289,6 +1287,7 @@ sub search_row_handler {
 
     # short-circuit for trashed template
     if ($template->trashed) {
+        $pager->column_display(status => 1);
         $row->{status}          = 'Trash';
         $row->{checkbox_column} = "&nbsp;";
         return 1;
@@ -1307,6 +1306,7 @@ sub search_row_handler {
             $row->{deployed} = '';
             $row->{status}   = '&nbsp;';
         } else {
+            $pager->column_display(status => 1);
             if ($template->checked_out) {
                 $row->{status} = "Live <br/> Checked out by <b>"
                   . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login . '</b>';
@@ -1318,6 +1318,7 @@ sub search_row_handler {
     } else {
 
         # Find Template screen
+        $pager->column_display(status => 1);
         if ($template->retired) {
 
             # Template is retired
