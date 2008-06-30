@@ -1,4 +1,4 @@
-// script.aculo.us builder.js v1.8.1, Thu Jan 03 22:07:12 -0500 2008
+// script.aculo.us builder.js v1.7.1_beta3, Fri May 25 17:19:41 +0200 2007
 
 // Copyright (c) 2005-2007 Thomas Fuchs (http://script.aculo.us, http://mir.aculo.us)
 //
@@ -134,7 +134,7 @@ var Builder = {
     });
   }
 }
-// script.aculo.us effects.js v1.8.1, Thu Jan 03 22:07:12 -0500 2008
+// script.aculo.us effects.js v1.7.1_beta3, Fri May 25 17:19:41 +0200 2007
 
 // Copyright (c) 2005-2007 Thomas Fuchs (http://script.aculo.us, http://mir.aculo.us)
 // Contributors:
@@ -149,17 +149,17 @@ var Builder = {
 // returns self (or first argument) if not convertable  
 String.prototype.parseColor = function() {  
   var color = '#';
-  if (this.slice(0,4) == 'rgb(') {  
+  if(this.slice(0,4) == 'rgb(') {  
     var cols = this.slice(4,this.length-1).split(',');  
     var i=0; do { color += parseInt(cols[i]).toColorPart() } while (++i<3);  
   } else {  
-    if (this.slice(0,1) == '#') {  
-      if (this.length==4) for(var i=1;i<4;i++) color += (this.charAt(i) + this.charAt(i)).toLowerCase();  
-      if (this.length==7) color = this.toLowerCase();  
+    if(this.slice(0,1) == '#') {  
+      if(this.length==4) for(var i=1;i<4;i++) color += (this.charAt(i) + this.charAt(i)).toLowerCase();  
+      if(this.length==7) color = this.toLowerCase();  
     }  
   }  
-  return (color.length==7 ? color : (arguments[0] || this));  
-};
+  return(color.length==7 ? color : (arguments[0] || this));  
+}
 
 /*--------------------------------------------------------------------------*/
 
@@ -168,7 +168,7 @@ Element.collectTextNodes = function(element) {
     return (node.nodeType==3 ? node.nodeValue : 
       (node.hasChildNodes() ? Element.collectTextNodes(node) : ''));
   }).flatten().join('');
-};
+}
 
 Element.collectTextNodesIgnoreClass = function(element, className) {  
   return $A($(element).childNodes).collect( function(node) {
@@ -176,18 +176,18 @@ Element.collectTextNodesIgnoreClass = function(element, className) {
       ((node.hasChildNodes() && !Element.hasClassName(node,className)) ? 
         Element.collectTextNodesIgnoreClass(node, className) : ''));
   }).flatten().join('');
-};
+}
 
 Element.setContentZoom = function(element, percent) {
   element = $(element);  
   element.setStyle({fontSize: (percent/100) + 'em'});   
-  if (Prototype.Browser.WebKit) window.scrollBy(0,0);
+  if(Prototype.Browser.WebKit) window.scrollBy(0,0);
   return element;
-};
+}
 
 Element.getInlineOpacity = function(element){
   return $(element).style.opacity || '';
-};
+}
 
 Element.forceRerendering = function(element) {
   try {
@@ -200,63 +200,31 @@ Element.forceRerendering = function(element) {
 
 /*--------------------------------------------------------------------------*/
 
+Array.prototype.call = function() {
+  var args = arguments;
+  this.each(function(f){ f.apply(this, args) });
+}
+
+/*--------------------------------------------------------------------------*/
+
 var Effect = {
   _elementDoesNotExistError: {
     name: 'ElementDoesNotExistError',
     message: 'The specified DOM element does not exist, but is required for this effect to operate'
   },
-  Transitions: {
-    linear: Prototype.K,
-    sinoidal: function(pos) {
-      return (-Math.cos(pos*Math.PI)/2) + 0.5;
-    },
-    reverse: function(pos) {
-      return 1-pos;
-    },
-    flicker: function(pos) {
-      var pos = ((-Math.cos(pos*Math.PI)/4) + 0.75) + Math.random()/4;
-      return pos > 1 ? 1 : pos;
-    },
-    wobble: function(pos) {
-      return (-Math.cos(pos*Math.PI*(9*pos))/2) + 0.5;
-    },
-    pulse: function(pos, pulses) { 
-      pulses = pulses || 5; 
-      return (
-        ((pos % (1/pulses)) * pulses).round() == 0 ? 
-              ((pos * pulses * 2) - (pos * pulses * 2).floor()) : 
-          1 - ((pos * pulses * 2) - (pos * pulses * 2).floor())
-        );
-    },
-    spring: function(pos) { 
-      return 1 - (Math.cos(pos * 4.5 * Math.PI) * Math.exp(-pos * 6)); 
-    },
-    none: function(pos) {
-      return 0;
-    },
-    full: function(pos) {
-      return 1;
-    }
-  },
-  DefaultOptions: {
-    duration:   1.0,   // seconds
-    fps:        100,   // 100= assume 66fps max.
-    sync:       false, // true for combining
-    from:       0.0,
-    to:         1.0,
-    delay:      0.0,
-    queue:      'parallel'
-  },
   tagifyText: function(element) {
+    if(typeof Builder == 'undefined')
+      throw("Effect.tagifyText requires including script.aculo.us' builder.js library");
+      
     var tagifyStyle = 'position:relative';
-    if (Prototype.Browser.IE) tagifyStyle += ';zoom:1';
+    if(Prototype.Browser.IE) tagifyStyle += ';zoom:1';
     
     element = $(element);
     $A(element.childNodes).each( function(child) {
-      if (child.nodeType==3) {
+      if(child.nodeType==3) {
         child.nodeValue.toArray().each( function(character) {
           element.insertBefore(
-            new Element('span', {style: tagifyStyle}).update(
+            Builder.node('span',{style: tagifyStyle},
               character == ' ' ? String.fromCharCode(160) : character), 
               child);
         });
@@ -266,8 +234,8 @@ var Effect = {
   },
   multiple: function(element, effect) {
     var elements;
-    if (((typeof element == 'object') || 
-        Object.isFunction(element)) && 
+    if(((typeof element == 'object') || 
+        (typeof element == 'function')) && 
        (element.length))
       elements = element;
     else
@@ -276,7 +244,7 @@ var Effect = {
     var options = Object.extend({
       speed: 0.1,
       delay: 0.0
-    }, arguments[2] || { });
+    }, arguments[2] || {});
     var masterDelay = options.delay;
 
     $A(elements).each( function(element, index) {
@@ -293,17 +261,51 @@ var Effect = {
     effect = (effect || 'appear').toLowerCase();
     var options = Object.extend({
       queue: { position:'end', scope:(element.id || 'global'), limit: 1 }
-    }, arguments[2] || { });
+    }, arguments[2] || {});
     Effect[element.visible() ? 
       Effect.PAIRS[effect][1] : Effect.PAIRS[effect][0]](element, options);
   }
 };
 
-Effect.DefaultOptions.transition = Effect.Transitions.sinoidal;
+var Effect2 = Effect; // deprecated
+
+/* ------------- transitions ------------- */
+
+Effect.Transitions = {
+  linear: Prototype.K,
+  sinoidal: function(pos) {
+    return (-Math.cos(pos*Math.PI)/2) + 0.5;
+  },
+  reverse: function(pos) {
+    return 1-pos;
+  },
+  flicker: function(pos) {
+    var pos = ((-Math.cos(pos*Math.PI)/4) + 0.75) + Math.random()/4;
+    return (pos > 1 ? 1 : pos);
+  },
+  wobble: function(pos) {
+    return (-Math.cos(pos*Math.PI*(9*pos))/2) + 0.5;
+  },
+  pulse: function(pos, pulses) { 
+    pulses = pulses || 5; 
+    return (
+      Math.round((pos % (1/pulses)) * pulses) == 0 ? 
+            ((pos * pulses * 2) - Math.floor(pos * pulses * 2)) : 
+        1 - ((pos * pulses * 2) - Math.floor(pos * pulses * 2))
+      );
+  },
+  none: function(pos) {
+    return 0;
+  },
+  full: function(pos) {
+    return 1;
+  }
+};
 
 /* ------------- core effects ------------- */
 
-Effect.ScopedQueue = Class.create(Enumerable, {
+Effect.ScopedQueue = Class.create();
+Object.extend(Object.extend(Effect.ScopedQueue.prototype, Enumerable), {
   initialize: function() {
     this.effects  = [];
     this.interval = null;    
@@ -314,7 +316,7 @@ Effect.ScopedQueue = Class.create(Enumerable, {
   add: function(effect) {
     var timestamp = new Date().getTime();
     
-    var position = Object.isString(effect.options.queue) ? 
+    var position = (typeof effect.options.queue == 'string') ? 
       effect.options.queue : effect.options.queue.position;
     
     switch(position) {
@@ -337,15 +339,15 @@ Effect.ScopedQueue = Class.create(Enumerable, {
     effect.startOn  += timestamp;
     effect.finishOn += timestamp;
 
-    if (!effect.options.queue.limit || (this.effects.length < effect.options.queue.limit))
+    if(!effect.options.queue.limit || (this.effects.length < effect.options.queue.limit))
       this.effects.push(effect);
     
-    if (!this.interval)
+    if(!this.interval)
       this.interval = setInterval(this.loop.bind(this), 15);
   },
   remove: function(effect) {
     this.effects = this.effects.reject(function(e) { return e==effect });
-    if (this.effects.length == 0) {
+    if(this.effects.length == 0) {
       clearInterval(this.interval);
       this.interval = null;
     }
@@ -360,15 +362,29 @@ Effect.ScopedQueue = Class.create(Enumerable, {
 Effect.Queues = {
   instances: $H(),
   get: function(queueName) {
-    if (!Object.isString(queueName)) return queueName;
+    if(typeof queueName != 'string') return queueName;
     
-    return this.instances.get(queueName) ||
-      this.instances.set(queueName, new Effect.ScopedQueue());
+    if(!this.instances[queueName])
+      this.instances[queueName] = new Effect.ScopedQueue();
+      
+    return this.instances[queueName];
   }
-};
+}
 Effect.Queue = Effect.Queues.get('global');
 
-Effect.Base = Class.create({
+Effect.DefaultOptions = {
+  transition: Effect.Transitions.sinoidal,
+  duration:   1.0,   // seconds
+  fps:        100,   // 100= assume 66fps max.
+  sync:       false, // true for combining
+  from:       0.0,
+  to:         1.0,
+  delay:      0.0,
+  queue:      'parallel'
+}
+
+Effect.Base = function() {};
+Effect.Base.prototype = {
   position: null,
   start: function(options) {
     function codeForEvent(options,eventName){
@@ -377,8 +393,8 @@ Effect.Base = Class.create({
         (options[eventName] ? 'this.options.'+eventName+'(this);' : '')
       );
     }
-    if (options && options.transition === false) options.transition = Effect.Transitions.linear;
-    this.options      = Object.extend(Object.extend({ },Effect.DefaultOptions), options || { });
+    if(options.transition === false) options.transition = Effect.Transitions.linear;
+    this.options      = Object.extend(Object.extend({},Effect.DefaultOptions), options || {});
     this.currentFrame = 0;
     this.state        = 'idle';
     this.startOn      = this.options.delay*1000;
@@ -388,60 +404,61 @@ Effect.Base = Class.create({
     this.totalFrames  = this.options.fps*this.options.duration;
     
     eval('this.render = function(pos){ '+
-      'if (this.state=="idle"){this.state="running";'+
-      codeForEvent(this.options,'beforeSetup')+
+      'if(this.state=="idle"){this.state="running";'+
+      codeForEvent(options,'beforeSetup')+
       (this.setup ? 'this.setup();':'')+ 
-      codeForEvent(this.options,'afterSetup')+
-      '};if (this.state=="running"){'+
+      codeForEvent(options,'afterSetup')+
+      '};if(this.state=="running"){'+
       'pos=this.options.transition(pos)*'+this.fromToDelta+'+'+this.options.from+';'+
       'this.position=pos;'+
-      codeForEvent(this.options,'beforeUpdate')+
+      codeForEvent(options,'beforeUpdate')+
       (this.update ? 'this.update(pos);':'')+
-      codeForEvent(this.options,'afterUpdate')+
+      codeForEvent(options,'afterUpdate')+
       '}}');
     
     this.event('beforeStart');
-    if (!this.options.sync)
-      Effect.Queues.get(Object.isString(this.options.queue) ? 
+    if(!this.options.sync)
+      Effect.Queues.get(typeof this.options.queue == 'string' ? 
         'global' : this.options.queue.scope).add(this);
   },
   loop: function(timePos) {
-    if (timePos >= this.startOn) {
-      if (timePos >= this.finishOn) {
+    if(timePos >= this.startOn) {
+      if(timePos >= this.finishOn) {
         this.render(1.0);
         this.cancel();
         this.event('beforeFinish');
-        if (this.finish) this.finish(); 
+        if(this.finish) this.finish(); 
         this.event('afterFinish');
         return;  
       }
       var pos   = (timePos - this.startOn) / this.totalTime,
-          frame = (pos * this.totalFrames).round();
-      if (frame > this.currentFrame) {
+          frame = Math.round(pos * this.totalFrames);
+      if(frame > this.currentFrame) {
         this.render(pos);
         this.currentFrame = frame;
       }
     }
   },
   cancel: function() {
-    if (!this.options.sync)
-      Effect.Queues.get(Object.isString(this.options.queue) ? 
+    if(!this.options.sync)
+      Effect.Queues.get(typeof this.options.queue == 'string' ? 
         'global' : this.options.queue.scope).remove(this);
     this.state = 'finished';
   },
   event: function(eventName) {
-    if (this.options[eventName + 'Internal']) this.options[eventName + 'Internal'](this);
-    if (this.options[eventName]) this.options[eventName](this);
+    if(this.options[eventName + 'Internal']) this.options[eventName + 'Internal'](this);
+    if(this.options[eventName]) this.options[eventName](this);
   },
   inspect: function() {
     var data = $H();
     for(property in this)
-      if (!Object.isFunction(this[property])) data.set(property, this[property]);
+      if(typeof this[property] != 'function') data[property] = this[property];
     return '#<Effect:' + data.inspect() + ',options:' + $H(this.options).inspect() + '>';
   }
-});
+}
 
-Effect.Parallel = Class.create(Effect.Base, {
+Effect.Parallel = Class.create();
+Object.extend(Object.extend(Effect.Parallel.prototype, Effect.Base.prototype), {
   initialize: function(effects) {
     this.effects = effects || [];
     this.start(arguments[1]);
@@ -454,45 +471,35 @@ Effect.Parallel = Class.create(Effect.Base, {
       effect.render(1.0);
       effect.cancel();
       effect.event('beforeFinish');
-      if (effect.finish) effect.finish(position);
+      if(effect.finish) effect.finish(position);
       effect.event('afterFinish');
     });
   }
 });
 
-Effect.Tween = Class.create(Effect.Base, {
-  initialize: function(object, from, to) {
-    object = Object.isString(object) ? $(object) : object;
-    var args = $A(arguments), method = args.last(), 
-      options = args.length == 5 ? args[3] : null;
-    this.method = Object.isFunction(method) ? method.bind(object) :
-      Object.isFunction(object[method]) ? object[method].bind(object) : 
-      function(value) { object[method] = value };
-    this.start(Object.extend({ from: from, to: to }, options || { }));
-  },
-  update: function(position) {
-    this.method(position);
-  }
-});
-
-Effect.Event = Class.create(Effect.Base, {
+Effect.Event = Class.create();
+Object.extend(Object.extend(Effect.Event.prototype, Effect.Base.prototype), {
   initialize: function() {
-    this.start(Object.extend({ duration: 0 }, arguments[0] || { }));
+    var options = Object.extend({
+      duration: 0
+    }, arguments[0] || {});
+    this.start(options);
   },
   update: Prototype.emptyFunction
 });
 
-Effect.Opacity = Class.create(Effect.Base, {
+Effect.Opacity = Class.create();
+Object.extend(Object.extend(Effect.Opacity.prototype, Effect.Base.prototype), {
   initialize: function(element) {
     this.element = $(element);
-    if (!this.element) throw(Effect._elementDoesNotExistError);
+    if(!this.element) throw(Effect._elementDoesNotExistError);
     // make this work on IE on elements without 'layout'
-    if (Prototype.Browser.IE && (!this.element.currentStyle.hasLayout))
+    if(Prototype.Browser.IE && (!this.element.currentStyle.hasLayout))
       this.element.setStyle({zoom: 1});
     var options = Object.extend({
       from: this.element.getOpacity() || 0.0,
       to:   1.0
-    }, arguments[1] || { });
+    }, arguments[1] || {});
     this.start(options);
   },
   update: function(position) {
@@ -500,30 +507,36 @@ Effect.Opacity = Class.create(Effect.Base, {
   }
 });
 
-Effect.Move = Class.create(Effect.Base, {
+Effect.Move = Class.create();
+Object.extend(Object.extend(Effect.Move.prototype, Effect.Base.prototype), {
   initialize: function(element) {
     this.element = $(element);
-    if (!this.element) throw(Effect._elementDoesNotExistError);
+    if(!this.element) throw(Effect._elementDoesNotExistError);
     var options = Object.extend({
       x:    0,
       y:    0,
       mode: 'relative'
-    }, arguments[1] || { });
+    }, arguments[1] || {});
     this.start(options);
   },
   setup: function() {
+    // Bug in Opera: Opera returns the "real" position of a static element or
+    // relative element that does not have top/left explicitly set.
+    // ==> Always set top and left for position relative elements in your stylesheets 
+    // (to 0 if you do not need them) 
     this.element.makePositioned();
     this.originalLeft = parseFloat(this.element.getStyle('left') || '0');
     this.originalTop  = parseFloat(this.element.getStyle('top')  || '0');
-    if (this.options.mode == 'absolute') {
+    if(this.options.mode == 'absolute') {
+      // absolute movement, so we need to calc deltaX and deltaY
       this.options.x = this.options.x - this.originalLeft;
       this.options.y = this.options.y - this.originalTop;
     }
   },
   update: function(position) {
     this.element.setStyle({
-      left: (this.options.x  * position + this.originalLeft).round() + 'px',
-      top:  (this.options.y  * position + this.originalTop).round()  + 'px'
+      left: Math.round(this.options.x  * position + this.originalLeft) + 'px',
+      top:  Math.round(this.options.y  * position + this.originalTop)  + 'px'
     });
   }
 });
@@ -531,29 +544,30 @@ Effect.Move = Class.create(Effect.Base, {
 // for backwards compatibility
 Effect.MoveBy = function(element, toTop, toLeft) {
   return new Effect.Move(element, 
-    Object.extend({ x: toLeft, y: toTop }, arguments[3] || { }));
+    Object.extend({ x: toLeft, y: toTop }, arguments[3] || {}));
 };
 
-Effect.Scale = Class.create(Effect.Base, {
+Effect.Scale = Class.create();
+Object.extend(Object.extend(Effect.Scale.prototype, Effect.Base.prototype), {
   initialize: function(element, percent) {
     this.element = $(element);
-    if (!this.element) throw(Effect._elementDoesNotExistError);
+    if(!this.element) throw(Effect._elementDoesNotExistError);
     var options = Object.extend({
       scaleX: true,
       scaleY: true,
       scaleContent: true,
       scaleFromCenter: false,
-      scaleMode: 'box',        // 'box' or 'contents' or { } with provided values
+      scaleMode: 'box',        // 'box' or 'contents' or {} with provided values
       scaleFrom: 100.0,
       scaleTo:   percent
-    }, arguments[2] || { });
+    }, arguments[2] || {});
     this.start(options);
   },
   setup: function() {
     this.restoreAfterFinish = this.options.restoreAfterFinish || false;
     this.elementPositioning = this.element.getStyle('position');
     
-    this.originalStyle = { };
+    this.originalStyle = {};
     ['top','left','width','height','fontSize'].each( function(k) {
       this.originalStyle[k] = this.element.style[k];
     }.bind(this));
@@ -563,7 +577,7 @@ Effect.Scale = Class.create(Effect.Base, {
     
     var fontSize = this.element.getStyle('font-size') || '100%';
     ['em','px','%','pt'].each( function(fontSizeType) {
-      if (fontSize.indexOf(fontSizeType)>0) {
+      if(fontSize.indexOf(fontSizeType)>0) {
         this.fontSize     = parseFloat(fontSize);
         this.fontSizeType = fontSizeType;
       }
@@ -572,61 +586,62 @@ Effect.Scale = Class.create(Effect.Base, {
     this.factor = (this.options.scaleTo - this.options.scaleFrom)/100;
     
     this.dims = null;
-    if (this.options.scaleMode=='box')
+    if(this.options.scaleMode=='box')
       this.dims = [this.element.offsetHeight, this.element.offsetWidth];
-    if (/^content/.test(this.options.scaleMode))
+    if(/^content/.test(this.options.scaleMode))
       this.dims = [this.element.scrollHeight, this.element.scrollWidth];
-    if (!this.dims)
+    if(!this.dims)
       this.dims = [this.options.scaleMode.originalHeight,
                    this.options.scaleMode.originalWidth];
   },
   update: function(position) {
     var currentScale = (this.options.scaleFrom/100.0) + (this.factor * position);
-    if (this.options.scaleContent && this.fontSize)
+    if(this.options.scaleContent && this.fontSize)
       this.element.setStyle({fontSize: this.fontSize * currentScale + this.fontSizeType });
     this.setDimensions(this.dims[0] * currentScale, this.dims[1] * currentScale);
   },
   finish: function(position) {
-    if (this.restoreAfterFinish) this.element.setStyle(this.originalStyle);
+    if(this.restoreAfterFinish) this.element.setStyle(this.originalStyle);
   },
   setDimensions: function(height, width) {
-    var d = { };
-    if (this.options.scaleX) d.width = width.round() + 'px';
-    if (this.options.scaleY) d.height = height.round() + 'px';
-    if (this.options.scaleFromCenter) {
+    var d = {};
+    if(this.options.scaleX) d.width = Math.round(width) + 'px';
+    if(this.options.scaleY) d.height = Math.round(height) + 'px';
+    if(this.options.scaleFromCenter) {
       var topd  = (height - this.dims[0])/2;
       var leftd = (width  - this.dims[1])/2;
-      if (this.elementPositioning == 'absolute') {
-        if (this.options.scaleY) d.top = this.originalTop-topd + 'px';
-        if (this.options.scaleX) d.left = this.originalLeft-leftd + 'px';
+      if(this.elementPositioning == 'absolute') {
+        if(this.options.scaleY) d.top = this.originalTop-topd + 'px';
+        if(this.options.scaleX) d.left = this.originalLeft-leftd + 'px';
       } else {
-        if (this.options.scaleY) d.top = -topd + 'px';
-        if (this.options.scaleX) d.left = -leftd + 'px';
+        if(this.options.scaleY) d.top = -topd + 'px';
+        if(this.options.scaleX) d.left = -leftd + 'px';
       }
     }
     this.element.setStyle(d);
   }
 });
 
-Effect.Highlight = Class.create(Effect.Base, {
+Effect.Highlight = Class.create();
+Object.extend(Object.extend(Effect.Highlight.prototype, Effect.Base.prototype), {
   initialize: function(element) {
     this.element = $(element);
-    if (!this.element) throw(Effect._elementDoesNotExistError);
-    var options = Object.extend({ startcolor: '#ffff99' }, arguments[1] || { });
+    if(!this.element) throw(Effect._elementDoesNotExistError);
+    var options = Object.extend({ startcolor: '#ffff99' }, arguments[1] || {});
     this.start(options);
   },
   setup: function() {
     // Prevent executing on elements not in the layout flow
-    if (this.element.getStyle('display')=='none') { this.cancel(); return; }
+    if(this.element.getStyle('display')=='none') { this.cancel(); return; }
     // Disable background image during the effect
-    this.oldStyle = { };
+    this.oldStyle = {};
     if (!this.options.keepBackgroundImage) {
       this.oldStyle.backgroundImage = this.element.getStyle('background-image');
       this.element.setStyle({backgroundImage: 'none'});
     }
-    if (!this.options.endcolor)
+    if(!this.options.endcolor)
       this.options.endcolor = this.element.getStyle('background-color').parseColor('#ffffff');
-    if (!this.options.restorecolor)
+    if(!this.options.restorecolor)
       this.options.restorecolor = this.element.getStyle('background-color');
     // init color calculations
     this._base  = $R(0,2).map(function(i){ return parseInt(this.options.startcolor.slice(i*2+1,i*2+3),16) }.bind(this));
@@ -634,7 +649,7 @@ Effect.Highlight = Class.create(Effect.Base, {
   },
   update: function(position) {
     this.element.setStyle({backgroundColor: $R(0,2).inject('#',function(m,v,i){
-      return m+((this._base[i]+(this._delta[i]*position)).round().toColorPart()); }.bind(this)) });
+      return m+(Math.round(this._base[i]+(this._delta[i]*position)).toColorPart()); }.bind(this)) });
   },
   finish: function() {
     this.element.setStyle(Object.extend(this.oldStyle, {
@@ -643,21 +658,30 @@ Effect.Highlight = Class.create(Effect.Base, {
   }
 });
 
-Effect.ScrollTo = function(element) {
-  var options = arguments[1] || { },
-    scrollOffsets = document.viewport.getScrollOffsets(),
-    elementOffsets = $(element).cumulativeOffset(),
-    max = (window.height || document.body.scrollHeight) - document.viewport.getHeight();  
-
-  if (options.offset) elementOffsets[1] += options.offset;
-
-  return new Effect.Tween(null,
-    scrollOffsets.top,
-    elementOffsets[1] > max ? max : elementOffsets[1],
-    options,
-    function(p){ scrollTo(scrollOffsets.left, p.round()) }
-  );
-};
+Effect.ScrollTo = Class.create();
+Object.extend(Object.extend(Effect.ScrollTo.prototype, Effect.Base.prototype), {
+  initialize: function(element) {
+    this.element = $(element);
+    this.start(arguments[1] || {});
+  },
+  setup: function() {
+    Position.prepare();
+    var offsets = Position.cumulativeOffset(this.element);
+    if(this.options.offset) offsets[1] += this.options.offset;
+    var max = window.innerHeight ? 
+      window.height - window.innerHeight :
+      document.body.scrollHeight - 
+        (document.documentElement.clientHeight ? 
+          document.documentElement.clientHeight : document.body.clientHeight);
+    this.scrollStart = Position.deltaY;
+    this.delta = (offsets[1] > max ? max : offsets[1]) - this.scrollStart;
+  },
+  update: function(position) {
+    Position.prepare();
+    window.scrollTo(Position.deltaX, 
+      this.scrollStart + (position*this.delta));
+  }
+});
 
 /* ------------- combination effects ------------- */
 
@@ -665,15 +689,14 @@ Effect.Fade = function(element) {
   element = $(element);
   var oldOpacity = element.getInlineOpacity();
   var options = Object.extend({
-    from: element.getOpacity() || 1.0,
-    to:   0.0,
-    afterFinishInternal: function(effect) { 
-      if (effect.options.to!=0) return;
-      effect.element.hide().setStyle({opacity: oldOpacity}); 
-    }
-  }, arguments[1] || { });
+  from: element.getOpacity() || 1.0,
+  to:   0.0,
+  afterFinishInternal: function(effect) { 
+    if(effect.options.to!=0) return;
+    effect.element.hide().setStyle({opacity: oldOpacity}); 
+  }}, arguments[1] || {});
   return new Effect.Opacity(element,options);
-};
+}
 
 Effect.Appear = function(element) {
   element = $(element);
@@ -686,9 +709,9 @@ Effect.Appear = function(element) {
   },
   beforeSetup: function(effect) {
     effect.element.setOpacity(effect.options.from).show(); 
-  }}, arguments[1] || { });
+  }}, arguments[1] || {});
   return new Effect.Opacity(element,options);
-};
+}
 
 Effect.Puff = function(element) {
   element = $(element);
@@ -710,9 +733,9 @@ Effect.Puff = function(element) {
       },
       afterFinishInternal: function(effect) {
          effect.effects[0].element.hide().setStyle(oldStyle); }
-     }, arguments[1] || { })
+     }, arguments[1] || {})
    );
-};
+}
 
 Effect.BlindUp = function(element) {
   element = $(element);
@@ -724,9 +747,9 @@ Effect.BlindUp = function(element) {
       afterFinishInternal: function(effect) {
         effect.element.hide().undoClipping();
       } 
-    }, arguments[1] || { })
+    }, arguments[1] || {})
   );
-};
+}
 
 Effect.BlindDown = function(element) {
   element = $(element);
@@ -743,8 +766,8 @@ Effect.BlindDown = function(element) {
     afterFinishInternal: function(effect) {
       effect.element.undoClipping();
     }
-  }, arguments[1] || { }));
-};
+  }, arguments[1] || {}));
+}
 
 Effect.SwitchOff = function(element) {
   element = $(element);
@@ -765,8 +788,8 @@ Effect.SwitchOff = function(element) {
         }
       })
     }
-  }, arguments[1] || { }));
-};
+  }, arguments[1] || {}));
+}
 
 Effect.DropOut = function(element) {
   element = $(element);
@@ -785,35 +808,29 @@ Effect.DropOut = function(element) {
         afterFinishInternal: function(effect) {
           effect.effects[0].element.hide().undoPositioned().setStyle(oldStyle);
         } 
-      }, arguments[1] || { }));
-};
+      }, arguments[1] || {}));
+}
 
 Effect.Shake = function(element) {
   element = $(element);
-  var options = Object.extend({
-    distance: 20,
-    duration: 0.5
-  }, arguments[1] || {});
-  var distance = parseFloat(options.distance);
-  var split = parseFloat(options.duration) / 10.0;
   var oldStyle = {
     top: element.getStyle('top'),
     left: element.getStyle('left') };
-    return new Effect.Move(element,
-      { x:  distance, y: 0, duration: split, afterFinishInternal: function(effect) {
+    return new Effect.Move(element, 
+      { x:  20, y: 0, duration: 0.05, afterFinishInternal: function(effect) {
     new Effect.Move(effect.element,
-      { x: -distance*2, y: 0, duration: split*2,  afterFinishInternal: function(effect) {
+      { x: -40, y: 0, duration: 0.1,  afterFinishInternal: function(effect) {
     new Effect.Move(effect.element,
-      { x:  distance*2, y: 0, duration: split*2,  afterFinishInternal: function(effect) {
+      { x:  40, y: 0, duration: 0.1,  afterFinishInternal: function(effect) {
     new Effect.Move(effect.element,
-      { x: -distance*2, y: 0, duration: split*2,  afterFinishInternal: function(effect) {
+      { x: -40, y: 0, duration: 0.1,  afterFinishInternal: function(effect) {
     new Effect.Move(effect.element,
-      { x:  distance*2, y: 0, duration: split*2,  afterFinishInternal: function(effect) {
+      { x:  40, y: 0, duration: 0.1,  afterFinishInternal: function(effect) {
     new Effect.Move(effect.element,
-      { x: -distance, y: 0, duration: split, afterFinishInternal: function(effect) {
+      { x: -20, y: 0, duration: 0.05, afterFinishInternal: function(effect) {
         effect.element.undoPositioned().setStyle(oldStyle);
   }}) }}) }}) }}) }}) }});
-};
+}
 
 Effect.SlideDown = function(element) {
   element = $(element).cleanWhitespace();
@@ -829,7 +846,7 @@ Effect.SlideDown = function(element) {
     afterSetup: function(effect) {
       effect.element.makePositioned();
       effect.element.down().makePositioned();
-      if (window.opera) effect.element.setStyle({top: ''});
+      if(window.opera) effect.element.setStyle({top: ''});
       effect.element.makeClipping().setStyle({height: '0px'}).show(); 
     },
     afterUpdateInternal: function(effect) {
@@ -839,25 +856,23 @@ Effect.SlideDown = function(element) {
     afterFinishInternal: function(effect) {
       effect.element.undoClipping().undoPositioned();
       effect.element.down().undoPositioned().setStyle({bottom: oldInnerBottom}); }
-    }, arguments[1] || { })
+    }, arguments[1] || {})
   );
-};
+}
 
 Effect.SlideUp = function(element) {
   element = $(element).cleanWhitespace();
   var oldInnerBottom = element.down().getStyle('bottom');
-  var elementDimensions = element.getDimensions();
   return new Effect.Scale(element, window.opera ? 0 : 1,
    Object.extend({ scaleContent: false, 
     scaleX: false, 
     scaleMode: 'box',
     scaleFrom: 100,
-    scaleMode: {originalHeight: elementDimensions.height, originalWidth: elementDimensions.width},
     restoreAfterFinish: true,
-    afterSetup: function(effect) {
+    beforeStartInternal: function(effect) {
       effect.element.makePositioned();
       effect.element.down().makePositioned();
-      if (window.opera) effect.element.setStyle({top: ''});
+      if(window.opera) effect.element.setStyle({top: ''});
       effect.element.makeClipping().show();
     },  
     afterUpdateInternal: function(effect) {
@@ -865,12 +880,12 @@ Effect.SlideUp = function(element) {
         (effect.dims[0] - effect.element.clientHeight) + 'px' });
     },
     afterFinishInternal: function(effect) {
-      effect.element.hide().undoClipping().undoPositioned();
-      effect.element.down().undoPositioned().setStyle({bottom: oldInnerBottom});
+      effect.element.hide().undoClipping().undoPositioned().setStyle({bottom: oldInnerBottom});
+      effect.element.down().undoPositioned();
     }
-   }, arguments[1] || { })
+   }, arguments[1] || {})
   );
-};
+}
 
 // Bug in opera makes the TD containing this element expand for a instance after finish 
 Effect.Squish = function(element) {
@@ -883,7 +898,7 @@ Effect.Squish = function(element) {
       effect.element.hide().undoClipping(); 
     }
   });
-};
+}
 
 Effect.Grow = function(element) {
   element = $(element);
@@ -892,7 +907,7 @@ Effect.Grow = function(element) {
     moveTransition: Effect.Transitions.sinoidal,
     scaleTransition: Effect.Transitions.sinoidal,
     opacityTransition: Effect.Transitions.full
-  }, arguments[1] || { });
+  }, arguments[1] || {});
   var oldStyle = {
     top: element.style.top,
     left: element.style.left,
@@ -957,7 +972,7 @@ Effect.Grow = function(element) {
       )
     }
   });
-};
+}
 
 Effect.Shrink = function(element) {
   element = $(element);
@@ -966,7 +981,7 @@ Effect.Shrink = function(element) {
     moveTransition: Effect.Transitions.sinoidal,
     scaleTransition: Effect.Transitions.sinoidal,
     opacityTransition: Effect.Transitions.none
-  }, arguments[1] || { });
+  }, arguments[1] || {});
   var oldStyle = {
     top: element.style.top,
     left: element.style.left,
@@ -1011,11 +1026,11 @@ Effect.Shrink = function(element) {
            effect.effects[0].element.hide().undoClipping().undoPositioned().setStyle(oldStyle); }
        }, options)
   );
-};
+}
 
 Effect.Pulsate = function(element) {
   element = $(element);
-  var options    = arguments[1] || { };
+  var options    = arguments[1] || {};
   var oldOpacity = element.getInlineOpacity();
   var transition = options.transition || Effect.Transitions.sinoidal;
   var reverser   = function(pos){ return transition(1-Effect.Transitions.pulse(pos, options.pulses)) };
@@ -1024,7 +1039,7 @@ Effect.Pulsate = function(element) {
     Object.extend(Object.extend({  duration: 2.0, from: 0,
       afterFinishInternal: function(effect) { effect.element.setStyle({opacity: oldOpacity}); }
     }, options), {transition: reverser}));
-};
+}
 
 Effect.Fold = function(element) {
   element = $(element);
@@ -1044,43 +1059,46 @@ Effect.Fold = function(element) {
       afterFinishInternal: function(effect) {
         effect.element.hide().undoClipping().setStyle(oldStyle);
       } });
-  }}, arguments[1] || { }));
+  }}, arguments[1] || {}));
 };
 
-Effect.Morph = Class.create(Effect.Base, {
+Effect.Morph = Class.create();
+Object.extend(Object.extend(Effect.Morph.prototype, Effect.Base.prototype), {
   initialize: function(element) {
     this.element = $(element);
-    if (!this.element) throw(Effect._elementDoesNotExistError);
+    if(!this.element) throw(Effect._elementDoesNotExistError);
     var options = Object.extend({
-      style: { }
-    }, arguments[1] || { });
-    
-    if (!Object.isString(options.style)) this.style = $H(options.style);
-    else {
-      if (options.style.include(':'))
-        this.style = options.style.parseStyle();
-      else {
-        this.element.addClassName(options.style);
-        this.style = $H(this.element.getStyles());
-        this.element.removeClassName(options.style);
-        var css = this.element.getStyles();
-        this.style = this.style.reject(function(style) {
-          return style.value == css[style.key];
+      style: {}
+    }, arguments[1] || {});
+    if (typeof options.style == 'string') {
+      if(options.style.indexOf(':') == -1) {
+        var cssText = '', selector = '.' + options.style;
+        $A(document.styleSheets).reverse().each(function(styleSheet) {
+          if (styleSheet.cssRules) cssRules = styleSheet.cssRules;
+          else if (styleSheet.rules) cssRules = styleSheet.rules;
+          $A(cssRules).reverse().each(function(rule) {
+            if (selector == rule.selectorText) {
+              cssText = rule.style.cssText;
+              throw $break;
+            }
+          });
+          if (cssText) throw $break;
         });
-        options.afterFinishInternal = function(effect) {
+        this.style = cssText.parseStyle();
+        options.afterFinishInternal = function(effect){
           effect.element.addClassName(effect.options.style);
           effect.transforms.each(function(transform) {
-            effect.element.style[transform.style] = '';
+            if(transform.style != 'opacity')
+              effect.element.style[transform.style] = '';
           });
         }
-      }
-    }
+      } else this.style = options.style.parseStyle();
+    } else this.style = $H(options.style)
     this.start(options);
   },
-  
   setup: function(){
     function parseColor(color){
-      if (!color || ['rgba(0, 0, 0, 0)','transparent'].include(color)) color = '#ffffff';
+      if(!color || ['rgba(0, 0, 0, 0)','transparent'].include(color)) color = '#ffffff';
       color = color.parseColor();
       return $R(0,2).map(function(i){
         return parseInt( color.slice(i*2+1,i*2+3), 16 ) 
@@ -1089,14 +1107,14 @@ Effect.Morph = Class.create(Effect.Base, {
     this.transforms = this.style.map(function(pair){
       var property = pair[0], value = pair[1], unit = null;
 
-      if (value.parseColor('#zzzzzz') != '#zzzzzz') {
+      if(value.parseColor('#zzzzzz') != '#zzzzzz') {
         value = value.parseColor();
         unit  = 'color';
-      } else if (property == 'opacity') {
+      } else if(property == 'opacity') {
         value = parseFloat(value);
-        if (Prototype.Browser.IE && (!this.element.currentStyle.hasLayout))
+        if(Prototype.Browser.IE && (!this.element.currentStyle.hasLayout))
           this.element.setStyle({zoom: 1});
-      } else if (Element.CSS_LENGTH.test(value)) {
+      } else if(Element.CSS_LENGTH.test(value)) {
           var components = value.match(/^([\+\-]?[0-9\.]+)(.*)$/);
           value = parseFloat(components[1]);
           unit = (components.length == 3) ? components[2] : null;
@@ -1120,7 +1138,7 @@ Effect.Morph = Class.create(Effect.Base, {
     });
   },
   update: function(position) {
-    var style = { }, transform, i = this.transforms.length;
+    var style = {}, transform, i = this.transforms.length;
     while(i--)
       style[(transform = this.transforms[i]).style] = 
         transform.unit=='color' ? '#'+
@@ -1130,25 +1148,24 @@ Effect.Morph = Class.create(Effect.Base, {
             (transform.targetValue[1]-transform.originalValue[1])*position)).toColorPart() +
           (Math.round(transform.originalValue[2]+
             (transform.targetValue[2]-transform.originalValue[2])*position)).toColorPart() :
-        (transform.originalValue +
-          (transform.targetValue - transform.originalValue) * position).toFixed(3) + 
-            (transform.unit === null ? '' : transform.unit);
+        transform.originalValue + Math.round(
+          ((transform.targetValue - transform.originalValue) * position) * 1000)/1000 + transform.unit;
     this.element.setStyle(style, true);
   }
 });
 
-Effect.Transform = Class.create({
+Effect.Transform = Class.create();
+Object.extend(Effect.Transform.prototype, {
   initialize: function(tracks){
     this.tracks  = [];
-    this.options = arguments[1] || { };
+    this.options = arguments[1] || {};
     this.addTracks(tracks);
   },
   addTracks: function(tracks){
     tracks.each(function(track){
-      track = $H(track);
-      var data = track.values().first();
+      var data = $H(track).values().first();
       this.tracks.push($H({
-        ids:     track.keys().first(),
+        ids:     $H(track).keys().first(),
         effect:  Effect.Morph,
         options: { style: data }
       }));
@@ -1158,9 +1175,8 @@ Effect.Transform = Class.create({
   play: function(){
     return new Effect.Parallel(
       this.tracks.map(function(track){
-        var ids = track.get('ids'), effect = track.get('effect'), options = track.get('options');
-        var elements = [$(ids) || $$(ids)].flatten();
-        return elements.map(function(e){ return new effect(e, Object.extend({ sync:true }, options)) });
+        var elements = [$(track.ids) || $$(track.ids)].flatten();
+        return elements.map(function(e){ return new track.effect(e, Object.extend({ sync:true }, track.options)) });
       }).flatten(),
       this.options
     );
@@ -1180,83 +1196,913 @@ Element.CSS_PROPERTIES = $w(
   
 Element.CSS_LENGTH = /^(([\+\-]?[0-9\.]+)(em|ex|px|in|cm|mm|pt|pc|\%))|0$/;
 
-String.__parseStyleElement = document.createElement('div');
 String.prototype.parseStyle = function(){
-  var style, styleRules = $H();
-  if (Prototype.Browser.WebKit)
-    style = new Element('div',{style:this}).style;
-  else {
-    String.__parseStyleElement.innerHTML = '<div style="' + this + '"></div>';
-    style = String.__parseStyleElement.childNodes[0].style;
-  }
+  var element = document.createElement('div');
+  element.innerHTML = '<div style="' + this + '"></div>';
+  var style = element.childNodes[0].style, styleRules = $H();
   
   Element.CSS_PROPERTIES.each(function(property){
-    if (style[property]) styleRules.set(property, style[property]); 
+    if(style[property]) styleRules[property] = style[property]; 
   });
-  
-  if (Prototype.Browser.IE && this.include('opacity'))
-    styleRules.set('opacity', this.match(/opacity:\s*((?:0|1)?(?:\.\d*)?)/)[1]);
-
+  if(Prototype.Browser.IE && this.indexOf('opacity') > -1) {
+    styleRules.opacity = this.match(/opacity:\s*((?:0|1)?(?:\.\d*)?)/)[1];
+  }
   return styleRules;
 };
 
-if (document.defaultView && document.defaultView.getComputedStyle) {
-  Element.getStyles = function(element) {
-    var css = document.defaultView.getComputedStyle($(element), null);
-    return Element.CSS_PROPERTIES.inject({ }, function(styles, property) {
-      styles[property] = css[property];
-      return styles;
-    });
-  };
-} else {
-  Element.getStyles = function(element) {
-    element = $(element);
-    var css = element.currentStyle, styles;
-    styles = Element.CSS_PROPERTIES.inject({ }, function(results, property) {
-      results[property] = css[property];
-      return results;
-    });
-    if (!styles.opacity) styles.opacity = element.getOpacity();
-    return styles;
-  };
+Element.morph = function(element, style) {
+  new Effect.Morph(element, Object.extend({ style: style }, arguments[2] || {}));
+  return element;
 };
 
-Effect.Methods = {
-  morph: function(element, style) {
-    element = $(element);
-    new Effect.Morph(element, Object.extend({ style: style }, arguments[2] || { }));
-    return element;
+['getInlineOpacity','forceRerendering','setContentZoom',
+ 'collectTextNodes','collectTextNodesIgnoreClass','morph'].each( 
+  function(f) { Element.Methods[f] = Element[f]; }
+);
+
+Element.Methods.visualEffect = function(element, effect, options) {
+  s = effect.dasherize().camelize();
+  effect_class = s.charAt(0).toUpperCase() + s.substring(1);
+  new Effect[effect_class](element, options);
+  return $(element);
+};
+
+Element.addMethods();// script.aculo.us controls.js v1.7.1_beta3, Fri May 25 17:19:41 +0200 2007
+
+// Copyright (c) 2005-2007 Thomas Fuchs (http://script.aculo.us, http://mir.aculo.us)
+//           (c) 2005-2007 Ivan Krstic (http://blogs.law.harvard.edu/ivan)
+//           (c) 2005-2007 Jon Tirsen (http://www.tirsen.com)
+// Contributors:
+//  Richard Livsey
+//  Rahul Bhargava
+//  Rob Wills
+// 
+// script.aculo.us is freely distributable under the terms of an MIT-style license.
+// For details, see the script.aculo.us web site: http://script.aculo.us/
+
+// Autocompleter.Base handles all the autocompletion functionality 
+// that's independent of the data source for autocompletion. This
+// includes drawing the autocompletion menu, observing keyboard
+// and mouse events, and similar.
+//
+// Specific autocompleters need to provide, at the very least, 
+// a getUpdatedChoices function that will be invoked every time
+// the text inside the monitored textbox changes. This method 
+// should get the text for which to provide autocompletion by
+// invoking this.getToken(), NOT by directly accessing
+// this.element.value. This is to allow incremental tokenized
+// autocompletion. Specific auto-completion logic (AJAX, etc)
+// belongs in getUpdatedChoices.
+//
+// Tokenized incremental autocompletion is enabled automatically
+// when an autocompleter is instantiated with the 'tokens' option
+// in the options parameter, e.g.:
+// new Ajax.Autocompleter('id','upd', '/url/', { tokens: ',' });
+// will incrementally autocomplete with a comma as the token.
+// Additionally, ',' in the above example can be replaced with
+// a token array, e.g. { tokens: [',', '\n'] } which
+// enables autocompletion on multiple tokens. This is most 
+// useful when one of the tokens is \n (a newline), as it 
+// allows smart autocompletion after linebreaks.
+
+if(typeof Effect == 'undefined')
+  throw("controls.js requires including script.aculo.us' effects.js library");
+
+var Autocompleter = {}
+Autocompleter.Base = function() {};
+Autocompleter.Base.prototype = {
+  baseInitialize: function(element, update, options) {
+    element          = $(element)
+    this.element     = element; 
+    this.update      = $(update);  
+    this.hasFocus    = false; 
+    this.changed     = false; 
+    this.active      = false; 
+    this.index       = 0;     
+    this.entryCount  = 0;
+
+    if(this.setOptions)
+      this.setOptions(options);
+    else
+      this.options = options || {};
+
+    this.options.paramName    = this.options.paramName || this.element.name;
+    this.options.tokens       = this.options.tokens || [];
+    this.options.frequency    = this.options.frequency || 0.4;
+    this.options.minChars     = this.options.minChars || 1;
+    this.options.onShow       = this.options.onShow || 
+      function(element, update){ 
+        if(!update.style.position || update.style.position=='absolute') {
+          update.style.position = 'absolute';
+          Position.clone(element, update, {
+            setHeight: false, 
+            offsetTop: element.offsetHeight
+          });
+        }
+        Effect.Appear(update,{duration:0.15});
+      };
+    this.options.onHide = this.options.onHide || 
+      function(element, update){ new Effect.Fade(update,{duration:0.15}) };
+
+    if(typeof(this.options.tokens) == 'string') 
+      this.options.tokens = new Array(this.options.tokens);
+
+    this.observer = null;
+    
+    this.element.setAttribute('autocomplete','off');
+
+    Element.hide(this.update);
+
+    Event.observe(this.element, 'blur', this.onBlur.bindAsEventListener(this));
+    Event.observe(this.element, 'keypress', this.onKeyPress.bindAsEventListener(this));
+
+    // Turn autocomplete back on when the user leaves the page, so that the
+    // field's value will be remembered on Mozilla-based browsers.
+    Event.observe(window, 'beforeunload', function(){ 
+      element.setAttribute('autocomplete', 'on'); 
+    });
   },
-  visualEffect: function(element, effect, options) {
-    element = $(element)
-    var s = effect.dasherize().camelize(), klass = s.charAt(0).toUpperCase() + s.substring(1);
-    new Effect[klass](element, options);
-    return element;
+
+  show: function() {
+    if(Element.getStyle(this.update, 'display')=='none') this.options.onShow(this.element, this.update);
+    if(!this.iefix && 
+      (Prototype.Browser.IE) &&
+      (Element.getStyle(this.update, 'position')=='absolute')) {
+      new Insertion.After(this.update, 
+       '<iframe id="' + this.update.id + '_iefix" '+
+       'style="display:none;position:absolute;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);" ' +
+       'src="javascript:false;" frameborder="0" scrolling="no"></iframe>');
+      this.iefix = $(this.update.id+'_iefix');
+    }
+    if(this.iefix) setTimeout(this.fixIEOverlapping.bind(this), 50);
   },
-  highlight: function(element, options) {
-    element = $(element);
-    new Effect.Highlight(element, options);
-    return element;
+  
+  fixIEOverlapping: function() {
+    Position.clone(this.update, this.iefix, {setTop:(!this.update.style.height)});
+    this.iefix.style.zIndex = 1;
+    this.update.style.zIndex = 2;
+    Element.show(this.iefix);
+  },
+
+  hide: function() {
+    this.stopIndicator();
+    if(Element.getStyle(this.update, 'display')!='none') this.options.onHide(this.element, this.update);
+    if(this.iefix) Element.hide(this.iefix);
+  },
+
+  startIndicator: function() {
+    if(this.options.indicator) Element.show(this.options.indicator);
+  },
+
+  stopIndicator: function() {
+    if(this.options.indicator) Element.hide(this.options.indicator);
+  },
+
+  onKeyPress: function(event) {
+    if(this.active)
+      switch(event.keyCode) {
+       case Event.KEY_TAB:
+       case Event.KEY_RETURN:
+         this.selectEntry();
+         Event.stop(event);
+       case Event.KEY_ESC:
+         this.hide();
+         this.active = false;
+         Event.stop(event);
+         return;
+       case Event.KEY_LEFT:
+       case Event.KEY_RIGHT:
+         return;
+       case Event.KEY_UP:
+         this.markPrevious();
+         this.render();
+         if(Prototype.Browser.WebKit) Event.stop(event);
+         return;
+       case Event.KEY_DOWN:
+         this.markNext();
+         this.render();
+         if(Prototype.Browser.WebKit) Event.stop(event);
+         return;
+      }
+     else 
+       if(event.keyCode==Event.KEY_TAB || event.keyCode==Event.KEY_RETURN || 
+         (Prototype.Browser.WebKit > 0 && event.keyCode == 0)) return;
+
+    this.changed = true;
+    this.hasFocus = true;
+
+    if(this.observer) clearTimeout(this.observer);
+      this.observer = 
+        setTimeout(this.onObserverEvent.bind(this), this.options.frequency*1000);
+  },
+
+  activate: function() {
+    this.changed = false;
+    this.hasFocus = true;
+    this.getUpdatedChoices();
+  },
+
+  onHover: function(event) {
+    var element = Event.findElement(event, 'LI');
+    if(this.index != element.autocompleteIndex) 
+    {
+        this.index = element.autocompleteIndex;
+        this.render();
+    }
+    Event.stop(event);
+  },
+  
+  onClick: function(event) {
+    var element = Event.findElement(event, 'LI');
+    this.index = element.autocompleteIndex;
+    this.selectEntry();
+    this.hide();
+  },
+  
+  onBlur: function(event) {
+    // needed to make click events working
+    setTimeout(this.hide.bind(this), 250);
+    this.hasFocus = false;
+    this.active = false;     
+  }, 
+  
+  render: function() {
+    if(this.entryCount > 0) {
+      for (var i = 0; i < this.entryCount; i++)
+        this.index==i ? 
+          Element.addClassName(this.getEntry(i),"selected") : 
+          Element.removeClassName(this.getEntry(i),"selected");
+      if(this.hasFocus) { 
+        this.show();
+        this.active = true;
+      }
+    } else {
+      this.active = false;
+      this.hide();
+    }
+  },
+  
+  markPrevious: function() {
+    if(this.index > 0) this.index--
+      else this.index = this.entryCount-1;
+    this.getEntry(this.index).scrollIntoView(false); //local patch (db2)
+  },
+  
+  markNext: function() {
+    if(this.index < this.entryCount-1) this.index++
+      else this.index = 0;
+    this.getEntry(this.index).scrollIntoView(false);
+  },
+  
+  getEntry: function(index) {
+    return this.update.firstChild.childNodes[index];
+  },
+  
+  getCurrentEntry: function() {
+    return this.getEntry(this.index);
+  },
+  
+  selectEntry: function() {
+    this.active = false;
+    this.updateElement(this.getCurrentEntry());
+  },
+
+  updateElement: function(selectedElement) {
+    if (this.options.updateElement) {
+      this.options.updateElement(selectedElement);
+      return;
+    }
+    var value = '';
+    if (this.options.select) {
+      var nodes = document.getElementsByClassName(this.options.select, selectedElement) || [];
+      if(nodes.length>0) value = Element.collectTextNodes(nodes[0], this.options.select);
+    } else
+      value = Element.collectTextNodesIgnoreClass(selectedElement, 'informal');
+    
+    var lastTokenPos = this.findLastToken();
+    if (lastTokenPos != -1) {
+      var newValue = this.element.value.substr(0, lastTokenPos + 1);
+      var whitespace = this.element.value.substr(lastTokenPos + 1).match(/^\s+/);
+      if (whitespace)
+        newValue += whitespace[0];
+      this.element.value = newValue + value;
+    } else {
+      this.element.value = value;
+    }
+    this.element.focus();
+    
+    if (this.options.afterUpdateElement)
+      this.options.afterUpdateElement(this.element, selectedElement);
+  },
+
+  updateChoices: function(choices) {
+    if(!this.changed && this.hasFocus) {
+      this.update.innerHTML = choices;
+      Element.cleanWhitespace(this.update);
+      Element.cleanWhitespace(this.update.down());
+
+      if(this.update.firstChild && this.update.down().childNodes) {
+        this.entryCount = 
+          this.update.down().childNodes.length;
+        for (var i = 0; i < this.entryCount; i++) {
+          var entry = this.getEntry(i);
+          entry.autocompleteIndex = i;
+          this.addObservers(entry);
+        }
+      } else { 
+        this.entryCount = 0;
+      }
+
+      this.stopIndicator();
+      this.index = 0;
+      
+      if(this.entryCount==1 && this.options.autoSelect) {
+        this.selectEntry();
+        this.hide();
+      } else {
+        this.render();
+      }
+    }
+  },
+
+  addObservers: function(element) {
+    Event.observe(element, "mouseover", this.onHover.bindAsEventListener(this));
+    Event.observe(element, "click", this.onClick.bindAsEventListener(this));
+  },
+
+  onObserverEvent: function() {
+    this.changed = false;   
+    if(this.getToken().length>=this.options.minChars) {
+      this.getUpdatedChoices();
+    } else {
+      this.active = false;
+      this.hide();
+    }
+  },
+
+  getToken: function() {
+    var tokenPos = this.findLastToken();
+    if (tokenPos != -1)
+      var ret = this.element.value.substr(tokenPos + 1).replace(/^\s+/,'').replace(/\s+$/,'');
+    else
+      var ret = this.element.value;
+
+    return /\n/.test(ret) ? '' : ret;
+  },
+
+  findLastToken: function() {
+    var lastTokenPos = -1;
+
+    for (var i=0; i<this.options.tokens.length; i++) {
+      var thisTokenPos = this.element.value.lastIndexOf(this.options.tokens[i]);
+      if (thisTokenPos > lastTokenPos)
+        lastTokenPos = thisTokenPos;
+    }
+    return lastTokenPos;
   }
-};
+}
 
-$w('fade appear grow shrink fold blindUp blindDown slideUp slideDown '+
-  'pulsate shake puff squish switchOff dropOut').each(
-  function(effect) { 
-    Effect.Methods[effect] = function(element, options){
-      element = $(element);
-      Effect[effect.charAt(0).toUpperCase() + effect.substring(1)](element, options);
-      return element;
+Ajax.Autocompleter = Class.create();
+Object.extend(Object.extend(Ajax.Autocompleter.prototype, Autocompleter.Base.prototype), {
+  initialize: function(element, update, url, options) {
+    this.baseInitialize(element, update, options);
+    this.options.asynchronous  = true;
+    this.options.onComplete    = this.onComplete.bind(this);
+    this.options.defaultParams = this.options.parameters || null;
+    this.url                   = url;
+  },
+
+  getUpdatedChoices: function() {
+    this.startIndicator();
+    
+    var entry = encodeURIComponent(this.options.paramName) + '=' + 
+      encodeURIComponent(this.getToken());
+
+    this.options.parameters = this.options.callback ?
+      this.options.callback(this.element, entry) : entry;
+
+    if(this.options.defaultParams) 
+      this.options.parameters += '&' + this.options.defaultParams;
+    
+    new Ajax.Request(this.url, this.options);
+  },
+
+  onComplete: function(request) {
+    this.updateChoices(request.responseText);
+  }
+
+});
+
+// The local array autocompleter. Used when you'd prefer to
+// inject an array of autocompletion options into the page, rather
+// than sending out Ajax queries, which can be quite slow sometimes.
+//
+// The constructor takes four parameters. The first two are, as usual,
+// the id of the monitored textbox, and id of the autocompletion menu.
+// The third is the array you want to autocomplete from, and the fourth
+// is the options block.
+//
+// Extra local autocompletion options:
+// - choices - How many autocompletion choices to offer
+//
+// - partialSearch - If false, the autocompleter will match entered
+//                    text only at the beginning of strings in the 
+//                    autocomplete array. Defaults to true, which will
+//                    match text at the beginning of any *word* in the
+//                    strings in the autocomplete array. If you want to
+//                    search anywhere in the string, additionally set
+//                    the option fullSearch to true (default: off).
+//
+// - fullSsearch - Search anywhere in autocomplete array strings.
+//
+// - partialChars - How many characters to enter before triggering
+//                   a partial match (unlike minChars, which defines
+//                   how many characters are required to do any match
+//                   at all). Defaults to 2.
+//
+// - ignoreCase - Whether to ignore case when autocompleting.
+//                 Defaults to true.
+//
+// It's possible to pass in a custom function as the 'selector' 
+// option, if you prefer to write your own autocompletion logic.
+// In that case, the other options above will not apply unless
+// you support them.
+
+Autocompleter.Local = Class.create();
+Autocompleter.Local.prototype = Object.extend(new Autocompleter.Base(), {
+  initialize: function(element, update, array, options) {
+    this.baseInitialize(element, update, options);
+    this.options.array = array;
+  },
+
+  getUpdatedChoices: function() {
+    this.updateChoices(this.options.selector(this));
+  },
+
+  setOptions: function(options) {
+    this.options = Object.extend({
+      choices: 10,
+      partialSearch: true,
+      partialChars: 2,
+      ignoreCase: true,
+      fullSearch: false,
+      selector: function(instance) {
+        var ret       = []; // Beginning matches
+        var partial   = []; // Inside matches
+        var entry     = instance.getToken();
+        var count     = 0;
+
+        for (var i = 0; i < instance.options.array.length &&  
+          ret.length < instance.options.choices ; i++) { 
+
+          var elem = instance.options.array[i];
+          var foundPos = instance.options.ignoreCase ? 
+            elem.toLowerCase().indexOf(entry.toLowerCase()) : 
+            elem.indexOf(entry);
+
+          while (foundPos != -1) {
+            if (foundPos == 0 && elem.length != entry.length) { 
+              ret.push("<li><strong>" + elem.substr(0, entry.length) + "</strong>" + 
+                elem.substr(entry.length) + "</li>");
+              break;
+            } else if (entry.length >= instance.options.partialChars && 
+              instance.options.partialSearch && foundPos != -1) {
+              if (instance.options.fullSearch || /\s/.test(elem.substr(foundPos-1,1))) {
+                partial.push("<li>" + elem.substr(0, foundPos) + "<strong>" +
+                  elem.substr(foundPos, entry.length) + "</strong>" + elem.substr(
+                  foundPos + entry.length) + "</li>");
+                break;
+              }
+            }
+
+            foundPos = instance.options.ignoreCase ? 
+              elem.toLowerCase().indexOf(entry.toLowerCase(), foundPos + 1) : 
+              elem.indexOf(entry, foundPos + 1);
+
+          }
+        }
+        if (partial.length)
+          ret = ret.concat(partial.slice(0, instance.options.choices - ret.length))
+        return "<ul>" + ret.join('') + "</ul>";
+      }
+    }, options || {});
+  }
+});
+
+// AJAX in-place editor
+//
+// see documentation on http://wiki.script.aculo.us/scriptaculous/show/Ajax.InPlaceEditor
+
+// Use this if you notice weird scrolling problems on some browsers,
+// the DOM might be a bit confused when this gets called so do this
+// waits 1 ms (with setTimeout) until it does the activation
+Field.scrollFreeActivate = function(field) {
+  setTimeout(function() {
+    Field.activate(field);
+  }, 1);
+}
+
+Ajax.InPlaceEditor = Class.create();
+Ajax.InPlaceEditor.defaultHighlightColor = "#FFFF99";
+Ajax.InPlaceEditor.prototype = {
+  initialize: function(element, url, options) {
+    this.url = url;
+    this.element = $(element);
+
+    this.options = Object.extend({
+      paramName: "value",
+      okButton: true,
+      okLink: false,
+      okText: "ok",
+      cancelButton: false,
+      cancelLink: true,
+      cancelText: "cancel",
+      textBeforeControls: '',
+      textBetweenControls: '',
+      textAfterControls: '',
+      savingText: "Saving...",
+      clickToEditText: "Click to edit",
+      okText: "ok",
+      rows: 1,
+      onComplete: function(transport, element) {
+        new Effect.Highlight(element, {startcolor: this.options.highlightcolor});
+      },
+      onFailure: function(transport) {
+        alert("Error communicating with the server: " + transport.responseText.stripTags());
+      },
+      callback: function(form) {
+        return Form.serialize(form);
+      },
+      handleLineBreaks: true,
+      loadingText: 'Loading...',
+      savingClassName: 'inplaceeditor-saving',
+      loadingClassName: 'inplaceeditor-loading',
+      formClassName: 'inplaceeditor-form',
+      highlightcolor: Ajax.InPlaceEditor.defaultHighlightColor,
+      highlightendcolor: "#FFFFFF",
+      externalControl: null,
+      submitOnBlur: false,
+      ajaxOptions: {},
+      evalScripts: false
+    }, options || {});
+
+    if(!this.options.formId && this.element.id) {
+      this.options.formId = this.element.id + "-inplaceeditor";
+      if ($(this.options.formId)) {
+        // there's already a form with that name, don't specify an id
+        this.options.formId = null;
+      }
+    }
+    
+    if (this.options.externalControl) {
+      this.options.externalControl = $(this.options.externalControl);
+    }
+    
+    this.originalBackground = Element.getStyle(this.element, 'background-color');
+    if (!this.originalBackground) {
+      this.originalBackground = "transparent";
+    }
+    
+    this.element.title = this.options.clickToEditText;
+    
+    this.onclickListener = this.enterEditMode.bindAsEventListener(this);
+    this.mouseoverListener = this.enterHover.bindAsEventListener(this);
+    this.mouseoutListener = this.leaveHover.bindAsEventListener(this);
+    Event.observe(this.element, 'click', this.onclickListener);
+    Event.observe(this.element, 'mouseover', this.mouseoverListener);
+    Event.observe(this.element, 'mouseout', this.mouseoutListener);
+    if (this.options.externalControl) {
+      Event.observe(this.options.externalControl, 'click', this.onclickListener);
+      Event.observe(this.options.externalControl, 'mouseover', this.mouseoverListener);
+      Event.observe(this.options.externalControl, 'mouseout', this.mouseoutListener);
+    }
+  },
+  enterEditMode: function(evt) {
+    if (this.saving) return;
+    if (this.editing) return;
+    this.editing = true;
+    this.onEnterEditMode();
+    if (this.options.externalControl) {
+      Element.hide(this.options.externalControl);
+    }
+    Element.hide(this.element);
+    this.createForm();
+    this.element.parentNode.insertBefore(this.form, this.element);
+    if (!this.options.loadTextURL) Field.scrollFreeActivate(this.editField);
+    // stop the event to avoid a page refresh in Safari
+    if (evt) {
+      Event.stop(evt);
+    }
+    return false;
+  },
+  createForm: function() {
+    this.form = document.createElement("form");
+    this.form.id = this.options.formId;
+    Element.addClassName(this.form, this.options.formClassName)
+    this.form.onsubmit = this.onSubmit.bind(this);
+
+    this.createEditField();
+
+    if (this.options.textarea) {
+      var br = document.createElement("br");
+      this.form.appendChild(br);
+    }
+    
+    if (this.options.textBeforeControls)
+      this.form.appendChild(document.createTextNode(this.options.textBeforeControls));
+
+    if (this.options.okButton) {
+      var okButton = document.createElement("input");
+      okButton.type = "submit";
+      okButton.value = this.options.okText;
+      okButton.className = 'editor_ok_button';
+      this.form.appendChild(okButton);
+    }
+    
+    if (this.options.okLink) {
+      var okLink = document.createElement("a");
+      okLink.href = "#";
+      okLink.appendChild(document.createTextNode(this.options.okText));
+      okLink.onclick = this.onSubmit.bind(this);
+      okLink.className = 'editor_ok_link';
+      this.form.appendChild(okLink);
+    }
+    
+    if (this.options.textBetweenControls && 
+      (this.options.okLink || this.options.okButton) && 
+      (this.options.cancelLink || this.options.cancelButton))
+      this.form.appendChild(document.createTextNode(this.options.textBetweenControls));
+      
+    if (this.options.cancelButton) {
+      var cancelButton = document.createElement("input");
+      cancelButton.type = "submit";
+      cancelButton.value = this.options.cancelText;
+      cancelButton.onclick = this.onclickCancel.bind(this);
+      cancelButton.className = 'editor_cancel_button';
+      this.form.appendChild(cancelButton);
+    }
+
+    if (this.options.cancelLink) {
+      var cancelLink = document.createElement("a");
+      cancelLink.href = "#";
+      cancelLink.appendChild(document.createTextNode(this.options.cancelText));
+      cancelLink.onclick = this.onclickCancel.bind(this);
+      cancelLink.className = 'editor_cancel editor_cancel_link';      
+      this.form.appendChild(cancelLink);
+    }
+    
+    if (this.options.textAfterControls)
+      this.form.appendChild(document.createTextNode(this.options.textAfterControls));
+  },
+  hasHTMLLineBreaks: function(string) {
+    if (!this.options.handleLineBreaks) return false;
+    return string.match(/<br/i) || string.match(/<p>/i);
+  },
+  convertHTMLLineBreaks: function(string) {
+    return string.replace(/<br>/gi, "\n").replace(/<br\/>/gi, "\n").replace(/<\/p>/gi, "\n").replace(/<p>/gi, "");
+  },
+  createEditField: function() {
+    var text;
+    if(this.options.loadTextURL) {
+      text = this.options.loadingText;
+    } else {
+      text = this.getText();
+    }
+
+    var obj = this;
+    
+    if (this.options.rows == 1 && !this.hasHTMLLineBreaks(text)) {
+      this.options.textarea = false;
+      var textField = document.createElement("input");
+      textField.obj = this;
+      textField.type = "text";
+      textField.name = this.options.paramName;
+      textField.value = text;
+      textField.style.backgroundColor = this.options.highlightcolor;
+      textField.className = 'editor_field';
+      var size = this.options.size || this.options.cols || 0;
+      if (size != 0) textField.size = size;
+      if (this.options.submitOnBlur)
+        textField.onblur = this.onSubmit.bind(this);
+      this.editField = textField;
+    } else {
+      this.options.textarea = true;
+      var textArea = document.createElement("textarea");
+      textArea.obj = this;
+      textArea.name = this.options.paramName;
+      textArea.value = this.convertHTMLLineBreaks(text);
+      textArea.rows = this.options.rows;
+      textArea.cols = this.options.cols || 40;
+      textArea.className = 'editor_field';      
+      if (this.options.submitOnBlur)
+        textArea.onblur = this.onSubmit.bind(this);
+      this.editField = textArea;
+    }
+    
+    if(this.options.loadTextURL) {
+      this.loadExternalText();
+    }
+    this.form.appendChild(this.editField);
+  },
+  getText: function() {
+    return this.element.innerHTML;
+  },
+  loadExternalText: function() {
+    Element.addClassName(this.form, this.options.loadingClassName);
+    this.editField.disabled = true;
+    new Ajax.Request(
+      this.options.loadTextURL,
+      Object.extend({
+        asynchronous: true,
+        onComplete: this.onLoadedExternalText.bind(this)
+      }, this.options.ajaxOptions)
+    );
+  },
+  onLoadedExternalText: function(transport) {
+    Element.removeClassName(this.form, this.options.loadingClassName);
+    this.editField.disabled = false;
+    this.editField.value = transport.responseText.stripTags();
+    Field.scrollFreeActivate(this.editField);
+  },
+  onclickCancel: function() {
+    this.onComplete();
+    this.leaveEditMode();
+    return false;
+  },
+  onFailure: function(transport) {
+    this.options.onFailure(transport);
+    if (this.oldInnerHTML) {
+      this.element.innerHTML = this.oldInnerHTML;
+      this.oldInnerHTML = null;
+    }
+    return false;
+  },
+  onSubmit: function() {
+    // onLoading resets these so we need to save them away for the Ajax call
+    var form = this.form;
+    var value = this.editField.value;
+    
+    // do this first, sometimes the ajax call returns before we get a chance to switch on Saving...
+    // which means this will actually switch on Saving... *after* we've left edit mode causing Saving...
+    // to be displayed indefinitely
+    this.onLoading();
+    
+    if (this.options.evalScripts) {
+      new Ajax.Request(
+        this.url, Object.extend({
+          parameters: this.options.callback(form, value),
+          onComplete: this.onComplete.bind(this),
+          onFailure: this.onFailure.bind(this),
+          asynchronous:true, 
+          evalScripts:true
+        }, this.options.ajaxOptions));
+    } else  {
+      new Ajax.Updater(
+        { success: this.element,
+          // don't update on failure (this could be an option)
+          failure: null }, 
+        this.url, Object.extend({
+          parameters: this.options.callback(form, value),
+          onComplete: this.onComplete.bind(this),
+          onFailure: this.onFailure.bind(this)
+        }, this.options.ajaxOptions));
+    }
+    // stop the event to avoid a page refresh in Safari
+    if (arguments.length > 1) {
+      Event.stop(arguments[0]);
+    }
+    return false;
+  },
+  onLoading: function() {
+    this.saving = true;
+    this.removeForm();
+    this.leaveHover();
+    this.showSaving();
+  },
+  showSaving: function() {
+    this.oldInnerHTML = this.element.innerHTML;
+    this.element.innerHTML = this.options.savingText;
+    Element.addClassName(this.element, this.options.savingClassName);
+    this.element.style.backgroundColor = this.originalBackground;
+    Element.show(this.element);
+  },
+  removeForm: function() {
+    if(this.form) {
+      if (this.form.parentNode) Element.remove(this.form);
+      this.form = null;
+    }
+  },
+  enterHover: function() {
+    if (this.saving) return;
+    this.element.style.backgroundColor = this.options.highlightcolor;
+    if (this.effect) {
+      this.effect.cancel();
+    }
+    Element.addClassName(this.element, this.options.hoverClassName)
+  },
+  leaveHover: function() {
+    if (this.options.backgroundColor) {
+      this.element.style.backgroundColor = this.oldBackground;
+    }
+    Element.removeClassName(this.element, this.options.hoverClassName)
+    if (this.saving) return;
+    this.effect = new Effect.Highlight(this.element, {
+      startcolor: this.options.highlightcolor,
+      endcolor: this.options.highlightendcolor,
+      restorecolor: this.originalBackground
+    });
+  },
+  leaveEditMode: function() {
+    Element.removeClassName(this.element, this.options.savingClassName);
+    this.removeForm();
+    this.leaveHover();
+    this.element.style.backgroundColor = this.originalBackground;
+    Element.show(this.element);
+    if (this.options.externalControl) {
+      Element.show(this.options.externalControl);
+    }
+    this.editing = false;
+    this.saving = false;
+    this.oldInnerHTML = null;
+    this.onLeaveEditMode();
+  },
+  onComplete: function(transport) {
+    this.leaveEditMode();
+    this.options.onComplete.bind(this)(transport, this.element);
+  },
+  onEnterEditMode: function() {},
+  onLeaveEditMode: function() {},
+  dispose: function() {
+    if (this.oldInnerHTML) {
+      this.element.innerHTML = this.oldInnerHTML;
+    }
+    this.leaveEditMode();
+    Event.stopObserving(this.element, 'click', this.onclickListener);
+    Event.stopObserving(this.element, 'mouseover', this.mouseoverListener);
+    Event.stopObserving(this.element, 'mouseout', this.mouseoutListener);
+    if (this.options.externalControl) {
+      Event.stopObserving(this.options.externalControl, 'click', this.onclickListener);
+      Event.stopObserving(this.options.externalControl, 'mouseover', this.mouseoverListener);
+      Event.stopObserving(this.options.externalControl, 'mouseout', this.mouseoutListener);
     }
   }
-);
+};
 
-$w('getInlineOpacity forceRerendering setContentZoom collectTextNodes collectTextNodesIgnoreClass getStyles').each( 
-  function(f) { Effect.Methods[f] = Element[f]; }
-);
+Ajax.InPlaceCollectionEditor = Class.create();
+Object.extend(Ajax.InPlaceCollectionEditor.prototype, Ajax.InPlaceEditor.prototype);
+Object.extend(Ajax.InPlaceCollectionEditor.prototype, {
+  createEditField: function() {
+    if (!this.cached_selectTag) {
+      var selectTag = document.createElement("select");
+      var collection = this.options.collection || [];
+      var optionTag;
+      collection.each(function(e,i) {
+        optionTag = document.createElement("option");
+        optionTag.value = (e instanceof Array) ? e[0] : e;
+        if((typeof this.options.value == 'undefined') && 
+          ((e instanceof Array) ? this.element.innerHTML == e[1] : e == optionTag.value)) optionTag.selected = true;
+        if(this.options.value==optionTag.value) optionTag.selected = true;
+        optionTag.appendChild(document.createTextNode((e instanceof Array) ? e[1] : e));
+        selectTag.appendChild(optionTag);
+      }.bind(this));
+      this.cached_selectTag = selectTag;
+    }
 
-Element.addMethods(Effect.Methods);
-// script.aculo.us dragdrop.js v1.8.1, Thu Jan 03 22:07:12 -0500 2008
+    this.editField = this.cached_selectTag;
+    if(this.options.loadTextURL) this.loadExternalText();
+    this.form.appendChild(this.editField);
+    this.options.callback = function(form, value) {
+      return "value=" + encodeURIComponent(value);
+    }
+  }
+});
+
+// Delayed observer, like Form.Element.Observer, 
+// but waits for delay after last key input
+// Ideal for live-search fields
+
+Form.Element.DelayedObserver = Class.create();
+Form.Element.DelayedObserver.prototype = {
+  initialize: function(element, delay, callback) {
+    this.delay     = delay || 0.5;
+    this.element   = $(element);
+    this.callback  = callback;
+    this.timer     = null;
+    this.lastValue = $F(this.element); 
+    Event.observe(this.element,'keyup',this.delayedListener.bindAsEventListener(this));
+  },
+  delayedListener: function(event) {
+    if(this.lastValue == $F(this.element)) return;
+    if(this.timer) clearTimeout(this.timer);
+    this.timer = setTimeout(this.onTimerEvent.bind(this), this.delay * 1000);
+    this.lastValue = $F(this.element);
+  },
+  onTimerEvent: function() {
+    this.timer = null;
+    this.callback(this.element, $F(this.element));
+  }
+};
+// script.aculo.us dragdrop.js v1.7.1_beta3, Fri May 25 17:19:41 +0200 2007
 
 // Copyright (c) 2005-2007 Thomas Fuchs (http://script.aculo.us, http://mir.aculo.us)
 //           (c) 2005-2007 Sammi Williams (http://www.oriontransfer.co.nz, sammi@oriontransfer.co.nz)
@@ -1264,7 +2110,7 @@ Element.addMethods(Effect.Methods);
 // script.aculo.us is freely distributable under the terms of an MIT-style license.
 // For details, see the script.aculo.us web site: http://script.aculo.us/
 
-if(Object.isUndefined(Effect))
+if(typeof Effect == 'undefined')
   throw("dragdrop.js requires including script.aculo.us' effects.js library");
 
 var Droppables = {
@@ -1280,13 +2126,14 @@ var Droppables = {
       greedy:     true,
       hoverclass: null,
       tree:       false
-    }, arguments[1] || { });
+    }, arguments[1] || {});
 
     // cache containers
     if(options.containment) {
       options._containers = [];
       var containment = options.containment;
-      if(Object.isArray(containment)) {
+      if((typeof containment == 'object') && 
+        (containment.constructor == Array)) {
         containment.each( function(c) { options._containers.push($(c)) });
       } else {
         options._containers.push($(containment));
@@ -1346,23 +2193,21 @@ var Droppables = {
 
   show: function(point, element) {
     if(!this.drops.length) return;
-    var drop, affected = [];
+    var affected = [];
     
+    if(this.last_active) this.deactivate(this.last_active);
     this.drops.each( function(drop) {
       if(Droppables.isAffected(point, element, drop))
         affected.push(drop);
     });
         
-    if(affected.length>0)
+    if(affected.length>0) {
       drop = Droppables.findDeepestChild(affected);
-
-    if(this.last_active && this.last_active != drop) this.deactivate(this.last_active);
-    if (drop) {
       Position.within(drop.element, point[0], point[1]);
       if(drop.onHover)
         drop.onHover(element, drop.element, Position.overlap(drop.overlap, drop.element));
       
-      if (drop != this.last_active) Droppables.activate(drop);
+      Droppables.activate(drop);
     }
   },
 
@@ -1482,7 +2327,10 @@ var Draggables = {
 
 /*--------------------------------------------------------------------------*/
 
-var Draggable = Class.create({
+var Draggable = Class.create();
+Draggable._dragging    = {};
+
+Draggable.prototype = {
   initialize: function(element) {
     var defaults = {
       handle: false,
@@ -1493,7 +2341,7 @@ var Draggable = Class.create({
         });
       },
       endeffect: function(element) {
-        var toOpacity = Object.isNumber(element._opacity) ? element._opacity : 1.0;
+        var toOpacity = typeof element._opacity == 'number' ? element._opacity : 1.0;
         new Effect.Opacity(element, {duration:0.2, from:0.7, to:toOpacity, 
           queue: {scope:'_draggable', position:'end'},
           afterFinish: function(){ 
@@ -1511,7 +2359,7 @@ var Draggable = Class.create({
       delay: 0
     };
     
-    if(!arguments[1] || Object.isUndefined(arguments[1].endeffect))
+    if(!arguments[1] || typeof arguments[1].endeffect == 'undefined')
       Object.extend(defaults, {
         starteffect: function(element) {
           element._opacity = Element.getOpacity(element);
@@ -1520,11 +2368,11 @@ var Draggable = Class.create({
         }
       });
     
-    var options = Object.extend(defaults, arguments[1] || { });
+    var options = Object.extend(defaults, arguments[1] || {});
 
     this.element = $(element);
     
-    if(options.handle && Object.isString(options.handle))
+    if(options.handle && (typeof options.handle == 'string'))
       this.handle = this.element.down('.'+options.handle, 0);
     
     if(!this.handle) this.handle = $(options.handle);
@@ -1537,6 +2385,7 @@ var Draggable = Class.create({
 
     Element.makePositioned(this.element); // fix IE    
 
+    this.delta    = this.currentDelta();
     this.options  = options;
     this.dragging = false;   
 
@@ -1558,7 +2407,7 @@ var Draggable = Class.create({
   },
   
   initDrag: function(event) {
-    if(!Object.isUndefined(Draggable._dragging[this.element]) &&
+    if(typeof Draggable._dragging[this.element] != 'undefined' &&
       Draggable._dragging[this.element]) return;
     if(Event.isLeftClick(event)) {    
       // abort on form elements, fixes a Firefox issue
@@ -1581,8 +2430,6 @@ var Draggable = Class.create({
   
   startDrag: function(event) {
     this.dragging = true;
-    if(!this.delta)
-      this.delta = this.currentDelta();
     
     if(this.options.zindex) {
       this.originalZ = parseInt(Element.getStyle(this.element,'z-index') || 0);
@@ -1591,9 +2438,7 @@ var Draggable = Class.create({
     
     if(this.options.ghosting) {
       this._clone = this.element.cloneNode(true);
-      this.element._originallyAbsolute = (this.element.getStyle('position') == 'absolute');
-      if (!this.element._originallyAbsolute)
-        Position.absolutize(this.element);
+      Position.absolutize(this.element);
       this.element.parentNode.insertBefore(this._clone, this.element);
     }
     
@@ -1663,9 +2508,7 @@ var Draggable = Class.create({
     }
 
     if(this.options.ghosting) {
-      if (!this.element._originallyAbsolute)
-        Position.relativize(this.element);
-      delete this.element._originallyAbsolute;
+      Position.relativize(this.element);
       Element.remove(this._clone);
       this._clone = null;
     }
@@ -1679,7 +2522,7 @@ var Draggable = Class.create({
     Draggables.notify('onEnd', this, event);
 
     var revert = this.options.revert;
-    if(revert && Object.isFunction(revert)) revert = revert(this.element);
+    if(revert && typeof revert == 'function') revert = revert(this.element);
     
     var d = this.currentDelta();
     if(revert && this.options.reverteffect) {
@@ -1733,15 +2576,15 @@ var Draggable = Class.create({
     }.bind(this));
     
     if(this.options.snap) {
-      if(Object.isFunction(this.options.snap)) {
+      if(typeof this.options.snap == 'function') {
         p = this.options.snap(p[0],p[1],this);
       } else {
-      if(Object.isArray(this.options.snap)) {
+      if(this.options.snap instanceof Array) {
         p = p.map( function(v, i) {
-          return (v/this.options.snap[i]).round()*this.options.snap[i] }.bind(this))
+          return Math.round(v/this.options.snap[i])*this.options.snap[i] }.bind(this))
       } else {
         p = p.map( function(v) {
-          return (v/this.options.snap).round()*this.options.snap }.bind(this))
+          return Math.round(v/this.options.snap)*this.options.snap }.bind(this))
       }
     }}
     
@@ -1825,13 +2668,12 @@ var Draggable = Class.create({
     }
     return { top: T, left: L, width: W, height: H };
   }
-});
-
-Draggable._dragging = { };
+}
 
 /*--------------------------------------------------------------------------*/
 
-var SortableObserver = Class.create({
+var SortableObserver = Class.create();
+SortableObserver.prototype = {
   initialize: function(element, observer) {
     this.element   = $(element);
     this.observer  = observer;
@@ -1847,12 +2689,12 @@ var SortableObserver = Class.create({
     if(this.lastValue != Sortable.serialize(this.element))
       this.observer(this.element)
   }
-});
+}
 
 var Sortable = {
   SERIALIZE_RULE: /^[^_\-](?:[A-Za-z0-9\-\_]*)[_](.*)$/,
   
-  sortables: { },
+  sortables: {},
   
   _findRootElement: function(element) {
     while (element.tagName.toUpperCase() != "BODY") {  
@@ -1908,7 +2750,7 @@ var Sortable = {
       
       onChange:    Prototype.emptyFunction,
       onUpdate:    Prototype.emptyFunction
-    }, arguments[1] || { });
+    }, arguments[1] || {});
 
     // clear any old sortable with same element
     this.destroy(element);
@@ -1972,7 +2814,7 @@ var Sortable = {
 
     (options.elements || this.findElements(element, options) || []).each( function(e,i) {
       var handle = options.handles ? $(options.handles[i]) :
-        (options.handle ? $(e).select('.' + options.handle)[0] : e); 
+        (options.handle ? $(e).getElementsByClassName(options.handle)[0] : e); 
       options.draggables.push(
         new Draggable(e, Object.extend(options_for_draggable, { handle: handle })));
       Droppables.add(e, options_for_droppable);
@@ -2132,7 +2974,7 @@ var Sortable = {
       only: sortableOptions.only,
       name: element.id,
       format: sortableOptions.format
-    }, arguments[1] || { });
+    }, arguments[1] || {});
     
     var root = {
       id: null,
@@ -2156,7 +2998,7 @@ var Sortable = {
 
   sequence: function(element) {
     element = $(element);
-    var options = Object.extend(this.options(element), arguments[1] || { });
+    var options = Object.extend(this.options(element), arguments[1] || {});
     
     return $(this.findElements(element, options) || []).map( function(item) {
       return item.id.match(options.format) ? item.id.match(options.format)[1] : '';
@@ -2165,9 +3007,9 @@ var Sortable = {
 
   setSequence: function(element, new_sequence) {
     element = $(element);
-    var options = Object.extend(this.options(element), arguments[2] || { });
+    var options = Object.extend(this.options(element), arguments[2] || {});
     
-    var nodeMap = { };
+    var nodeMap = {};
     this.findElements(element, options).each( function(n) {
         if (n.id.match(options.format))
             nodeMap[n.id.match(options.format)[1]] = [n, n.parentNode];
@@ -2185,7 +3027,7 @@ var Sortable = {
   
   serialize: function(element) {
     element = $(element);
-    var options = Object.extend(Sortable.options(element), arguments[1] || { });
+    var options = Object.extend(Sortable.options(element), arguments[1] || {});
     var name = encodeURIComponent(
       (arguments[1] && arguments[1].name) ? arguments[1].name : element.id);
     
@@ -2230,979 +3072,15 @@ Element.findChildren = function(element, only, recursive, tagName) {
 Element.offsetSize = function (element, type) {
   return element['offset' + ((type=='vertical' || type=='height') ? 'Height' : 'Width')];
 }
-// script.aculo.us controls.js v1.8.1, Thu Jan 03 22:07:12 -0500 2008
-
-// Copyright (c) 2005-2007 Thomas Fuchs (http://script.aculo.us, http://mir.aculo.us)
-//           (c) 2005-2007 Ivan Krstic (http://blogs.law.harvard.edu/ivan)
-//           (c) 2005-2007 Jon Tirsen (http://www.tirsen.com)
-// Contributors:
-//  Richard Livsey
-//  Rahul Bhargava
-//  Rob Wills
-// 
-// script.aculo.us is freely distributable under the terms of an MIT-style license.
-// For details, see the script.aculo.us web site: http://script.aculo.us/
-
-// Autocompleter.Base handles all the autocompletion functionality 
-// that's independent of the data source for autocompletion. This
-// includes drawing the autocompletion menu, observing keyboard
-// and mouse events, and similar.
-//
-// Specific autocompleters need to provide, at the very least, 
-// a getUpdatedChoices function that will be invoked every time
-// the text inside the monitored textbox changes. This method 
-// should get the text for which to provide autocompletion by
-// invoking this.getToken(), NOT by directly accessing
-// this.element.value. This is to allow incremental tokenized
-// autocompletion. Specific auto-completion logic (AJAX, etc)
-// belongs in getUpdatedChoices.
-//
-// Tokenized incremental autocompletion is enabled automatically
-// when an autocompleter is instantiated with the 'tokens' option
-// in the options parameter, e.g.:
-// new Ajax.Autocompleter('id','upd', '/url/', { tokens: ',' });
-// will incrementally autocomplete with a comma as the token.
-// Additionally, ',' in the above example can be replaced with
-// a token array, e.g. { tokens: [',', '\n'] } which
-// enables autocompletion on multiple tokens. This is most 
-// useful when one of the tokens is \n (a newline), as it 
-// allows smart autocompletion after linebreaks.
-
-if(typeof Effect == 'undefined')
-  throw("controls.js requires including script.aculo.us' effects.js library");
-
-var Autocompleter = { }
-Autocompleter.Base = Class.create({
-  baseInitialize: function(element, update, options) {
-    element          = $(element)
-    this.element     = element; 
-    this.update      = $(update);  
-    this.hasFocus    = false; 
-    this.changed     = false; 
-    this.active      = false; 
-    this.index       = 0;     
-    this.entryCount  = 0;
-    this.oldElementValue = this.element.value;
-
-    if(this.setOptions)
-      this.setOptions(options);
-    else
-      this.options = options || { };
-
-    this.options.paramName    = this.options.paramName || this.element.name;
-    this.options.tokens       = this.options.tokens || [];
-    this.options.frequency    = this.options.frequency || 0.4;
-    this.options.minChars     = this.options.minChars || 1;
-    this.options.onShow       = this.options.onShow || 
-      function(element, update){ 
-        if(!update.style.position || update.style.position=='absolute') {
-          update.style.position = 'absolute';
-          Position.clone(element, update, {
-            setHeight: false, 
-            offsetTop: element.offsetHeight
-          });
-        }
-        Effect.Appear(update,{duration:0.15});
-      };
-    this.options.onHide = this.options.onHide || 
-      function(element, update){ new Effect.Fade(update,{duration:0.15}) };
-
-    if(typeof(this.options.tokens) == 'string') 
-      this.options.tokens = new Array(this.options.tokens);
-    // Force carriage returns as token delimiters anyway
-    if (!this.options.tokens.include('\n'))
-      this.options.tokens.push('\n');
-
-    this.observer = null;
-    
-    this.element.setAttribute('autocomplete','off');
-
-    Element.hide(this.update);
-
-    Event.observe(this.element, 'blur', this.onBlur.bindAsEventListener(this));
-    Event.observe(this.element, 'keydown', this.onKeyPress.bindAsEventListener(this));
-  },
-
-  show: function() {
-    if(Element.getStyle(this.update, 'display')=='none') this.options.onShow(this.element, this.update);
-    if(!this.iefix && 
-      (Prototype.Browser.IE) &&
-      (Element.getStyle(this.update, 'position')=='absolute')) {
-      new Insertion.After(this.update, 
-       '<iframe id="' + this.update.id + '_iefix" '+
-       'style="display:none;position:absolute;filter:progid:DXImageTransform.Microsoft.Alpha(opacity=0);" ' +
-       'src="javascript:false;" frameborder="0" scrolling="no"></iframe>');
-      this.iefix = $(this.update.id+'_iefix');
-    }
-    if(this.iefix) setTimeout(this.fixIEOverlapping.bind(this), 50);
-  },
-  
-  fixIEOverlapping: function() {
-    Position.clone(this.update, this.iefix, {setTop:(!this.update.style.height)});
-    this.iefix.style.zIndex = 1;
-    this.update.style.zIndex = 2;
-    Element.show(this.iefix);
-  },
-
-  hide: function() {
-    this.stopIndicator();
-    if(Element.getStyle(this.update, 'display')!='none') this.options.onHide(this.element, this.update);
-    if(this.iefix) Element.hide(this.iefix);
-  },
-
-  startIndicator: function() {
-    if(this.options.indicator) Element.show(this.options.indicator);
-  },
-
-  stopIndicator: function() {
-    if(this.options.indicator) Element.hide(this.options.indicator);
-  },
-
-  onKeyPress: function(event) {
-    if(this.active)
-      switch(event.keyCode) {
-       case Event.KEY_TAB:
-       case Event.KEY_RETURN:
-         this.selectEntry();
-         Event.stop(event);
-       case Event.KEY_ESC:
-         this.hide();
-         this.active = false;
-         Event.stop(event);
-         return;
-       case Event.KEY_LEFT:
-       case Event.KEY_RIGHT:
-         return;
-       case Event.KEY_UP:
-         this.markPrevious();
-         this.render();
-         Event.stop(event);
-         return;
-       case Event.KEY_DOWN:
-         this.markNext();
-         this.render();
-         Event.stop(event);
-         return;
-      }
-     else 
-       if(event.keyCode==Event.KEY_TAB || event.keyCode==Event.KEY_RETURN || 
-         (Prototype.Browser.WebKit > 0 && event.keyCode == 0)) return;
-
-    this.changed = true;
-    this.hasFocus = true;
-
-    if(this.observer) clearTimeout(this.observer);
-      this.observer = 
-        setTimeout(this.onObserverEvent.bind(this), this.options.frequency*1000);
-  },
-
-  activate: function() {
-    this.changed = false;
-    this.hasFocus = true;
-    this.getUpdatedChoices();
-  },
-
-  onHover: function(event) {
-    var element = Event.findElement(event, 'LI');
-    if(this.index != element.autocompleteIndex) 
-    {
-        this.index = element.autocompleteIndex;
-        this.render();
-    }
-    Event.stop(event);
-  },
-  
-  onClick: function(event) {
-    var element = Event.findElement(event, 'LI');
-    this.index = element.autocompleteIndex;
-    this.selectEntry();
-    this.hide();
-  },
-  
-  onBlur: function(event) {
-    // needed to make click events working
-    setTimeout(this.hide.bind(this), 250);
-    this.hasFocus = false;
-    this.active = false;     
-  }, 
-  
-  render: function() {
-    if(this.entryCount > 0) {
-      for (var i = 0; i < this.entryCount; i++)
-        this.index==i ? 
-          Element.addClassName(this.getEntry(i),"selected") : 
-          Element.removeClassName(this.getEntry(i),"selected");
-      if(this.hasFocus) { 
-        this.show();
-        this.active = true;
-      }
-    } else {
-      this.active = false;
-      this.hide();
-    }
-  },
-  
-  markPrevious: function() {
-    if(this.index > 0) this.index--
-      else this.index = this.entryCount-1;
-    this.getEntry(this.index).scrollIntoView(true);
-  },
-  
-  markNext: function() {
-    if(this.index < this.entryCount-1) this.index++
-      else this.index = 0;
-    this.getEntry(this.index).scrollIntoView(false);
-  },
-  
-  getEntry: function(index) {
-    return this.update.firstChild.childNodes[index];
-  },
-  
-  getCurrentEntry: function() {
-    return this.getEntry(this.index);
-  },
-  
-  selectEntry: function() {
-    this.active = false;
-    this.updateElement(this.getCurrentEntry());
-  },
-
-  updateElement: function(selectedElement) {
-    if (this.options.updateElement) {
-      this.options.updateElement(selectedElement);
-      return;
-    }
-    var value = '';
-    if (this.options.select) {
-      var nodes = $(selectedElement).select('.' + this.options.select) || [];
-      if(nodes.length>0) value = Element.collectTextNodes(nodes[0], this.options.select);
-    } else
-      value = Element.collectTextNodesIgnoreClass(selectedElement, 'informal');
-    
-    var bounds = this.getTokenBounds();
-    if (bounds[0] != -1) {
-      var newValue = this.element.value.substr(0, bounds[0]);
-      var whitespace = this.element.value.substr(bounds[0]).match(/^\s+/);
-      if (whitespace)
-        newValue += whitespace[0];
-      this.element.value = newValue + value + this.element.value.substr(bounds[1]);
-    } else {
-      this.element.value = value;
-    }
-    this.oldElementValue = this.element.value;
-    this.element.focus();
-    
-    if (this.options.afterUpdateElement)
-      this.options.afterUpdateElement(this.element, selectedElement);
-  },
-
-  updateChoices: function(choices) {
-    if(!this.changed && this.hasFocus) {
-      this.update.innerHTML = choices;
-      Element.cleanWhitespace(this.update);
-      Element.cleanWhitespace(this.update.down());
-
-      if(this.update.firstChild && this.update.down().childNodes) {
-        this.entryCount = 
-          this.update.down().childNodes.length;
-        for (var i = 0; i < this.entryCount; i++) {
-          var entry = this.getEntry(i);
-          entry.autocompleteIndex = i;
-          this.addObservers(entry);
-        }
-      } else { 
-        this.entryCount = 0;
-      }
-
-      this.stopIndicator();
-      this.index = 0;
-      
-      if(this.entryCount==1 && this.options.autoSelect) {
-        this.selectEntry();
-        this.hide();
-      } else {
-        this.render();
-      }
-    }
-  },
-
-  addObservers: function(element) {
-    Event.observe(element, "mouseover", this.onHover.bindAsEventListener(this));
-    Event.observe(element, "click", this.onClick.bindAsEventListener(this));
-  },
-
-  onObserverEvent: function() {
-    this.changed = false;   
-    this.tokenBounds = null;
-    if(this.getToken().length>=this.options.minChars) {
-      this.getUpdatedChoices();
-    } else {
-      this.active = false;
-      this.hide();
-    }
-    this.oldElementValue = this.element.value;
-  },
-
-  getToken: function() {
-    var bounds = this.getTokenBounds();
-    return this.element.value.substring(bounds[0], bounds[1]).strip();
-  },
-
-  getTokenBounds: function() {
-    if (null != this.tokenBounds) return this.tokenBounds;
-    var value = this.element.value;
-    if (value.strip().empty()) return [-1, 0];
-    var diff = arguments.callee.getFirstDifferencePos(value, this.oldElementValue);
-    var offset = (diff == this.oldElementValue.length ? 1 : 0);
-    var prevTokenPos = -1, nextTokenPos = value.length;
-    var tp;
-    for (var index = 0, l = this.options.tokens.length; index < l; ++index) {
-      tp = value.lastIndexOf(this.options.tokens[index], diff + offset - 1);
-      if (tp > prevTokenPos) prevTokenPos = tp;
-      tp = value.indexOf(this.options.tokens[index], diff + offset);
-      if (-1 != tp && tp < nextTokenPos) nextTokenPos = tp;
-    }
-    return (this.tokenBounds = [prevTokenPos + 1, nextTokenPos]);
-  }
-});
-
-Autocompleter.Base.prototype.getTokenBounds.getFirstDifferencePos = function(newS, oldS) {
-  var boundary = Math.min(newS.length, oldS.length);
-  for (var index = 0; index < boundary; ++index)
-    if (newS[index] != oldS[index])
-      return index;
-  return boundary;
-};
-
-Ajax.Autocompleter = Class.create(Autocompleter.Base, {
-  initialize: function(element, update, url, options) {
-    this.baseInitialize(element, update, options);
-    this.options.asynchronous  = true;
-    this.options.onComplete    = this.onComplete.bind(this);
-    this.options.defaultParams = this.options.parameters || null;
-    this.url                   = url;
-  },
-
-  getUpdatedChoices: function() {
-    this.startIndicator();
-    
-    var entry = encodeURIComponent(this.options.paramName) + '=' + 
-      encodeURIComponent(this.getToken());
-
-    this.options.parameters = this.options.callback ?
-      this.options.callback(this.element, entry) : entry;
-
-    if(this.options.defaultParams) 
-      this.options.parameters += '&' + this.options.defaultParams;
-    
-    new Ajax.Request(this.url, this.options);
-  },
-
-  onComplete: function(request) {
-    this.updateChoices(request.responseText);
-  }
-});
-
-// The local array autocompleter. Used when you'd prefer to
-// inject an array of autocompletion options into the page, rather
-// than sending out Ajax queries, which can be quite slow sometimes.
-//
-// The constructor takes four parameters. The first two are, as usual,
-// the id of the monitored textbox, and id of the autocompletion menu.
-// The third is the array you want to autocomplete from, and the fourth
-// is the options block.
-//
-// Extra local autocompletion options:
-// - choices - How many autocompletion choices to offer
-//
-// - partialSearch - If false, the autocompleter will match entered
-//                    text only at the beginning of strings in the 
-//                    autocomplete array. Defaults to true, which will
-//                    match text at the beginning of any *word* in the
-//                    strings in the autocomplete array. If you want to
-//                    search anywhere in the string, additionally set
-//                    the option fullSearch to true (default: off).
-//
-// - fullSsearch - Search anywhere in autocomplete array strings.
-//
-// - partialChars - How many characters to enter before triggering
-//                   a partial match (unlike minChars, which defines
-//                   how many characters are required to do any match
-//                   at all). Defaults to 2.
-//
-// - ignoreCase - Whether to ignore case when autocompleting.
-//                 Defaults to true.
-//
-// It's possible to pass in a custom function as the 'selector' 
-// option, if you prefer to write your own autocompletion logic.
-// In that case, the other options above will not apply unless
-// you support them.
-
-Autocompleter.Local = Class.create(Autocompleter.Base, {
-  initialize: function(element, update, array, options) {
-    this.baseInitialize(element, update, options);
-    this.options.array = array;
-  },
-
-  getUpdatedChoices: function() {
-    this.updateChoices(this.options.selector(this));
-  },
-
-  setOptions: function(options) {
-    this.options = Object.extend({
-      choices: 10,
-      partialSearch: true,
-      partialChars: 2,
-      ignoreCase: true,
-      fullSearch: false,
-      selector: function(instance) {
-        var ret       = []; // Beginning matches
-        var partial   = []; // Inside matches
-        var entry     = instance.getToken();
-        var count     = 0;
-
-        for (var i = 0; i < instance.options.array.length &&  
-          ret.length < instance.options.choices ; i++) { 
-
-          var elem = instance.options.array[i];
-          var foundPos = instance.options.ignoreCase ? 
-            elem.toLowerCase().indexOf(entry.toLowerCase()) : 
-            elem.indexOf(entry);
-
-          while (foundPos != -1) {
-            if (foundPos == 0 && elem.length != entry.length) { 
-              ret.push("<li><strong>" + elem.substr(0, entry.length) + "</strong>" + 
-                elem.substr(entry.length) + "</li>");
-              break;
-            } else if (entry.length >= instance.options.partialChars && 
-              instance.options.partialSearch && foundPos != -1) {
-              if (instance.options.fullSearch || /\s/.test(elem.substr(foundPos-1,1))) {
-                partial.push("<li>" + elem.substr(0, foundPos) + "<strong>" +
-                  elem.substr(foundPos, entry.length) + "</strong>" + elem.substr(
-                  foundPos + entry.length) + "</li>");
-                break;
-              }
-            }
-
-            foundPos = instance.options.ignoreCase ? 
-              elem.toLowerCase().indexOf(entry.toLowerCase(), foundPos + 1) : 
-              elem.indexOf(entry, foundPos + 1);
-
-          }
-        }
-        if (partial.length)
-          ret = ret.concat(partial.slice(0, instance.options.choices - ret.length))
-        return "<ul>" + ret.join('') + "</ul>";
-      }
-    }, options || { });
-  }
-});
-
-// AJAX in-place editor and collection editor
-// Full rewrite by Christophe Porteneuve <tdd@tddsworld.com> (April 2007).
-
-// Use this if you notice weird scrolling problems on some browsers,
-// the DOM might be a bit confused when this gets called so do this
-// waits 1 ms (with setTimeout) until it does the activation
-Field.scrollFreeActivate = function(field) {
-  setTimeout(function() {
-    Field.activate(field);
-  }, 1);
-}
-
-Ajax.InPlaceEditor = Class.create({
-  initialize: function(element, url, options) {
-    this.url = url;
-    this.element = element = $(element);
-    this.prepareOptions();
-    this._controls = { };
-    arguments.callee.dealWithDeprecatedOptions(options); // DEPRECATION LAYER!!!
-    Object.extend(this.options, options || { });
-    if (!this.options.formId && this.element.id) {
-      this.options.formId = this.element.id + '-inplaceeditor';
-      if ($(this.options.formId))
-        this.options.formId = '';
-    }
-    if (this.options.externalControl)
-      this.options.externalControl = $(this.options.externalControl);
-    if (!this.options.externalControl)
-      this.options.externalControlOnly = false;
-    this._originalBackground = this.element.getStyle('background-color') || 'transparent';
-    this.element.title = this.options.clickToEditText;
-    this._boundCancelHandler = this.handleFormCancellation.bind(this);
-    this._boundComplete = (this.options.onComplete || Prototype.emptyFunction).bind(this);
-    this._boundFailureHandler = this.handleAJAXFailure.bind(this);
-    this._boundSubmitHandler = this.handleFormSubmission.bind(this);
-    this._boundWrapperHandler = this.wrapUp.bind(this);
-    this.registerListeners();
-  },
-  checkForEscapeOrReturn: function(e) {
-    if (!this._editing || e.ctrlKey || e.altKey || e.shiftKey) return;
-    if (Event.KEY_ESC == e.keyCode)
-      this.handleFormCancellation(e);
-    else if (Event.KEY_RETURN == e.keyCode)
-      this.handleFormSubmission(e);
-  },
-  createControl: function(mode, handler, extraClasses) {
-    var control = this.options[mode + 'Control'];
-    var text = this.options[mode + 'Text'];
-    if ('button' == control) {
-      var btn = document.createElement('input');
-      btn.type = 'submit';
-      btn.value = text;
-      btn.className = 'editor_' + mode + '_button';
-      if ('cancel' == mode)
-        btn.onclick = this._boundCancelHandler;
-      this._form.appendChild(btn);
-      this._controls[mode] = btn;
-    } else if ('link' == control) {
-      var link = document.createElement('a');
-      link.href = '#';
-      link.appendChild(document.createTextNode(text));
-      link.onclick = 'cancel' == mode ? this._boundCancelHandler : this._boundSubmitHandler;
-      link.className = 'editor_' + mode + '_link';
-      if (extraClasses)
-        link.className += ' ' + extraClasses;
-      this._form.appendChild(link);
-      this._controls[mode] = link;
-    }
-  },
-  createEditField: function() {
-    var text = (this.options.loadTextURL ? this.options.loadingText : this.getText());
-    var fld;
-    if (1 >= this.options.rows && !/\r|\n/.test(this.getText())) {
-      fld = document.createElement('input');
-      fld.type = 'text';
-      var size = this.options.size || this.options.cols || 0;
-      if (0 < size) fld.size = size;
-    } else {
-      fld = document.createElement('textarea');
-      fld.rows = (1 >= this.options.rows ? this.options.autoRows : this.options.rows);
-      fld.cols = this.options.cols || 40;
-    }
-    fld.name = this.options.paramName;
-    fld.value = text; // No HTML breaks conversion anymore
-    fld.className = 'editor_field';
-    if (this.options.submitOnBlur)
-      fld.onblur = this._boundSubmitHandler;
-    this._controls.editor = fld;
-    if (this.options.loadTextURL)
-      this.loadExternalText();
-    this._form.appendChild(this._controls.editor);
-  },
-  createForm: function() {
-    var ipe = this;
-    function addText(mode, condition) {
-      var text = ipe.options['text' + mode + 'Controls'];
-      if (!text || condition === false) return;
-      ipe._form.appendChild(document.createTextNode(text));
-    };
-    this._form = $(document.createElement('form'));
-    this._form.id = this.options.formId;
-    this._form.addClassName(this.options.formClassName);
-    this._form.onsubmit = this._boundSubmitHandler;
-    this.createEditField();
-    if ('textarea' == this._controls.editor.tagName.toLowerCase())
-      this._form.appendChild(document.createElement('br'));
-    if (this.options.onFormCustomization)
-      this.options.onFormCustomization(this, this._form);
-    addText('Before', this.options.okControl || this.options.cancelControl);
-    this.createControl('ok', this._boundSubmitHandler);
-    addText('Between', this.options.okControl && this.options.cancelControl);
-    this.createControl('cancel', this._boundCancelHandler, 'editor_cancel');
-    addText('After', this.options.okControl || this.options.cancelControl);
-  },
-  destroy: function() {
-    if (this._oldInnerHTML)
-      this.element.innerHTML = this._oldInnerHTML;
-    this.leaveEditMode();
-    this.unregisterListeners();
-  },
-  enterEditMode: function(e) {
-    if (this._saving || this._editing) return;
-    this._editing = true;
-    this.triggerCallback('onEnterEditMode');
-    if (this.options.externalControl)
-      this.options.externalControl.hide();
-    this.element.hide();
-    this.createForm();
-    this.element.parentNode.insertBefore(this._form, this.element);
-    if (!this.options.loadTextURL)
-      this.postProcessEditField();
-    if (e) Event.stop(e);
-  },
-  enterHover: function(e) {
-    if (this.options.hoverClassName)
-      this.element.addClassName(this.options.hoverClassName);
-    if (this._saving) return;
-    this.triggerCallback('onEnterHover');
-  },
-  getText: function() {
-    return this.element.innerHTML;
-  },
-  handleAJAXFailure: function(transport) {
-    this.triggerCallback('onFailure', transport);
-    if (this._oldInnerHTML) {
-      this.element.innerHTML = this._oldInnerHTML;
-      this._oldInnerHTML = null;
-    }
-  },
-  handleFormCancellation: function(e) {
-    this.wrapUp();
-    if (e) Event.stop(e);
-  },
-  handleFormSubmission: function(e) {
-    var form = this._form;
-    var value = $F(this._controls.editor);
-    this.prepareSubmission();
-    var params = this.options.callback(form, value) || '';
-    if (Object.isString(params))
-      params = params.toQueryParams();
-    params.editorId = this.element.id;
-    if (this.options.htmlResponse) {
-      var options = Object.extend({ evalScripts: true }, this.options.ajaxOptions);
-      Object.extend(options, {
-        parameters: params,
-        onComplete: this._boundWrapperHandler,
-        onFailure: this._boundFailureHandler
-      });
-      new Ajax.Updater({ success: this.element }, this.url, options);
-    } else {
-      var options = Object.extend({ method: 'get' }, this.options.ajaxOptions);
-      Object.extend(options, {
-        parameters: params,
-        onComplete: this._boundWrapperHandler,
-        onFailure: this._boundFailureHandler
-      });
-      new Ajax.Request(this.url, options);
-    }
-    if (e) Event.stop(e);
-  },
-  leaveEditMode: function() {
-    this.element.removeClassName(this.options.savingClassName);
-    this.removeForm();
-    this.leaveHover();
-    this.element.style.backgroundColor = this._originalBackground;
-    this.element.show();
-    if (this.options.externalControl)
-      this.options.externalControl.show();
-    this._saving = false;
-    this._editing = false;
-    this._oldInnerHTML = null;
-    this.triggerCallback('onLeaveEditMode');
-  },
-  leaveHover: function(e) {
-    if (this.options.hoverClassName)
-      this.element.removeClassName(this.options.hoverClassName);
-    if (this._saving) return;
-    this.triggerCallback('onLeaveHover');
-  },
-  loadExternalText: function() {
-    this._form.addClassName(this.options.loadingClassName);
-    this._controls.editor.disabled = true;
-    var options = Object.extend({ method: 'get' }, this.options.ajaxOptions);
-    Object.extend(options, {
-      parameters: 'editorId=' + encodeURIComponent(this.element.id),
-      onComplete: Prototype.emptyFunction,
-      onSuccess: function(transport) {
-        this._form.removeClassName(this.options.loadingClassName);
-        var text = transport.responseText;
-        if (this.options.stripLoadedTextTags)
-          text = text.stripTags();
-        this._controls.editor.value = text;
-        this._controls.editor.disabled = false;
-        this.postProcessEditField();
-      }.bind(this),
-      onFailure: this._boundFailureHandler
-    });
-    new Ajax.Request(this.options.loadTextURL, options);
-  },
-  postProcessEditField: function() {
-    var fpc = this.options.fieldPostCreation;
-    if (fpc)
-      $(this._controls.editor)['focus' == fpc ? 'focus' : 'activate']();
-  },
-  prepareOptions: function() {
-    this.options = Object.clone(Ajax.InPlaceEditor.DefaultOptions);
-    Object.extend(this.options, Ajax.InPlaceEditor.DefaultCallbacks);
-    [this._extraDefaultOptions].flatten().compact().each(function(defs) {
-      Object.extend(this.options, defs);
-    }.bind(this));
-  },
-  prepareSubmission: function() {
-    this._saving = true;
-    this.removeForm();
-    this.leaveHover();
-    this.showSaving();
-  },
-  registerListeners: function() {
-    this._listeners = { };
-    var listener;
-    $H(Ajax.InPlaceEditor.Listeners).each(function(pair) {
-      listener = this[pair.value].bind(this);
-      this._listeners[pair.key] = listener;
-      if (!this.options.externalControlOnly)
-        this.element.observe(pair.key, listener);
-      if (this.options.externalControl)
-        this.options.externalControl.observe(pair.key, listener);
-    }.bind(this));
-  },
-  removeForm: function() {
-    if (!this._form) return;
-    this._form.remove();
-    this._form = null;
-    this._controls = { };
-  },
-  showSaving: function() {
-    this._oldInnerHTML = this.element.innerHTML;
-    this.element.innerHTML = this.options.savingText;
-    this.element.addClassName(this.options.savingClassName);
-    this.element.style.backgroundColor = this._originalBackground;
-    this.element.show();
-  },
-  triggerCallback: function(cbName, arg) {
-    if ('function' == typeof this.options[cbName]) {
-      this.options[cbName](this, arg);
-    }
-  },
-  unregisterListeners: function() {
-    $H(this._listeners).each(function(pair) {
-      if (!this.options.externalControlOnly)
-        this.element.stopObserving(pair.key, pair.value);
-      if (this.options.externalControl)
-        this.options.externalControl.stopObserving(pair.key, pair.value);
-    }.bind(this));
-  },
-  wrapUp: function(transport) {
-    this.leaveEditMode();
-    // Can't use triggerCallback due to backward compatibility: requires
-    // binding + direct element
-    this._boundComplete(transport, this.element);
-  }
-});
-
-Object.extend(Ajax.InPlaceEditor.prototype, {
-  dispose: Ajax.InPlaceEditor.prototype.destroy
-});
-
-Ajax.InPlaceCollectionEditor = Class.create(Ajax.InPlaceEditor, {
-  initialize: function($super, element, url, options) {
-    this._extraDefaultOptions = Ajax.InPlaceCollectionEditor.DefaultOptions;
-    $super(element, url, options);
-  },
-
-  createEditField: function() {
-    var list = document.createElement('select');
-    list.name = this.options.paramName;
-    list.size = 1;
-    this._controls.editor = list;
-    this._collection = this.options.collection || [];
-    if (this.options.loadCollectionURL)
-      this.loadCollection();
-    else
-      this.checkForExternalText();
-    this._form.appendChild(this._controls.editor);
-  },
-
-  loadCollection: function() {
-    this._form.addClassName(this.options.loadingClassName);
-    this.showLoadingText(this.options.loadingCollectionText);
-    var options = Object.extend({ method: 'get' }, this.options.ajaxOptions);
-    Object.extend(options, {
-      parameters: 'editorId=' + encodeURIComponent(this.element.id),
-      onComplete: Prototype.emptyFunction,
-      onSuccess: function(transport) {
-        var js = transport.responseText.strip();
-        if (!/^\[.*\]$/.test(js)) // TODO: improve sanity check
-          throw 'Server returned an invalid collection representation.';
-        this._collection = eval(js);
-        this.checkForExternalText();
-      }.bind(this),
-      onFailure: this.onFailure
-    });
-    new Ajax.Request(this.options.loadCollectionURL, options);
-  },
-
-  showLoadingText: function(text) {
-    this._controls.editor.disabled = true;
-    var tempOption = this._controls.editor.firstChild;
-    if (!tempOption) {
-      tempOption = document.createElement('option');
-      tempOption.value = '';
-      this._controls.editor.appendChild(tempOption);
-      tempOption.selected = true;
-    }
-    tempOption.update((text || '').stripScripts().stripTags());
-  },
-
-  checkForExternalText: function() {
-    this._text = this.getText();
-    if (this.options.loadTextURL)
-      this.loadExternalText();
-    else
-      this.buildOptionList();
-  },
-
-  loadExternalText: function() {
-    this.showLoadingText(this.options.loadingText);
-    var options = Object.extend({ method: 'get' }, this.options.ajaxOptions);
-    Object.extend(options, {
-      parameters: 'editorId=' + encodeURIComponent(this.element.id),
-      onComplete: Prototype.emptyFunction,
-      onSuccess: function(transport) {
-        this._text = transport.responseText.strip();
-        this.buildOptionList();
-      }.bind(this),
-      onFailure: this.onFailure
-    });
-    new Ajax.Request(this.options.loadTextURL, options);
-  },
-
-  buildOptionList: function() {
-    this._form.removeClassName(this.options.loadingClassName);
-    this._collection = this._collection.map(function(entry) {
-      return 2 === entry.length ? entry : [entry, entry].flatten();
-    });
-    var marker = ('value' in this.options) ? this.options.value : this._text;
-    var textFound = this._collection.any(function(entry) {
-      return entry[0] == marker;
-    }.bind(this));
-    this._controls.editor.update('');
-    var option;
-    this._collection.each(function(entry, index) {
-      option = document.createElement('option');
-      option.value = entry[0];
-      option.selected = textFound ? entry[0] == marker : 0 == index;
-      option.appendChild(document.createTextNode(entry[1]));
-      this._controls.editor.appendChild(option);
-    }.bind(this));
-    this._controls.editor.disabled = false;
-    Field.scrollFreeActivate(this._controls.editor);
-  }
-});
-
-//**** DEPRECATION LAYER FOR InPlace[Collection]Editor! ****
-//**** This only  exists for a while,  in order to  let ****
-//**** users adapt to  the new API.  Read up on the new ****
-//**** API and convert your code to it ASAP!            ****
-
-Ajax.InPlaceEditor.prototype.initialize.dealWithDeprecatedOptions = function(options) {
-  if (!options) return;
-  function fallback(name, expr) {
-    if (name in options || expr === undefined) return;
-    options[name] = expr;
-  };
-  fallback('cancelControl', (options.cancelLink ? 'link' : (options.cancelButton ? 'button' :
-    options.cancelLink == options.cancelButton == false ? false : undefined)));
-  fallback('okControl', (options.okLink ? 'link' : (options.okButton ? 'button' :
-    options.okLink == options.okButton == false ? false : undefined)));
-  fallback('highlightColor', options.highlightcolor);
-  fallback('highlightEndColor', options.highlightendcolor);
-};
-
-Object.extend(Ajax.InPlaceEditor, {
-  DefaultOptions: {
-    ajaxOptions: { },
-    autoRows: 3,                                // Use when multi-line w/ rows == 1
-    cancelControl: 'link',                      // 'link'|'button'|false
-    cancelText: 'cancel',
-    clickToEditText: 'Click to edit',
-    externalControl: null,                      // id|elt
-    externalControlOnly: false,
-    fieldPostCreation: 'activate',              // 'activate'|'focus'|false
-    formClassName: 'inplaceeditor-form',
-    formId: null,                               // id|elt
-    highlightColor: '#ffff99',
-    highlightEndColor: '#ffffff',
-    hoverClassName: '',
-    htmlResponse: true,
-    loadingClassName: 'inplaceeditor-loading',
-    loadingText: 'Loading...',
-    okControl: 'button',                        // 'link'|'button'|false
-    okText: 'ok',
-    paramName: 'value',
-    rows: 1,                                    // If 1 and multi-line, uses autoRows
-    savingClassName: 'inplaceeditor-saving',
-    savingText: 'Saving...',
-    size: 0,
-    stripLoadedTextTags: false,
-    submitOnBlur: false,
-    textAfterControls: '',
-    textBeforeControls: '',
-    textBetweenControls: ''
-  },
-  DefaultCallbacks: {
-    callback: function(form) {
-      return Form.serialize(form);
-    },
-    onComplete: function(transport, element) {
-      // For backward compatibility, this one is bound to the IPE, and passes
-      // the element directly.  It was too often customized, so we don't break it.
-      new Effect.Highlight(element, {
-        startcolor: this.options.highlightColor, keepBackgroundImage: true });
-    },
-    onEnterEditMode: null,
-    onEnterHover: function(ipe) {
-      ipe.element.style.backgroundColor = ipe.options.highlightColor;
-      if (ipe._effect)
-        ipe._effect.cancel();
-    },
-    onFailure: function(transport, ipe) {
-      alert('Error communication with the server: ' + transport.responseText.stripTags());
-    },
-    onFormCustomization: null, // Takes the IPE and its generated form, after editor, before controls.
-    onLeaveEditMode: null,
-    onLeaveHover: function(ipe) {
-      ipe._effect = new Effect.Highlight(ipe.element, {
-        startcolor: ipe.options.highlightColor, endcolor: ipe.options.highlightEndColor,
-        restorecolor: ipe._originalBackground, keepBackgroundImage: true
-      });
-    }
-  },
-  Listeners: {
-    click: 'enterEditMode',
-    keydown: 'checkForEscapeOrReturn',
-    mouseover: 'enterHover',
-    mouseout: 'leaveHover'
-  }
-});
-
-Ajax.InPlaceCollectionEditor.DefaultOptions = {
-  loadingCollectionText: 'Loading options...'
-};
-
-// Delayed observer, like Form.Element.Observer, 
-// but waits for delay after last key input
-// Ideal for live-search fields
-
-Form.Element.DelayedObserver = Class.create({
-  initialize: function(element, delay, callback) {
-    this.delay     = delay || 0.5;
-    this.element   = $(element);
-    this.callback  = callback;
-    this.timer     = null;
-    this.lastValue = $F(this.element); 
-    Event.observe(this.element,'keyup',this.delayedListener.bindAsEventListener(this));
-  },
-  delayedListener: function(event) {
-    if(this.lastValue == $F(this.element)) return;
-    if(this.timer) clearTimeout(this.timer);
-    this.timer = setTimeout(this.onTimerEvent.bind(this), this.delay * 1000);
-    this.lastValue = $F(this.element);
-  },
-  onTimerEvent: function() {
-    this.timer = null;
-    this.callback(this.element, $F(this.element));
-  }
-});
-// script.aculo.us slider.js v1.8.1, Thu Jan 03 22:07:12 -0500 2008
+// script.aculo.us slider.js v1.7.1_beta3, Fri May 25 17:19:41 +0200 2007
 
 // Copyright (c) 2005-2007 Marty Haught, Thomas Fuchs 
 //
 // script.aculo.us is freely distributable under the terms of an MIT-style license.
 // For details, see the script.aculo.us web site: http://script.aculo.us/
 
-if (!Control) var Control = { };
+if(!Control) var Control = {};
+Control.Slider = Class.create();
 
 // options:
 //  axis: 'vertical', or 'horizontal' (default)
@@ -3210,18 +3088,18 @@ if (!Control) var Control = { };
 // callbacks:
 //  onChange(value)
 //  onSlide(value)
-Control.Slider = Class.create({
+Control.Slider.prototype = {
   initialize: function(handle, track, options) {
     var slider = this;
     
-    if (Object.isArray(handle)) {
+    if(handle instanceof Array) {
       this.handles = handle.collect( function(e) { return $(e) });
     } else {
       this.handles = [$(handle)];
     }
     
     this.track   = $(track);
-    this.options = options || { };
+    this.options = options || {};
 
     this.axis      = this.options.axis || 'horizontal';
     this.increment = this.options.increment || 1;
@@ -3255,11 +3133,11 @@ Control.Slider = Class.create({
     this.dragging = false;
     this.disabled = false;
 
-    if (this.options.disabled) this.setDisabled();
+    if(this.options.disabled) this.setDisabled();
 
     // Allowed values array
     this.allowedValues = this.options.values ? this.options.values.sortBy(Prototype.K) : false;
-    if (this.allowedValues) {
+    if(this.allowedValues) {
       this.minimum = this.allowedValues.min();
       this.maximum = this.allowedValues.max();
     }
@@ -3272,15 +3150,16 @@ Control.Slider = Class.create({
     this.handles.each( function(h,i) {
       i = slider.handles.length-1-i;
       slider.setValue(parseFloat(
-        (Object.isArray(slider.options.sliderValue) ? 
+        (slider.options.sliderValue instanceof Array ? 
           slider.options.sliderValue[i] : slider.options.sliderValue) || 
          slider.range.start), i);
-      h.makePositioned().observe("mousedown", slider.eventMouseDown);
+      Element.makePositioned(h); // fix IE
+      Event.observe(h, "mousedown", slider.eventMouseDown);
     });
     
-    this.track.observe("mousedown", this.eventMouseDown);
-    document.observe("mouseup", this.eventMouseUp);
-    document.observe("mousemove", this.eventMouseMove);
+    Event.observe(this.track, "mousedown", this.eventMouseDown);
+    Event.observe(document, "mouseup", this.eventMouseUp);
+    Event.observe(document, "mousemove", this.eventMouseMove);
     
     this.initialized = true;
   },
@@ -3300,36 +3179,36 @@ Control.Slider = Class.create({
     this.disabled = false;
   },  
   getNearestValue: function(value){
-    if (this.allowedValues){
-      if (value >= this.allowedValues.max()) return(this.allowedValues.max());
-      if (value <= this.allowedValues.min()) return(this.allowedValues.min());
+    if(this.allowedValues){
+      if(value >= this.allowedValues.max()) return(this.allowedValues.max());
+      if(value <= this.allowedValues.min()) return(this.allowedValues.min());
       
       var offset = Math.abs(this.allowedValues[0] - value);
       var newValue = this.allowedValues[0];
       this.allowedValues.each( function(v) {
         var currentOffset = Math.abs(v - value);
-        if (currentOffset <= offset){
+        if(currentOffset <= offset){
           newValue = v;
           offset = currentOffset;
         } 
       });
       return newValue;
     }
-    if (value > this.range.end) return this.range.end;
-    if (value < this.range.start) return this.range.start;
+    if(value > this.range.end) return this.range.end;
+    if(value < this.range.start) return this.range.start;
     return value;
   },
   setValue: function(sliderValue, handleIdx){
-    if (!this.active) {
+    if(!this.active) {
       this.activeHandleIdx = handleIdx || 0;
       this.activeHandle    = this.handles[this.activeHandleIdx];
       this.updateStyles();
     }
     handleIdx = handleIdx || this.activeHandleIdx || 0;
-    if (this.initialized && this.restricted) {
-      if ((handleIdx>0) && (sliderValue<this.values[handleIdx-1]))
+    if(this.initialized && this.restricted) {
+      if((handleIdx>0) && (sliderValue<this.values[handleIdx-1]))
         sliderValue = this.values[handleIdx-1];
-      if ((handleIdx < (this.handles.length-1)) && (sliderValue>this.values[handleIdx+1]))
+      if((handleIdx < (this.handles.length-1)) && (sliderValue>this.values[handleIdx+1]))
         sliderValue = this.values[handleIdx+1];
     }
     sliderValue = this.getNearestValue(sliderValue);
@@ -3340,7 +3219,7 @@ Control.Slider = Class.create({
       this.translateToPx(sliderValue);
     
     this.drawSpans();
-    if (!this.dragging || !this.event) this.updateFinished();
+    if(!this.dragging || !this.event) this.updateFinished();
   },
   setValueBy: function(delta, handleIdx) {
     this.setValue(this.values[handleIdx || this.activeHandleIdx || 0] + delta, 
@@ -3368,24 +3247,24 @@ Control.Slider = Class.create({
       (this.track.offsetHeight != 0 ? this.track.offsetHeight :
         this.track.style.height.replace(/px$/,"")) - this.alignY : 
       (this.track.offsetWidth != 0 ? this.track.offsetWidth : 
-        this.track.style.width.replace(/px$/,"")) - this.alignX);
+        this.track.style.width.replace(/px$/,"")) - this.alignY);
   },  
   isVertical:  function(){
     return (this.axis == 'vertical');
   },
   drawSpans: function() {
     var slider = this;
-    if (this.spans)
+    if(this.spans)
       $R(0, this.spans.length-1).each(function(r) { slider.setSpan(slider.spans[r], slider.getRange(r)) });
-    if (this.options.startSpan)
+    if(this.options.startSpan)
       this.setSpan(this.options.startSpan,
         $R(0, this.values.length>1 ? this.getRange(0).min() : this.value ));
-    if (this.options.endSpan)
+    if(this.options.endSpan)
       this.setSpan(this.options.endSpan, 
         $R(this.values.length>1 ? this.getRange(this.spans.length-1).max() : this.value, this.maximum));
   },
   setSpan: function(span, range) {
-    if (this.isVertical()) {
+    if(this.isVertical()) {
       span.style.top = this.translateToPx(range.start);
       span.style.height = this.translateToPx(range.end - range.start + this.range.start);
     } else {
@@ -3398,14 +3277,14 @@ Control.Slider = Class.create({
     Element.addClassName(this.activeHandle, 'selected');
   },
   startDrag: function(event) {
-    if (Event.isLeftClick(event)) {
-      if (!this.disabled){
+    if(Event.isLeftClick(event)) {
+      if(!this.disabled){
         this.active = true;
         
         var handle = Event.element(event);
         var pointer  = [Event.pointerX(event), Event.pointerY(event)];
         var track = handle;
-        if (track==this.track) {
+        if(track==this.track) {
           var offsets  = Position.cumulativeOffset(this.track); 
           this.event = event;
           this.setValue(this.translateToValue( 
@@ -3419,7 +3298,7 @@ Control.Slider = Class.create({
           while((this.handles.indexOf(handle) == -1) && handle.parentNode) 
             handle = handle.parentNode;
             
-          if (this.handles.indexOf(handle)!=-1) {
+          if(this.handles.indexOf(handle)!=-1) {
             this.activeHandle    = handle;
             this.activeHandleIdx = this.handles.indexOf(this.activeHandle);
             this.updateStyles();
@@ -3434,10 +3313,10 @@ Control.Slider = Class.create({
     }
   },
   update: function(event) {
-   if (this.active) {
-      if (!this.dragging) this.dragging = true;
+   if(this.active) {
+      if(!this.dragging) this.dragging = true;
       this.draw(event);
-      if (Prototype.Browser.WebKit) window.scrollBy(0,0);
+      if(Prototype.Browser.WebKit) window.scrollBy(0,0);
       Event.stop(event);
    }
   },
@@ -3448,11 +3327,11 @@ Control.Slider = Class.create({
     pointer[1] -= this.offsetY + offsets[1];
     this.event = event;
     this.setValue(this.translateToValue( this.isVertical() ? pointer[1] : pointer[0] ));
-    if (this.initialized && this.options.onSlide)
+    if(this.initialized && this.options.onSlide)
       this.options.onSlide(this.values.length>1 ? this.values : this.value, this);
   },
   endDrag: function(event) {
-    if (this.active && this.dragging) {
+    if(this.active && this.dragging) {
       this.finishDrag(event, true);
       Event.stop(event);
     }
@@ -3465,8 +3344,8 @@ Control.Slider = Class.create({
     this.updateFinished();
   },
   updateFinished: function() {
-    if (this.initialized && this.options.onChange) 
+    if(this.initialized && this.options.onChange) 
       this.options.onChange(this.values.length>1 ? this.values : this.value, this);
     this.event = null;
   }
-});
+}
