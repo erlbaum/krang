@@ -43,7 +43,13 @@ use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader History => qw(add_history);
 use Carp qw(croak);
+use File::Temp qw(tempdir);
+use File::Copy qw(copy);
+use File::Spec::Functions qw(catfile catdir abs2rel);
+use File::Basename qw(fileparse);
 
 ##############################
 #####  OVERRIDE METHODS  #####
@@ -87,6 +93,10 @@ sub setup {
               autocomplete
               retire
               unretire
+              save_and_transform_image
+              transform_image
+              save_image_transform
+              cancel_image_transform
               )
         ]
     );
@@ -1186,8 +1196,9 @@ sub save_and_view_log {
     # Redirect to history screen
     my $url =
         "history.pl?history_return_script=media.pl"
-      . "&history_return_params=rm&history_return_params=edit&id=$id"
-      . "&class=Media&id_meth=media_id";
+      . "&history_return_params=rm&history_return_params=edit"
+      . "&history_return_params=media_id&history_return_params=$id"
+      . "&id=$id&class=Media&id_meth=media_id";
     $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
@@ -1579,7 +1590,7 @@ sub make_media_tmpl_data {
 
     # Set up details only found on edit (not add) view
     if ($tmpl_data{media_id} = $m->media_id()) {
-        my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
+        my $thumbnail_path = $m->thumbnail_path(relative => 1, medium => 1) || '';
         $tmpl_data{thumbnail_path} = $thumbnail_path;
         $tmpl_data{url}            = format_url(
             url    => $m->url(),
@@ -1604,7 +1615,8 @@ sub make_media_tmpl_data {
         $tmpl_data{media_version_chooser} = $media_version_chooser;
     }
 
-    if ($m->filename && $m->mime_type && $m->mime_type =~ m{^text/}) {
+    my $extension     = $m->file_path =~ /\.([^\.]+)$/ ? $1 : '';
+    if($m->is_text) {
         $tmpl_data{is_text} = 1;
 
         # populate template with the file's contents
@@ -1616,7 +1628,6 @@ sub make_media_tmpl_data {
 
         # populate template with the syntax-highlighting "language"
         my $text_type     = 'html';                                     # the default
-        my $extension     = $m->file_path =~ /\.([^\.]+)$/ ? $1 : '';
         my %extension_map = (
             js  => 'javascript',
             css => 'css',
@@ -1626,6 +1637,12 @@ sub make_media_tmpl_data {
         $text_type = $extension_map{$extension} if $extension_map{$extension};
         debug("CodePress text type: $text_type");
         $tmpl_data{text_type} = $text_type;
+
+    } elsif( $m->is_image ) {
+        $tmpl_data{is_image} = 1;
+        # can we transform it with Imager?
+        $extension = 'jpeg' if $extension eq 'jpg'; # Imager doesn't recognize "jpg"
+        $tmpl_data{can_transform_image} = $Imager::formats{$extension};
     }
 
     # Build type drop-down
@@ -1636,6 +1653,7 @@ sub make_media_tmpl_data {
         -values  => \@media_type_ids,
         -labels  => \%media_types,
         -default => ($m->media_type_id() || $session{KRANG_PERSIST}{pkg('Media')}{media_type_id}),
+        -class   => 'usual',
     );
 
     # persist media_type_id in session for next time someone adds media..
@@ -1775,7 +1793,7 @@ sub make_media_view_tmpl_data {
     }
 
     # CodePress tmppl_vars: is_text, text_content & text_type
-    if ($m->filename && $m->mime_type && $m->mime_type =~ m{^text/}) {
+    if ($m->is_text) {
         $tmpl_data{is_text} = 1;
 
         # populate template with the file's contents
@@ -2139,9 +2157,7 @@ sub unretire {
                 url      => $media->url
             );
         } elsif ($@->isa('Krang::Media::NoEditAccess')) {
-
             # param tampering
-##	    return $self->access_forbidden();
             # or perhaps a permission change
             add_alert('access_denied_on_unretire', id => $media_id, url => $media->url);
         }
@@ -2151,40 +2167,146 @@ sub unretire {
     add_message('media_unretired', id => $media_id, url => $media->url);
 
     return $self->list_retired;
-
 }
+
+sub save_and_transform_image {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    # Update media object
+    my $m = $session{media};
+    $self->update_media($m) || return $self->redirect_to_workspace;
+
+    return $self->transform_image;
+}
+
+sub transform_image {
+    my $self        = shift;
+    my $q           = $self->query();
+    my $m           = $session{media};
+    my $apply_trans = $q->param('apply_transform');
+    my ($imager, $url);
+
+    if($apply_trans) {
+        $imager = $self->_do_apply_transform($m, $q);
+        # change the file_path into a relative url
+        $url = abs2rel($session{image_transform_tmp_file}, KrangRoot);
+
+    } else {
+        $self->_clear_image_transform_session();
+        $imager = Imager->new();
+        $imager->open(file => $m->file_path) or croak $imager->errstr();
+        $url = $m->file_path(relative => 1);
+        $session{image_transform_actions} = {};
+    }
+
+    my $t = $self->load_tmpl('transform_image.tmpl');
+    $t->param(
+        title           => $m->title,
+        url             => $url,
+        original_width  => $imager->getwidth,
+        original_height => $imager->getheight,
+    );
+    return $t->output;
+}
+
+sub _do_apply_transform {
+    my ($self, $media, $query) = @_;
+    my $imager = Imager->new();
+    # do our work on a temp file
+    my $tmp_dir = tempdir(CLEANUP => 0, DIR => catdir(KrangRoot, 'tmp'));
+    my $file_path = catfile($tmp_dir, $media->filename);
+
+    # copy the old file there
+    my $old_file = $session{image_transform_tmp_file} || $media->file_path;
+    copy($old_file, $file_path) or die "Could not copy file $old_file to $file_path: $!\n";
+    $session{image_transform_tmp_file} = $file_path;
+    $imager->open(file => $file_path) or croak $imager->errstr();
+
+    # RESIZE
+    my $new_width = $query->param('new_width');
+    my $new_height = $query->param('new_height');
+    if($new_width || $new_height ) {
+        add_message('image_scaled', width => $new_width, height => $new_height);
+        $imager = $imager->scale(xpixels => $new_width, ypixels => $new_height);
+        $session{image_transform_actions}->{resize} = 1;
+    }
+
+    # CROP
+    my %crop = map { $_ => $query->param("crop_$_") } qw(x y width height);
+    if($crop{x} || $crop{y} || $crop{width} || $crop{width}) {
+        $imager = $imager->crop(
+            left   => $crop{x},
+            top    => $crop{y},
+            width  => $crop{width},
+            height => $crop{height}
+        );
+        add_message('image_cropped', width => $imager->getwidth, height => $imager->getheight);
+        $session{image_transform_actions}->{crop} = 1;
+    }
+
+    # ROTATE
+    if(my $direction = $query->param('rotate_direction')) {
+        my $degress = $direction eq 'r' ? 90 : -90;
+        $imager = $imager->rotate(degrees => $degress);
+        add_message("image_rotated_$direction");
+        $session{image_transform_actions}->{rotate} = 1;
+    }
+
+    # FLIP
+    if(my $direction = $query->param('flip_direction')) {
+        $imager->flip(dir => $direction);
+        add_message("image_flipped_$direction");
+        $session{image_transform_actions}->{flip} = 1;
+    }
+
+    # now save it to a tmp place
+    $imager->write(file => $file_path);
+    return $imager;
+}
+
+sub save_image_transform {
+    my $self = shift;
+    my $m = $session{media};
+    my $imager = $self->_do_apply_transform($m, $self->query);
+
+    # save changes
+    $m->upload_file(filepath => $session{image_transform_tmp_file});
+    $m->save();
+    add_message('image_transform_saved');
+
+    # now record the history of what was done
+    foreach my $action (keys %{$session{image_transform_actions}}) {
+        add_history(object => $m, action => $action);
+    }
+
+    return $self->edit;
+}
+
+sub cancel_image_transform {
+    my $self = shift;
+    $self->_clear_image_transform_session();
+    add_message("image_transform_canceled");
+    return $self->edit;
+}
+
+sub _clear_image_transform_session {
+    my $self = shift;
+
+    # clear the tmp file
+    if(my $file = $session{image_transform_tmp_file} ) {
+        unlink $file if -e $file;
+        delete $session{image_transform_tmp_file};
+    }
+
+    # clear any history actions
+    delete $session{image_transform_actions};
+}
+
 
 1;
 
 =back
 
 =cut
-
-####  Created by:  ######################################
-#
-#
-# use CGI::Application::Generator;
-# my $c = CGI::Application::Generator->new();
-# $c->app_module_tmpl($ENV{HOME}.'/krang/templates/krang_cgi_app.tmpl');
-# $c->package_name('Krang::CGI::Media');
-# $c->base_module('Krang::CGI');
-# $c->start_mode('add');
-# $c->run_modes(qw(
-#                  find
-#                  advanced_find
-#                  add
-#                  save_add
-#                  cancel_add
-#                  save_stay_add
-#                  edit
-#                  save_edit
-#                  save_stay_edit
-#                  delete
-#                  delete_selected
-#                  view
-#                  view_version
-#                  revert_version
-#                 ));
-# $c->use_modules(qw/Krang::Category Krang::Media Krang::Widget Krang::Message Krang::HTMLPager Krang::Pref Krang::Session Carp/);
-# $c->tmpl_path('Media/');
-# print $c->output_app_module();

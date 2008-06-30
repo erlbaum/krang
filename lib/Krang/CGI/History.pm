@@ -17,7 +17,11 @@ our %ACTION_LABELS = (
     retire   => 'retired',
     unretire => 'unretired',
     trash    => 'trashed',
-    untrash  => 'untrashed'
+    untrash  => 'untrashed',
+    resize   => 'resized',
+    crop     => 'cropped',
+    rotate   => 'rotated',
+    flip     => 'flipped',
 );
 
 use Carp qw(croak);

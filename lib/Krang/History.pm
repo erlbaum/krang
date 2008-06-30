@@ -338,8 +338,27 @@ Override this method to extend the list.
 =cut
 
 sub actions {
-    return
-      qw( new save checkin checkout steal publish deploy undeploy move revert delete retire unretire trash untrash );
+    return qw( 
+        new 
+        save 
+        checkin 
+        checkout 
+        steal 
+        publish 
+        deploy 
+        undeploy 
+        move 
+        revert 
+        delete 
+        retire 
+        unretire 
+        trash 
+        untrash 
+        resize
+        crop 
+        rotate 
+        flip
+    );
 }
 
 1;

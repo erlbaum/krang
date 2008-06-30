@@ -16,6 +16,7 @@ use Storable qw(nfreeze thaw);
 use File::Spec::Functions qw(catdir catfile splitpath canonpath);
 use File::Path;
 use File::Copy;
+use File::Basename qw(fileparse);
 use LWP::MediaTypes qw(guess_media_type);
 use Imager;
 use File::stat;
@@ -522,38 +523,51 @@ sub prune_versions {
 
 Stores media file to temporary location on filesystem. Sets $media->filename() also. 
 
+Of if you already have the file in a temporary location in KrangRoot then you can
+simply pass the C<filepath> argument instead.
+
+    $media->upload_file(filepath => $path);
+
 =cut
 
 sub upload_file {
     my $self     = shift;
     my %args     = @_;
     my $root     = KrangRoot;
-    my $filename = $args{'filename'}
-      || croak('You must pass in a filename in order to upload a file');
-    my $filehandle = $args{'filehandle'}
-      || croak('You must pass in a filehandle in order to upload a file');
-    croak('You cannot use a / in a filename!') if $filename =~ /\//;
+    my ($path, $name, $handle, $tmpdir) = @_;
+    if($path = $args{'filepath'}) {
+        ($name, $tmpdir) = fileparse($path);
+    } else {
+        $name = $args{'filename'}
+          || croak(
+            'You must pass in a filename in order to upload a file if you are not using filepath');
+        $handle = $args{'filehandle'}
+          || croak(
+            'You must pass in a filehandle in order to upload a file if you are not using filepath'
+          );
+        croak('You cannot use a / in a filename!') if $name =~ /\//;
 
-    my $path = tempdir(DIR => catdir(KrangRoot, 'tmp'));
-    my $filepath = catfile($path, $filename);
-    open(FILE, ">$filepath") || croak("Unable to open $path for writing media!");
+        $tmpdir = catfiletempdir(DIR => catdir(KrangRoot, 'tmp'));
+        $path = catfile($tmpdir, $name);
+        open(FILE, ">$path") || croak("Unable to open $path for writing media!");
 
-    my $buffer;
-    while (read($filehandle, $buffer, 10240)) { print FILE $buffer }
-    close $filehandle;
-    close FILE;
+        my $buffer;
+        while (read($handle, $buffer, 10240)) { print FILE $buffer }
+        close $handle;
+        close FILE;
+    }
 
-    $self->{tempfile} = $filepath;
-    $self->{tempdir}  = $path;
-    $self->{filename} = $filename;
+    $self->{tempfile} = $path;
+    $self->{tempdir}  = $tmpdir;
+    $self->{filename} = $name;
 
-    # blow the URL cache since filename has changed
-    undef $self->{url_cache};
+    # blow the URL cache if the filename has changed
+    if($self->filename && $self->filename ne $name) {
+        undef $self->{url_cache};
+    }
 
     # guess the mime_type
-    return $self->{mime_type} = guess_media_type($filepath);
-
-    return $self;
+    $self->{mime_type} = guess_media_type($path);
 }
 
 =item $media->store_temp_file(filename => $filename, content=> $text)
@@ -2465,6 +2479,28 @@ sub clone {
     $copy->{url} = $copy->url;
 
     return $copy;
+}
+
+=item C<< $media->is_text() >>
+
+Returns true if this media object appears to be text (HTML, JS, CSS, etc);
+
+=cut
+
+sub is_text {
+    my $self = shift;
+    return $self->filename && $self->mime_type && $self->mime_type =~ /^text\//;
+}
+
+=item C<< $media->is_image() >>
+
+Returns true if this media object appears to be an image.
+
+=cut
+
+sub is_image {
+    my $self = shift;
+    return $self->filename && $self->mime_type && $self->mime_type =~ /^image\//
 }
 
 =back
