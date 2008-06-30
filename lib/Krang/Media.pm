@@ -547,7 +547,7 @@ sub upload_file {
           );
         croak('You cannot use a / in a filename!') if $name =~ /\//;
 
-        $tmpdir = catfiletempdir(DIR => catdir(KrangRoot, 'tmp'));
+        $tmpdir = tempdir(DIR => catdir(KrangRoot, 'tmp'));
         $path = catfile($tmpdir, $name);
         open(FILE, ">$path") || croak("Unable to open $path for writing media!");
 
