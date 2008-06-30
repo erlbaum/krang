@@ -42,8 +42,8 @@ save_and_view_log = function() {
 }
 
 <tmpl_if is_image>
-manipulate_image = function() {
-  Krang.Form.submit('edit_media_form', { rm: 'manipulate_image' });
+transform_image = function() {
+  Krang.Form.submit('edit_media_form', { rm: 'transform_image' });
 }
 </tmpl_if>
 
@@ -268,8 +268,8 @@ Content
 
 <div class="panel capped<tmpl_if add_mode> clearfix</tmpl_if>">
 <input value="Cancel" onclick="do_cancel()" type="button" class="west">
-<tmpl_if can_manipulate_image>
-<input value="Transform" onclick="manipulate_image()" type="button">
+<tmpl_if can_transform_image>
+<input value="Transform" onclick="transform_image()" type="button">
 </tmpl_if>
 <input value="Save &amp; Stay" onclick="do_save_stay()" type="button">
 <input value="Save" onclick="do_save()" type="button">
