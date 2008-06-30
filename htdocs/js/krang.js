@@ -1135,7 +1135,7 @@ Object.extend( Krang.Navigation.prototype, {
         // if we have nav cookie, then just use what it gives us
         if ( value && value != '' ) {
             // make sure what we get are Ints not strings
-            panels = $A(value.split(',')).map(function(s) { parseInt(s) }).toArray();
+            panels = $A(value.split(',')).map(function(s) { return parseInt(s) }).toArray();
         } else { // just show the first panel
             panels = [ 0 ];
         }
