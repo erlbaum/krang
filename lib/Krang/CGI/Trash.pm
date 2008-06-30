@@ -87,6 +87,7 @@ sub find {
         columns          => ['id', 'type', 'title', 'url', 'date', 'thumbnail', 'checkbox_column'],
         column_labels    => \%col_labels,
         columns_sortable => [qw(id type title url date)],
+        columns_hidden   => ['checkbox_column'],
         id_handler  => sub { $self->_id_handler(@_) },
         row_handler => sub { $self->_row_handler(@_)},
     );
@@ -109,7 +110,8 @@ sub _row_handler {
 
     # maybe show list controls
     if ($row->{may_edit}) {
-        $pager->show_list_controls(1);
+##        $pager->show_list_controls(1);
+        $pager->column_display('checkbox_column' => 1);
     }
 
     # format date
