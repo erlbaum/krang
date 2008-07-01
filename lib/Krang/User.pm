@@ -379,15 +379,11 @@ sub dependent_check {
     my $dependents = 0;
     my %info;
 
-    for my $class (qw/media story template/) {
-        my $module = ucfirst $class;
-        no strict 'subs';
-
-        my $pkg = pkg($module);
-        eval "require $pkg";
+    for my $class ($self->dependent_class_list) {
+        eval "require $class";
         die $@ if $@;
 
-        my @objects = $pkg->find(checked_out_by => $id);
+        my @objects = $class->find(checked_out_by => $id);
         if (@objects) {
             my $id_method = $class->id_meth();
             $dependents += scalar @objects;
@@ -401,6 +397,21 @@ sub dependent_check {
     ) if $dependents;
 
     return 0;
+}
+
+=item * dependent_class_list
+
+Returns a list of classes to check for potential objects that could
+be checked-out by users. This is called by C<dependent_check()> and mainly
+exists to be overridden by addons.
+
+Classes in this list must implement the C<find()> and C<id_meth()> methods.
+
+=cut
+
+sub dependent_class_list {
+    my $self = shift;
+    return (pkg('Media'), pkg('Story'), pkg('Template'));
 }
 
 
