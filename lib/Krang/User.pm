@@ -374,12 +374,12 @@ One can handle such an exception thusly:
 =cut
 
 sub dependent_check {
-    my $self = shift;
-    my $id = shift || $self->{user_id};
+    my $self       = shift;
+    my $id         = shift || $self->{user_id};
     my $dependents = 0;
     my %info;
 
-    for my $class(qw/media story template/) {
+    for my $class (qw/media story template/) {
         my $module = ucfirst $class;
         no strict 'subs';
 
@@ -389,15 +389,16 @@ sub dependent_check {
 
         my @objects = $pkg->find(checked_out_by => $id);
         if (@objects) {
-            my $id_field = $class . "_id";
+            my $id_method = $class->id_meth();
             $dependents += scalar @objects;
-            push @{$info{$class}}, map {$_->$id_field} @objects;
+            push @{$info{$class}}, map { $_->$id_method } @objects;
         }
     }
 
-    Krang::User::Dependency->throw(message => 'Objects depend on this user',
-                                   dependencies => \%info)
-        if $dependents;
+    Krang::User::Dependency->throw(
+        message      => 'Objects depend on this user',
+        dependencies => \%info
+    ) if $dependents;
 
     return 0;
 }
