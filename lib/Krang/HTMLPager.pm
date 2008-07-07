@@ -1035,6 +1035,9 @@ sub _fill_template {
 
     # Process pager and get rows
     my $pager_view = $self->get_pager_view();
+    unless ($t->query(name => 'show_list_controls')) {
+        delete $pager_view->{show_list_controls};
+    }
     $t->param($pager_view);
 
     # Set up persist_vars
