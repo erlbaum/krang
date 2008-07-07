@@ -1193,6 +1193,9 @@ sub get_pager_view {
         $pager_view{"__show_${col}__"} = $column_display{$col};
     }
 
+    # show list controls?
+    $pager_view{show_list_controls} = $self->show_list_controls;
+
     return \%pager_view;
 }
 
