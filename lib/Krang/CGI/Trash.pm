@@ -104,13 +104,24 @@ sub _row_handler {
 
     # do the clone
     $row->{$_} = $obj->{$_} for keys %$obj;
+    
+    # fix problem with root level templates:
+    # SQL query will return NULL for may_edit but these assets at the root
+    # will only be subject to asset-level permissions, not category-level
+    # ones. Category-level will set may_edit == 0 if not allowed.
 
+    if (($row->{type} eq 'template') && (!defined $row->{may_edit})) {
+        if (index($row->{url}, '/') == 0) {
+            $row->{may_edit} = 1;
+        }
+    }
+    
     # Uppercase story type
     $row->{class} = ucfirst($row->{class});
 
     # maybe show list controls
     if ($row->{may_edit}) {
-##        $pager->show_list_controls(1);
+        $pager->show_list_controls(1);
         $pager->column_display('checkbox_column' => 1);
     }
 
