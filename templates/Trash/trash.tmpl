@@ -11,7 +11,7 @@ Krang.onload( function() {
     Krang.Form.submit('krang_pager_form', { rm: 'restore_object', type_id : type_id });
   }
   
-  <tmpl_if show_list_controls>
+  <tmpl_if __show_checkbox_column__>
     restore_checked = function()
     {
       var question = '';
@@ -83,7 +83,7 @@ Trash
 
   <tmpl_include HTMLPager/pager-internals.tmpl>
 
-  <tmpl_if show_list_controls><div class="panel">
+  <tmpl_if __show_checkbox_column__><div class="panel">
     <input value="Restore" onclick="restore_checked()" type="button">
     <tmpl_if admin_may_delete>
       <input value="Delete" onclick="delete_checked()" type="button">
@@ -115,7 +115,7 @@ Trash
       <tmpl_var colhead_url></th>
   <th></th>
   <th><tmpl_var colhead_date></th>
-  <th class="l tick"><tmpl_if show_list_controls><tmpl_var colhead_checkbox_column></tmpl_if></th>
+  <th class="l tick"><tmpl_if __show_checkbox_column__><tmpl_var colhead_checkbox_column></tmpl_if></th>
   </tr>
   </thead>
 
@@ -158,7 +158,7 @@ Trash
 
   <tmpl_include HTMLPager/pager-pagination.tmpl>
 
-  <tmpl_if show_list_controls><div class="panel capped">
+  <tmpl_if __show_checkbox_column__><div class="panel capped">
     <input value="Restore" onclick="restore_checked()" type="button">
     <tmpl_if admin_may_delete>
       <input value="Delete" onclick="delete_checked()" type="button">

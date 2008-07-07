@@ -121,7 +121,6 @@ sub _row_handler {
 
     # maybe show list controls
     if ($row->{may_edit}) {
-        $pager->show_list_controls(1);
         $pager->column_display('checkbox_column' => 1);
     }
 

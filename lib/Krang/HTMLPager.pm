@@ -70,7 +70,6 @@ use Krang::ClassLoader MethodMaker => (
                                                row_handler
                                                id_handler
                                                max_page_links
-                                               show_list_controls
                                              ) ],
                        );
 
@@ -130,7 +129,6 @@ sub init {
                     command_column_commands => [],
                     command_column_labels => {},
                     max_page_links => 10,
-                    show_list_controls => undef,
                    );
 
     # finish the object
@@ -540,14 +538,14 @@ below.
 
 An arrayref containing the names of columns that should not be
 displayed per default.  Members of this list must also be members of
-the arrayref 'columns'.  Together with B<display_column()>, this list
+the arrayref 'columns'.  Together with B<column_display()>, this list
 allows to display the named columns depending on some row object
 property.
 
 For each member of this list, the pager creates a special tmpl_if that
 can be used to control the column display in the templates.  The
 default value of those tmpl_if is '0', but can be changed via
-display_column().
+column_display().
 
  B<Example:>
 
@@ -560,7 +558,7 @@ column seems the right place for this piece of information. For this
 edge the status column hidden per default should be displayed
 nonetheless.  The default -- hide the column -- is specified using the
 'columns_hidden' list, inverting the default from within a row handler
-is done via B<display_column()>.
+is done via B<column_display()>.
 
   <tmpl_if __show_status__><td><tmpl_var status></tmpl_if>
 
@@ -658,13 +656,6 @@ set to "descending"  If not set, this property will
 default to "0" and sort order will consequently default
 to "ascending".
 
-=item show_list_controls
-
-  show_list_controls => 1
-
-A boolean filled into the template. It may be used as a tmpl_if to
-control the display of list controls (see the following documentation
-on row_handler). Defaults to undef.
 
 =item row_handler
 
@@ -682,7 +673,7 @@ data and set that data in the hashref.  For example:
     $row_hashref->{first_middle} = $row_obj->first() . " " . $row_obj->middle();
     $row_hashref->{last} = $row_obj->last();
     $row_hashref->{type} = join(", ", ($row_obj->contrib_type_names()) );
-    $pager->show_list_controls(1) if $row_obj->may_edit;
+    $pager->column_display('checkbox_column' => 1) if $row_obj->may_edit;
   }
 
 The purpose of passing in the pager object is to make the display of
@@ -1035,9 +1026,7 @@ sub _fill_template {
 
     # Process pager and get rows
     my $pager_view = $self->get_pager_view();
-    unless ($t->query(name => 'show_list_controls')) {
-        delete $pager_view->{show_list_controls};
-    }
+
     $t->param($pager_view);
 
     # Set up persist_vars
@@ -1195,9 +1184,6 @@ sub get_pager_view {
     for my $col (keys %column_display) {
         $pager_view{"__show_${col}__"} = $column_display{$col};
     }
-
-    # show list controls?
-    $pager_view{show_list_controls} = $self->show_list_controls;
 
     return \%pager_view;
 }
