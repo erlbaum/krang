@@ -267,7 +267,7 @@ $element->object->isa('Krang::Story') and croaks otherwise.
 sub story { 
     my $self = shift;
     my $object = $self->object;
-    croak("Expected a pkg('Story') in element->object for $self->{element_id}, but didn't find on!")
+    croak("Expected a pkg('Story') in element->object for $self->{element_id}, but didn't find one!")
       unless $object and $object->isa('Krang::Story');
     return $object;
 }
