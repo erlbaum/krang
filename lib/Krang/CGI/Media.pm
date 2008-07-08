@@ -1190,7 +1190,7 @@ sub save_and_view_log {
     $self->update_media($m) || return $self->redirect_to_workspace;
     my $id = $m->media_id;
 
-    my $return_rm = $q->param('return_to_transform') ? 'transform_image' : 'image';
+    my $return_rm = $q->param('return_to_transform') ? 'transform_image' : 'edit';
 
     # Redirect to history screen
     my $url =
