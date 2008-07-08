@@ -559,12 +559,12 @@ sub upload_file {
 
     $self->{tempfile} = $path;
     $self->{tempdir}  = $tmpdir;
-    $self->{filename} = $name;
 
     # blow the URL cache if the filename has changed
     if($self->filename && $self->filename ne $name) {
         undef $self->{url_cache};
     }
+    $self->{filename} = $name;
 
     # guess the mime_type
     $self->{mime_type} = guess_media_type($path);
