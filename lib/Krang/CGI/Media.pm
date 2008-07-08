@@ -1190,10 +1190,12 @@ sub save_and_view_log {
     $self->update_media($m) || return $self->redirect_to_workspace;
     my $id = $m->media_id;
 
+    my $return_rm = $q->param('return_to_transform') ? 'transform_image' : 'image';
+
     # Redirect to history screen
     my $url =
         "history.pl?history_return_script=media.pl"
-      . "&history_return_params=rm&history_return_params=edit"
+      . "&history_return_params=rm&history_return_params=$return_rm"
       . "&history_return_params=media_id&history_return_params=$id"
       . "&id=$id&class=Media&id_meth=media_id";
     $self->header_props(-uri => $url);
@@ -2204,6 +2206,7 @@ sub transform_image {
 
     my $t = $self->load_tmpl('transform_image.tmpl');
     $t->param(
+        media_id        => $m->media_id,
         title           => $m->title,
         url             => $url,
         original_width  => $imager->getwidth,

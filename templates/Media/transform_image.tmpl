@@ -1,8 +1,9 @@
 <tmpl_include header.tmpl>
 
 <form name="view_log_form" method="post" action="media.pl">
-<input name="rm" value="view_log" type="hidden">
-<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+<input type="hidden" name="rm" value="save_and_view_log">
+<input type="hidden" name="media_id" value="<tmpl_var escape=html media_id>">
+<input type="hidden" name="return_to_transform" value="1">
 </form>
 
 <p class="cram east">
@@ -13,25 +14,18 @@
 Transform Image
 </h2>
 
-<style type="text/css">
-#transform_controls .control {
-    padding: 2px;
-    margin: 2px;
-}
-
-#transform_controls .control:hover {
-    cursor: pointer;
-}
-</style>
-
 <h3><tmpl_var title escape=html></h3>
 
-<div id="transform_controls" style="margin-bottom: 5px">
-
-  <img class="control" src="/static/<tmpl_var krang_install_id>/images/rotate_left.png" onclick="do_rotate('l')" title="Rotate Left">
-  <img class="control" src="/static/<tmpl_var krang_install_id>/images/rotate_right.png" onclick="do_rotate('r')" title="Rotate Right">
-  <img class="control" src="/static/<tmpl_var krang_install_id>/images/flip_horizontal.png" onclick="do_flip('h')" title="Flip Horizontally">
-  <img class="control" src="/static/<tmpl_var krang_install_id>/images/flip_vertical.png" onclick="do_flip('v')" title="Flip Vertically">
+<div id="transform_controls">
+<form name="transform_controls_form">
+  <img class="control" src="/static/<tmpl_var krang_install_id>/images/rotate_left.png">
+  <input type="button" class="button" value="Rotate Left" onclick="do_rotate('l')">
+  <img class="control" src="/static/<tmpl_var krang_install_id>/images/rotate_right.png">
+  <input type="button" class="button" value="Rotate Right" onclick="do_rotate('r')">
+  <img class="control" src="/static/<tmpl_var krang_install_id>/images/flip_horizontal.png">
+  <input type="button" class="button" value="Flip Horizontal" onclick="do_flip('h')">
+  <img class="control" src="/static/<tmpl_var krang_install_id>/images/flip_vertical.png">
+  <input type="button" class="button" value="Flip Vertical" onclick="do_flip('v')">
 
   <div id="resize_track" class="slider_track">
     <div id="resize_handle" class="slider_handle"></div>
@@ -43,6 +37,14 @@ Transform Image
   <label for="control_height">Height</label>
   <input type="text" name="control_height" id="control_height" value="<tmpl_var original_height>" size="5" onblur="change_height(this.value)">
 
+</form>
+</div>
+
+<div class="panel"><form>
+<input value="Cancel" onclick="do_cancel()" type="button" class="west">
+<input value="Apply" onclick="do_transform_image()" type="button">
+<input value="Save" onclick="do_save_image_transform()" type="button">
+</form>
 </div>
 
 <div id="resize_image_container" style="width: 700px; max-height: 400px; overflow: auto">
@@ -189,13 +191,6 @@ change_height = function(new_height) {
     dont_change_dimensions = false;
 }
 </script>
-
-<div class="panel capped"><form>
-<input value="Cancel" onclick="do_cancel()" type="button" class="west">
-<input value="Apply" onclick="do_transform_image()" type="button">
-<input value="Save" onclick="do_save_image_transform()" type="button">
-</form>
-</div>
 
 <form name="cancel_form" action="media.pl" method="post">
 <input type="hidden" name="rm" value="cancel_image_transform">

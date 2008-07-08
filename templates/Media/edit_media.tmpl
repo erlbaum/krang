@@ -41,11 +41,13 @@ save_and_view_log = function() {
   Krang.Form.submit('edit_media_form', { rm: 'save_and_view_log' });
 }
 
+<tmpl_unless add_mode>
 <tmpl_if is_image>
 transform_image = function() {
   Krang.Form.submit('edit_media_form', { rm: 'transform_image' });
 }
 </tmpl_if>
+</tmpl_unless>
 
 <tmpl_if may_publish>
   publish_media = function() {
@@ -268,9 +270,9 @@ Content
 
 <div class="panel capped<tmpl_if add_mode> clearfix</tmpl_if>">
 <input value="Cancel" onclick="do_cancel()" type="button" class="west">
-<tmpl_if can_transform_image>
+<tmpl_unless add_mode><tmpl_if can_transform_image>
 <input value="Transform" onclick="transform_image()" type="button">
-</tmpl_if>
+</tmpl_if></tmpl_unless>
 <input value="Save &amp; Stay" onclick="do_save_stay()" type="button">
 <input value="Save" onclick="do_save()" type="button">
 <tmpl_if may_publish>
