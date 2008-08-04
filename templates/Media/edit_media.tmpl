@@ -113,8 +113,9 @@ Media
 </h2>
 
 <tmpl_unless add_mode>
+  <div>
   <tmpl_if thumbnail_path><div class="east">
-    <tmpl_if media_id><a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media',null)"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>" class="thumbnail"><tmpl_if media_id></a></tmpl_if>
+    <tmpl_if media_id><a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media',null)"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
   </div></tmpl_if>
 
   <table class="request" summary="">
@@ -154,6 +155,7 @@ Media
   </tbody>
 
   </table>
+  </div>
 </tmpl_unless>
 
 <table class="request" summary=""><!--:FIX(db2)-->
@@ -295,11 +297,6 @@ Content
   <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
   </form>
 </tmpl_unless>
-
-<!-- tooltips for media previews: -->
-<div id="tooltip"><img id="tooltip-img" src="/images/icon-loading-small.gif" /></div>
-<img id="tooltip-pointer" src="/images/tooltip_arrow.gif" />
-<!-- :tooltips for media previews -->
 
 <tmpl_include footer.tmpl>
 
