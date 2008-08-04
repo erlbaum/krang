@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Adding Fedora 9 as a build target. [Michael Peters]
+
+=item *
+
 Fixing bug in the scheduler daemon that resulted in lost MySQL connection
 errors. [Michael Peters]
 
