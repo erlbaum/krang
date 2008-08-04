@@ -29,7 +29,7 @@ database for this instance does not yet exist, it will be created.
 =cut
 
 use base 'Exporter';
-our @EXPORT_OK = qw(dbh forget_dbh);
+our @EXPORT_OK = qw(dbh forget_dbh forget_all_dbhs);
 
 use Carp qw(croak);
 use DBI;
@@ -133,9 +133,18 @@ sub forget_dbh () {
     delete $DBH{$name};
 }
 
+=item C<< forget_all_dbhs() >>
 
+Removes all cached DB handles. Normally C<forget_dbh()> is sufficient
+but in some cases you want to forget all possible DB handles that could be cached, when
+before forking when Addons and Element Libraries are in effect and could have done
+their own queries.
 
+=cut
 
+sub forget_all_dbhs () {
+    %DBH = ();
+}
 
 =back
 

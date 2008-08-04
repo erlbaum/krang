@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixing bug in the scheduler daemon that resulted in lost MySQL connection
+errors. [Michael Peters]
+
+=item *
+
 Fixed some minor bugs with the new Image Transformation. [Michael Peters]
 
 =item *
