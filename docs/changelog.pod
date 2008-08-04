@@ -2,7 +2,22 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.02 - IN DEVELOPMENT
+=head2 3.03 - In Development
+
+=over
+
+=item *
+
+Fixed some minor bugs with the new Image Transformation. [Michael Peters]
+
+=item *
+
+Upgraded our JSON modules to use the latest JSON::XS. This gives us speed and
+better handling of UTF8. [Michael Peters]
+
+=back
+
+=head2 3.02 - July 8th, 2008
 
 =over
 

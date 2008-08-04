@@ -46,7 +46,7 @@ use Krang::ClassLoader Conf => qw(
     SMTPServer
 );
 use CGI::Application::Plugin::RateLimit;
-use JSON qw(objToJson);
+use JSON::Any;
 
 sub setup {
     my $self = shift;
@@ -214,7 +214,7 @@ sub _do_login {
     }
     my $pref_cookie = $q->cookie(
         -name  => 'KRANG_PREFS',
-        -value => objToJson(\%prefs),
+        -value => JSON::Any->new->encode(\%prefs),
         -path  => '/'
     );
 
@@ -224,7 +224,7 @@ sub _do_login {
     );
     my $conf_cookie = $q->cookie(
         -name  => 'KRANG_CONFIG',
-        -value => objToJson(\%conf_info),
+        -value => JSON::Any->new->encode(\%conf_info),
 	-path  => '/'
     );
 

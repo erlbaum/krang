@@ -11,7 +11,7 @@ use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf => qw(PasswordChangeTime);
-use JSON qw(objToJson);
+use JSON::Any;
 
 =head1 NAME
 
@@ -138,7 +138,7 @@ sub update_prefs {
         }
         my $pref_cookie = $q->cookie(
             -name  => 'KRANG_PREFS',
-            -value => objToJson(\%prefs),
+            -value => JSON::Any->new->encode(\%prefs),
 	    -path  => '/'
         );
         $self->header_add(-cookie => [$pref_cookie->as_string]);
