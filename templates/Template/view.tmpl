@@ -21,7 +21,7 @@ view_log = function() {
 
 // Register CodePress's onload event:
 Krang.onload( function() { 
-  if (! Prototype.Browser.WebKit) {
+  if (! Prototype.Browser.WebKit && Krang.my_prefs().syntax_highlighting == 1) {
     CodePress.run();
   }
 } );

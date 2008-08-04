@@ -80,6 +80,10 @@ our %CONFIG = (
         type => 'scalar',
         row  => 'message_timeout',
     },
+    syntax_highlighting => {
+        type => 'scalar',
+        row  => 'syntax_highlighting',
+    },
 );
 
 =pod

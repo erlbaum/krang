@@ -469,6 +469,9 @@ Krang.Ajax.update = function(args) {
     itself) optionally sets the values of those elements and then submits 
     the form. 
 
+    Krang.Form.get_field(form, input);
+    Returns the HTML object representing the input field of the form.
+
     You can also specify a third parameter which contains other optional
     flags that can be passed to dictact the behaviour.
     These flags include:
@@ -507,13 +510,17 @@ Krang.Form = {
             });
         }
     },
-    get : function(form, input) {
+    get_field : function(form, input) {
         form = typeof form == 'object' ? form : document.forms[form];
         var err = 'Krang.Form.get(): ';
 
         if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
         if( !form.elements[input] ) alert(err + 'input "' + input + '" does not exist in form "' + form.name + '"!');
-        return form.elements[input].value;
+        return form.elements[input];
+    },
+    get : function(form, input) {
+        var field = _get_field(form, input);
+        return field.value;
     },
     submit : function(form, inputs, options) {
         form = typeof form == 'object' ? form : document.forms[form];

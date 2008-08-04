@@ -99,6 +99,15 @@ sub edit {
         )
     );
 
+    $template->param(
+        syntax_highlighting_radio => scalar $q->radio_group(
+            -name   => 'syntax_highlighting',
+            -values => [ 0, 1],
+            -labels => { 0 => 'No', 1 => 'Yes', },
+            -default => pkg('MyPref')->get('syntax_highlighting'),
+        )
+    );
+
     $template->param(password_spec => pkg('PasswordHandler')->_password_spec);
 
     return $template->output; 
@@ -116,7 +125,7 @@ sub update_prefs {
     my $prefs_changed = 0;
 
     # look at each pref
-    my @prefs = qw(search_page_size use_autocomplete message_timeout);
+    my @prefs = qw(search_page_size use_autocomplete message_timeout syntax_highlighting);
     for my $name (@prefs) {
         my $old = pkg('MyPref')->get($name);
         my $new = $q->param($name);
