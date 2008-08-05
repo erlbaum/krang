@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Enable the use of optgroups in the 'Add Element' dropdown. [Eric Folley]
+
+=item *
+
 Adding new user preference for turning CodePress on/off. [Michael Peters]
 
 =item *
