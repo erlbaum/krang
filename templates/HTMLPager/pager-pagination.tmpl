@@ -6,7 +6,7 @@
 Showing
 <tmpl_var start_row> &ndash; <tmpl_var end_row>
 of <tmpl_var found_count>
-Results 
+<tmpl_unless pagination_skip_results>Results</tmpl_unless> 
 
 <tmpl_if show_big_view>
   <a href="javascript:Krang.Pager.show_big_view(0)">Show <tmpl_var user_page_size> Per Page</a>
