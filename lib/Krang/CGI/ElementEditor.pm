@@ -297,19 +297,48 @@ sub element_edit {
     # whip up child element picker from available classes
     my @available =  $element->available_child_classes();
     if (@available) {
-        my @values;
+        my (@values, %labels);
         if (my @elements_in_order = $element->class->order_of_available_children) {
             # if the element class defines the order, use it 
             my %element_order;
-            for (my $i = 0; $i < @elements_in_order; ++$i) {
-                $element_order{$elements_in_order[$i]} = $i;
+            if (ref $elements_in_order[0] eq 'HASH') {
+                # build the menu with optgroups
+                for (my $i = 0; $i < @elements_in_order; ++$i) {
+                    %element_order = ();
+
+                    # get elements for this group
+                    my @element_names = @{$elements_in_order[$i]->{elements}};
+                    for (my $j = 0; $j < @element_names; ++$j) {
+                        $element_order{$element_names[$j]} = $j;
+                    }
+
+                    # we only care about available elements
+                    my @elements = grep { exists $element_order{$_->name} } @available;
+                    next unless @elements;
+                    
+                    my @sorted = sort { ($element_order{$a} || 0) <=> ($element_order{$b} || 0) } map { $_->name } @elements;
+                    my %group_labels = map { ($_->name, $_->display_name) } @elements;
+
+                    push @values, $query->optgroup(
+                        -name => $elements_in_order[$i]->{optgroup},
+                        -values => \@sorted,
+                        -labels => \%group_labels,
+                    );
+                }
+            } else {
+                # single list
+                for (my $i = 0; $i < @elements_in_order; ++$i) {
+                    $element_order{$elements_in_order[$i]} = $i;
+                }
+                @values = sort { ($element_order{$a} || 0) <=> ($element_order{$b} || 0) } map { $_->name } @available;
+                %labels = map { ($_->name, $_->display_name) } @available;
             }
-            @values = sort { ($element_order{$a} || 0) <=> ($element_order{$b} || 0) } map { $_->name } @available;
         } else {
             # otherwise sort by display name
             @values = map { $_->name } sort { $a->display_name cmp $b->display_name } @available;
+            %labels = map { ($_->name, $_->display_name) } @available;
         }
-        my %labels = map { ($_->name, $_->display_name) } @available;
+
         $template->param(child_select => 
                          $query->popup_menu(-name   => "child",
                                             -values => \@values,

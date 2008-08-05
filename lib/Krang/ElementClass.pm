@@ -1033,9 +1033,19 @@ sub thaw_data_xml {
 =item C<< $class->order_of_available_children() >>
 
 This optional method allows an element class to override Krang's default
-behavior of sorting available children (in the 'Add' dropdown) by
-display name. If present it should return an array containing
-the names of optional elements in the desired order.
+behavior of sorting available children (in the 'Add' dropdown) by display name.
+If present it can return an array containing the names of optional elements in
+the desired order, or an array of hashrefs to include optgroups in the menu.
+The hashrefs should have the following structure:
+
+  {
+    optgroup => 'My Group',
+    elements => [qw(
+      element1
+      element2
+      element3
+    )]
+  }
 
 =cut
 
