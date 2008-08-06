@@ -1640,6 +1640,7 @@ sub make_media_tmpl_data {
     } elsif( $m->is_image ) {
         $tmpl_data{is_image} = 1;
         # can we transform it with Imager?
+        $extension = lc($extension);
         $extension = 'jpeg' if $extension eq 'jpg'; # Imager doesn't recognize "jpg"
         $tmpl_data{can_transform_image} = $Imager::formats{$extension};
     }
