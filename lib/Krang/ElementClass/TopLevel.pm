@@ -484,6 +484,7 @@ sub publish_frontend_app_stub {
         $dumper->Terse(1);
         $dumper->Indent(0);
         $dumper->Sortkeys(1);
+        $dumper->Maxdepth(0);
         $params_string = "PARAMS => " . $dumper->Dump;
     }
 
