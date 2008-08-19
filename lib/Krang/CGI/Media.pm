@@ -1541,26 +1541,17 @@ sub update_media {
 
             next;
         }
+
         if ($mf eq 'text_content') {
+            my $text = $q->param('text_content') || next;
 
             # Upload takes precedence over inline edit
             next if $q->param('media_file');
 
-            # Handle direct text-file editing
-            next unless $q->param('text_content');
-            my $text = $q->param('text_content');
-
-            my $media_file = $q->param('title');
-            debug('MEDIA TITLE: ' . $media_file . "\n\n");
-
-            # Coerce a reasonable name from what we get
-            my @filename_parts = split(/[\/\\\:]/, $media_file);
-            my $filename = $filename_parts[-1];
-
             # Put the file in the Media object
             $m->store_temp_file(
-                content  => $text,
-                filename => $filename,
+                content   => $text,
+                filename  => $m->filename,
             );
 
             next;
