@@ -98,6 +98,7 @@ sub show {
 			     };
 	}
 	$template->param(may_move => 1);
+    $template->param(desk_loop => \@desk_loop);
     }
 
     # permissions
@@ -329,7 +330,7 @@ sub _do_move {
     my $desk_name = $desk ? $desk->name : '';
 
     eval { $obj->move_to_desk($desk_id); };
-
+    
     if ($@ and ref($@)) {
         if($@->isa('Krang::Story::CheckedOut')) {
             add_alert(
