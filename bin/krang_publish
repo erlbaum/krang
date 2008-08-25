@@ -175,17 +175,19 @@ explanation of what is going on.
 
 =cut
 
-
 BEGIN {
+
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
-    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
-    unshift @INC, $lib, "$lib/".$Config{archname};
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -203,7 +205,6 @@ $@
 END
 }
 
-
 # Krang Libs
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Conf => qw(KrangRoot ElementLibrary SSLEngine);
@@ -219,7 +220,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 # Setup - grabbing all the command-line options.
 
-my %id  = map { ($_, [])} qw(story media category below_category site);
+my %id = map { ($_, []) } qw(story media category below_category site);
 
 my ($help, $man, $everything, $verbose, $all_instances) = (0, 0, 0, 0, 0);
 my $limited_to_site     = 0;
@@ -236,45 +237,46 @@ my $not_on_desk         = 0;
 @ARGV = map { $_ =~ s/\_/\-/g; $_ } @ARGV;
 
 # then process options
-pod2usage(2) unless
-  GetOptions('help'                => \$help,
-             'man'                 => \$man,
+pod2usage(2)
+  unless GetOptions(
+          'help' => \$help,
+          'man'  => \$man,
 
-             'verbose'             => \$verbose,
-             'everything'          => \$everything,
-             'all-instances'       => \$all_instances,
-             'limited-to-site'     => \$limited_to_site,
-             'limited-to-category' => \$limited_to_category,
-             'republish-only'      => \$republish_only,
-	     'maintain-versions'   => \$maintain_versions,
-             'not-on-desk'         => \$not_on_desk,
-             'version-check'       => \$version_check,
-             'to-preview'          => \$to_preview,
+          'verbose'             => \$verbose,
+          'everything'          => \$everything,
+          'all-instances'       => \$all_instances,
+          'limited-to-site'     => \$limited_to_site,
+          'limited-to-category' => \$limited_to_category,
+          'republish-only'      => \$republish_only,
+          'maintain-versions'   => \$maintain_versions,
+          'not-on-desk'         => \$not_on_desk,
+          'version-check'       => \$version_check,
+          'to-preview'          => \$to_preview,
 
-             'increment=i'       => \$increment,
+          'increment=i' => \$increment,
 
-	     # handle --story-id, --site-id, etc.
-             (map { ("$_-id=s", $id{$_}) } keys %id)
+          # handle --story-id, --site-id, etc.
+          (map { ("$_-id=s", $id{$_}) } keys %id)
 
-            );
+  );
 
-pod2usage(1)             if $help;
+pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
   if @ARGV;
 
-if( $all_instances && ! $everything ) {
+if ($all_instances && !$everything) {
     warn "Can't use --all-instances without also using --everything!\n";
     exit(1);
 }
 
-if ( $maintain_versions && $to_preview ) {
+if ($maintain_versions && $to_preview) {
     warn "Can't use --maintain-versions and --to-preview!\n";
-    exit (1);
+    exit(1);
 }
 
-if ( $maintain_versions && !$republish_only ) {
+if ($maintain_versions && !$republish_only) {
     warn "Can't use --maintain-versions without also using --republish-only!\n";
     exit(1);
 }
@@ -285,34 +287,34 @@ Krang::Cache::start();
 # figure out how these command-line options affect find criteria.
 my %find_options = (limit => $increment, offset => 0);
 my %publish_args = (
-                    callback            => \&_progress_callback,
-                    skip_callback       => \&_skip_callback,
-                    version_check       => $version_check,
-                    remember_asset_list => 1
-                   );
+    callback            => \&_progress_callback,
+    skip_callback       => \&_skip_callback,
+    version_check       => $version_check,
+    remember_asset_list => 1
+);
 
 if ($republish_only) {
-    $find_options{published} = 1;
+    $find_options{published}         = 1;
     $publish_args{maintain_versions} = $maintain_versions;
 }
 
-if($not_on_desk) {
+if ($not_on_desk) {
     $find_options{desk_id} = undef;
 }
-
 
 my $arg_string = "Publishing content with the following options:\n$0";
 
 my $has_options = 0;
 
-$arg_string .= " --to-preview" if $to_preview;
-$arg_string .= " --republish-only" if $republish_only;
+$arg_string .= " --to-preview"        if $to_preview;
+$arg_string .= " --republish-only"    if $republish_only;
 $arg_string .= " --maintain-versions" if $maintain_versions;
-$arg_string .= " --not-on-desk" if $not_on_desk;
-$arg_string .= " --version-check" if $version_check;
-$arg_string .= " --all-instances" if $all_instances;
+$arg_string .= " --not-on-desk"       if $not_on_desk;
+$arg_string .= " --version-check"     if $version_check;
+$arg_string .= " --all-instances"     if $all_instances;
 
 if ($everything) {
+
     # removes checking for related stories/media.
     $publish_args{disable_related_assets} = 1;
 
@@ -320,7 +322,8 @@ if ($everything) {
 
     $has_options = 1;
 } else {
-    # NOTE: --site_id and --category-id options are mutually 
+
+    # NOTE: --site_id and --category-id options are mutually
     #       exclusive from --story-id and --media-id.
     if (@{$id{site}} || @{$id{category}} || @{$id{below_category}}) {
         if (@{$id{site}}) {
@@ -339,12 +342,13 @@ if ($everything) {
             $has_options = 1;
         }
     } elsif (@{$id{story}} || @{$id{media}}) {
+
         # you can specify both --story-id and --media-id
         # arguments simultaneously.
         if (@{$id{story}}) {
             $arg_string .= " --story-id $id{story}[0]";
             if ((@{$id{story}} == 1 && $id{story}[0] =~ /,/)) {
-                $id{story} = [ split /,/, $id{story}[0] ];
+                $id{story} = [split /,/, $id{story}[0]];
             }
             $find_options{story_id} = $id{story};
             $has_options = 1;
@@ -353,7 +357,7 @@ if ($everything) {
         if (@{$id{media}}) {
             $arg_string .= " --media-id $id{media}[0]";
             if ((@{$id{media}} == 1 && $id{media}[0] =~ /,/)) {
-                $id{media} = [ split /,/, $id{media}[0] ];
+                $id{media} = [split /,/, $id{media}[0]];
             }
             $find_options{media_id} = $id{media};
             $has_options = 1;
@@ -379,22 +383,21 @@ my $total_storytime  = 0;
 my $total_storycount = 0;
 my $total_mediatime  = 0;
 my $total_mediacount = 0;
-my %skipcount = ();
+my %skipcount        = ();
 
 my @assettime;
 my $storycount = 0;
 my $mediacount = 0;
 
-
 # if the --everything option was specified, publish all media first,
 # then stories.
 if ($everything) {
     my @instances;
-    if( $all_instances ) {
+    if ($all_instances) {
         @instances = pkg('Conf')->instances();
     } else {
-        @instances = ($ENV{KRANG_INSTANCE} || 
-                      (pkg('Conf')->instances == 1 && (pkg('Conf')->instances)[0]));
+        @instances =
+          ($ENV{KRANG_INSTANCE} || (pkg('Conf')->instances == 1 && (pkg('Conf')->instances)[0]));
     }
     foreach my $instance (@instances) {
         print "INSTANCE $instance\n" if @instances > 1;
@@ -404,12 +407,12 @@ if ($everything) {
     }
 
 } else {
-    if (
-        $find_options{site_id}           ||
-        $find_options{category_id}       ||
-        $find_options{below_category_id} ||
-        $find_options{media_id}
-       ) {
+    if (   $find_options{site_id}
+        || $find_options{category_id}
+        || $find_options{below_category_id}
+        || $find_options{media_id})
+    {
+
         # publish media first - remove story_id arg
         my $story_id;
 
@@ -427,25 +430,33 @@ if ($everything) {
         $find_options{story_id} = $story_id if $story_id;
     }
 
-    if (
-        $find_options{site_id}           ||
-        $find_options{category_id}       ||
-        $find_options{below_category_id} ||
-        $find_options{story_id}
-       ) {
+    if (   $find_options{site_id}
+        || $find_options{category_id}
+        || $find_options{below_category_id}
+        || $find_options{story_id})
+    {
         publish_stories(\%find_options, \%publish_args);
     }
 }
 
-print "\n\nSTATUS: Publish completed.\n======================================================================\n";
+print
+  "\n\nSTATUS: Publish completed.\n======================================================================\n";
 print "$arg_string\n\nResults:\n";
 print "\ntype\t\tnumber published\ttime(seconds)\tseconds/asset\n";
 print "----------------------------------------------------------------------\n";
-printf("stories\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_storycount, $total_storytime, (($total_storytime > 0) ? ($total_storytime/$total_storycount) : 0));
-printf("media\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_mediacount, $total_mediatime, (($total_mediatime > 0) ? ($total_mediatime/$total_mediacount) : 0));
+printf("stories\t\t%i\t\t\t%.02f\t\t%.02f\n",
+    $total_storycount, $total_storytime,
+    (($total_storytime > 0) ? ($total_storytime / $total_storycount) : 0));
+printf("media\t\t%i\t\t\t%.02f\t\t%.02f\n",
+    $total_mediacount, $total_mediatime,
+    (($total_mediatime > 0) ? ($total_mediatime / $total_mediacount) : 0));
 
 print "----------------------------------------------------------------------\n";
-printf("TOTAL:\t\t%i assets\t\t%.02f seconds\n\n", ($total_storycount+$total_mediacount), $increment_time);
+printf(
+    "TOTAL:\t\t%i assets\t\t%.02f seconds\n\n",
+    ($total_storycount + $total_mediacount),
+    $increment_time
+);
 
 if (keys %skipcount) {
     my $total_errors = 0;
@@ -468,13 +479,10 @@ printf("CACHE HITS:\t\t%d\n", $hits)
 printf("CACHE FILL AT END:\t\t%d\n\n", $fill)
   if $verbose and Krang::Cache::active();
 
-
-
-
 sub publish_media {
 
     my ($global_find_options, $publish_args) = @_;
-    my $find_options = { %$global_find_options };
+    my $find_options = {%$global_find_options};
 
     # make sure we're starting at the beginning.
     $find_options->{offset} = 0;
@@ -482,25 +490,24 @@ sub publish_media {
     # make sure we don't have 'desk_id'
     delete $find_options->{desk_id};
 
-
     while (my @media = pkg('Media')->find(%{$find_options})) {
         my @starttime = gettimeofday();
         @assettime = @starttime;
 
         eval {
-            if ($to_preview) {
+            if ($to_preview)
+            {
                 foreach my $media (@media) {
                     $publisher->preview_media(media => $media, %$publish_args);
                 }
             } else {
-                $publisher->publish_media(media => \@media, %{$publish_args}); 
+                $publisher->publish_media(media => \@media, %{$publish_args});
             }
         };
         if (my $err = $@) {
             if (ref $err && $err->isa('Krang::Publisher::FileWriteError')) {
                 print STDOUT sprintf("ERROR:\n%s\:\nsource='%s'\ndestination='%s'\nerror='%s'\n",
-                                     $err->{message}, $err->{source}, $err->{destination},
-                                     $err->{system_error});
+                    $err->{message}, $err->{source}, $err->{destination}, $err->{system_error});
                 croak;
             } else {
                 croak($err);
@@ -509,15 +516,16 @@ sub publish_media {
 
         my $endtime = tv_interval(\@starttime);
 
-        print sprintf("STATUS: media %i - %i published in %.02f seconds.\n",
-                      ($find_options->{offset}+1),
-                      ($find_options->{offset} + @media),
-                      $endtime);
+        print sprintf(
+            "STATUS: media %i - %i published in %.02f seconds.\n",
+            ($find_options->{offset} + 1),
+            ($find_options->{offset} + @media), $endtime
+        );
 
-        # because Krang::Publisher does not have callback implemented 
+        # because Krang::Publisher does not have callback implemented
         # for preview_media, need to keep track of media preview time
         # and # of media previewed here...
-        $mediacount += @media if $to_preview;
+        $mediacount      += @media   if $to_preview;
         $total_mediatime += $endtime if $to_preview;
 
         $increment_time  += $endtime;
@@ -536,7 +544,6 @@ sub publish_media {
 
 }
 
-
 sub publish_stories {
 
     my ($find_options, $publish_args) = @_;
@@ -551,7 +558,7 @@ sub publish_stories {
 
         if (@stories == $increment) {
             $publish_args->{keep_asset_list} = 1;
-        } else { 
+        } else {
             $publish_args->{keep_asset_list} = 0;
         }
 
@@ -559,7 +566,8 @@ sub publish_stories {
         @assettime = @starttime;
 
         eval {
-            if ($to_preview) {
+            if ($to_preview)
+            {
                 foreach my $story (@stories) {
                     $publisher->preview_story(story => $story, %$publish_args);
                 }
@@ -570,15 +578,20 @@ sub publish_stories {
         };
 
         if (my $err = $@) {
+
             # report something, anything!
             print STDERR sprintf("Publish failed for unknown reason: '%s'\n", $err);
             exit;
         }
 
-
         my $endtime = tv_interval(\@starttime);
 
-        print sprintf("STATUS: Stories %i - %i (%i stories, %i media) published in %.02f seconds.\n", ($find_options->{offset}+1), ($find_options->{offset} + @stories), $storycount, $mediacount, $endtime);
+        print sprintf(
+            "STATUS: Stories %i - %i (%i stories, %i media) published in %.02f seconds.\n",
+            ($find_options->{offset} + 1),
+            ($find_options->{offset} + @stories),
+            $storycount, $mediacount, $endtime
+        );
 
         # add everything up.
         $increment_time  += $endtime;
@@ -601,7 +614,6 @@ sub publish_stories {
 
 }
 
-
 sub _skip_callback {
     my %args = @_;
 
@@ -609,58 +621,76 @@ sub _skip_callback {
     my $error  = $args{error};
 
     my $id   = ($object->isa('Krang::Story')) ? $object->story_id : $object->media_id;
-    my $type = ($object->isa('Krang::Story')) ? 'stories' : 'media';
-
+    my $type = ($object->isa('Krang::Story')) ? 'stories'         : 'media';
 
     if ($error eq 'checked_out') {
-        print sprintf("WARNING: %s ID=%i was not published - it is currently checked out by User ID=%i\n",
-                      (ref $object), $id, $object->checked_out_by);
+        print sprintf(
+            "WARNING: %s ID=%i was not published - it is currently checked out by User ID=%i\n",
+            (ref $object),
+            $id, $object->checked_out_by
+        );
 
         $skipcount{$type}{CheckedOut}++;
         return;
     }
 
     if (ref $error) {
+
         # if there is an error, figure out what it is, create the
         # appropriate message and return.
         if ($error->isa('Krang::ElementClass::TemplateNotFound')) {
-            print sprintf("ERROR:\t%s ID=%i not published - missing template:\n\tcategory:\t'%s'\n\ttemplate:\t'%s'\n",
-                          (ref $object), $id, $error->category_url, $error->template_name);
+            print sprintf(
+                "ERROR:\t%s ID=%i not published - missing template:\n\tcategory:\t'%s'\n\ttemplate:\t'%s'\n",
+                (ref $object),
+                $id, $error->category_url, $error->template_name
+            );
             $skipcount{$type}{TemplateNotFound}++;
             return;
         } elsif ($error->isa('Krang::ElementClass::TemplateParseError')) {
-            print sprintf("ERROR:\t%s ID=%i not published - template error:\n\ttemplate:\t'%s'\n\tcategory:\t'%s'\n\tparse error:\t'%s'\n",
-                          (ref $object), $id, $error->template_name, $error->category_url, $error->message);
+            print sprintf(
+                "ERROR:\t%s ID=%i not published - template error:\n\ttemplate:\t'%s'\n\tcategory:\t'%s'\n\tparse error:\t'%s'\n",
+                (ref $object),
+                $id, $error->template_name, $error->category_url, $error->message
+            );
             $skipcount{$type}{TemplateParseError}++;
             return;
         } elsif ($error->isa('Krang::Publisher::FileWriteError')) {
-            print sprintf("ERROR: %s ID=%i not published to '%s' - output error:\n\terror:\t'%s'\n",
-                          (ref $object), $id, $error->destination, $error->system_error);
+            print sprintf(
+                "ERROR: %s ID=%i not published to '%s' - output error:\n\terror:\t'%s'\n",
+                (ref $object),
+                $id, $error->destination, $error->system_error
+            );
             $skipcount{$type}{FileWriteError}++;
             return;
         } elsif ($error->isa('Krang::Publisher::ZeroSizeOutput')) {
-            print sprintf("ERROR: %s ID=%i not published to '%s' - the output is zero-size",
-                          (ref $object), $error->story_id, $error->category_url);
+            print sprintf(
+                "ERROR: %s ID=%i not published to '%s' - the output is zero-size",
+                (ref $object),
+                $error->story_id, $error->category_url
+            );
             $skipcount{$type}{ZeroSizeOutput}++;
             return;
         }
 
-
         # no other error object handled right now.
-        print sprintf("WARNING: %s ID=%i was not published for error='%s'\n",
-                      (ref $object), $id, ref $error);
+        print sprintf(
+            "WARNING: %s ID=%i was not published for error='%s'\n",
+            (ref $object),
+            $id, ref $error
+        );
         $skipcount{$type}{UnknownError}++;
         return;
     }
 
     # unknown error.
-    print sprintf("WARNING: %s ID=%i was not published for unknown error='%s'\n",
-                  (ref $object), $id, $error);
+    print sprintf(
+        "WARNING: %s ID=%i was not published for unknown error='%s'\n",
+        (ref $object),
+        $id, $error
+    );
 
     $skipcount{$type}{UnknownError}++;
 }
-
-
 
 # update the progress bar during preview or publish
 sub _progress_callback {
@@ -668,15 +698,16 @@ sub _progress_callback {
     my ($object, $counter, $total) = @arg{qw(object counter total)};
     my $string;
 
-
     my $endtime = tv_interval(\@assettime);
 
     if ($object->isa('Krang::Story')) {
-        $string .= sprintf("Published story_id=%i (time=%.02f url=%s)", $object->story_id, $endtime, $object->url);
+        $string .= sprintf("Published story_id=%i (time=%.02f url=%s)",
+            $object->story_id, $endtime, $object->url);
         $storycount++;
         $total_storytime += $endtime;
     } elsif ($object->isa('Krang::Media')) {
-        $string .= sprintf("Published media_id=%i (time=%.02f url=%s)", $object->media_id, $endtime, $object->url);
+        $string .= sprintf("Published media_id=%i (time=%.02f url=%s)",
+            $object->media_id, $endtime, $object->url);
         $mediacount++;
         $total_mediatime += $endtime;
     } else {
