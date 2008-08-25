@@ -8,6 +8,22 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<forget_all_dbhs()> method to C<Krang::DB> to help in the situation
+where you fork a process and don't want the child to use the parent's handles.
+[Michael Peters] 
+
+=item *
+
+Added C<no_cache> argument to C<Krang::DB::dbh()> to by-pass the cache.
+[Michael Peters]
+
+=item *
+
+Fixing bug in L<Krang::Schedule> and L<Krang::Schedule::Daemon> which resulted
+in MySQL Lost Connection errors on really busy systems. [Michael Peters]
+
+=item *
+
 Fixed bug in Bulk Upload of media objects where Unix shell meta-characters
 in file names caused problems when unpacking. [Michael Peters]
 
