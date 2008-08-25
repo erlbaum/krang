@@ -8,6 +8,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in Bulk Upload of media objects where Unix shell meta-characters
+in file names caused problems when unpacking. [Michael Peters]
+
+=item *
+
+Added C<--story-class> argument to F<bin/krang_publish>. [Michael Peters]
+
+=item *
+
 Enable the use of optgroups in the 'Add Element' dropdown. [Eric Folley]
 
 =item *
