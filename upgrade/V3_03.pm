@@ -22,8 +22,8 @@ sub per_instance {
     return if $args{no_db};
     my $dbh = dbh();
 
-    # add 'retired' and 'trashed' columns to STORY
-    $dbh->do('INSERT INTO pref (id, value) VALUES ("syntax_highlighting", "1"');
+    # add syntax_highlighting option to preferences
+    $dbh->do('INSERT INTO pref (id, value) VALUES ("syntax_highlighting", "1")');
 }
 
 1;
