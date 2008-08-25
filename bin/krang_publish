@@ -232,33 +232,35 @@ my $increment           = 100;
 my $media_only          = 0;
 my $to_preview          = 0;
 my $not_on_desk         = 0;
+my @story_class         = ();
 
 # for backwards compatibility, convert all underscores in options to hyphens
-@ARGV = map { $_ =~ s/\_/\-/g; $_ } @ARGV;
+for(0..$#ARGV) {
+    if( $ARGV[$_] =~ /^--\S+/ && $ARGV[$_] =~ /_/) {
+        $ARGV[$_] =~ s/_/-/g;
+    }
+}
 
 # then process options
-pod2usage(2)
-  unless GetOptions(
-          'help' => \$help,
-          'man'  => \$man,
+GetOptions(
+    'help'                => \$help,
+    'man'                 => \$man,
+    'verbose'             => \$verbose,
+    'everything'          => \$everything,
+    'all-instances'       => \$all_instances,
+    'limited-to-site'     => \$limited_to_site,
+    'limited-to-category' => \$limited_to_category,
+    'republish-only'      => \$republish_only,
+    'maintain-versions'   => \$maintain_versions,
+    'not-on-desk'         => \$not_on_desk,
+    'version-check'       => \$version_check,
+    'to-preview'          => \$to_preview,
+    'increment=i'         => \$increment,
+    'story-class=s'       => \@story_class,
 
-          'verbose'             => \$verbose,
-          'everything'          => \$everything,
-          'all-instances'       => \$all_instances,
-          'limited-to-site'     => \$limited_to_site,
-          'limited-to-category' => \$limited_to_category,
-          'republish-only'      => \$republish_only,
-          'maintain-versions'   => \$maintain_versions,
-          'not-on-desk'         => \$not_on_desk,
-          'version-check'       => \$version_check,
-          'to-preview'          => \$to_preview,
-
-          'increment=i' => \$increment,
-
-          # handle --story-id, --site-id, etc.
-          (map { ("$_-id=s", $id{$_}) } keys %id)
-
-  );
+    # handle --story-id, --site-id, etc.
+    (map { ("$_-id=s", $id{$_}) } keys %id)
+) || pod2usage(2);
 
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
@@ -363,6 +365,13 @@ if ($everything) {
             $has_options = 1;
         }
     }
+
+    if( @story_class ) {
+        $arg_string .= " --story-class $_" foreach @story_class;
+        $find_options{class} = \@story_class;
+        $has_options = 1;
+    }
+
 }
 
 $arg_string .= " (SSL enabled)" if SSLEngine and SSLEngine eq 'on' and $to_preview;
@@ -414,28 +423,21 @@ if ($everything) {
     {
 
         # publish media first - remove story_id arg
-        my $story_id;
-
-        if (exists($find_options{story_id})) {
-            $story_id = $find_options{story_id};
-            delete $find_options{story_id};
-        }
-
-        publish_media(\%find_options, \%publish_args);
-
-        # delete media_id from find_options.
-        delete $find_options{media_id};
-
-        # restore story_id if needed.
-        $find_options{story_id} = $story_id if $story_id;
+        my %media_find_options = %find_options;
+        delete $media_find_options{story_id};
+        delete $media_find_options{class};
+        publish_media(\%media_find_options, \%publish_args);
     }
 
     if (   $find_options{site_id}
         || $find_options{category_id}
         || $find_options{below_category_id}
-        || $find_options{story_id})
+        || $find_options{story_id}
+        || $find_options{class})
     {
-        publish_stories(\%find_options, \%publish_args);
+        my %story_find_options = %find_options;
+        delete $story_find_options{media_id};
+        publish_stories(\%story_find_options, \%publish_args);
     }
 }
 
@@ -545,7 +547,6 @@ sub publish_media {
 }
 
 sub publish_stories {
-
     my ($find_options, $publish_args) = @_;
 
     # make sure offset is reset
