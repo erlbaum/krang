@@ -449,7 +449,7 @@ sub reorder_children {
       if grep { ++$seen{$_} != 1 } @_;
 
     # check size
-    croak("reorder_children called with wrong sized list, or list containing ")
+    croak("reorder_children called with wrong sized list")
       unless @$children == @_;
 
     # normalize to a list of objects, in requested order
