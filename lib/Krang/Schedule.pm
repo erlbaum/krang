@@ -954,7 +954,7 @@ sub find {
         $query .= " LIMIT $offset, -1";
     }
 
-    my $dbh = dbh();
+    my $dbh = dbh(no_cache => 1);
     my $sth = $dbh->prepare($query);
 
     debug(__PACKAGE__ . "->find() SQL: $query");
