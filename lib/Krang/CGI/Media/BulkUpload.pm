@@ -162,7 +162,11 @@ sub upload {
         # find all files and dirs in archive 
         File::Find::find(\&build_image_list, $opened_root);    
 
-        add_message('media_in_root'), rmtree($opened_root),  return $self->choose() if $media_in_root;
+        if( $media_in_root ) {
+            add_alert('media_in_root');
+            rmtree($opened_root);
+            return $self->choose();
+        }
 
         # check to see all dirs in archive match Krang site/cats,
         # return if not
