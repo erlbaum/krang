@@ -519,7 +519,7 @@ Krang.Form = {
         return form.elements[input];
     },
     get : function(form, input) {
-        var field = _get_field(form, input);
+        var field = Krang.Form.get_field(form, input);
         return field.value;
     },
     submit : function(form, inputs, options) {
