@@ -101,6 +101,7 @@ use Exception::Class (
     'Krang::Category::NoEditAccess' => {fields => [qw(category_id category_url)]},
     'Krang::Category::RootDeletion',
     'Krang::Category::CopyAssetConflict',
+    'Krang::Category::CantCopyParentToChild',
 );
 
 use File::Spec;
@@ -1457,44 +1458,58 @@ done by copy().  can_copy_test() should always be called before
 copy(), and it should be called with the same argument and the same
 options to make sure the copy will succeed.
 
-Throws a Krang::Story::CantCheckOut exception if the URL of a
-would-be-created category is occupied by some story and we cannot
-check out this story (if we can, we can turn the story into a category
-index, but this is done by copy()).
-
-B<Options>
-
-The following three options might trigger a
-Krang::Category::NoEditAccess exception if an asset's destination
-category already exists and we don't have edit access to this
-category.  This can only happen when copying to non-leaf-categories.
-
-If one of the would-be-created assets already exists, a
-Krang::Category::CopyAssetConflict is thrown, unless the option
-'overwrite' is specified.
+The following exceptions can occur:
 
 =over
 
-=item story => 1
+=item * Krang::Story::CantCheckOut
 
-Also test wether copying stories living below $category and its children
+Throwns if the URL of a would-be-created category is occupied by some
+story and we cannot check out this story (if we can, we can turn the
+story into a category index, but this is done by copy()).
+
+=item * Krang::Category::NoEditAccess
+
+Can be thrown if an asset's destination category already exists and
+we don't have edit access to this category. This can only happen when
+copying to non-leaf-categories.
+
+=item * Krang::Category::CopyAssetConflict
+
+Thrown if one of the would-be-created assets already exists unless the
+option 'overwrite' is specified.
+
+=item * Krang::Category::CantCopyParentToChild
+
+Thrown if the copy will result in infinit recursion. This would happen
+if you tried to copy a parent directory into it's a child.
+
+=back
+
+B<Options>
+
+=over
+
+=item story
+
+Also test wether copying stories living below C<$category> and its children
 would succeed.
 
-=item media => 1
+=item media
 
-Also test wether copying media living below $category and its children
+Also test wether copying media living below C<$category> and its children
 would succeed.
 
-=item template => 1
+=item template
 
-Also test wether copying templates living below $category and its children
+Also test wether copying templates living below C<$category> and its children
 would succeed.
 
-=item overwrite => 1
+=item overwrite
 
 This option modifies the test behavior of this method.  No
-Krang::Category::CopyAssetConflict will be thrown even if the URL of a
-would-be-created asset is already occupied by some other asset living
+C<Krang::Category::CopyAssetConflict> will be thrown even if the URL of
+a would-be-created asset is already occupied by some other asset living
 below the destination category.
 
 =back
@@ -1509,12 +1524,18 @@ sub can_copy_test {
     my $dst_cat     = $args{dst_category};
     my $dst_cat_url = $dst_cat->url;
 
-    #
-    # First verify that we can create the category subtree below destination category
-    #
     my @src_cat_descendants = $self->descendants;
     my %dst_cat_urls        = ();
 
+    # verify that we are not copying ourself to one of our children
+    if(grep { $dst_cat->category_id == $_->category_id } @src_cat_descendants) {
+        Krang::Category::CantCopyParentToChild->throw(message => "Can't copy category #"
+              . $self->category_id
+              . " to child category "
+              . $dst_cat->category_id,);
+    }
+
+    # verify that we can create the category subtree below destination category
     # build URL collection of would-be-created categories below destination category
     for my $descendant (@src_cat_descendants) {
 

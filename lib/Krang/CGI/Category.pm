@@ -130,7 +130,7 @@ sub find_row_handler {
     my ($self, $row, $category, $pager) = @_;
     $row->{category_id} = $category->category_id();
     $row->{url} = format_url(url => $category->url(), length => 60);
-    unless ($category->may_edit) {
+    unless($category->may_edit) {
         $row->{command_column}  = "&nbsp;";
         $row->{checkbox_column} = "&nbsp;";
     }
@@ -756,6 +756,15 @@ sub execute_copy {
             }
         } elsif ($@->isa('Krang::Category::CopyAssetConflict')) {
             $query->param(confirm_copy => 1);
+            return $self->prepare_copy;
+        } elsif( $@->isa('Krang::Category::InfiniteRecursion')) {
+            add_alert(
+                'cant_copy_parent_to_child',
+                parent_id => $src_cat->category_id,
+                parent_url => $src_cat->url,
+                child_id  => $dst_cat->category_id,
+                child_url => $dst_cat->url,
+            );
             return $self->prepare_copy;
         } else {
             croak("Unknow error: " . $@);
