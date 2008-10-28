@@ -1716,9 +1716,10 @@ or bin/ scripts make calls to C<find()>!
 # THREE) whereas "ONE TWO" THREE returns (ONE TWO, THREE)
 sub _search_text_to_phrases {
     my ($pkg, $text) = @_;
-    my @phrases;
+    return () unless defined $text;
 
     # first add any quoted text as multi-word phrase(s)
+    my @phrases;
     while ($text =~ s/([\'\"])([^\1]*?)\1//) {
         my $phrase = $2;
         $phrase =~ s/\s+/ /;
