@@ -2338,17 +2338,24 @@ sub deserialize_xml {
     );
 
     # deserialize elements for update
-    my $element = pkg('Element')->deserialize_xml(
-        data      => $data->{element}[0],
-        set       => $set,
-        no_update => $no_update,
-        object    => $media
-    );
+    if ($data->{element}[0]) {
+        my $element = pkg('Element')->deserialize_xml(
+            data      => $data->{element}[0],
+            set       => $set,
+            no_update => $no_update,
+            object    => $media
+        );
 
-    # remove existing element tree
-    $media->element->delete(skip_delete_hook => 1) if ($media->element);
-    $media->{element}    = $element;
-    $media->{element_id} = undef;
+        # remove existing element tree
+        $media->element->delete(skip_delete_hook => 1) if ($media->element);
+        $media->{element}    = $element;
+        $media->{element_id} = undef;
+    } else {
+        $media->{element} = pkg('Element')->new(
+            class  => pkg('ElementClass::Media')->element_class_name,
+            object => $media
+        );
+    }
 
     # save again; this time element will be saved and element_id will be set
     $media->save;
