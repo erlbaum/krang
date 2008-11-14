@@ -34,7 +34,7 @@
                 </xs:sequence>
                 </xs:complexType>
                 </xs:element>
-                <xs:element name="inactive" type="xs:boolean" minOccurs="0"/>
+                <xs:element name="inactive" type="xs:boolean"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
