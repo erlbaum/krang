@@ -434,15 +434,15 @@ element just before adding a new child. It is passed the elementclass
 (not its name) the new child would normally belong to, the data it
 would receive and the parent element. Based on these parameters the
 name of a sibling class may be calculated, and the data modified. If
-either of the arguments has been modified, this method must return a
-list containing the (new) class (or its name) and the (modified)
-data.
+this method is overridden, it must return a list containing the
+new class and the new data, whether or not they match the old values.
+The default implementation returns them unchanged.
 
 =cut
 
 sub bulk_save_change {
     my ($self, %arg) = @_;
-    return;
+    return ($arg{class}, $arg{data});
 }
 
 sub view_data {

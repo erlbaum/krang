@@ -140,7 +140,6 @@ sub tidy_up_after_treebuilder {
 This method does:
 
  remove tags w/o content inside
- remove adjacent closing/opening tags while preserving whitespace in between
  remove excess whitespace
  remove leading whitespace
  remove trailing whitespace
@@ -155,13 +154,14 @@ to be cleaned.
 sub remove_junk {
     my ($self, $html) = @_;
 
-    $$html =~ s/<([^>]+)>\s*<\/\1>//gs;        # remove tags w/o content inside
-    $$html =~ s/<\/([^>]+)>(\s*)<\1>/$2/gs;    # remove adjacent closing/opening tags
-    $$html =~ s/(\s|&nbsp;)+/ /gs;             # remove excess whitespace
-    $$html =~ s/^\s+//sg;                      # remove leading whitespace
-    $$html =~ s/\s+$//sg;                      # remove trailing whitespace
-    $$html =~ s/^(<\/?br[^>]*>)+//gsi;         # remove leading BR tags
-    $$html =~ s/(<\/?br[^>]*>)+$//gsi;         # remove trailing BR tags
+    # remove tags w/o content inside
+    1 while $$html =~ s/<([^>]+)><\/\1>//gs;
+
+    $$html =~ s/(\s|&nbsp;)+/ /gs;        # remove excess whitespace
+    $$html =~ s/^\s+//sg;                 # remove leading whitespace
+    $$html =~ s/\s+$//sg;                 # remove trailing whitespace
+    $$html =~ s/^(<\/?br[^>]*>)+//gsi;    # remove leading BR tags
+    $$html =~ s/(<\/?br[^>]*>)+$//gsi;    # remove trailing BR tags
 }
 
 1;
