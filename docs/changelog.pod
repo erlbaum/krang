@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Fixed Bug in RadiGroup labels (was calling localize() on the 
+labels-hashref key instead of its value to populate the label) 
+[David Kaufman]
+
+
 =item *
 
 Ported fix from David Kaufman to unpreview a media object when it
