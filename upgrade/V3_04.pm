@@ -386,7 +386,7 @@ EOF
     }
     if ($warn_about_chown_failure) {
         print
-          "\n* * * WARNING * * * \t The Krang upgrade script was unable to correct the ownership of $element_lib/$class.pm\n";
+          "\n* * * WARNING * * * \t The Krang upgrade script was unable to verify/fix the ownership of $element_lib/$class.pm\n";
     }
     if ($warn_about_set_conf) {
         print
