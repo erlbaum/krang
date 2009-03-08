@@ -85,12 +85,6 @@ sub fill_template {
     $TREE{$instance} = $pkg->initialize_tree($instance, \%perms);
 
     $template->param(nav_content => $pkg->render($TREE{$instance}, \%perms));
-
-    # set global admin if all admin perms are on
-    $template->param(nav_global_admin => 1)
-      unless grep { not $perms{admin}{$_} }
-          grep { $_ ne 'admin_users_limited' }
-          keys %{$perms{admin}};
 }
 
 # render the navigation menu held in the navigation tree
@@ -143,7 +137,7 @@ sub render {
     } elsif ($depth == 2) {
         if ($kids) {
             $pre = qq{<b>$name</b>\n<dl>\n<dt>};
-            $post = "</dl>";
+            $post = "</dt>\n</dl>";
         } else {
             $pre = $name;
         }
@@ -291,7 +285,7 @@ sub default_tree {
     $access_node->condition(
         sub {
             ($_[0]->{admin}{admin_users} or $_[0]->{admin}{admin_users_limited})
-              || (shift->{admin}{admin_groups});
+              || $_[0]->{admin}{admin_groups};
         }
     );
     
@@ -307,19 +301,16 @@ sub default_tree {
 
     my $publish_node = $node->new_daughter();
     $publish_node->name('Publishing');
-    $publish_node->condition(sub {
-        (shift->{admin}{admin_sites})
-        ||
-        (shift->{admin}{admin_categories})
-        ||
-        (shift->{admin}{admin_desks})
-        ||
-        (shift->{admin}{admin_contribs})
-        ||
-        (shift->{admin}{admin_jobs})
-        ||
-        (shift->{admin}{admin_lists})
-    });
+    $publish_node->condition(
+        sub {
+                 $_[0]->{admin}{admin_sites}
+              || $_[0]->{admin}{admin_categories}
+              || $_[0]->{admin}{admin_desks}
+              || $_[0]->{admin}{admin_contribs}
+              || $_[0]->{admin}{admin_jobs}
+              || $_[0]->{admin}{admin_lists};
+        }
+    );
 
     $sub = $publish_node->new_daughter();
     $sub->name('Sites');

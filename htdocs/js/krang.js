@@ -62,18 +62,7 @@ Krang.load = function(target) {
     this at least let's you check it easier.
 */
 Krang.is_ie_6 = function() {
-    var ua = navigator.userAgent;
-    var offset = ua.indexOf('MSIE ');
-    if (offset == -1) {
-        return 0;
-    } else {
-        var version = parseFloat(ua.substring(offset+5, ua.indexOf(';', offset)));
-        if (version < 7) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
+    return Prototype.Browser.IEVersion == 6;
 }
 
 /*
@@ -141,12 +130,11 @@ Krang.Window = {
         url += Krang.Window.get_id();
         return url;
     },
-    
     log_out : function() {
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             window.location = 'login.pl?rm=logout';
             window.name = '';
-        }    
+        }
     },
 
     get_id : function() {
@@ -170,8 +158,23 @@ Krang.popup = function(url, options) {
     var height = options.height || 600;
     var width  = options.width  || 800;
     url = Krang.Window.pass_id(url);
-    var win = window.open( url, 'krangpopup', 'width=' + width + ',height=' + height + ',top=25,left=50,resizable,scrollbars,status' );
-    if ( win ) win.focus();
+
+    if (Prototype.Browser.IE) {
+        // we need the referer to be sent
+        // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
+        // the 'target' attribute takes arbitrary values in IE6/7 (undocumented)
+        var a = new Element('a', {href : url });
+        a.target = 'krangpopup';
+        document.body.appendChild(a);
+        a.click();
+    } else {
+        var win = window.open(
+            url,
+            'krangpopup',
+            'width=' + width + ',height=' + height + ',top=25,left=50,resizable,scrollbars,status'
+        );
+        if ( win ) win.focus();
+    }
 };
 
 /*
@@ -205,7 +208,7 @@ Krang.Cookie = {
         return value;
     },
     set : function(name, value) {
-	document.cookie = name + '=' + encodeURIComponent(value) + "; path=/";
+    document.cookie = name + '=' + encodeURIComponent(value) + "; path=/";
     },
     json_get : function(name) {
         var json = Krang.Cookie.get(name);
@@ -235,7 +238,7 @@ Krang.Ajax = {
         // only encode to Base64 if our character set is not utf-8
         var config = Krang.config();
         if(config.charset == 'utf-8' || config.charset == 'UTF-8') return;
-        
+
         for(var n in params) {
             // if it's an object/array (happens with same named elements)
             // then we need to encode each element
@@ -333,11 +336,11 @@ Krang.Ajax.request = function(args) {
                     complete(args, transport, json);
                 }, 12);
             },
-            onFailure   : function(transport, e) { 
+            onFailure   : function(transport, e) {
                 failure(transport, e);
                 Krang.Error.show();
             },
-            onException : function(transport, e) { 
+            onException : function(transport, e) {
                 failure(transport, e);
                 Krang.Error.show();
             }
@@ -386,8 +389,6 @@ Krang.Ajax.request = function(args) {
           // do something
         }
     });
-
-    TODO: handle GET and POST differently
 */
 Krang.Ajax.update = function(args) {
     var url       = args.url;
@@ -427,8 +428,8 @@ Krang.Ajax.update = function(args) {
             evalScripts : true,
             asynchronous: true,
             // if we're successful we're not in edit mode (can be reset by the request)
-            onSuccess   : function(transport, json) { 
-                Krang.Nav.edit_mode(false); 
+            onSuccess   : function(transport, json) {
+                Krang.Nav.edit_mode(false);
                 if(to_top) Krang.to_top();
                 // wait 12 ms so we know that the JS in our request has been evaled
                 // since Prototype will wait 10 gives for the Browser to update
@@ -456,12 +457,12 @@ Krang.Ajax.update = function(args) {
                     Krang.hide_indicator(indicator);
                 }, 12);
             },
-            onFailure   : function(transport, e) { 
+            onFailure   : function(transport, e) {
                 // user callback
                 failure(transport, e);
                 Krang.Error.show();
             },
-            onException : function(transport, e) { 
+            onException : function(transport, e) {
                 // user callback
                 failure(transport, e);
                 Krang.Error.show();
@@ -484,18 +485,18 @@ Krang.Ajax.update = function(args) {
 
     Krang.Form.submit(form, { input: 'value' }, { new_window: true })
     Select a form (can either be the name of the form, or the form object
-    itself) optionally sets the values of those elements and then submits 
-    the form. 
+    itself) optionally sets the values of those elements and then submits
+    the form.
 
     You can also specify a third parameter which contains other optional
     flags that can be passed to dictate the behaviour.
     These flags include:
-    
+
         new_window : open the request into a new window.
                      Defaults to false.
         to_top     : if the request will be performed using AJAX sometimes
-                     you don't want to force the user to go back to the top 
-                     of the page. Setting this to false will do just that. 
+                     you don't want to force the user to go back to the top
+                     of the page. Setting this to false will do just that.
                      Defaults to true.
         target     : the id of an element for which the content is intended
                      for
@@ -551,9 +552,12 @@ Krang.Form = {
             // save the old target of the form so we can restore it after
             // submission
             var old_target = form.target;
+            var old_url = form.action;
+            form.action = Krang.Window.pass_id(old_url);
             form.target = window.name + '_b';
             form.submit();
             form.target = old_target;
+            form.action = old_url;
         } else {
             Krang.show_indicator();
 
@@ -712,7 +716,7 @@ Krang.class_suffix = function(el, prefix) {
     return suffix;
 };
 
-/* 
+/*
     Krang.Nav
 */
 Krang.Nav = {
@@ -725,13 +729,12 @@ Krang.Nav = {
         Krang.Nav.edit_mode_flag = flag;
     },
     goto_url       : function(url, ajax) {
-
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);
                 var query   = matches[2] || '';
                 Krang.Ajax.update({
-                    url    : Krang.Window.pass_id(matches[1]),
+                    url    : matches[1],
                     params : Krang.Ajax.toQueryParams(matches[2])
                 });
             } else {
@@ -741,7 +744,6 @@ Krang.Nav = {
                     // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
                     var a = new Element('a', {href : Krang.Window.pass_id(url)});
                     document.body.appendChild(a);
-                    console.log(a);
                     a.click();
                 } else {
                     window.location = Krang.Window.pass_id(url);
@@ -795,9 +797,9 @@ Krang.Messages = {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
 
-        // if it's a "messages" level and the "alerts" are locked (being show) 
-        // then just return since we don't want to show them both at the same 
-        // time. When "alerts" are hidden they will show "messages" so nothing 
+        // if it's a "messages" level and the "alerts" are locked (being show)
+        // then just return since we don't want to show them both at the same
+        // time. When "alerts" are hidden they will show "messages" so nothing
         // is ever not shown.
         if( level == 'messages' && Krang.Messages._locked['alerts'] ) return;
 
@@ -813,7 +815,7 @@ Krang.Messages = {
 
             var el = $(level);
 
-            // set the content 
+            // set the content
             el.down('div.content').update(content);
 
             // in some cases we want to close the message after a user-specified
@@ -830,17 +832,17 @@ Krang.Messages = {
                     close_message_callback = function() {
                         // we no longer want to keep this message locked
                         Krang.Messages._locked[level] = false;
-                        
+
                         // unique marker so later we know that we're trying to close
                         // the same message window that we opened.
                         var unique = new Date().valueOf();
                         $('messages').addClassName('unique_' + unique);
                         window.setTimeout(
-                            function() { 
+                            function() {
                                 if( $('messages').hasClassName('unique_' + unique) ) {
                                     Krang.Messages.hide('messages');
                                 }
-                            }, 
+                            },
                             secs * 1000
                         );
                     }
@@ -850,9 +852,9 @@ Krang.Messages = {
             // quickly hide the existing messages
             Krang.Messages.hide(level, true);
 
-            // We need to make sure that the message container isn't in the process 
-            // of sliding (locked). Wrap this in an anonymous function so that it can 
-            // be called again and again as needed by setTimeout. 
+            // We need to make sure that the message container isn't in the process
+            // of sliding (locked). Wrap this in an anonymous function so that it can
+            // be called again and again as needed by setTimeout.
             var try_count = 0;
             var _actually_show = function() {
                 if( ! Krang.Messages._locked[level] ) {
@@ -864,7 +866,7 @@ Krang.Messages = {
                     el.setStyle({ top: '0px' });
 
                     if( Krang.is_ie_6() ) {
-                        // in IE 6 we need to create an iframe to slide at the 
+                        // in IE 6 we need to create an iframe to slide at the
                         // same time as the message's wrapper
                         var wrapper = el.down('div.wrapper');
                         Krang.Widget.HideIEControls.load(wrapper);
@@ -873,9 +875,9 @@ Krang.Messages = {
                         Krang.Widget.HideIEControls.resize(wrapper);
                         close_message_callback();
                     } else {
-                        new Effect.SlideDown( el, { 
-                            duration    : Krang.Messages._slide_time, 
-                            afterFinish : close_message_callback 
+                        new Effect.SlideDown( el, {
+                            duration    : Krang.Messages._slide_time,
+                            afterFinish : close_message_callback
                         });
                     }
                 } else {
@@ -907,8 +909,8 @@ Krang.Messages = {
                 } else {
                     // lock the messages (will be unlocked by afterFinish call)
                     Krang.Messages._locked[level] = true;
-                    new Effect.SlideUp(el, { 
-                        duration    : Krang.Messages._slide_time, 
+                    new Effect.SlideUp(el, {
+                        duration    : Krang.Messages._slide_time,
                         afterFinish : finish_callback
                     });
                 }
@@ -927,7 +929,7 @@ Krang.to_top = function() {
     $('H').scrollTo();
 };
 
-/* 
+/*
     Krang.row_checked(form, inputName)
     Krang.pager_row_checked()
 */
@@ -952,7 +954,7 @@ Krang.pager_row_checked = function() {
 /*
     Krang.Pager
     Collection of methods for dealing with pager tables.
-    
+
     // Tell the pager the name of the input that's used to determine
     // which form is for the pager
     Krang.Pager.input_key('some input name');
@@ -964,7 +966,7 @@ Krang.pager_row_checked = function() {
     // to be ordered descendingly
     Krang.Pager.sort('id', 1);
 
-    // Show the 'long' or 'short' view of the pager to show the number of rows 
+    // Show the 'long' or 'short' view of the pager to show the number of rows
     // based on the user's preferences
     Krang.Pager.long_view();
 
@@ -984,17 +986,17 @@ Krang.Pager = {
     },
     goto_page     : function(num) {
         Krang.Form.submit(
-            Krang.Pager._form, 
-            { krang_pager_curr_page_num : num }, 
+            Krang.Pager._form,
+            { krang_pager_curr_page_num : num },
             { to_top : false, target: Krang.Pager.target }
         );
     },
     sort          : function(field, desc) {
-        Krang.Form.set( 
-            Krang.Pager._form, 
-            { 
-                krang_pager_sort_field      : field, 
-                krang_pager_sort_order_desc : desc 
+        Krang.Form.set(
+            Krang.Pager._form,
+            {
+                krang_pager_sort_field      : field,
+                krang_pager_sort_order_desc : desc
             }
         );
         Krang.Pager.goto_page(1);
@@ -1046,7 +1048,7 @@ Krang.check_all = function( list_checkbox, prefix ) {
 Krang.update_order = function( select, prefix ) {
     var position = select.selectedIndex;
     var inputs   = [];
-  
+
     // get the list of relevant elements
     for ( var i = 0; i < select.form.elements.length; i++ ) {
         var el = select.form.elements[i];
@@ -1054,15 +1056,15 @@ Krang.update_order = function( select, prefix ) {
             inputs.push( el );
         }
     }
-    
+
     // this sort function works for sorting with an upward or downward
     // bias if there is a tie
     var sort_function = function ( a, b, upward ) {
         var val = (a.value - b.value);
         if( val == 0 ) {
-            if( a.name == select.name )      
+            if( a.name == select.name )
                 val = upward ? -1 :  1;
-            else if( b.name == select.name ) 
+            else if( b.name == select.name )
                 val = upward ?  1 : -1;
         }
         return val;
@@ -1088,17 +1090,30 @@ Krang.update_order = function( select, prefix ) {
     (either 'story' or 'media') with a certain id (if no id is present
     it will preview the one currently in the session)
 */
-Krang.preview = function(type, id) {
-    var url = 'publisher.pl?rm=preview_' + type + '&'
-            + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) );
+Krang.preview = function(type, id, withPreviewEditor) {
+    var url = 'publisher.pl?rm=preview_' + type
+    + '&' + ( ( id == null      ) ? ( 'session=' + type      ) : ( type + '_id=' + id      ) )
+    + '&' + ( (withPreviewEditor) ? ( 'with_preview_editor=1') : ( 'with_preview_editor=0' ) ); 
+
+    // attach the preview window to our session
+    url = Krang.Window.pass_id(url);
 
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
     instance = instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
-   
-    var pop = window.open( Krang.Window.pass_id(url), instance + 'preview' );
 
-    if ( pop ) pop.focus();
+    if (Prototype.Browser.IE) {
+        // we need the referer to be sent
+        // see http://webbugtrack.blogspot.com/search/label/HTTP%20Referer
+        // the 'target' attribute takes arbitrary values in IE6/7 (undocumented)
+        var a = new Element('a', {href : url });
+        a.target = instance;
+        document.body.appendChild(a);
+        a.click();
+    } else {
+        var pop = window.open( url, instance + 'preview' );
+        if ( pop ) pop.focus();
+    }
 }
 
 /*
@@ -1195,7 +1210,7 @@ Object.extend( Krang.Navigation.prototype, {
 Krang.Slug = {};
 
 /*
-    Krang.Slug.title_to_slug = function(title) 
+    Krang.Slug.title_to_slug = function(title)
     Default auto-slug-building method. Can be overridden by ElementClass::title_to_slug
 */
 
@@ -1228,12 +1243,12 @@ Krang.Slug.high_latin1_map = {
     "\u201E" : "",           // 0x84 &bdquo;  DOUBLE LOW-9 QUOTATION MARK
     "\u2026" : "",           // 0x85 &hellip; HORIZONTAL ELLIPSIS
     "\u2020" : "",           // 0x86 &dagger; DAGGER
-    "\u2021" : "",           // 0x87 &Dagger; DOUBLE DAGGER 
+    "\u2021" : "",           // 0x87 &Dagger; DOUBLE DAGGER
     "\u02C6" : "",           // 0x88 &circ;   MODIFIER LETTER CIRCUMFLEX ACCENT
     "\u2030" : "",           // 0x89 &permil; PER MILLE SIGN
     "\u0160" : "S",          // 0x8A &Scaron; LATIN CAPITAL LETTER S WITH CARON
     "\u2039" : "",           // 0x8B &lsaquo; SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-    "\u0152" : "OE",         // 0x8C &OElig;  LATIN CAPITAL LIGATURE OE 
+    "\u0152" : "OE",         // 0x8C &OElig;  LATIN CAPITAL LIGATURE OE
     "\u017D" : "Z",          // 0x8E &#381;   LATIN CAPITAL LETTER Z WITH CARON
     "\u2018" : "",           // 0x91 &lsquo;  LEFT SINGLE QUOTATION MARK
     "\u2019" : "",           // 0x92 &rsquo;  RIGHT SINGLE QUOTATION MARK
@@ -1290,11 +1305,11 @@ Krang.Slug.high_latin1_map = {
     "\u00C5" : "A",          // 0xC5          LATIN CAPITAL LETTER A WITH RING ABOVE
     "\u00C6" : "AE",         // 0xC6          LATIN CAPITAL LETTER AE
     "\u00C7" : "C",          // 0xC7          LATIN CAPITAL LETTER C WITH CEDILLA
-    "\u00C8" : "E",          // 0xC8          LATIN CAPITAL LETTER E WITH GRAVE 
-    "\u00C9" : "E",          // 0xC9          LATIN CAPITAL LETTER E WITH ACUTE 
+    "\u00C8" : "E",          // 0xC8          LATIN CAPITAL LETTER E WITH GRAVE
+    "\u00C9" : "E",          // 0xC9          LATIN CAPITAL LETTER E WITH ACUTE
     "\u00CA" : "E",          // 0xCA          LATIN CAPITAL LETTER E WITH CIRCUMFLEX
     "\u00CB" : "E",          // 0xCB          LATIN CAPITAL LETTER E WITH DIAERESIS
-    "\u00CC" : "I",          // 0xCC          LATIN CAPITAL LETTER I WITH GRAVE 
+    "\u00CC" : "I",          // 0xCC          LATIN CAPITAL LETTER I WITH GRAVE
     "\u00CD" : "I",          // 0xCD          LATIN CAPITAL LETTER I WITH ACUTE
     "\u00CE" : "I",          // 0xCE          LATIN CAPITAL LETTER I WITH CIRCUMFLEX
     "\u00CF" : "I",          // 0xCF          LATIN CAPITAL LETTER I WITH DIAERESIS
@@ -1361,7 +1376,7 @@ Krang.Slug.high_latin1_re = '';
 })();
 
 Krang.Widget = {};
-/* 
+/*
     Krang.Widget.date_chooser(inputName)
     Primarily used by the HTML output by Krang::Widget::date_chooser()
 */
@@ -1425,7 +1440,7 @@ Krang.Widget.time_chooser = function(inputName, use_ampm_time) {
             } else if(! current ) {
                 input.value = '';
             }
-            
+
             clock.show();
         }
     });
@@ -1485,7 +1500,7 @@ Krang.Widget.HideIEControls = {
         iframe.style.height   = '0px';
         iframe.style.width    = '0px';
 
-        // insert the iframe under the 
+        // insert the iframe under the
         el.parentNode.insertBefore(iframe, el.nextSibling);
 
         // give it the correct size and position
@@ -1517,8 +1532,8 @@ Krang.Widget.HideIEControls = {
     for example when the user double-clicks on the trigger)
 
     'options' can be a hash containing the following name-value pairs:
-    
-    duration    : How long should the effect last in secs. 
+
+    duration    : How long should the effect last in secs.
                   The default is 0.3
     afterFinish : An optional callback to run when we're done
 */
@@ -1535,7 +1550,7 @@ Krang.Widget.BlindUpDown = function(element, args) {
             element,
             {
                 duration    : (args.duration || .3),
-                afterFinish : function() { 
+                afterFinish : function() {
                     // unlock the element
                     Krang.Widget._BlindUpDown_Locked[element.id] = false;
                     if( args.afterFinish ) args.afterFinish();
@@ -1549,7 +1564,7 @@ Krang.Widget.BlindUpDown = function(element, args) {
             element,
             {
                 duration    : (args.duration || .3),
-                afterFinish : function() { 
+                afterFinish : function() {
                     // unlock the element
                     Krang.Widget._BlindUpDown_Locked[element.id] = false;
                     if( args.afterFinish ) args.afterFinish();
@@ -1567,69 +1582,69 @@ Krang.Widget.BlindUpDown = function(element, args) {
     base64      = Krang.Base64.encode(some_string);
     some_string = Krang.Base64.decode(base64);
 */
-Krang.Base64 = {  
-    chars  : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",  
-  
-    // public method for encoding  
-    encode : function (input) {  
-        var output = "";  
-        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;  
-        var i = 0;  
-  
-        while (i < input.length) {  
-            chr1 = input.charCodeAt(i++);  
-            chr2 = input.charCodeAt(i++);  
-            chr3 = input.charCodeAt(i++);  
-  
-            enc1 = chr1 >> 2;  
-            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);  
-            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);  
-            enc4 = chr3 & 63;  
-  
-            if (isNaN(chr2)) {  
-                enc3 = enc4 = 64;  
-            } else if (isNaN(chr3)) {  
-                enc4 = 64;  
-            }  
-  
-            output = output 
-                + this.chars.charAt(enc1) + this.chars.charAt(enc2) 
-                + this.chars.charAt(enc3) + this.chars.charAt(enc4);  
-        }  
-  
-        return output;  
-    },  
-  
-    // public method for decoding  
-    decode : function (input) {  
-        var output = "";  
-        var chr1, chr2, chr3;  
-        var enc1, enc2, enc3, enc4;  
-        var i = 0;  
-  
-        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");  
-  
-        while (i < input.length) {  
-            enc1 = this.chars.indexOf(input.charAt(i++));  
-            enc2 = this.chars.indexOf(input.charAt(i++));  
-            enc3 = this.chars.indexOf(input.charAt(i++));  
-            enc4 = this.chars.indexOf(input.charAt(i++));  
-  
-            chr1 = (enc1 << 2) | (enc2 >> 4);  
-            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);  
-            chr3 = ((enc3 & 3) << 6) | enc4;  
-  
-            output = output + String.fromCharCode(chr1);  
-  
-            if (enc3 != 64) {  
-                output = output + String.fromCharCode(chr2);  
-            }  
-            if (enc4 != 64) {  
-                output = output + String.fromCharCode(chr3);  
-            }  
-  
-        }  
-        return output;  
+Krang.Base64 = {
+    chars  : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+    // public method for encoding
+    encode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+        var i = 0;
+
+        while (i < input.length) {
+            chr1 = input.charCodeAt(i++);
+            chr2 = input.charCodeAt(i++);
+            chr3 = input.charCodeAt(i++);
+
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
+
+            if (isNaN(chr2)) {
+                enc3 = enc4 = 64;
+            } else if (isNaN(chr3)) {
+                enc4 = 64;
+            }
+
+            output = output
+                + this.chars.charAt(enc1) + this.chars.charAt(enc2)
+                + this.chars.charAt(enc3) + this.chars.charAt(enc4);
+        }
+
+        return output;
+    },
+
+    // public method for decoding
+    decode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3;
+        var enc1, enc2, enc3, enc4;
+        var i = 0;
+
+        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+
+        while (i < input.length) {
+            enc1 = this.chars.indexOf(input.charAt(i++));
+            enc2 = this.chars.indexOf(input.charAt(i++));
+            enc3 = this.chars.indexOf(input.charAt(i++));
+            enc4 = this.chars.indexOf(input.charAt(i++));
+
+            chr1 = (enc1 << 2) | (enc2 >> 4);
+            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            chr3 = ((enc3 & 3) << 6) | enc4;
+
+            output = output + String.fromCharCode(chr1);
+
+            if (enc3 != 64) {
+                output = output + String.fromCharCode(chr2);
+            }
+            if (enc4 != 64) {
+                output = output + String.fromCharCode(chr3);
+            }
+
+        }
+        return output;
     }
 }
 
@@ -1754,7 +1769,7 @@ var rules = {
                 el,
                 div,
                 Krang.Window.pass_id(request_url),
-                { 
+                {
                     paramName: 'phrase',
                     tokens   : [' '],
                     callback : function(el, url) {
@@ -1784,11 +1799,6 @@ var rules = {
             mode     : 'named'
         });
     },
-    //IE6 requires a little help with the flyout navigation menuing:
-    '#H .nav .menu' : function( el ) {
-        if ( Krang.is_ie_6() )
-            el.onmouseover = el.onmouseout = function(){ this.toggleClassName( 'over' ); };
-    },
     // popup tooltips for thumbnails
     'img.thumbnail' : function( el ) {
         var url = el.src.replace(/\/(m|t)__/, '/');
@@ -1798,13 +1808,34 @@ var rules = {
         el.observe('mouseout', function(event) {
             Krang.Tooltip.Media.hide();
         }.bindAsEventListener(el));
+    },
+    '.story-preview-link' : function(el) {
+        el.observe('click', function(event) {
+            var elm  = event.element();
+            var name = elm.readAttribute('name');
+            if (!name) return;
+            var story_id = name.split(/_/);
+            //               'story' ,     ID     , 'withPreviewEditor'
+            Krang.preview(story_id[0], story_id[1], story_id[2]);
+            Event.stop(event);
+        }.bindAsEventListener(el));
+    },
+    '.media-preview-link' : function(el) {
+        el.observe('click', function(event) {
+            var elm = event.findElement('a');
+            var name = elm.readAttribute('name');
+            if (!name) return;
+            var media_id = name.split(/_/);
+            Krang.preview(media_id[0], media_id[1]);
+            Event.stop(event);
+        }.bindAsEventListener(el));
     }
 };
 
 /*
   IE6- rules only
 */
-if (Prototype.Browser.IEVersion < 7) {
+if (Krang.is_ie_6()) {
     // for the big green dropdown menu buttons in the panels
     // IE needs some help here (this may not be necessary for IE7)
     Object.extend(rules,{
@@ -1816,6 +1847,9 @@ if (Prototype.Browser.IEVersion < 7) {
             el.observe('mouseout', function(ev) {
                 el.removeClassName('over');
             });
+        },
+        '#H .nav .menu' : function( el ) {
+            el.onmouseover = el.onmouseout = function(){ this.toggleClassName( 'over' ); };
         }
     });
 }
@@ -1839,3 +1873,34 @@ Krang.ElementClass = {};
    creating PoorText fields, like Krang::ElementClass::PoorText
  */
 Krang.PoorTextCreationArguments = new Array;
+
+/*
+
+                Preview Editor
+
+*/
+
+/**
+   Message handler called by previewed story's postMessage() - a HTML5
+   feature implemented by Firefox 3
+*/
+if (Object.isFunction(window.postMessage)) {
+    window.addEventListener('message', function(e) {
+
+        var cmsURL = window.location.protocol + '//' + window.location.host;
+
+        // get the preview URLs of our sites from config cookie
+        var config      = Krang.config();
+        var previewURLs = config.previewURLs;
+
+        if (previewURLs.any(function(url) {return url == e.origin})) {
+            // message comes from one of our sites
+            window.focus(); // needs to be allowed in Firefox' Advanced JavaScript settings
+         
+            // goto Story Edit UI of requested container element
+            var url_params = e.data && e.data.split(/\uE000/);
+            console.log(url_params[0]+' - '+url_params[1]);
+            Krang.Ajax.update({url: url_params[0], params: url_params[1].evalJSON()});
+        }
+    }, false);
+}

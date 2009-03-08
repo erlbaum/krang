@@ -23,11 +23,11 @@ cancel_contrib_change = function()
   save_stay = function() {
     Krang.Form.submit('edit_contrib_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
   }
-
-  find_media = function() {
-    Krang.Form.submit('edit_contrib_form', { rm: 'save_and_find_media_link' });
-  }
 </tmpl_unless>
+
+find_media = function() {
+    Krang.Form.submit('edit_contrib_form', { rm: 'save_and_find_media_link' });
+}
 
 </script>
 
@@ -39,7 +39,7 @@ cancel_contrib_change = function()
 </tmpl_if>
 </h2>
 
-<form name="edit_contrib_form" method="post" enctype="multipart/form-data" action="contributor.pl">
+<form id="edit_contrib_form" name="edit_contrib_form" method="post" enctype="multipart/form-data" action="contributor.pl">
 
 <input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
@@ -129,8 +129,8 @@ cancel_contrib_change = function()
 <th><tmpl_lang Photograph></th>
 <td>
 <tmpl_if media_id>
-  <img alt="" src="<tmpl_var escape=html thumbnail_path>">
-  <a href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><tmpl_var escape=html filename></a>
+  <a href="" class="media-preview-link" name="media_<tmpl_var escape=html media_id>"><img alt="" src="<tmpl_var escape=html thumbnail_path>" class="thumbnail"></a>
+  <a href="" class="media-preview-link" name="media_<tmpl_var escape=html media_id>"><tmpl_var escape=html filename></a>
   <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
   <br>
 </tmpl_if>
@@ -164,6 +164,11 @@ cancel_contrib_change = function()
 </div>
 
 </form>
+
+<!-- tooltips for media previews: -->
+<div id="tooltip"><img id="tooltip-img" src="<tmpl_var static_url>/images/icon-loading-small.gif" /></div>
+<img id="tooltip-pointer" src="<tmpl_var static_url>/images/tooltip_arrow.gif" />
+<!-- :tooltips for media previews -->
 
 <tmpl_include footer.tmpl>
 

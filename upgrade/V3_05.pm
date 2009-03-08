@@ -19,7 +19,8 @@ sub per_instance {
     my ($self, %args) = @_;
     return if $args{no_db};
     my $dbh = dbh();
-    print "\n\nUPGRADING INSTANCE " . uc(InstanceElementSet) . ":\n\n";
+    my $instance = pkg('Conf')->instance();
+    print "\n\nUPGRADING INSTANCE $instance:\n\n";
 
     # add the new published flag to media
     my @media_columns = @{$dbh->selectcol_arrayref('SHOW columns FROM media')};
@@ -38,7 +39,7 @@ sub per_instance {
             my $cmd = catfile(KrangRoot, 'bin', 'krang_create_lists');
             $cmd .= " --verbose --input_file $lists_conf";
             local $ENV{KRANG_INSTANCE} = Krang::Conf->instance();
-            system($cmd) && die "'cmd' failed: $?";
+            system($cmd) && die "'$cmd' failed: $?";
         }
     }
 }

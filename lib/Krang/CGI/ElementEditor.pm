@@ -202,7 +202,7 @@ use Carp qw(croak);
 use Krang::ClassLoader Session      => qw(%session);
 use Krang::ClassLoader Log          => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader Message      => qw(add_message get_messages add_alert);
-use Krang::ClassLoader Widget       => qw(category_chooser date_chooser decode_date);
+use Krang::ClassLoader Widget       => qw(category_chooser date_chooser decode_date format_url);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'BulkEdit::Textarea';
 use Krang::ClassLoader 'BulkEdit::Xinha';
@@ -722,7 +722,7 @@ sub find_story_link {
         pager_html                       => $pager->output(),
         row_count                        => $pager->row_count,
         action                           => $self->_get_script_name,
-        editor_insert_storylink_function => $query->param('editor_insert_storylink_function'),
+        editor_insert_storylink_function => scalar $query->param('editor_insert_storylink_function'),
     );
 
     return $template->output;
@@ -741,17 +741,11 @@ sub find_story_link_row_handler {
     $row->{story_id} = $story->story_id();
 
     # format url to fit on the screen and to link to preview
-    my $url       = $story->url();
-    my @parts     = split('/', $url);
-    my @url_lines = (shift(@parts), "");
-    for (@parts) {
-        if ((length($url_lines[-1]) + length($_)) > 15) {
-            push(@url_lines, "");
-        }
-        $url_lines[-1] .= "/" . $_;
-    }
-    $row->{url} = join('<wbr>',
-        map { qq{<a href="javascript:Krang.preview('story',$row->{story_id})">$_</a>} } @url_lines);
+    $row->{url} = format_url(
+        url     => $story->url,
+        class   => 'story-preview-link',
+        name    => "story_$row->{story_id}",
+    );
 
     # title
     $row->{title} = $q->escapeHTML($story->title);
@@ -937,22 +931,16 @@ sub find_media_link_row_handler {
     $row->{media_id} = $media->media_id();
 
     # format url to fit on the screen and to link to preview
-    my $url       = $media->url();
-    my @parts     = split('/', $url);
-    my @url_lines = (shift(@parts), "");
-    for (@parts) {
-        if ((length($url_lines[-1]) + length($_)) > 15) {
-            push(@url_lines, "");
-        }
-        $url_lines[-1] .= "/" . $_;
-    }
-    $row->{url} = join('<wbr>',
-        map { qq{<a href="javascript:Krang.preview('media',$row->{media_id})">$_</a>} } @url_lines);
+    $row->{url} = format_url(
+        url     => $media->url,
+        class   => 'media-preview-link',
+        name    => "media_$row->{media_id}",
+    );
 
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
         $row->{thumbnail} = qq|
-           <a href="javascript:Krang.preview('media',$row->{media_id})">
+           <a href="" class="media-preview-link" name="media_$row->{media_id}">
               <img alt="" src="$thumbnail_path" class="thumbnail">
            </a>
         |;
@@ -1074,8 +1062,8 @@ sub save_and_add {
     my $self = shift;
 
     # call internal _save and return output from it on error
-#    my $output = $self->_save();
-#    return $output if length $output;
+    my $output = $self->_save();
+    return $output if length $output;
 
     return $self->add();
 }
@@ -1207,27 +1195,21 @@ sub element_save {
 
     my $element = $self->_find_element($root, $path);
 
-    # validate data
-    my @msgs;
-    my $clean   = 1;
-    my $index   = 0;
-    my @valid   = ();
+    # we don't run element validation on the following run modes, because it could prevent
+    # the user's ability to make the necessary changes to the element so that it would pass
+    # validation
+    my $rm    = $self->get_current_runmode();
+    my $clean = 1;
     my @invalid = ();
-    my $rm      = $self->get_current_runmode();
-    foreach my $child ($element->children()) {
-
-        # ignore storylinks and medialinks if entering find_story or
-        # find_media modes.  Doing otherwise will make it impossible
-        # to satisfy their requirements.
-        unless (
-            (
-                   $rm eq 'save_and_find_story_link'
-                or $rm eq 'save_and_find_media_link'
-            )
-            and (  $child->class->isa('Krang::ElementClass::StoryLink')
-                or $child->class->isa('Krang::ElementClass::MediaLink'))
-          )
-        {
+    my @valid   = ();
+    if (   $rm ne 'save_and_find_story_link'
+        && $rm ne 'save_and_find_media_link'
+        && $rm ne 'reorder'
+        && $rm ne 'delete_children'
+        && $rm ne 'save_and_add')
+    {
+        my $index   = 0;
+        foreach my $child ($element->children()) {
             my ($valid, $msg) = $child->validate(query => $query);
             if (not $valid) {
                 warn "Validation for child element "
@@ -1240,16 +1222,16 @@ sub element_save {
             } else {
                 push @valid, $child;
             }
+            $index++;
         }
-        $index++;
-    }
 
-    # let the parent take a crack at it if all else is ok
-    if ($clean) {
-        my ($valid, $msg) = $element->validate_children(query => $query);
-        if (not $valid) {
-            add_alert('invalid_element_data', msg => $msg);
-            $clean = 0;
+        # let the parent take a crack at it if all else is ok
+        if ($clean) {
+            my ($valid, $msg) = $element->validate_children(query => $query);
+            if (not $valid) {
+                add_alert('invalid_element_data', msg => $msg);
+                $clean = 0;
+            }
         }
     }
 
@@ -1263,10 +1245,8 @@ sub element_save {
     }
 
     # save data
-    $index = 0;
     foreach my $child ($element->children()) {
         $child->load_query_data(query => $query) unless $child->hidden;
-        $index++;
     }
 
     # notify user of the save
@@ -1354,9 +1334,9 @@ sub revise {
     unless ($no_return) {
 
         # call internal _save and return output from it on error
-#        $self->{_dont_revise_because_called_by_revise} = 1;    # uh, what a kludge
-#        my $output = $self->_save();
-#        return $output if length $output;
+        $self->{_dont_revise_because_called_by_revise} = 1;    # uh, what a kludge
+        my $output = $self->_save();
+        return $output if length $output;
 
         return $self->edit();
     }

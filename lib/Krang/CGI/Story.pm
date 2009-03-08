@@ -480,7 +480,7 @@ sub edit {
 
     # set fields shown everywhere
     $template->param(
-        story_id => $story->story_id || "N/A",
+        story_id => $story->story_id || localize("N/A"),
         type => localize($story->element->display_name),
         url  => $story->url
         ? format_url(
@@ -711,7 +711,8 @@ sub view {
         type     => localize($story->element->display_name),
         url      => format_url(
             url    => $story->url,
-            linkto => "javascript:Krang.preview('story','" . $story->story_id() . "')",
+            name   => 'story_' . $story->story_id,
+            class  => 'story-preview-link',
             length => 50,
         ),
         version => $story->version
@@ -1078,7 +1079,7 @@ sub preview_and_stay {
 
     # re-load edit window and have it launch new window for preview
     my $edit_window = $self->edit || '';
-    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null);</script>|;
+    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null, 'preview_editor');</script>|;
     return ($edit_window . $js_for_preview);
 }
 
@@ -2079,6 +2080,7 @@ sub retire_selected {
     }
 
     add_message('selected_stories_retired');
+    $q->param(rm => 'find');
     return $self->find();
 }
 
@@ -2268,7 +2270,8 @@ sub find_story_row_handler {
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
         url    => $story->url(),
-        linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')"
+        name   => 'story_' . $row->{story_id},
+        class  => 'story-preview-link',
     );
 
     # cover_date
@@ -2392,7 +2395,8 @@ sub list_active_row_handler {
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
         url    => $story->url(),
-        linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')"
+        name   => 'story_' . $row->{story_id},
+        class  => 'story-preview-link',
     );
 
     # title
@@ -2609,7 +2613,7 @@ sub alert_duplicate_url {
             '',
             map {
                 sprintf(
-                    qq{<tr>  <td> %d </td>  <td> <a href="javascript:Krang.preview('story',%d)">%s</a> </td>  </tr>},
+                    qq{<tr>  <td> %d </td>  <td> <a href="" class="story-preview-link" name="story_%d">%s</a> </td>  </tr>},
                     $_->{id}, $_->{id}, $_->{url})
               } @{$error->stories}
         );
@@ -2728,6 +2732,7 @@ sub retire {
     add_message('story_retired', id => $story_id, url => $story->url);
 
     $q->delete('story_id');
+    $q->param(rm => 'find');
 
     return $self->find();
 }

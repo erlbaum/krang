@@ -22,7 +22,7 @@ The basic order of events is:
 
 =cut
 
-use Apache::Constants qw(:response);
+use Apache::Constants qw(:response :common);
 use Apache::Cookie;
 use Apache::SizeLimit;
 use Apache::URI;
@@ -52,7 +52,7 @@ use Krang::ClassLoader Conf => qw(
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
-use Krang::ClassLoader 'Session' => qw(%session);
+use Krang::ClassLoader Session => qw(%session);
 use CSS::Minifier::XS;
 use JavaScript::Minifier::XS;
 use Mail::Sender;
@@ -246,14 +246,7 @@ sub access_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    my %allow_browsers = (
-        netscape  => 7.1,
-        ie        => 6,
-        mozilla   => 5,
-        firefox   => 1.5,
-        safari    => 1.3,
-        konqueror => 1,
-    );
+    my %allow_browsers = $self->supported_browsers;
 
     my %engine_of = (
         netscape  => 'Gecko',
@@ -274,7 +267,8 @@ sub access_handler ($$) {
             if ($bd->major > $major
                 or ($bd->major == $major && $bd->minor >= $minor))
             {
-                $r->subprocess_env("KRANG_BROWSER_ENGINE" => $engine_of{$browser});
+                $r->subprocess_env("KRANG_BROWSER_ENGINE"        => $engine_of{$browser});
+                $r->subprocess_env("KRANG_BROWSER_MAJOR_VERSION" => $bd->major);
                 return OK;
             }
         }
@@ -282,10 +276,40 @@ sub access_handler ($$) {
 
     # failure
     debug("Unsupported browser detected: " . ($r->header_in('User-Agent') || ''));
-    $r->custom_response(FORBIDDEN,
-        "<h1>Unsupported browser detected.</h1><p>This application requires Firefox 1.5+, Safari 1.3+, Internet Explorer 6+, Mozilla 1.7+, Netscape 7+ or Konqueror 1+.</p>"
-    );
+    $r->custom_response(FORBIDDEN, $self->forbidden_browser_message);
     return FORBIDDEN;
+}
+
+=item supported_browsers()
+
+The list of browsers and versions to allow as supported browsers.
+
+=cut
+
+sub supported_browsers {
+    my $self = shift;
+
+    return (
+        netscape  => 7.1,
+        ie        => 6,
+        mozilla   => 5,
+        firefox   => 1.5,
+        safari    => 1.3,
+        konqueror => 1,
+    );
+}
+
+=item forbidden_browser_message()
+
+The text of the error message returned to unsupported browsers.
+
+=cut
+
+sub forbidden_browser_message {
+    my $self = shift;
+
+    return
+      "<h1>Unsupported browser detected.</h1><p>This application requires Firefox 1.5+, Safari 1.3+, Internet Explorer 6+, Mozilla 1.7+, Netscape 7+ or Konqueror 1+.</p>";
 }
 
 =item Krang::Handler->authen_handler
@@ -362,22 +386,28 @@ sub authen_handler ($$) {
     # Get window_id from query
     my %args = $r->args();
     my $window_id = $args{window_id} || '';
+    debug("Got window_id $window_id from request");
 
     # User opened a new window manually, typed or copied URL or
     # accessed it via History: make sure we create a new id for this
     # new window
     if ($window_id && not $r->header_in("Referer")) {
         undef $window_id;
+        debug("No referer header; Unsetting window_id");
     }
 
     # Get session_id for window_id
     if ($window_id) {
 
         # existing window
+        debug("Retrieving session from wid_$window_id cookie");
         $session_id = $cookie{"wid_$window_id"};
 
         # if there's no $session_id for this window, logout happened in other window
-        undef $window_id unless $session_id;
+        if (!$session_id) {
+            undef $window_id;
+            debug("No session found; Unsetting window_id");
+        }
     }
 
     # No window ID means no session for this window: create a new one
@@ -387,13 +417,15 @@ sub authen_handler ($$) {
         $window_id = $cookie{next_wid}++;
 
         # new session
+        debug("Creating new session for new window_id $window_id");
         $session_id = pkg('Session')->create();
 
         # store mapping between new window ID and new session ID in cookie
         $cookie{"wid_$window_id"} = $session_id;
 
         # put language pref in new session
-        $session{language} = pkg('MyPref')->get('language', $cookie{user_id})
+        $session{language} =
+             pkg('MyPref')->get('language', $cookie{user_id})
           || DefaultLanguage
           || 'en';
 
@@ -564,14 +596,28 @@ directive.
 sub cleanup_handler ($$) {
     my ($pkg, $r) = @_;
     return DECLINED unless $r->is_main;
+    my $status = $r->last->status;
+    return DECLINED unless $status == SERVER_ERROR;
 
     my $error = $r->notes('error-notes') || $ENV{ERROR_NOTES};
     if ($error && ErrorNotificationEmail) {
 
         # format an email message with all of the information that we want
         my $line = ('=' x 40);
-        my $msg  = "PERL ERROR\n$line\n%s\nSERVER\n$line\n%s\nURL\n$line\n%s\n\n"
+        my $msg =
+            "INSTANCE\n$line\n%s (%s)\n\nUSER\n$line\n%s (#%s)\n\nTIMESTAMP\n$line\n%s\n"
+          . "SERVER\n$line\n%s\nURL\n$line\n%s\n\nPERL ERROR\n$line\n%s\n"
           . "REQUEST\n$line\n%s\nENV\n$line\n%s\nHTTP STATUS\n$line\n%s";
+        my $instance     = Arcos::Conf->instance();
+        my $instance_url = $r->hostname;
+        my $user_id      = $r->user;
+        my $timestamp    = scalar localtime;
+        my $login        = '';
+        if ($user_id) {
+            eval "require pkg('User')";
+            my ($user) = pkg('User')->find(user_id => $user_id);
+            $login = $user->login if $user;
+        }
         my $server  = `hostname`;
         my $url     = $r->uri;
         my $request = $r->as_string();
@@ -580,7 +626,9 @@ sub cleanup_handler ($$) {
         $dumper->Indent(1);
         $dumper->Sortkeys(1);
         $dumper->Maxdepth(0);
-        $msg = sprintf($msg, $error, $server, $url, $request, $dumper->Dump, $r->status);
+        $msg = sprintf($msg,
+            $instance, $instance_url, $login,   $user_id,      $timestamp, $server,
+            $url,      $error,        $request, $dumper->Dump, $r->status);
 
         # now send the email to all configured recipients
         my @email = split(/\s*,\s*/, ErrorNotificationEmail);
@@ -589,7 +637,7 @@ sub cleanup_handler ($$) {
         $sender->MailMsg(
             {
                 to      => \@email,
-                subject => "[Krang] Internal Server Error",
+                subject => "[Krang] Internal Server Error - $instance",
                 msg     => $msg,
             }
         );
@@ -777,7 +825,7 @@ sub _can_handle_gzip {
             $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
             $r->pnotes(browser_detecor => $bd);
         }
-        if ($bd->ie && $bd->version < 6) {
+        if ($bd->ie && $bd->version <= 6) {
             return 0;
         } else {
             return 1;

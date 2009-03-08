@@ -407,7 +407,7 @@ preview_and_stay = function() {
       </ul>
     </li>
     <tmpl_if may_publish>
-    <li><input value="<tmpl_lang Publish>" onclick="save_and_publish()" type="button"</li>
+    <li><input value="<tmpl_lang Publish>" onclick="save_and_publish()" type="button"></li>
     </tmpl_if>
 </div>
 
@@ -419,5 +419,10 @@ preview_and_stay = function() {
 <tmpl_loop categorylink_chooser_loop><tmpl_var categorylink_chooser></tmpl_loop>
 
 </form>
+
+<!-- tooltips for media previews: -->
+<div id="tooltip"><img id="tooltip-img" src="<tmpl_var static_url>/images/icon-loading-small.gif" /></div>
+<img id="tooltip-pointer" src="<tmpl_var static_url>/images/tooltip_arrow.gif" />
+<!-- :tooltips for media previews -->
 
 <tmpl_include footer.tmpl>
