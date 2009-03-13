@@ -39,6 +39,7 @@ use Krang::ClassLoader Localization => qw(localize);
 use Time::Piece;
 
 use Carp qw(croak);
+use URI::Escape qw(uri_escape);
 
 use Krang::ClassLoader base => 'CGI';
 
@@ -56,6 +57,7 @@ sub setup {
               publish_story_list
               publish_assets
               publish_media
+              preview_editor
               )
         ]
     );
@@ -359,7 +361,7 @@ sub preview_story {
 
     # start up the cache and setup an eval{} to catch any death
     pkg('Cache')->start();
-    my $url;
+    my ($url, $with_preview_editor);
     eval {
 
         my $publisher = pkg('Publisher')->new();
@@ -373,7 +375,7 @@ sub preview_story {
           && pkg('MyPref')->get('use_preview_finder');
 
         # maybe also with Preview Editor
-        my $with_preview_editor = $use_template_finder
+        $with_preview_editor = $use_template_finder
           && $query->param('with_preview_editor');
 
         # stuff into the publish context
@@ -462,13 +464,57 @@ sub preview_story {
     # die a rightful death
     die $err if $err;
 
+    # should never happen
+    return '' unless $url;
+
     # this should always be true
     assert($url eq $story->preview_url) if ASSERT;
 
     # dynamic redirect to preview if we've got a url to redirect to
     my $scheme = PreviewSSL ? 'https' : 'http';
-    print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
-      if $url;
+
+    # w/o preview editor
+    if ($with_preview_editor) {
+        # display the previewed story in a frame within the main window
+        my $qstring = "rm=preview_editor&story_preview_url="
+          .uri_escape("$scheme://$url")
+          ."&window_id=$ENV{KRANG_WINDOW_ID}";
+
+        print qq|
+            <script type="text/javascript">
+                setTimeout(
+                    function() { location.replace("publisher.pl?$qstring") },
+                    10
+                )
+            </script>
+        |;
+        return;
+    } else {
+        # display the previewed story in the main window
+        print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
+    }
+}
+
+=item preview_editor
+
+Displays the previewed story in a frame within the story preview window.
+
+=cut
+
+sub preview_editor {
+    my ($self) = @_;
+    my $query  = $self->query;
+
+    my $t = $self->load_tmpl(
+        'preview_editor.tmpl',
+        die_on_bad_params => 0,
+    );
+
+    $t->param(
+        story_preview_url => ($query->param('story_preview_url') || ''),
+        window_id         => ($query->param('window_id')         || ''),
+    );
+    return $t->output;
 }
 
 # update the progress bar during preview or publish

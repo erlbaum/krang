@@ -137,6 +137,9 @@
 
 */
 
+    var window_id      = window.name; // the CMS and the PREVIEW main window IDs are identical
+    var preview_origin = location.protocol + '//' + location.host;
+    
     // no overlay, no functionality
     if (! $('krang_preview_editor_toggle')) { return }
 
