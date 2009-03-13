@@ -276,6 +276,14 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
             this.centerIt();
             this.config.centerOnCreation = false;
         }
+
+        // show section even when directly setting them via Prototype's Ajax.Updater
+        this.sections.each(function(section) {
+            var s = $(this.id + '-' + section);
+            if (s && s.innerHTML != '') { s.show(); }
+
+        }.bind(this));
+
         this.onShow.each(function(f) {
             if (Object.isFunction(f)) f.defer();
         });

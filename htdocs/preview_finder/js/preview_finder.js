@@ -142,6 +142,13 @@
 
     // click handler for container element labels, posts back to the
     // CMS to open the corresponding container element in the "Edit Story" UI
+
+    editStory = ProtoPopup.get('__editor_popup', {
+        width:          '780px',
+//        cancelIconSrc : info.cmsRoot + '/proto_popup/images/cancel.png'
+    });
+    
+
     var labelClickHandler = function(e) {
         var label   = e.element();
         var info    = label.readAttribute('name');
@@ -151,39 +158,46 @@
             window_id: cms.windowID,
             rm:        'edit',
             story_id:  cms.storyID,
-            path:      cms.elementXPath
+            path:      cms.elementXPath,
+            withCredentials: true
         };
+        console.log("URL: "+url);
+        editStory.show();
+        Krang.Ajax.update({
+            url: url, params: params, to_top: false, target: '__editor_popup-body',
+                    onComplete: function() {editStory.show()}
+        });
 
-        if (Object.isFunction(window.postMessage)) {
-            // HTML5 feature implemented by Firefox 3, maybe by IE8 and Safari 4
-            params['ajax'] = 1;
-            window.opener.postMessage(url + "\uE000" + Object.toJSON(params), cms.cmsRoot);
-        } else if (Prototype.Browser.IE) {
-            //
-            // This hack does not work for communications *back* to the CMS window
-            //
-            // var a = new Element('a', {href:   url + '?' + Object.toQueryString(params)});
-            // a.target = "krang_window_" + cms.windowID;
-            // document.body.appendChild(a);
-            // a.click();
-            //
-            // But using a form works! (strange, both use the same 'target' property)
-            //
-            // pass params as form inputs and signal it to
-            // Krang::Handler using with the special query param 'posted_window_id'
-            var f = new Element(
-                'form',
-                {action: url+'?posted_window_id=1', method: 'post', target: 'krang_window_'+cms.windowID}
-            );
-            $H(params).keys().each(function(i) {
-                    f.appendChild(new Element('input', {type: 'hidden', name: i, value: params[i]}));
-            });
-            document.body.appendChild(f);
-            f.submit();
-        } else {
-            // Safari 3.1 / 3.2
-            window.open(url + '?' + Object.toQueryString(params), "krang_window_" + cms.windowID);
-        }
+//        if (Object.isFunction(window.postMessage)) {
+//            // HTML5 feature implemented by Firefox 3, maybe by IE8 and Safari 4
+//            params['ajax'] = 1;
+//            window.opener.postMessage(url + "\uE000" + Object.toJSON(params), cms.cmsRoot);
+//        } else if (Prototype.Browser.IE) {
+//            //
+//            // This hack does not work for communications *back* to the CMS window
+//            //
+//            // var a = new Element('a', {href:   url + '?' + Object.toQueryString(params)});
+//            // a.target = "krang_window_" + cms.windowID;
+//            // document.body.appendChild(a);
+//            // a.click();
+//            //
+//            // But using a form works! (strange, both use the same 'target' property)
+//            //
+//            // pass params as form inputs and signal it to
+//            // Krang::Handler using with the special query param 'posted_window_id'
+//            var f = new Element(
+//                'form',
+//                {action: url+'?posted_window_id=1', method: 'post', target: 'krang_window_'+cms.windowID}
+//            );
+//            $H(params).keys().each(function(i) {
+//                    f.appendChild(new Element('input', {type: 'hidden', name: i, value: params[i]}));
+//            });
+//            document.body.appendChild(f);
+//            f.submit();
+//        } else {
+//            // Safari 3.1 / 3.2
+//            window.open(url + '?' + Object.toQueryString(params), "krang_window_" + cms.windowID);
+//        }
     };
 
     // position the labels
