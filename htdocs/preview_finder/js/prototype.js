@@ -1200,8 +1200,7 @@ Ajax.Request = Class.create(Ajax.Base, {
     this.url = url;
     this.method = this.options.method;
     var params = Object.clone(this.options.parameters);
-//console.log('prototype.js, request params:');
-//console.log(params);
+
     if (!['get', 'post'].include(this.method)) {
       // simulate other verbs over post
       params['_method'] = this.method;
@@ -1226,10 +1225,6 @@ Ajax.Request = Class.create(Ajax.Base, {
       this.transport.open(this.method.toUpperCase(), this.url,
         this.options.asynchronous);
 
-      // for FF 3.1
-      // see https://developer.mozilla.org/En/HTTP_access_control
-      this.transport.withCredentials = this.parameters.withCredentials;
-console.log("Transport withCredentials: "+this.transport.withCredentials);
       if (this.options.asynchronous) this.respondToReadyState.bind(this).defer(1);
 
       this.transport.onreadystatechange = this.onStateChange.bind(this);
@@ -1256,8 +1251,8 @@ console.log("Transport withCredentials: "+this.transport.withCredentials);
 
   setRequestHeaders: function() {
     var headers = {
-//      'X-Requested-With': 'XMLHttpRequest',
-//      'X-Prototype-Version': Prototype.Version,
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-Prototype-Version': Prototype.Version,
       'Accept': 'text/javascript, text/html, application/xml, text/xml, */*'
     };
 

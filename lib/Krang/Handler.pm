@@ -48,7 +48,6 @@ use Krang::ClassLoader Conf => qw(
   ErrorNotificationEmail
   SMTPServer
   FromAddress
-  PreviewSSL
 );
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
@@ -156,7 +155,7 @@ sub trans_handler ($$) {
         }
 
         # Set current instance, or die trying
-        critical("Krang::Handler:  Setting instance to '$instance_name'");
+        debug("Krang::Handler:  Setting instance to '$instance_name'");
         pkg('Conf')->instance($instance_name);
 
         # Propagate the instance name to the CGI-land
@@ -182,7 +181,7 @@ sub trans_handler ($$) {
         }
 
         # Set current instance, or die trying
-        critical("Krang::Handler:  Setting instance to '$instance_name'");
+        debug("Krang::Handler:  Setting instance to '$instance_name'");
         pkg('Conf')->instance($instance_name);
 
         # Propagate the instance name to the CGI-land
@@ -257,7 +256,7 @@ sub access_handler ($$) {
         safari    => 'WebKit',
         konqueror => 'WebKit',
     );
-critical("Method: ".$r->method);
+
     my $bd = $r->pnotes('browser_detector')
       || HTTP::BrowserDetect->new($r->header_in('User-Agent'));
     foreach my $browser (keys %allow_browsers) {
@@ -270,40 +269,13 @@ critical("Method: ".$r->method);
             {
                 $r->subprocess_env("KRANG_BROWSER_ENGINE"        => $engine_of{$browser});
                 $r->subprocess_env("KRANG_BROWSER_MAJOR_VERSION" => $bd->major);
-
-                # Access control for Preview Editor
-                if (my $origin = $r->header_in('Origin')) {
-                    critical("Header 'Origin': $origin");
-                    my $scheme = PreviewSSL ? 'https://' : 'http://';
-                    my %responsible_for = map { $scheme . $_->preview_url => 1 } pkg('Site')->find();
-                    if ($responsible_for{$origin}) {
-
-                        if ($r->method eq 'OPTIONS') {
-                            # Prototype.js must not send 'X-custom' headers to avoid the OPTIOMS request
-                            $r->err_header_out('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-                            $r->err_header_out('Content-Length', 0);
-                        } else {
-                            critical("Adding response header Access-Control-Allow-Origin header: $origin");
-                            $r->err_header_out('Access-Control-Allow-Origin', $origin);
-                            $r->err_header_out('Access-Control-Allow-Credentials', 'true');
-                        }
-                        return OK;
-                    } else {
-                        # FIX ME: normal CMS request can arrive here with Safari 4
-                        return OK;
-                        critical("Request with unsupported Origin header '$origin'");
-                    }
-                } else {
-                    critical("request without origin");
-                    return OK;
-                }
-            } else {
-                critical("Unsupported browser detected: " . ($r->header_in('User-Agent') || ''));
+                return OK;
             }
         }
     }
 
     # failure
+    debug("Unsupported browser detected: " . ($r->header_in('User-Agent') || ''));
     $r->custom_response(FORBIDDEN, $self->forbidden_browser_message);
     return FORBIDDEN;
 }
@@ -367,14 +339,11 @@ sub authen_handler ($$) {
     # Get cookies
     my %cookies = Apache::Cookie->new($r)->parse;
 
-use Krang::Log qw(critical);use Data::Dumper;
-critical(Dumper(\%cookies));
-
     # If there's no ID or no session cookie, redirect to Login
     unless ($cookies{$instance}) {
 
         # no cookie, redirect to login
-        critical("No cookie found, passing Authen without user login");
+        debug("No cookie found, passing Authen without user login");
         return OK;
     }
 
@@ -428,27 +397,27 @@ critical(Dumper(\%cookies));
 
     # Get window_id from query
     my $window_id = $args{window_id} || '';
-    critical("Got window_id $window_id from request");
+    debug("Got window_id $window_id from request");
 
     # User opened a new window manually, typed or copied URL or
     # accessed it via History: make sure we create a new id for this
     # new window
     if ($window_id && not ($r->header_in("Referer") || $args{posted_window_id})) {
         undef $window_id;
-        critical("No referer header; Unsetting window_id");
+        debug("No referer header; Unsetting window_id");
     }
 
     # Get session_id for window_id
     if ($window_id) {
 
         # existing window
-        critical("Retrieving session from wid_$window_id cookie");
+        debug("Retrieving session from wid_$window_id cookie");
         $session_id = $cookie{"wid_$window_id"};
 
         # if there's no $session_id for this window, logout happened in other window
         if (!$session_id) {
             undef $window_id;
-            critical("No session found; Unsetting window_id");
+            debug("No session found; Unsetting window_id");
         }
     }
 
@@ -459,7 +428,7 @@ critical(Dumper(\%cookies));
         $window_id = $cookie{next_wid}++;
 
         # new session
-        critical("Creating new session for new window_id $window_id");
+        debug("Creating new session for new window_id $window_id");
         $session_id = pkg('Session')->create();
 
         # store mapping between new window ID and new session ID in cookie
@@ -497,7 +466,7 @@ critical(Dumper(\%cookies));
 
     # Check for invalid session
     unless (pkg('Session')->validate($session_id)) {
-        critical("Invalid session '$session_id' for window $window_id. Wiping its cookie.");
+        debug("Invalid session '$session_id' for window $window_id. Wiping its cookie.");
         return OK;
     }
 
