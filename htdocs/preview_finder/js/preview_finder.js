@@ -143,15 +143,24 @@
     // no overlay, no functionality
     if (! $('krang_preview_editor_toggle')) { return }
 
+    // CMS access data
+    var cmsWin   = top.opener;
+    var cmsData  = window.name.split(/\uE000/);
+    var cmsURL   = cmsData[0];
+    var cmsWinID = cmsData[1];
+
+    console.debug("CMS URL: "+cmsURL);
+    console.debug("Window ID: "+cmsWinID);
+
     // click handler for container element labels, posts back to the
     // CMS to open the corresponding container element in the "Edit Story" UI
     var labelClickHandler = function(e) {
         var label   = e.element();
         var info    = label.readAttribute('name');
         var cms     = info.evalJSON();
-        var url     = cms.cmsRoot + '/story.pl';
+        var url     = cmsURL + '/story.pl';
         var params  = {
-            window_id: cms.windowID,
+            window_id: cmsWinID,
             rm:        'edit',
             story_id:  cms.storyID,
             path:      cms.elementXPath
@@ -160,7 +169,7 @@
         if (Object.isFunction(window.postMessage)) {
             // HTML5 feature implemented by Firefox 3, maybe by IE8 and Safari 4
             params['ajax'] = 1;
-            top.opener.postMessage(url + "\uE000" + Object.toJSON(params), cms.cmsRoot);
+            cmsWin.postMessage(url + "\uE000" + Object.toJSON(params), cmsURL);
         } else if (Prototype.Browser.IE) {
             //
             // This hack does not work for communications *back* to the CMS window

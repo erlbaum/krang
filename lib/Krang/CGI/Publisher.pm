@@ -513,6 +513,7 @@ sub preview_editor {
     $t->param(
         story_preview_url => ($query->param('story_preview_url') || ''),
         window_id         => ($query->param('window_id')         || ''),
+        cms_root          => pkg('Conf')->cms_root(),
     );
     return $t->output;
 }
