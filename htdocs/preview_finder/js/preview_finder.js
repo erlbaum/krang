@@ -137,9 +137,6 @@
 
 */
 
-    var window_id      = window.name; // the CMS and the PREVIEW main window IDs are identical
-    var preview_origin = location.protocol + '//' + location.host;
-    
     // no overlay, no functionality
     if (! $('krang_preview_editor_toggle')) { return }
 
@@ -167,34 +164,9 @@
         };
 
         if (Object.isFunction(window.postMessage)) {
-            // HTML5 feature implemented by Firefox 3, maybe by IE8 and Safari 4
+            // HTML5 feature implemented by Firefox 3+, IE8+ and Safari 4+
             params['ajax'] = 1;
-            cmsWin.postMessage(url + "\uE000" + Object.toJSON(params), cmsURL);
-        } else if (Prototype.Browser.IE) {
-            //
-            // This hack does not work for communications *back* to the CMS window
-            //
-            // var a = new Element('a', {href:   url + '?' + Object.toQueryString(params)});
-            // a.target = "krang_window_" + cms.windowID;
-            // document.body.appendChild(a);
-            // a.click();
-            //
-            // But using a form works! (strange, both use the same 'target' property)
-            //
-            // pass params as form inputs and signal it to
-            // Krang::Handler using with the special query param 'posted_window_id'
-            var f = new Element(
-                'form',
-                {action: url+'?posted_window_id=1', method: 'post', target: 'krang_window_'+cms.windowID}
-            );
-            $H(params).keys().each(function(i) {
-                    f.appendChild(new Element('input', {type: 'hidden', name: i, value: params[i]}));
-            });
-            document.body.appendChild(f);
-            f.submit();
-        } else {
-            // Safari 3.1 / 3.2
-            window.open(url + '?' + Object.toQueryString(params), "krang_window_" + cms.windowID);
+            Prototype.XOrigin.XUpdater(cmsWin, cmsURL, '/story.pl', {parameters:params}, {success: 'C'});
         }
     };
 

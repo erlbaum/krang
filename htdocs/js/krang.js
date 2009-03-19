@@ -1885,23 +1885,72 @@ Krang.PoorTextCreationArguments = new Array;
 
 /**
    Message handler called by previewed story's postMessage() - a HTML5
-   feature implemented by Firefox 3
+   feature implemented by Firefox 3+, IE8+, Safari4+
 */
-if (Object.isFunction(window.postMessage)) {
-    window.addEventListener('message', function(e) {
+if (Prototype == undefined) {
+    throw new Error("The library xorigin.js is based on prototype.js, but Prototype is not defined");
+}
+if (Prototype.XOrigin == undefined) {
+    Prototype.XOrigin = {};
+}
 
-        // get the preview URLs of our sites from config cookie
-        var config      = Krang.config();
+Prototype.XOrigin.Proxy = function(e, authorizedOrigins) {
+    if (authorizedOrigins.any(function(url) { return url == e.origin })) {
+        // message from authorized origin
+        var data;
+        if (data = e.data && e.data.split(/\uE000/)) {
+            // unpack the posted data
+            var url     = data[0];
+            var options = data[1] ? data[1].evalJSON() : {};
+            var target  = data[2] ? data[2].evalJSON() : {};
+
+            console.debug("2. Received message from '" + e.origin + "' -" + data);
+
+            // our type
+            var type = options['__type__']; delete options['__type__'];
+
+            // add callbacks to options
+            ['onSuccess', 'onFailure', 'onException'].each(function(cb) {
+                    options[cb] = function(response, json) {
+                        console.debug("4. X-JSON header in XHR response for cb '" + cb +"' on next line");
+                        console.debug(json);
+
+                        // pack response message (JSON header only)
+                        // the XHR response object contains stuff we may not access cross origin wise
+                        var msg = cb + "\uE000" + Object.toJSON(json);
+
+                        // post back to sender
+                        e.source.postMessage(msg, e.origin);
+                    }
+            });
+
+            // send XHR request
+            if (type == 'request') {
+                console.debug("3. Sending Ajax.Request(url, options) for URL: "+url
+                              +" ('options' on next line");
+                console.debug(options);
+                new Ajax.Request(url, options);
+
+            } else if (type == 'xupdater') {
+                console.debug("3. Sending Ajax.Updater(target, url, options) for URL: "+url
+                              +" ('target' and 'options' on next 2 lines");
+                console.debug(target); console.debug(options);
+                new Ajax.Updater(target, url, options);
+            }
+        }
+    }
+};
+
+Event.observe(window, 'message', function(e) {
+        // get allowed preview site URLs from 'config' cookie
+        var config      = Krang.config() || {};
         var previewURLs = config.previewURLs;
 
-        if (previewURLs.any(function(url) {return url == e.origin})) {
-            // message comes from one of our sites
-            window.focus(); // needs to be allowed in Firefox' Advanced JavaScript settings
-         
-            // goto Story Edit UI of requested container element
-            var url_params = e.data && e.data.split(/\uE000/);
-            console.log(url_params[0]+' - '+url_params[1]);
-            Krang.Ajax.update({url: url_params[0], params: url_params[1].evalJSON()});
+        if (!previewURLs) {
+            throw(new Error("Message event handler (krang.js): Missing preview site URLs"));
         }
-    }, false);
-}
+
+        // call our cross origin XHR proxy
+        Prototype.XOrigin.Proxy(e, previewURLs);
+});
+
