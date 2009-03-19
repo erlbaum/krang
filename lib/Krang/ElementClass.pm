@@ -1626,6 +1626,9 @@ sub _get_preview_editor_js_css_loader {
 
     return <<END;
 <script type="text/javascript">
+// pull in Preview Editor...
+if (self != top) {
+    // ... only if opened in its IFrame ...
     // ProtoPopup CSS
     var tpCSS = document.createElement('link');
     tpCSS.type="text/css";
@@ -1645,6 +1648,13 @@ sub _get_preview_editor_js_css_loader {
     tpScript.setAttribute('language','JavaScript');
     tpScript.setAttribute('src','$args{cms_root}/js/preview_finder.js');
     document.body.appendChild(tpScript);
+} else {
+    // ... otherwise hide overlay
+    try {
+        document.getElementById('krang_preview_editor_top_overlay').style.display = 'none';
+        document.getElementById('krang_preview_editor_top_spacer').style.display = 'none';
+    } catch(er) {}
+}
 </script>
 END
 }

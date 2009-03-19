@@ -160,7 +160,7 @@
         if (Object.isFunction(window.postMessage)) {
             // HTML5 feature implemented by Firefox 3, maybe by IE8 and Safari 4
             params['ajax'] = 1;
-            window.opener.postMessage(url + "\uE000" + Object.toJSON(params), cms.cmsRoot);
+            top.opener.postMessage(url + "\uE000" + Object.toJSON(params), cms.cmsRoot);
         } else if (Prototype.Browser.IE) {
             //
             // This hack does not work for communications *back* to the CMS window
