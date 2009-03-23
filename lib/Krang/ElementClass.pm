@@ -1671,12 +1671,15 @@ END
 sub _insert_preview_editor_top_overlay {
     my ($self, %arg) = @_;
 
-    my $title      = localize('Krang Preview');
-    my $activate   = localize('Activate');
-    my $deactivate = localize('Deactivate');
-    my $close      = localize('Close');
-    my $help       = localize('Help');
-    my $loading    = localize('Loading');
+    my $title       = localize('Krang Preview');
+    my $browse      = localize('Browse');
+    my $find_tmpl   = localize('Find Template');
+    my $edit        = localize('Edit');
+    my $steal       = localize('Steal from');
+    my $checked_out = localize('Checked out by');
+    my $close       = localize('Close');
+    my $help        = localize('Help');
+    my $loading     = localize('Loading');
 
     my $include_editor = $arg{with_preview_editor}
       ? '<span id="krang_preview_editor_include_editor">'. localize('Editor') . ' &</span>'
@@ -1691,8 +1694,17 @@ sub _insert_preview_editor_top_overlay {
 <div id="krang_preview_editor_top_overlay" style="width: 100%; height: 16px; border-bottom: 4px solid #d4d4d4; background-color: #cee7ff; position: fixed; top: 0; left:0; right:0; color:#336699; font-family: sans-serif; font-weight: bold; padding:15px;">
   <table cellpadding="0" cellspacing="0" border="0" width="100%"><tbody><tr>
     <td width="33%"><span id="krang_preview_editor_logo">$title</span> <span id="krang_preview_editor_include">$include_editor $tmpl_finder</span></td>
-    <td width="33%" style="text-align: center"><span id="krang_preview_editor_toggle"><span id="krang_preview_editor_deactivate">$deactivate</span><span id="krang_preview_editor_activate" style="display: none">$activate</span></span></td>
-    <td width="33%" style="text-align: right; padding-right: 20px"><a href="" id="krang_preview_editor_help" name="$help_url">$help</a><a href="" id="krang_preview_editor_close">$close</a></td>
+<!--    <td width="33%" style="text-align: center"><span id="krang_preview_editor_toggle"><span id="krang_preview_editor_deactivate">deactivate</span><span id="krang_preview_editor_activate" style="display: none">activate</span></span></td>-->
+
+    <td width="57%" style="text-align: center">
+       <span id="krang_preview_editor_btn_browse"  class="krang_preview_editor_btn" style="display:none">$browse</span>
+       <span id="krang_preview_editor_btn_find"    class="krang_preview_editor_btn" style="display:none">$find_tmpl</span>
+       <span id="krang_preview_editor_btn_edit"    class="krang_preview_editor_btn" style="display:none">$edit</span>
+       <span id="krang_preview_editor_btn_steal"   class="krang_preview_editor_btn" style="display:none">$steal</span>
+       <span id="krang_preview_editor_checked_out" style="display:none">$checked_out</span>
+    </td>
+
+    <td width="10%" style="text-align: right; padding-right: 20px"><a href="" id="krang_preview_editor_help" name="$help_url">$help</a><a href="" id="krang_preview_editor_close">$close</a></td>
   </tr></tbody></table>
 </div>
 <div id="krang_preview_editor_load_indicator" style="$indicator_css">

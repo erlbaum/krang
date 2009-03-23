@@ -2,18 +2,40 @@
    Krang Preview Finder Module
  */
 (function() {
-    // positioning of top overlay
-    if (Prototype.Browser.IEVersion == 6) {
-        $('krang_preview_editor_top_overlay').setStyle({position: 'absolute'});
+/*
+                   --- CMS access data ---
+*/
+    var cmsWin   = top.opener;
+    var cmsData  = window.name.split(/\uE000/);
+    var cmsURL   = cmsData[0];
+    var cmsWinID = cmsData[1];
+
+    // get story ID
+    var fLabel  = $$('.krang_preview_editor_element_label').first();
+    var flName  = fLabel ? fLabel.readAttribute('name') : '';
+    try {
+        var flObj   = flName ? flName.evalJSON() : '';
     }
+    catch (er) {
+        alert(er.name + ": Critical error in preview_finder.js. Please inform the Krang developer team.");
+    }
+    var storyID = flObj.storyID;
+
+    console.debug("CMS URL: "+cmsURL);
+    console.debug("Window ID: "+cmsWinID);
+    console.debug("Story ID: "+storyID);
+
+/*
+                    --- Template Finder ---
+*/
 
     // helper function to format infos extracted from our comment
     var formatInfo = function(info, separator) {
         var html   = '';
 
         var script = info.type == 'template'
-        ? info.cmsRoot + "/template.pl?rm=search&do_advanced_search=1&search_template_id=" + info.id
-        : info.cmsRoot + "/media.pl?rm=find&do_advanced_search=1&search_media_id=" + info.id;
+        ? cmsURL + "/template.pl?rm=search&do_advanced_search=1&search_template_id=" + info.id
+        : cmsURL + "/media.pl?rm=find&do_advanced_search=1&search_media_id=" + info.id;
 
         if (separator) {html += '<hr style="margin:3px 0px" class="__skip_pinfo"/>';}
 
@@ -90,7 +112,12 @@
                 if (startRE.test(comment)) {
                     // a start tag: extract info
                     comment = comment.replace(/KrangPreviewFinder Start/, '').strip();
-                    info = comment.evalJSON();
+                    try {
+                        info = comment.evalJSON();
+                    }
+                    catch (er) {
+                        alert(er.name + ": Critical error in preview_finder.js. Please inform the Krang developer team.");
+                    }
                     return info;
                 } else if (endRE.test(comment)) {
                     // an end tag: we are not interested in the corresponding start tag
@@ -114,13 +141,13 @@
             pinfo = ProtoPopup.makeFunction('__pinfo', {
                 header:         '<strong>Template / Media Info</strong>',
                 width:          '400px',
-                cancelIconSrc : info.cmsRoot + '/proto_popup/images/cancel.png'
+                cancelIconSrc : cmsURL + '/proto_popup/images/cancel.png'
             });
         }
 
-        if (info.cmsRoot) {
+//        if (info.cmsRoot) {
             pinfo(html);
-        }
+//        }
 
         // and prevent the default behavior for links, unless it's our own link
         if (!element.hasClassName("krang-find-template-link")) {
@@ -128,26 +155,13 @@
         }
         return false;
     };
-    document.observe('click', templateFinderClickHandler);
 
 /*
-
-                --- Preview Editor ---
-
+                         --- Preview Editor ---
 
 */
 
-    // no overlay, no functionality
-    if (! $('krang_preview_editor_toggle')) { return }
-
-    // CMS access data
-    var cmsWin   = top.opener;
-    var cmsData  = window.name.split(/\uE000/);
-    var cmsURL   = cmsData[0];
-    var cmsWinID = cmsData[1];
-
-    console.debug("CMS URL: "+cmsURL);
-    console.debug("Window ID: "+cmsWinID);
+    var runMode = '';
 
     // click handler for container element labels, posts back to the
     // CMS to open the corresponding container element in the "Edit Story" UI
@@ -158,7 +172,7 @@
         var url     = cmsURL + '/story.pl';
         var params  = {
             window_id: cmsWinID,
-            rm:        'edit',
+            rm:        runMode,
             story_id:  cms.storyID,
             path:      cms.elementXPath
         };
@@ -181,45 +195,128 @@
     // reposition them when resizing the window
     Event.observe(window, 'resize', positionLabels);
 
-    // make them clickable
-    $$('.krang_preview_editor_element_label').reverse().each(function(contElm) {
-            var id     = contElm.identify();
-            contElm.show().observe('click', labelClickHandler);
+/*
+    
+                  --- Overlay UI ---
+    
+*/
+    // Stop click events from bubbling up above the UI container
+    $('krang_preview_editor_top_overlay').observe('click', function(e) { Event.stop(e) });
+
+    // Update overlay buttons callback
+    var initOverlay = function(status) { // status provided by Krang::CGI::Story::get_status()
+
+        console.debug("Story status on next line: ");
+        console.debug(status);
+
+        var uiReset = function() {
+            try { $('__pinfo').hide() } catch(er) {}
+            $$('.krang_preview_editor_btn').invoke('removeClassName', 'krang_preview_editor_btn_pressed');            
+            $$('.krang_preview_editor_element_label').invoke('hide');
+            document.stopObserving('click', templateFinderClickHandler);
+            document.stopObserving('click', labelClickHandler);
+        };
+
+        var doActivateEdit = function() {
+            $('krang_preview_editor_btn_edit').addClassName('krang_preview_editor_btn_pressed').show();
+            $$('.krang_preview_editor_element_label').invoke('show');
+            document.observe('click', labelClickHandler);
+        };
+
+        var activateEdit = function() {
+            $('krang_preview_editor_btn_edit').show().observe('click', function(e) {
+                uiReset();
+                doActivateEdit();
+            });
+        }
+
+        // reset UI
+        uiReset();
+
+        // Browse button
+        $('krang_preview_editor_btn_browse').addClassName('krang_preview_editor_btn_pressed')
+        .show().observe('click', function(e) {
+            uiReset();
+            $('krang_preview_editor_btn_browse').addClassName('krang_preview_editor_btn_pressed');
+        });
+
+        // Find template button
+        $('krang_preview_editor_btn_find').show().observe('click', function(e) {
+            uiReset();
+            $('krang_preview_editor_btn_find').addClassName('krang_preview_editor_btn_pressed');
+            document.observe('click', templateFinderClickHandler);
+        });
+
+        // Edit/Steal buttons and checked out msg
+        if (status.checkedOutBy == 'me') {
+            runMode = 'edit';
+            activateEdit();
+        } else if (status.checkedOut == '0') {
+            runMode = 'checkout_and_edit';
+            activateEdit();
+        } else if (status.checkedOut == '1' && status.maySteal == '0') {
+            var co = $('krang_preview_editor_checked_out');
+            co.update(co.innerHTML + ' ' + status.checkedOutBy).show();
+        } else if (status.maySteal == '1') {
+            var ms = $('krang_preview_editor_btn_steal');
+            ms.update(ms.innerHTML +  ' ' + status.checkedOutBy).show().observe('click', function(e) {
+                    uiReset();
+                    Prototype.XOrigin.XUpdater(cmsWin, cmsURL, '/story.pl', {
+                            parameters: {
+                                rm:        'pe_steal_story',
+                                ajax:      1,
+                                window_id: cmsWinID,
+                                story_id:  storyID
+                            },
+                            onComplete: function(json) {
+                                if (json.status == 'ok') {
+                                    ms.hide();
+                                    runMode = 'edit';
+                                    doActivateEdit();
+                                    activateEdit();
+                                    console.info(json.msg);
+                                } else {
+                                    console.error("Steal Story "+storyID+" failed (preview_finder.js)");
+                                }
+                            }
+                        },
+                        {success: 'C'}
+                    );
+            });
+        } else {
+            throw(new Error("Unknown story status in initOverlay() - preview_finder.js"));
+        }
+
+        // Close button
+        $('krang_preview_editor_close').observe('click', function(e) {
+            $('krang_preview_editor_top_overlay').hide();                
+        });
+
+        // Help button
+        var helpBtn = $('krang_preview_editor_help');
+        var helpURL  = helpBtn.readAttribute('name');
+        var showHelp = function() {
+            window.open(helpURL, "kranghelp", "width=400,height=500");
+        }
+        helpBtn.observe('click', showHelp);
+    }
+
+    // initialize overlay
+    Prototype.XOrigin.Request(cmsWin, cmsURL, '/story.pl', {
+        parameters: {
+            window_id: cmsWinID,
+            rm:        'pe_get_status',
+            story_id:  storyID
+        },
+        onComplete: initOverlay
     });
 
-    // activate/deactivate the editor and the template/media finder
-    var activateDeactivate = function(e) {
-        if ($('krang_preview_editor_activate').visible()) {
-            $('krang_preview_editor_activate').hide();
-            $('krang_preview_editor_deactivate').show();
-            document.observe('click', templateFinderClickHandler);
-        } else {
-            $('krang_preview_editor_activate').show();
-            $('krang_preview_editor_deactivate').hide();
-            document.stopObserving('click', templateFinderClickHandler);
-        }
-        $$('.krang_preview_editor_element_label').invoke('toggle');
-    };
-    $('krang_preview_editor_toggle').observe('click', activateDeactivate);
-    
-    // deactivate finder (maybe editor too) and hide the top overlay (bring it back pressing F5)
-    var deactivateHide = function(e) {
-        document.stopObserving('click', templateFinderClickHandler);
-        Event.stopObserving(window, 'resize', positionLabels);
-        $$('.krang_preview_editor_element_label').invoke('hide');
-        $('krang_preview_editor_top_overlay').hide();
-        $('krang_preview_editor_top_spacer').hide();
-        try { $('__pinfo').hide() } catch(er) {}
-        Event.stop(e);
-    }
-    $('krang_preview_editor_close').observe('click', deactivateHide);
 
-    // show help
-    var helpLink = $('krang_preview_editor_help');
-    var helpURL  = helpLink.readAttribute('name');
-    var showHelp = function() {
-        window.open(helpURL, "kranghelp", "width=400,height=500");
-    }
-    helpLink.observe('click', showHelp);
+/*
+
+            --- Other buttons
+
+*/
+
 
 })();

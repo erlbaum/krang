@@ -33,9 +33,14 @@ div.krang_preview_editor_element_label:active {
   font-size: 12px;
 }
 
-#krang_preview_editor_toggle { 
-  text-decoration: underline;
-  cursor: pointer;
+.krang_preview_editor_btn {
+  border:  1px outset silver; 
+  cursor:  pointer;
+  padding: 2px 4px;
+}
+
+.krang_preview_editor_btn_pressed { 
+  border: 1px inset silver;
 }
 
 a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited { 

@@ -8,7 +8,7 @@ use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader Log     => qw(debug info assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Message => qw(add_message add_alert clear_messages clear_alerts);
+use Krang::ClassLoader Message => qw(add_message add_alert clear_messages clear_alerts get_messages);
 use Krang::ClassLoader Widget =>
   qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader 'CGI::Workspace';
@@ -94,6 +94,8 @@ sub setup {
         retire                        => 'retire',
         retire_selected               => 'retire_selected',
         unretire                      => 'unretire',
+        pe_get_status                 => 'pe_get_status',
+        pe_steal_story                => 'pe_steal_story',
     );
 
     $self->tmpl_path('Story/');
@@ -2851,6 +2853,78 @@ sub unretire {
     add_message('story_unretired', id => $story_id, url => $story->url);
 
     return $self->list_retired;
+}
+
+#
+#     Preview Editor Runmodes
+#
+
+########### FIXME documentation
+
+sub pe_get_status {
+    my ($self) = @_;
+    my $query  = $self->query;
+
+    my $story_id = $query->param('story_id');
+    return '' unless $story_id;
+
+    # get story
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+
+    # checked out status
+    my $checked_out = $story->checked_out;
+
+    # get user
+    my $cob = '';
+    if ($checked_out) {
+        $cob = 'me' if $story->checked_out_by eq $ENV{REMOTE_USER};
+        unless ($cob) {
+            my ($owner) = pkg('User')->find(user_id => $story->checked_out_by);
+            $cob = CGI->escapeHTML($owner->first_name . ' ' . $owner->last_name);
+        }
+    }
+
+    # may I steal it?
+    my $may_steal = pkg('Group')->user_admin_permissions('may_checkin_all');
+
+    # return status
+    $self->add_json_header(
+        checkedOut   => $checked_out,
+        checkedOutBy => $cob,
+        maySteal     => $may_steal,
+    );
+
+    return '';
+}
+
+sub pe_steal_story {
+    my ($self)   = @_;
+    my $query    = $self->query;
+    my $story_id = $query->param('story_id');
+
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+
+    # steal the story and keep track of victim
+    my ($victim)    = pkg('User')->find(user_id => $story->checked_out_by);
+    my $victim_name = $victim ? $query->escapeHTML($victim->first_name . ' ' . $victim->last_name) : '';
+
+    add_history(object => $story, action => 'steal');
+    $story->checkin();
+    $story->checkout();
+
+    add_message(
+        'one_story_stolen_and_opened',
+        id     => $story_id,
+        victim => $victim_name
+    );
+
+    # put message in JSON header
+    $self->add_json_header(
+        status => 'ok',
+        msg    => (join('<br/>', get_messages()) || ''),
+    );
+
+    return $self->edit;
 }
 
 1;
