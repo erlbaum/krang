@@ -14,9 +14,12 @@ Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, xtarget)
     // add our type
     options['__type__'] = type;
 
-    // our default XHR method
+    // our defaults
     options.method = options.method ? options.method : 'get';
-    
+    if (type == 'xupdater') {
+        options.evalScripts = options.evalScripts ? options.evalScripts : true;
+    }
+
     // pack message for cross document messaging
     var msg = xurl + xpath + "\uE000" + Object.toJSON(options);
     if (type == 'xupdater' && xtarget) { msg += "\uE000" + Object.toJSON(xtarget); }
