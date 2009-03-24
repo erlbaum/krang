@@ -28,10 +28,7 @@ use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'Cache';
-use Krang::ClassLoader Conf         => qw(PreviewSSL Charset EnablePreviewFinder
-                                          HostName InstanceHostName
-                                          SSLApachePort InstanceSSLPort
-                                          ApachePort InstanceApachePort);
+use Krang::ClassLoader Conf         => qw(PreviewSSL Charset EnablePreviewEditor);
 use Krang::ClassLoader Log          => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget       => qw(format_url datetime_chooser decode_datetime);
 use Krang::ClassLoader Message      => qw(add_message add_alert get_alerts clear_alerts);
@@ -361,29 +358,10 @@ sub preview_story {
 
     # start up the cache and setup an eval{} to catch any death
     pkg('Cache')->start();
-    my ($url, $with_preview_editor);
+    my ($url);
     eval {
 
         my $publisher = pkg('Publisher')->new();
-
-        #
-        # Krang::ElementClass methods need to know special stuff for
-        # the Preview Editor
-        #
-        # Maybe use template/media finder in preview
-        my $use_template_finder = EnablePreviewFinder
-          && pkg('MyPref')->get('use_preview_finder');
-
-        # maybe also with Preview Editor
-        $with_preview_editor = $use_template_finder
-          && $query->param('with_preview_editor');
-
-        # stuff into the publish context
-        $publisher->publish_context(
-                use_template_finder => ($use_template_finder || 0),
-                with_preview_editor => ($with_preview_editor || 0),
-                cms_root            => pkg('Conf')->cms_root,
-        );
 
         eval {
             $url = $publisher->preview_story(
@@ -474,7 +452,7 @@ sub preview_story {
     my $scheme = PreviewSSL ? 'https' : 'http';
 
     # w/o preview editor
-    if ($with_preview_editor) {
+    if (pkg('MyPref')->get('use_preview_editor')) {
         # display the previewed story in a frame within the main window
         my $qstring = "rm=preview_editor&story_preview_url="
           .uri_escape("$scheme://$url")

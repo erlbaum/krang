@@ -1081,7 +1081,7 @@ sub preview_and_stay {
 
     # re-load edit window and have it launch new window for preview
     my $edit_window = $self->edit || '';
-    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null, 'preview_editor');</script>|;
+    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null);</script>|;
     return ($edit_window . $js_for_preview);
 }
 

@@ -1090,10 +1090,9 @@ Krang.update_order = function( select, prefix ) {
     (either 'story' or 'media') with a certain id (if no id is present
     it will preview the one currently in the session)
 */
-Krang.preview = function(type, id, withPreviewEditor) {
+Krang.preview = function(type, id) {
     var url = 'publisher.pl?rm=preview_' + type
-    + '&' + ( ( id == null      ) ? ( 'session=' + type      ) : ( type + '_id=' + id      ) )
-    + '&' + ( (withPreviewEditor) ? ( 'with_preview_editor=1') : ( 'with_preview_editor=0' ) ); 
+    + '&' + ( ( id == null ) ? ( 'session=' + type ) : ( type + '_id=' + id ) );
 
     // attach the preview window to our session
     url = Krang.Window.pass_id(url);
@@ -1817,8 +1816,7 @@ var rules = {
             var story_data = name.split(/_/);
             var story_id = story_data[1];
             if( story_id == 'null' ) story_id = null;
-            var with_preview_editor = story_data[2];
-            Krang.preview('story', story_id, with_preview_editor);
+            Krang.preview('story', story_id);
             Event.stop(event);
         }.bindAsEventListener(el));
     },

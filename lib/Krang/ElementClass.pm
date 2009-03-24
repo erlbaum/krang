@@ -10,7 +10,7 @@ use HTML::Template::Expr;
 use Encode qw(decode_utf8 encode_utf8);
 
 use Krang::ClassLoader Log          => qw(debug info critical);
-use Krang::ClassLoader Conf         => qw(PreviewSSL);
+use Krang::ClassLoader Conf         => qw(PreviewSSL EnablePreviewEditor);
 use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'MyPref';
@@ -727,13 +727,13 @@ sub find_template {
         my %publish_context = $publisher->publish_context();
 
         # use template finder if enabled
-        if ($publish_context{use_template_finder}) {
+        if (EnablePreviewEditor) {
+            $args{cms_root} = pkg('Conf')->cms_root;
             $self->_insert_comments_for_template_finder(
                 %args,
                 filters   => \@filters,
                 publisher => $publisher,
                 filename  => $filename,
-                %publish_context,
             );
             $self->_insert_preview_editor_top_overlay(
                 %args,
@@ -1093,7 +1093,7 @@ sub _fill_loop_iteration {
 
     # overlay div showing the child's display name
     my %publish_context = $publisher->publish_context;
-    my $div = $child->is_container && $publish_context{with_preview_editor}
+    my $div = $child->is_container && EnablePreviewEditor
       ? $self->_get_preview_editor_element_overlays(%args, %publish_context)
       : '';
 
@@ -1671,7 +1671,7 @@ END
 sub _insert_preview_editor_top_overlay {
     my ($self, %arg) = @_;
 
-    my $title       = localize('Krang Preview');
+    my $title       = localize('Krang Preview Editor');
     my $browse      = localize('Browse');
     my $find_tmpl   = localize('Find Template');
     my $edit        = localize('Edit');
@@ -1681,11 +1681,6 @@ sub _insert_preview_editor_top_overlay {
     my $help        = localize('Help');
     my $loading     = localize('Loading');
 
-    my $include_editor = $arg{with_preview_editor}
-      ? '<span id="krang_preview_editor_include_editor">'. localize('Editor') . ' &</span>'
-      : '';
-    my $tmpl_finder = localize('Template Finder');
-
     my $help_url = $arg{cms_root} . "/help.pl?topic=preview_editor&window_id=$ENV{KRANG_WINDOW_ID}";
 
     my $indicator_css = "background-color: #cee7ff; color: #666; filter: alpha(opacity=90); opacity: .9; position: fixed; z-index: 32767; left: 0; bottom: 0; border: 1px solid #369; padding: 0.5em 0.6em; width: 70px; font-size: 9px; font-weight: bold; display: none";
@@ -1693,7 +1688,7 @@ sub _insert_preview_editor_top_overlay {
     my $overlay =<<END;
 <div id="krang_preview_editor_top_overlay" style="width: 100%; height: 16px; border-bottom: 4px solid #d4d4d4; background-color: #cee7ff; position: fixed; top: 0; left:0; right:0; color:#336699; font-family: sans-serif; font-weight: bold; padding:15px;">
   <table cellpadding="0" cellspacing="0" border="0" width="100%"><tbody><tr>
-    <td width="33%"><span id="krang_preview_editor_logo">$title</span> <span id="krang_preview_editor_include">$include_editor $tmpl_finder</span></td>
+    <td width="33%"><span id="krang_preview_editor_logo">$title</span></td>
 <!--    <td width="33%" style="text-align: center"><span id="krang_preview_editor_toggle"><span id="krang_preview_editor_deactivate">deactivate</span><span id="krang_preview_editor_activate" style="display: none">activate</span></span></td>-->
 
     <td width="57%" style="text-align: center">
