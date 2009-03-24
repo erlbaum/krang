@@ -100,6 +100,7 @@ my @files = qw(
   htdocs/js/scriptaculous.js
   htdocs/proto_popup/src/proto_popup_base.js
   htdocs/preview_finder/js/xorigin.js
+  htdocs/preview_finder/js/krang_messages.js
   htdocs/preview_finder/js/preview_finder.js
 );
 @files = map { catfile(KrangRoot, $_) } @files;

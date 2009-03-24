@@ -8,7 +8,14 @@
     var cmsWin   = top.opener;
     var cmsData  = window.name.split(/\uE000/);
     var cmsURL   = cmsData[0];
-    var cmsWinID = cmsData[1];
+    try {
+        var conf = cmsData[1] ? cmsData[1].evalJSON() : {}
+    }
+    catch(er) {
+        alert(er.name + ": Critical error in preview_finder.js. Please inform the Krang developer team.");
+    }
+    var cmsWinID   = conf.winID;
+    var msgTimeout = conf.messageTimeout;
 
     // get story ID
     var fLabel  = $$('.krang_preview_editor_element_label').first();
@@ -274,7 +281,7 @@
                                     runMode = 'edit';
                                     doActivateEdit();
                                     activateEdit();
-                                    console.info(json.msg);
+                                    Krang.Messages.add(json.msg).show(msgTimeout);
                                 } else {
                                     console.error("Steal Story "+storyID+" failed (preview_finder.js)");
                                 }
@@ -289,7 +296,7 @@
 
         // Close button
         $('krang_preview_editor_close').observe('click', function(e) {
-            $('krang_preview_editor_top_overlay').hide();                
+            top.location.href = window.location.href;
         });
 
         // Help button

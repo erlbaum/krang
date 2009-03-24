@@ -1702,12 +1702,30 @@ sub _insert_preview_editor_top_overlay {
     <td width="10%" style="text-align: right; padding-right: 20px"><a href="" id="krang_preview_editor_help" name="$help_url">$help</a><a href="" id="krang_preview_editor_close">$close</a></td>
   </tr></tbody></table>
 </div>
+
 <div id="krang_preview_editor_load_indicator" style="$indicator_css">
 <img alt="Load Indicator" src="$arg{cms_root}/images/indicator_small_bluebg.gif" style="padding 0 1em 0 0; vertical-align:middle">
 $loading&hellip;
 </div>
 END
-        my $top_spacer = qq{<div id="krang_preview_editor_top_spacer"></div>};
+        my $top_spacer = <<END;
+<div id="krang_preview_editor_top_spacer"></div>
+<div id="krang_preview_editor_messages" class="krang_preview_editor_slider" style="display:none;">
+<div class="wrapper">
+<div class="content" style="background: url('$arg{cms_root}/images/slider-info.gif') 20px 10px no-repeat;"></div>
+<form>
+<input value="$close" type="button" class="krang_preview_editor_button" style="background: #EEE url('$arg{cms_root}/images/bkg-button-mini.gif') 0 50% repeat-x !important;"/>
+</form>
+</div></div>
+
+<div id="krang_preview_editor_alerts" class="krang_preview_editor_slider" style="display:none;"><div class="wrapper">
+<div class="content" style="background: url('$arg{cms_root}/images/slider-alert.gif') 20px 10px no-repeat;"></div>
+<form>
+<input value="$close" type="button" class="krang_preview_editor_button" style="background: #EEE url('$arg{cms_root}/images/bkg-button-mini.gif') 0 50% repeat-x !important;">
+</form>
+</div></div>
+END
+
         push @{$arg{filters}}, sub { ${$_[0]} =~ s/(<body[^>]*>)/$1$top_spacer/msi };
         push @{$arg{filters}}, sub { ${$_[0]} =~ s/(<\/body[^>]*>)/$overlay$1/msi };
 }

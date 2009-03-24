@@ -28,6 +28,7 @@ use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'Cache';
+use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader Conf         => qw(PreviewSSL Charset EnablePreviewEditor);
 use Krang::ClassLoader Log          => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget       => qw(format_url datetime_chooser decode_datetime);
@@ -371,7 +372,6 @@ sub preview_story {
             );
         };
         if (my $error = $@) {
-
             # if there is an error, figure out what it is, create the
             # appropriate message and return an error page.
             if (ref $error && $error->isa('Krang::ElementClass::TemplateNotFound')) {
@@ -452,7 +452,7 @@ sub preview_story {
     my $scheme = PreviewSSL ? 'https' : 'http';
 
     # w/o preview editor
-    if (pkg('MyPref')->get('use_preview_editor')) {
+    if (pkg('MyPref')->get('use_preview_editor') && !$query->param('exit_preview_editor')) {
         # display the previewed story in a frame within the main window
         my $qstring = "rm=preview_editor&story_preview_url="
           .uri_escape("$scheme://$url")
@@ -492,6 +492,7 @@ sub preview_editor {
         story_preview_url => ($query->param('story_preview_url') || ''),
         window_id         => ($query->param('window_id')         || ''),
         cms_root          => pkg('Conf')->cms_root(),
+        message_timeout   => pkg('MyPref')->get('message_timeout'),
     );
     return $t->output;
 }
