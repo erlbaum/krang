@@ -34,8 +34,9 @@ use Krang::ClassLoader Log          => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget       => qw(format_url datetime_chooser decode_datetime);
 use Krang::ClassLoader Message      => qw(add_message add_alert get_alerts clear_alerts);
 use Krang::ClassLoader Localization => qw(localize);
-use Time::Piece;
 
+use Time::Piece;
+use JSON::Any;
 use Carp qw(croak);
 use URI::Escape qw(uri_escape);
 
@@ -490,9 +491,10 @@ sub preview_editor {
 
     $t->param(
         story_preview_url => ($query->param('story_preview_url') || ''),
-        window_id         => ($query->param('window_id')         || ''),
-        cms_root          => pkg('Conf')->cms_root(),
-        message_timeout   => pkg('MyPref')->get('message_timeout'),
+        json => JSON::Any->new->encode({
+            winID  => ($query->param('window_id') || ''),
+            cmsURL => pkg('Conf')->cms_root(),
+        }),
     );
     return $t->output;
 }

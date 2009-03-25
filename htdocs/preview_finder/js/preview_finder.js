@@ -6,16 +6,14 @@
                    --- CMS access data ---
 */
     var cmsWin   = top.opener;
-    var cmsData  = window.name.split(/\uE000/);
-    var cmsURL   = cmsData[0];
     try {
-        var conf = cmsData[1] ? cmsData[1].evalJSON() : {}
+        var cmsData = window.name ? window.name.evalJSON() : {}
     }
     catch(er) {
-        alert(er.name + ": Critical error in preview_finder.js. Please inform the Krang developer team.");
+        alert(er.name + ": Critical error in preview_finder.js. Please inform the Krang developer team.\n");
     }
-    var cmsWinID   = conf.winID;
-    var msgTimeout = conf.messageTimeout;
+    var cmsURL     = cmsData.cmsURL;
+    var cmsWinID   = cmsData.winID;
 
     // get story ID
     var fLabel  = $$('.krang_preview_editor_element_label').first();
@@ -275,13 +273,13 @@
                                 window_id: cmsWinID,
                                 story_id:  storyID
                             },
-                            onComplete: function(json) {
+                            onComplete: function(json, pref, conf) {
                                 if (json.status == 'ok') {
                                     ms.hide();
                                     runMode = 'edit';
                                     doActivateEdit();
                                     activateEdit();
-                                    Krang.Messages.add(json.msg).show(msgTimeout);
+                                    Krang.Messages.add(json.msg).show(pref.message_timeout);
                                 } else {
                                     console.error("Steal Story "+storyID+" failed (preview_finder.js)");
                                 }
