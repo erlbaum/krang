@@ -212,7 +212,7 @@ Krang.Cookie = {
     },
     json_get : function(name) {
         var json = Krang.Cookie.get(name);
-        return eval('(' + json + ')');
+        return json.evalJSON()
     }
 }
 
@@ -1902,6 +1902,8 @@ Krang.XOriginProxy = function(e, authorizedOrigins) {
 
             Krang.show_indicator();
 
+            
+
             // send XHR request for Prototype.XOrigin.Request
             if (type == 'request') {
                 console.debug("3. Sending Ajax.Request(url, options) for URL: "+url
@@ -1918,7 +1920,9 @@ Krang.XOriginProxy = function(e, authorizedOrigins) {
 
                         // pack response message (JSON header only)
                         // the XHR response object contains stuff we may not access cross origin wise
-                        var msg = cb + "\uE000" + Object.toJSON(json);
+                        var msg = cb + "\uE000" + Object.toJSON(json)
+                                     + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
+                                     + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
 
                         // post back to sender
                         e.source.postMessage(msg, e.origin);
@@ -1948,7 +1952,9 @@ Krang.XOriginProxy = function(e, authorizedOrigins) {
 
                         // pack response message (JSON header only)
                         // the XHR response object contains stuff we may not access cross origin wise
-                        var msg = cb + "\uE000" + Object.toJSON(json);
+                        var msg = cb + "\uE000" + Object.toJSON(json) 
+                                     + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
+                                     + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
 
                         // post back to sender
                         e.source.postMessage(msg, e.origin);
