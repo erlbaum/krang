@@ -44,8 +44,10 @@ Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, xtarget)
 
                     var cb   = data[0];
                     var json = data[1].evalJSON() || {};
+                    var pref = data[2].evalJSON() || {};
+                    var conf = data[3].evalJSON() || {};
 
-                    callback[cb](json);
+                    callback[cb](json, pref, conf);
                 }
 
                 // this is a one time event listener
