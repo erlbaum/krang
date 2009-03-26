@@ -321,8 +321,8 @@
                         cmsApp: 'story.pl',
                         method: 'get',
                         params: {
-                                rm:       'pe_steal_story',
-                                story_id: storyID
+                                rm: 'steal_selected',
+                                krang_pager_rows_checked: storyID
                         },
                         onComplete: function(json, pref, conf) {
                             // Replace "Steal" button with "Edit" button

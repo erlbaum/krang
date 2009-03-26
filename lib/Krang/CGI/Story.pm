@@ -2903,36 +2903,6 @@ sub pe_get_status {
     return '';
 }
 
-sub pe_steal_story {
-    my ($self)   = @_;
-    my $query    = $self->query;
-    my $story_id = $query->param('story_id');
-
-    my ($story) = pkg('Story')->find(story_id => $story_id);
-
-    # steal the story and keep track of victim
-    my ($victim)    = pkg('User')->find(user_id => $story->checked_out_by);
-    my $victim_name = $victim ? $query->escapeHTML($victim->first_name . ' ' . $victim->last_name) : '';
-
-    add_history(object => $story, action => 'steal');
-    $story->checkin();
-    $story->checkout();
-
-    add_message(
-        'one_story_stolen_and_opened',
-        id     => $story_id,
-        victim => $victim_name
-    );
-
-    # put message in JSON header
-    $self->add_json_header(
-        status => 'ok',
-        msg    => (join('<br/>', get_messages()) || ''),
-    );
-
-    return $self->edit;
-}
-
 sub pe_checkout_and_edit {
     my ($self)   = @_;
     my $query    = $self->query;
