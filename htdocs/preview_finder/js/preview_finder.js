@@ -305,13 +305,6 @@
                     cmsURL: cmsURL,
                     cmsApp: 'story.pl',
                     params: { rm: 'pe_checkout_and_edit', story_id: storyID },
-                    onComplete: function(json, pref, conf) {
-                        if (json.status == 'ok') {
-                            Krang.Messages.add(json.msg).show(pref.message_timeout);
-                        } else {
-                            console.error("Steal Story "+storyID+" failed (preview_finder.js)");
-                        }
-                    }
                 });
             });
         }
@@ -333,16 +326,10 @@
                         },
                         onComplete: function(json, pref, conf) {
                             // Replace "Steal" button with "Edit" button
-                            if (json.status == 'ok') {
-                                // show "Edit" button and activate container element labels
-                                ms.hide();
-                                runMode = 'save_and_jump';
-                                doActivateEdit();
-                                activateEdit();
-                                Krang.Messages.add(json.msg).show(pref.message_timeout);
-                            } else {
-                                console.error("Steal Story "+storyID+" failed (preview_finder.js)");
-                            }
+                            ms.hide();
+                            runMode = 'save_and_jump';
+                            doActivateEdit();
+                            activateEdit();
                         },
                     });
             });
