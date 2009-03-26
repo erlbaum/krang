@@ -1918,7 +1918,7 @@ Krang.PoorTextCreationArguments = new Array;
         
     };
 
-    var update = function(e, options) {
+    var xupdater = function(e, options) {
         // send XHR request for Prototype.XOrigin.XUpdater
         console.debug("3. Sending Ajax.Updater(target, url, options) for URL: "+options.cmsURL
                       +" ('options' on next 2 lines");
@@ -1972,13 +1972,13 @@ Krang.PoorTextCreationArguments = new Array;
         });
     };
 
-    var info = function(e, options) {
+    var wininfo = function(e, options) {
         if (options.question == 'isStoryOnWorkspace') {
             if (document.forms && document.forms['krang_pager_form']
                                && /workspace/.test(document.forms['krang_pager_form'].action)) {
-                e.source.postMessage('ifYes\uE000"yes"', e.origin);
+                e.source.postMessage('response\uE000"yes"', e.origin);
             } else {
-                e.source.postMessage('ifYes\uE000"no"', e.origin);                
+                e.source.postMessage('response\uE000"no"', e.origin);                
             }
             e.source.postMessage('finish', e.origin);
         }
@@ -2001,9 +2001,9 @@ Krang.PoorTextCreationArguments = new Array;
                 if (options.type == 'request') {
                     request(e, options);
                 } else if (options.type == 'xupdater') {
-                    update(e, options);
+                    xupdater(e, options);
                 } else if (options.type == 'wininfo') {
-                    info(e, options);
+                    wininfo(e, options);
                 }
             }
         }
