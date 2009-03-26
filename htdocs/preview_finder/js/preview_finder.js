@@ -191,7 +191,7 @@
         Prototype.XOrigin.WinInfo(cmsWin, {
             cmsURL:   cmsURL,
             question: 'isStoryOnWorkspace',
-            ifYes: function(response) {
+            response: function(response) {
                if (response == 'yes') {
                    params['rm']       = 'edit';
                    params['story_id'] = storyID;
@@ -257,18 +257,24 @@
             });
         }
 
+        // IMPORTANT NOTE: In the following functions, the anonymous
+        // functions passed to activateEdit() are
+        // executed when clicking on the Edit/Steal button
+
         var editBtnIfOwner = function() {
             runMode = 'save_and_jump';
 
             console.debug("Stories: "+storyID+' '+status.storyInSession);
 
-            // care for stories accessed via the workspace
             if (status.storyInSession == storyID) {
+                // our story is already in the session, but is it also
+                // on the "Edit Story" screen?
                 activateEdit(function() {
                     Prototype.XOrigin.WinInfo(cmsWin, {
                         cmsURL:   cmsURL,
                         question: 'isStoryOnWorkspace',
-                        ifYes:    function(response) {
+                        response: function(response) {
+                            // it's not opened in "Edit Story", so open it
                             if (response == 'yes') {
                                 // like clicking on "Edit" button on workspace
                                 Prototype.XOrigin.XUpdater(cmsWin, {
@@ -278,6 +284,7 @@
                                     params: {rm: 'edit', story_id: storyID},
                                 })}}})});
             } else {
+                // our story is not yet in the session, so open it on "Edit Story"
                 activateEdit(function() {
                     Prototype.XOrigin.XUpdater(cmsWin, {
                         cmsURL: cmsURL,
@@ -290,9 +297,10 @@
         }
 
         var editBtnIfMayEdit = function() {
+            // our story is checked-in, but we may edit it
             runMode = 'save_and_jump';
             activateEdit(function() {
-                // care for checked in stories
+                // check it out and open it on "Edit Story"
                 Prototype.XOrigin.XUpdater(cmsWin, {
                     cmsURL: cmsURL,
                     cmsApp: 'story.pl',
@@ -309,8 +317,9 @@
         }
 
         var editBtnIfMaySteal = function() {
-            // story is checked in and we may steal it
+            // story is checked out by another user, but we may steal it
             var ms = $('krang_preview_editor_btn_steal');
+            // show the "Steal" button instead of the "Edit" button and add the current owner to the label
             ms.update(ms.innerHTML +  ' ' + status.checkedOutBy).show().observe('click', function(e) {
                     uiReset();
                     // steal the story
@@ -323,6 +332,7 @@
                                 story_id: storyID
                         },
                         onComplete: function(json, pref, conf) {
+                            // Replace "Steal" button with "Edit" button
                             if (json.status == 'ok') {
                                 // show "Edit" button and activate container element labels
                                 ms.hide();
@@ -342,24 +352,24 @@
         // Set button status
         //
 
-        // reset UI
+        // reset button status
         uiReset();
 
-        // Browse button
+        // Init "Browse" button
         $('krang_preview_editor_btn_browse').addClassName('krang_preview_editor_btn_pressed')
         .show().observe('click', function(e) {
             uiReset();
             $('krang_preview_editor_btn_browse').addClassName('krang_preview_editor_btn_pressed');
         });
 
-        // Find template button
+        // Init "Find Template" button
         $('krang_preview_editor_btn_find').show().observe('click', function(e) {
             uiReset();
             $('krang_preview_editor_btn_find').addClassName('krang_preview_editor_btn_pressed');
             document.observe('click', templateFinderClickHandler);
         });
 
-        // Edit/Steal button and checked out msg
+        // Init "Edit/Steal" button and checked out msg
         if (status.checkedOutBy == 'me') {
             editBtnIfOwner();
         } else if (status.checkedOut == '0' && status.mayEdit  == '1') {
@@ -374,8 +384,10 @@
             co.update(co.innerHTML + ' ' + status.checkedOutBy).show();
         }
 
-        // Close button
+        // Init "Close" button
         $('krang_preview_editor_close').observe('click', function(e) {
+           // Show our story in a top level window: Disables the
+           // loading of the Preview Editor's JavaScript and CSS
             top.location.href = window.location.href;
         });
 
@@ -388,15 +400,16 @@
         helpBtn.observe('click', showHelp);
     }
 
-    // initialize overlay
+    // get our story's checkout status...
     Prototype.XOrigin.Request(cmsWin, {
         cmsURL: cmsURL,
         cmsApp: 'story.pl',
         method: 'get',
         params: {
-            rm:        'pe_get_status',
-            story_id:  storyID
+            rm:       'pe_get_status',
+            story_id: storyID
         },
+        // ...and initialize the overlay and its buttons
         onComplete: initOverlay
     });
 })();

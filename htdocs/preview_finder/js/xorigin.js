@@ -7,7 +7,7 @@ Prototype.XOrigin = {};
 //Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, form, xtarget) {
 Prototype.XOrigin._send = function(type, xwindow, options) {
     var callback = {};
-    ['onComplete', 'onException', 'onFailure', 'ifYes', 'finish'].each(function(cb) {
+    ['onComplete', 'onException', 'onFailure', 'response', 'finish'].each(function(cb) {
             callback[cb] = options[cb] || Prototype.emptyFunction;
             delete options[cb];
     });
