@@ -96,6 +96,7 @@ sub setup {
         unretire                      => 'unretire',
         pe_get_status                 => 'pe_get_status',
         pe_steal_story                => 'pe_steal_story',
+        pe_checkout_and_edit          => 'pe_checkout_and_edit',
     );
 
     $self->tmpl_path('Story/');
@@ -2887,11 +2888,16 @@ sub pe_get_status {
     # may I steal it?
     my $may_steal = pkg('Group')->user_admin_permissions('may_checkin_all');
 
+    # is there are different story in the session
+    my $story_in_session = $session{story} ? $session{story}->story_id : '';
+
     # return status
     $self->add_json_header(
-        checkedOut   => $checked_out,
-        checkedOutBy => $cob,
-        maySteal     => $may_steal,
+        checkedOut     => $checked_out,
+        checkedOutBy   => $cob,
+        maySteal       => $may_steal,
+        mayEdit        => $story->may_edit,
+        storyInSession => $story_in_session,
     );
 
     return '';
@@ -2925,6 +2931,26 @@ sub pe_steal_story {
     );
 
     return $self->edit;
+}
+
+sub pe_checkout_and_edit {
+    my ($self)   = @_;
+    my $query    = $self->query;
+    my $story_id = $query->param('story_id');
+
+    if ($story_id) {
+        $self->add_json_header(
+            status => 'ok',
+            msg    => localize("Checked out Story %s", $story_id),
+        );
+        return $self->checkout_and_edit;
+    } else {
+        $self->add_json_header(
+            status => 'nok',
+            msg    => localize('Missing story ID in checkout'),
+        );
+        return $self->find;
+    }
 }
 
 1;
