@@ -4,25 +4,20 @@ if (Prototype == undefined) {
 
 Prototype.XOrigin = {};
 
-Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, xtarget) {
+//Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, form, xtarget) {
+Prototype.XOrigin._send = function(type, xwindow, options) {
     var callback = {};
-    ['onSuccess', 'onComplete', 'onException', 'onFailure'].each(function(cb) {
+    ['onComplete', 'onException', 'onFailure', 'ifYes', 'finish'].each(function(cb) {
             callback[cb] = options[cb] || Prototype.emptyFunction;
             delete options[cb];
     });
 
     // add our type
-    options['__type__'] = type;
-
-    // our defaults
-    options.method = options.method ? options.method : 'get';
-    if (type == 'xupdater') {
-        options.evalScripts = options.evalScripts ? options.evalScripts : true;
-    }
+    options.type = type;
 
     // pack message for cross document messaging
-    var msg = xurl + xpath + "\uE000" + Object.toJSON(options);
-    if (type == 'xupdater' && xtarget) { msg += "\uE000" + Object.toJSON(xtarget); }
+//    var msg = xurl + xpath + "?window_id=" + winID + "\uE000" + Object.toJSON(options);
+    var msg = Object.toJSON(options);
 
     // show load indicator
     var loadIndicator = $('krang_preview_editor_load_indicator');
@@ -30,7 +25,7 @@ Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, xtarget)
 
     // install 'message' event listener to receive the response
     var responseHandler = function(e) {
-            if (e.origin == xurl.replace(/^(https?:\/\/[^/]+).*$/, "$1")) {
+            if (e.origin == options.cmsURL.replace(/^(https?:\/\/[^/]+).*$/, "$1")) {
                 // message coming from xwindow
 
                 // TODO hide indicator
@@ -40,12 +35,12 @@ Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, xtarget)
                 var data;
                 if (data = e.data && e.data.split(/\uE000/)) {
 
-                    console.debug("5. Response data from xurl: " + data);
+                    console.debug("5. Response data from cmsURL: " + data);
 
                     var cb   = data[0];
-                    var json = data[1].evalJSON() || {};
-                    var pref = data[2].evalJSON() || {};
-                    var conf = data[3].evalJSON() || {};
+                    var json = data[1] ? data[1].evalJSON() : {};
+                    var pref = data[2] ? data[2].evalJSON() : {};
+                    var conf = data[3] ? data[3].evalJSON() : {};
 
                     callback[cb](json, pref, conf);
                 }
@@ -64,8 +59,9 @@ Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, xtarget)
 
     // send message
     console.debug("1. Post message: "+msg);
-    xwindow.postMessage(msg, xurl);
+    xwindow.postMessage(msg, options.cmsURL);
 };
 
 Prototype.XOrigin.Request  = Prototype.XOrigin._send.curry('request');
 Prototype.XOrigin.XUpdater = Prototype.XOrigin._send.curry('xupdater');
+Prototype.XOrigin.WinInfo  = Prototype.XOrigin._send.curry('wininfo');

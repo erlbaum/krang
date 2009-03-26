@@ -1885,98 +1885,141 @@ Krang.PoorTextCreationArguments = new Array;
    Message handler called by previewed story's postMessage() - a HTML5
    feature implemented by Firefox 3+, IE8+, Safari4+
 */
-Krang.XOriginProxy = function(e, authorizedOrigins) {
-    if (authorizedOrigins.any(function(url) { return url == e.origin })) {
-        // message from authorized origin
-        var data;
-        if (data = e.data && e.data.split(/\uE000/)) {
-            // unpack the posted data
-            var url     = data[0];
-            var options = data[1] ? data[1].evalJSON() : {};
-            var target  = data[2] ? data[2].evalJSON() : {};
+(function() {
+    var request = function(e, options) {
+        console.debug("3. Sending Ajax.Request(url, options) for URL: "+options.cmsURL
+                      +" ('options' on next line");
+        console.debug(options);
 
-            console.debug("2. Received message from '" + e.origin + "' -" + data);
+        // add callbacks to options
+        ['onComplete', 'onFailure', 'onException'].each(function(cb) {
+            options[cb] = function(args, response, json) {
+                console.debug("4. X-JSON header in XHR response for cb '" + cb +"' on next line");
+                console.debug(json);
+                
+                Krang.hide_indicator();
+                
+                // pack response message (JSON header only)
+                // the XHR response object contains stuff we may not access cross origin wise
+                var msg = cb + "\uE000" + Object.toJSON(json)
+                             + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
+                             + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
+                
+                // post back to sender
+                e.source.postMessage(msg, e.origin);
+            }
+        });
+        
+        Krang.Ajax.request({
+            url:        Krang.Window.pass_id(options.cmsURL + '/' + options.cmsApp),
+            params:     options.params,
+            onComplete: options.onComplete
+        });
+        
+    };
 
-            // our type
-            var type = options['__type__']; delete options['__type__'];
+    var update = function(e, options) {
+        // send XHR request for Prototype.XOrigin.XUpdater
+        console.debug("3. Sending Ajax.Updater(target, url, options) for URL: "+options.cmsURL
+                      +" ('options' on next 2 lines");
+        console.debug(options);
+                    
+        var target = options.target || 'C';
+                    
+        ['onComplete', 'onFailure', 'onException'].each(function(cb) {
+            options[cb] = function(args, response, json) {
+                console.debug("4. X-JSON header in XHR response for cb '" + cb +"' on next line");
+                console.debug(json);
+                
+                if (cb == 'onComplete') {
+                    setTimeout(function() {Krang.load(target.success)}, 10);
+                } else if (cb == 'onFailure' || cb == 'onException') {
+                    Krang.Error.show();
+                }
 
-            Krang.show_indicator();
+                Krang.hide_indicator();
 
-            
+                // pack response message (JSON header only)
+                // the XHR response object contains stuff we may not access cross origin wise
+                var msg = cb + "\uE000" + Object.toJSON(json) 
+                             + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
+                             + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
+                
+                // post back to sender
+                e.source.postMessage(msg, e.origin);
+            }
+        });
+        
+        // process CMS form for preview editor request
+        Krang.ElementEditor.run_save_hooks();
+        
+        var form = $(options.form);
+        if (form) {
+            Krang.Form.set(form, options.params);
+            var params = Form.serialize(form, true);
+            var method = form.method;
+        } else {
+            var params = options.params;
+            var method = options.method;
+        }
 
-            // send XHR request for Prototype.XOrigin.Request
-            if (type == 'request') {
-                console.debug("3. Sending Ajax.Request(url, options) for URL: "+url
-                              +" ('options' on next line");
-                console.debug(options);
+        Krang.Ajax.update({
+            url        : Krang.Window.pass_id(options.cmsURL + '/' + options.cmsApp),
+            params     : params,
+            method     : method,
+            target     : target,
+            onComplete : options['onComplete']
+        });
+    };
 
-                // add callbacks to options
-                ['onComplete', 'onFailure', 'onException'].each(function(cb) {
-                    options[cb] = function(response, json) {
-                        console.debug("4. X-JSON header in XHR response for cb '" + cb +"' on next line");
-                        console.debug(json);
+    var info = function(e, options) {
+        if (options.question == 'isStoryOnWorkspace') {
+            if (document.forms && document.forms['krang_pager_form']
+                               && /workspace/.test(document.forms['krang_pager_form'].action)) {
+                e.source.postMessage('ifYes\uE000"yes"', e.origin);
+            } else {
+                e.source.postMessage('ifYes\uE000"no"', e.origin);                
+            }
+            e.source.postMessage('finish', e.origin);
+        }
+        console.log(window);
+    };
 
-                        Krang.hide_indicator();
+    Krang.XOriginProxy = function(e, authorizedOrigins) {
+        if (authorizedOrigins.any(function(url) { return url == e.origin })) {
+            // message from authorized origin
+            var data;
+            if (data = e.data) {
+                // unpack the posted data
+                var options     = data.evalJSON();
+                
+                console.debug("2. Received message from '" + e.origin + "' - " + data);
+                
+                Krang.show_indicator();
 
-                        // pack response message (JSON header only)
-                        // the XHR response object contains stuff we may not access cross origin wise
-                        var msg = cb + "\uE000" + Object.toJSON(json)
-                                     + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
-                                     + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
-
-                        // post back to sender
-                        e.source.postMessage(msg, e.origin);
-                    }
-                });
-
-                new Ajax.Request(url, options);
-
-            } else if (type == 'xupdater') {
-                // send XHR request for Prototype.XOrigin.XUpdater
-                console.debug("3. Sending Ajax.Updater(target, url, options) for URL: "+url
-                              +" ('target' and 'options' on next 2 lines");
-                console.debug(target); console.debug(options);
-
-                ['onComplete', 'onFailure', 'onException'].each(function(cb) {
-                    options[cb] = function(response, json) {
-                        console.debug("4. X-JSON header in XHR response for cb '" + cb +"' on next line");
-                        console.debug(json);
-
-                        if (cb == 'onComplete') {
-                            setTimeout(function() {Krang.load(target.success)}, 10);
-                        } else if (cb == 'onFailure' || cb == 'onException') {
-                            Krang.Error.show();
-                        }
-
-                        Krang.hide_indicator();
-
-                        // pack response message (JSON header only)
-                        // the XHR response object contains stuff we may not access cross origin wise
-                        var msg = cb + "\uE000" + Object.toJSON(json) 
-                                     + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
-                                     + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
-
-                        // post back to sender
-                        e.source.postMessage(msg, e.origin);
-                    }
-                });
-
-                new Ajax.Updater(target, url, options);
+                // do it
+                if (options.type == 'request') {
+                    request(e, options);
+                } else if (options.type == 'xupdater') {
+                    update(e, options);
+                } else if (options.type == 'wininfo') {
+                    info(e, options);
+                }
             }
         }
-    }
-};
+    };
+ })();
 
 Event.observe(window, 'message', function(e) {
-        // get allowed preview site URLs from 'config' cookie
-        var config      = Krang.config() || {};
-        var previewURLs = config.previewURLs;
+    // get allowed preview site URLs from 'config' cookie
+    var config      = Krang.config() || {};
+    var previewURLs = config.previewURLs;
 
-        if (!previewURLs) {
-            throw(new Error("Message event handler (krang.js): Missing preview site URLs"));
-        }
+    if (!previewURLs) {
+        throw(new Error("Message event handler (krang.js): Missing preview site URLs"));
+    }
 
-        // call our cross origin XHR proxy
-        Krang.XOriginProxy(e, previewURLs);
+    // call our cross origin XHR proxy
+    Krang.XOriginProxy(e, previewURLs);
 });
 

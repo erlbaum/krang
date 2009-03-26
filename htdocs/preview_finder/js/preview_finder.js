@@ -88,7 +88,7 @@
     var pinfo   = null;
 
     // template finder click handler, looks up the info in the special
-    // comments, formats them and display them in a popup
+    // comments, formats them and displays them in a popup
     var templateFinderClickHandler = function(e) {
 
         var element = e.element();
@@ -165,7 +165,6 @@
                          --- Preview Editor ---
 
 */
-
     var runMode = '';
 
     // click handler for container element labels, posts back to the
@@ -174,26 +173,36 @@
         var label   = e.element();
         var info    = label.readAttribute('name');
         var cms     = info.evalJSON();
-        var url     = cmsURL + '/story.pl';
         var params  = {
-            window_id: cmsWinID,
-            rm:        runMode,
-            story_id:  cms.storyID,
-            path:      cms.elementXPath
+            rm:       runMode,
+            jump_to:  cms.elementXPath,
         };
 
-        if (Object.isFunction(window.postMessage)) {
-            // HTML5 feature implemented by Firefox 3+, IE8+ and Safari 4+
-            params['ajax'] = 1;
-            Prototype.XOrigin.XUpdater(cmsWin, cmsURL, '/story.pl', {parameters:params}, {success: 'C'});
-        }
+        Prototype.XOrigin.WinInfo(cmsWin, {
+            cmsURL:   cmsURL,
+            question: 'isStoryOnWorkspace',
+            ifYes: function(response) {
+               if (response == 'yes') {
+                   params['rm']       = 'edit';
+                   params['story_id'] = storyID;
+               }
+            },
+            finish: function() {                    
+               Prototype.XOrigin.XUpdater(cmsWin, {
+                   cmsURL:   cmsURL,
+                   cmsApp:   'story.pl',
+                   form:     'edit',
+                   params:   params
+               });
+            }
+        });
     };
 
     // position the labels
     var positionLabels = function() {
         $$('.krang_preview_editor_element_label').reverse().each(function(contElm) {
-                var offset = contElm.next().cumulativeOffset();
-                contElm.show().setStyle({left: offset.left - 7 + 'px', top: offset.top - 23 + 'px'})
+            var offset = contElm.next().cumulativeOffset();
+            contElm.show().setStyle({left: offset.left - 7 + 'px', top: offset.top - 23 + 'px'})
     })};
     positionLabels();
 
@@ -228,9 +237,10 @@
             document.observe('click', labelClickHandler);
         };
 
-        var activateEdit = function() {
+        var activateEdit = function(func) {
             $('krang_preview_editor_btn_edit').show().observe('click', function(e) {
                 uiReset();
+                if (Object.isFunction(func)) { func.call(); }
                 doActivateEdit();
             });
         }
@@ -252,44 +262,86 @@
             document.observe('click', templateFinderClickHandler);
         });
 
-        // Edit/Steal buttons and checked out msg
+        // Edit/Steal button and checked out msg
         if (status.checkedOutBy == 'me') {
-            runMode = 'edit';
-            activateEdit();
-        } else if (status.checkedOut == '0') {
-            runMode = 'checkout_and_edit';
-            activateEdit();
-        } else if (status.checkedOut == '1' && status.maySteal == '0') {
-            var co = $('krang_preview_editor_checked_out');
-            co.update(co.innerHTML + ' ' + status.checkedOutBy).show();
-        } else if (status.maySteal == '1') {
+            runMode = 'save_and_jump';
+            console.log("Stories: "+storyID+' '+status.storyInSession);
+                // care for stories accessed via the workspace
+            if (status.storyInSession == storyID) {
+                activateEdit(function() {
+                    Prototype.XOrigin.WinInfo(cmsWin, {
+                        cmsURL:   cmsURL,
+                        question: 'isStoryOnWorkspace',
+                        ifYes:    function(response) {
+                            if (response == 'yes') {
+                                // like clicking on "Edit" button on workspace
+                                Prototype.XOrigin.XUpdater(cmsWin, {
+                                    cmsURL: cmsURL,
+                                    cmsApp: 'story.pl',
+                                    form:   'edit',
+                                    params: {rm: 'edit', story_id: storyID},
+                                })}}})});
+            } else {
+                activateEdit(function() {
+                    Prototype.XOrigin.XUpdater(cmsWin, {
+                        cmsURL: cmsURL,
+                        cmsApp: 'story.pl',
+                        params: {rm: 'edit', story_id: storyID},
+                        form:   undefined,
+                   });
+                });
+            }
+        } else if (status.checkedOut == '0' && status.mayEdit == '1') {
+            runMode = 'save_and_jump';
+            activateEdit(function() {
+                // care for checked in stories
+                Prototype.XOrigin.XUpdater(cmsWin, {
+                    cmsURL: cmsURL,
+                    cmsApp: 'story.pl',
+                    params: { rm: 'pe_checkout_and_edit', story_id: storyID },
+                    onComplete: function(json, pref, conf) {
+                        if (json.status == 'ok') {
+                            Krang.Messages.add(json.msg).show(pref.message_timeout);
+                        } else {
+                            console.error("Steal Story "+storyID+" failed (preview_finder.js)");
+                        }
+                    }
+                });
+            });
+        } else if (status.checkedOut == '1' && status.maySteal == '1') {
+            // story is checked in and we may steal it
             var ms = $('krang_preview_editor_btn_steal');
             ms.update(ms.innerHTML +  ' ' + status.checkedOutBy).show().observe('click', function(e) {
                     uiReset();
-                    Prototype.XOrigin.XUpdater(cmsWin, cmsURL, '/story.pl', {
-                            parameters: {
-                                rm:        'pe_steal_story',
-                                ajax:      1,
-                                window_id: cmsWinID,
-                                story_id:  storyID
-                            },
-                            onComplete: function(json, pref, conf) {
-                                if (json.status == 'ok') {
-                                    ms.hide();
-                                    runMode = 'edit';
-                                    doActivateEdit();
-                                    activateEdit();
-                                    Krang.Messages.add(json.msg).show(pref.message_timeout);
-                                } else {
-                                    console.error("Steal Story "+storyID+" failed (preview_finder.js)");
-                                }
+                    // steal the story
+                    Prototype.XOrigin.XUpdater(cmsWin, {
+                        cmsURL: cmsURL,
+                        cmsApp: 'story.pl',
+                        method: 'get',
+                        params: {
+                                rm:       'pe_steal_story',
+                                story_id: storyID
+                        },
+                        onComplete: function(json, pref, conf) {
+                            if (json.status == 'ok') {
+                                // show "Edit" button and activate container element labels
+                                ms.hide();
+                                runMode = 'save_and_jump';
+                                doActivateEdit();
+                                activateEdit();
+                                Krang.Messages.add(json.msg).show(pref.message_timeout);
+                            } else {
+                                console.error("Steal Story "+storyID+" failed (preview_finder.js)");
                             }
                         },
-                        {success: 'C'}
-                    );
+                    });
             });
+        } else if (status.checkedOut == '0' && status.mayEdit == '0') {
+            $('krang_preview_editor_forbidden').show();
         } else {
-            throw(new Error("Unknown story status in initOverlay() - preview_finder.js"));
+            // story is checked out and we may not steal it
+            var co = $('krang_preview_editor_checked_out').show();;
+            co.update(co.innerHTML + ' ' + status.checkedOutBy).show();
         }
 
         // Close button
@@ -307,21 +359,14 @@
     }
 
     // initialize overlay
-    Prototype.XOrigin.Request(cmsWin, cmsURL, '/story.pl', {
-        parameters: {
-            window_id: cmsWinID,
+    Prototype.XOrigin.Request(cmsWin, {
+        cmsURL: cmsURL,
+        cmsApp: 'story.pl',
+        method: 'get',
+        params: {
             rm:        'pe_get_status',
             story_id:  storyID
         },
         onComplete: initOverlay
     });
-
-
-/*
-
-            --- Other buttons
-
-*/
-
-
 })();

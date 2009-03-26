@@ -1680,6 +1680,7 @@ sub _insert_preview_editor_top_overlay {
     my $close       = localize('Close');
     my $help        = localize('Help');
     my $loading     = localize('Loading');
+    my $forbidden   = localize('No Edit Permission');
 
     my $help_url = $arg{cms_root} . "/help.pl?topic=preview_editor&window_id=$ENV{KRANG_WINDOW_ID}";
 
@@ -1697,6 +1698,7 @@ sub _insert_preview_editor_top_overlay {
        <span id="krang_preview_editor_btn_edit"    class="krang_preview_editor_btn" style="display:none">$edit</span>
        <span id="krang_preview_editor_btn_steal"   class="krang_preview_editor_btn" style="display:none">$steal</span>
        <span id="krang_preview_editor_checked_out" style="display:none">$checked_out</span>
+       <span id="krang_preview_editor_forbidden"   style="display:none">$forbidden</span>
     </td>
 
     <td width="10%" style="text-align: right; padding-right: 20px"><a href="" id="krang_preview_editor_help" name="$help_url">$help</a><a href="" id="krang_preview_editor_close">$close</a></td>
