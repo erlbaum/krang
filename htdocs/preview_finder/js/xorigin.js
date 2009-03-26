@@ -7,7 +7,48 @@ Prototype.XOrigin = {};
 //Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, form, xtarget) {
 Prototype.XOrigin._send = function(type, xwindow, options) {
     var callback = {};
-    ['onComplete', 'onException', 'onFailure', 'response', 'finish'].each(function(cb) {
+
+    // Hook Krang.Messages into onComplete handler
+    var _onComplete = options['onComplete'] || Prototype.emptyFunction;
+    delete options['onComplete'];
+    callback['onComplete'] = function(json, pref, conf) {
+        // call custom handler
+        _onComplete(json, pref, conf);
+
+        // clear messages and alerts stack
+        Krang.Messages.clear('messages');
+        Krang.Messages.clear('alerts');
+
+        if (!json) { return }
+
+        // handle Krang.Messages 'alerts'
+        if (json.alerts) {
+            json.alerts.each(function(msg) { Krang.Messages.add(msg, 'alerts') });
+        }
+        Krang.Messages.show(pref.message_timeout, 'alerts');
+
+        // handle Krang.Messages 'messages'
+        if (json.messages) {
+            // legacy Krang messages
+            json.messages.each(function(msg) { Krang.Messages.add(msg, 'messages') });
+        }
+        if (json.status == 'ok') {
+            // preview editor specific messages
+            Krang.Messages.add(json.msg);
+        }
+        if (json.messages || json.status == 'ok') {
+            Krang.Messages.show(pref.message_timeout, 'messages');
+        }
+    };
+
+    // TODO: Hook modal error popup into onFailure and onException handler
+    ['onException', 'onFailure'].each(function(cb) {
+            callback[cb] = options[cb] || Prototype.emptyFunction;
+            delete options[cb];
+    });
+
+    // The response and finish handlers for XOrigin.WinInfo
+    ['response', 'finish'].each(function(cb) {
             callback[cb] = options[cb] || Prototype.emptyFunction;
             delete options[cb];
     });
@@ -16,7 +57,6 @@ Prototype.XOrigin._send = function(type, xwindow, options) {
     options.type = type;
 
     // pack message for cross document messaging
-//    var msg = xurl + xpath + "?window_id=" + winID + "\uE000" + Object.toJSON(options);
     var msg = Object.toJSON(options);
 
     // show load indicator

@@ -793,6 +793,14 @@ Krang.Messages = {
         if( level === undefined ) level = 'messages';
         Krang.Messages._stack[level].push(msg);
     },
+    get         : function(level) {
+        if( level === undefined ) { level = 'messages'; }
+        return Krang.Messages._stack[level];
+    },
+    clear       : function(level) {
+        if( level === undefined ) { level = 'messages'; }
+        Krang.Messages._stack[level] = [];
+    },
     show        : function(level) {
         // default to 'messages'
         if( level === undefined ) level = 'messages';
@@ -805,13 +813,11 @@ Krang.Messages = {
 
         var my_stack = Krang.Messages._stack[level];
         if( my_stack.length ) {
-            var content = '';
-            var size = my_stack.length;
-
-            for(var i=0; i< size; i++) {
-                var msg = my_stack.pop();
-                if ( msg ) content += '<p>' + msg + '</p>';
-            }
+            // build HTML from stack
+            var content = my_stack.inject('', function(content, msg) {
+                if ( msg ) { content += '<p>' + msg + '</p>'; }
+                return content;
+            });
 
             var el = $(level);
 
@@ -1925,14 +1931,17 @@ Krang.PoorTextCreationArguments = new Array;
         console.debug(options);
                     
         var target = options.target || 'C';
-                    
+
         ['onComplete', 'onFailure', 'onException'].each(function(cb) {
             options[cb] = function(args, response, json) {
                 console.debug("4. X-JSON header in XHR response for cb '" + cb +"' on next line");
                 console.debug(json);
                 
                 if (cb == 'onComplete') {
-                    setTimeout(function() {Krang.load(target.success)}, 10);
+                    // add messages and alerts to our json
+                    if (json === null) { json = {}; }
+                    json['messages'] = Krang.Messages.get('messages');
+                    json['alerts']   = Krang.Messages.get('alerts');
                 } else if (cb == 'onFailure' || cb == 'onException') {
                     Krang.Error.show();
                 }
