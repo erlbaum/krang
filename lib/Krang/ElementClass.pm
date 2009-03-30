@@ -1674,7 +1674,7 @@ sub _insert_preview_editor_top_overlay {
     my $title       = localize('Krang Preview Editor');
     my $browse      = localize('Browse');
     my $find_tmpl   = localize('Find Template');
-    my $edit        = localize('Edit');
+    my $edit        = localize('Edit Story');
     my $steal       = localize('Steal from');
     my $checked_out = localize('Checked out by');
     my $close       = localize('Close');
@@ -1687,23 +1687,19 @@ sub _insert_preview_editor_top_overlay {
     my $indicator_css = "background-color: #cee7ff; color: #666; filter: alpha(opacity=90); opacity: .9; position: fixed; z-index: 32767; left: 0; bottom: 0; border: 1px solid #369; padding: 0.5em 0.6em; width: 70px; font-size: 9px; font-weight: bold; display: none";
 
     my $overlay =<<END;
-<div id="krang_preview_editor_top_overlay" style="width: 100%; height: 16px; border-bottom: 4px solid #d4d4d4; background-color: #cee7ff; position: fixed; top: 0; left:0; right:0; color:#336699; font-family: sans-serif; font-weight: bold; padding:15px;">
-  <table cellpadding="0" cellspacing="0" border="0" width="100%"><tbody><tr>
-    <td width="33%"><span id="krang_preview_editor_logo">$title</span></td>
-<!--    <td width="33%" style="text-align: center"><span id="krang_preview_editor_toggle"><span id="krang_preview_editor_deactivate">deactivate</span><span id="krang_preview_editor_activate" style="display: none">activate</span></span></td>-->
+<div id="krang_preview_editor_top_overlay" style="background: #cee7ff url($arg{cms_root}/images/bkg-button-mini.gif) repeat-x scroll 0 50%;"><div style="padding-top: 6px">
+  <div id="krang_preview_editor_buttons_right"><a href="" id="krang_preview_editor_help" name="$help_url">$help</a><a href="" id="krang_preview_editor_close">$close</a></div>
 
-    <td width="57%" style="text-align: center">
-       <span id="krang_preview_editor_btn_browse"  class="krang_preview_editor_btn" style="display:none">$browse</span>
-       <span id="krang_preview_editor_btn_find"    class="krang_preview_editor_btn" style="display:none">$find_tmpl</span>
-       <span id="krang_preview_editor_btn_edit"    class="krang_preview_editor_btn" style="display:none">$edit</span>
-       <span id="krang_preview_editor_btn_steal"   class="krang_preview_editor_btn" style="display:none">$steal</span>
-       <span id="krang_preview_editor_checked_out" style="display:none">$checked_out</span>
-       <span id="krang_preview_editor_forbidden"   style="display:none">$forbidden</span>
-    </td>
+  <span id="krang_preview_editor_logo">$title</span>
 
-    <td width="10%" style="text-align: right; padding-right: 20px"><a href="" id="krang_preview_editor_help" name="$help_url">$help</a><a href="" id="krang_preview_editor_close">$close</a></td>
-  </tr></tbody></table>
-</div>
+  <span id="krang_preview_editor_btn_browse"  class="krang_preview_editor_btn">$browse</span>
+  <span id="krang_preview_editor_btn_find"    class="krang_preview_editor_btn" style="display:none">$find_tmpl</span>
+  <span id="krang_preview_editor_btn_edit"    class="krang_preview_editor_btn" style="display:none">$edit</span>
+  <span id="krang_preview_editor_btn_steal"   class="krang_preview_editor_btn" style="display:none">$steal</span>
+  <span id="krang_preview_editor_checked_out" style="display:none">$checked_out</span>
+  <span id="krang_preview_editor_forbidden"   style="display:none">$forbidden</span>
+
+</div></div>
 
 <div id="krang_preview_editor_load_indicator" style="$indicator_css">
 <img alt="Load Indicator" src="$arg{cms_root}/images/indicator_small_bluebg.gif" style="padding 0 1em 0 0; vertical-align:middle">
@@ -1779,3 +1775,19 @@ actually use them...
 =cut
 
 1;
+
+##  <TABLE cellpadding="0" cellspacing="0" border="0" width="100%"><tbody><tr>
+##    <td width="33%"><span id="krang_preview_editor_logo">$title</span></td>
+##<!--    <td width="33%" style="text-align: center"><span id="krang_preview_editor_toggle"><span id="krang_preview_editor_deactivate">deactivate</span><span id="krang_preview_editor_activate" style="display: none">activate</span></span></td>-->
+##
+##    <td width="57%" style="text-align: center">
+##       <span id="krang_preview_editor_btn_browse"  class="krang_preview_editor_btn" style="display:none">$browse</span>
+##       <span id="krang_preview_editor_btn_find"    class="krang_preview_editor_btn" style="display:none">$find_tmpl</span>
+##       <span id="krang_preview_editor_btn_edit"    class="krang_preview_editor_btn" style="display:none">$edit</span>
+##       <span id="krang_preview_editor_btn_steal"   class="krang_preview_editor_btn" style="display:none">$steal</span>
+##       <span id="krang_preview_editor_checked_out" style="display:none">$checked_out</span>
+##       <span id="krang_preview_editor_forbidden"   style="display:none">$forbidden</span>
+##    </td>
+##
+##    <td width="10%" style="text-align: right"><a href="" id="krang_preview_editor_help" name="$help_url">$help</a><a href="" id="krang_preview_editor_close">$close</a></td>
+##  </tr></tbody></table>

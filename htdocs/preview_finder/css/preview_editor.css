@@ -2,8 +2,21 @@
 /*   outline: 2px solid #ff0000; */
 /* } */
 
+#krang_preview_editor_top_overlay { 
+  height: 27px; 
+  position: fixed;
+  top: 0;
+  left:0;
+  right:0;
+  font: bold 12px Helvetia, Arial, sans-serif;
+  padding: 0px 15px;
+  color: #669900
+}
+
 #krang_preview_editor_logo { 
+  font-style: italic;
   text-transform: uppercase;
+  margin-right: 100px;
 }
 
 div.krang_preview_editor_element_label { 
@@ -22,15 +35,7 @@ div.krang_preview_editor_element_label:active {
 }
 
 #krang_preview_editor_top_spacer {
-  height: 50px;
-}
-
-#krang_preview_editor_help { 
-  margin-right: 20px;
-}
-
-#krang_preview_editor_include { 
-  font-size: 12px;
+  height: 27px;
 }
 
 .krang_preview_editor_btn {
@@ -43,9 +48,20 @@ div.krang_preview_editor_element_label:active {
   border: 1px inset silver;
 }
 
-a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited { 
-  color: #336699;
+#krang_preview_editor_buttons_right { 
+  float: right;
 }
+
+#krang_preview_editor_help { 
+  margin-right: 20px;
+  color: #669900;
+}
+
+a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited { 
+  color: #669900;
+}
+
+
 
 /******************
  * Krang.Messages *
@@ -71,7 +87,42 @@ a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited {
   line-height: 1;
 }
 .krang_preview_editor_button:hover {
-  background-color: <tmpl_var HilightColor> !important;
+  background-color: #FF9 !important;
   background-image: none !important;
 }
 
+/***************
+ * Error popup *
+ ***************/
+#krang_preview_editor_error { 
+  background-color: #E0F0FF;
+  border: 1px solid #BBB;
+  padding: 0;
+  width: 500px;
+}
+
+#krang_preview_editor_error-body {
+  background-color: #E0F0FF;
+  color: #000;
+  min-height: 60px;
+  margin: 10px 15px;
+  padding: 0 0 0 60px;
+  font-size: 1.27em;
+}
+
+#krang_preview_editor_error-footer { 
+  background-color: #CEE7FF;
+  padding: 5px 10px 5px 0;
+  text-align: right;
+}
+
+#krang_preview_editor_error-close_btn { 
+  color: #690 !important; width: auto !important;
+  overflow: visible;
+  margin: 0;
+  border: 1px solid #BBB;
+  border-color: #EEE #BBB #BBB #EEE;
+  padding: .1em .5em;
+  font-size: 11px;
+  line-height: 1;
+}
