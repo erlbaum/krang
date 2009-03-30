@@ -2891,13 +2891,17 @@ sub pe_get_status {
     # is there are different story in the session
     my $story_in_session = $session{story} ? $session{story}->story_id : '';
 
+    # do we have at least read permission for templates?
+    my $tmpl_perm = pkg('Group')->user_asset_permissions('template');
+
     # return status
     $self->add_json_header(
-        checkedOut     => $checked_out,
-        checkedOutBy   => $cob,
-        maySteal       => $may_steal,
-        mayEdit        => $story->may_edit,
-        storyInSession => $story_in_session,
+        checkedOut       => $checked_out,
+        checkedOutBy     => $cob,
+        maySteal         => $may_steal,
+        mayEdit          => $story->may_edit,
+        storyInSession   => $story_in_session,
+        mayReadTemplates => ($tmpl_perm eq 'hide' ? 0 : 1),
     );
 
     return '';

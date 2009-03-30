@@ -52,7 +52,7 @@ Krang.XOrigin.factory = (function() {
         _cb();
 
         // default handler
-        ProtoPopup.Alert.get('krang_preview_editor_failure', {
+        ProtoPopup.Alert.get('krang_preview_editor_error', {
             modal:  true,
             width:  '500px',
             body:   'Looks like a little bug (probably an Internal Server Error)<br/>Contact your System Administrator if this problem continues.',
@@ -70,7 +70,7 @@ Krang.XOrigin.factory = (function() {
         _cb(error);
 
         // default handler
-        ProtoPopup.Alert.get('krang_preview_editor_exception', {
+        ProtoPopup.Alert.get('krang_preview_editor_error', {
             modal:  true,
             width:  '500px',
             body:   'Looks like a little bug (probably a JavaScript error)<br/>Contact your System Administrator if this problem continues.',

@@ -350,11 +350,13 @@
         });
 
         // Init "Find Template" button
-        $('krang_preview_editor_btn_find').show().observe('click', function(e) {
-            uiReset();
-            $('krang_preview_editor_btn_find').addClassName('krang_preview_editor_btn_pressed');
-            document.observe('click', templateFinderClickHandler);
-        });
+        if (status.mayReadTemplates) {
+            $('krang_preview_editor_btn_find').show().observe('click', function(e) {
+                uiReset();
+                $('krang_preview_editor_btn_find').addClassName('krang_preview_editor_btn_pressed');
+                document.observe('click', templateFinderClickHandler);
+            });
+        }
 
         // Init "Edit/Steal" button and checked out msg
         if (status.checkedOutBy == 'me') {
