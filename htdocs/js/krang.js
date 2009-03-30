@@ -6,6 +6,32 @@ if (typeof Krang == 'undefined') {
     Krang = {};
 }
 
+/**
+   Krang.debug("Some debug message");
+
+   A simple wrapper around console.debug with a switch to switch it on
+   and off.
+
+   Krang.debug.on();
+   Krang.debug("bla");
+   Krang.debug.off();
+*/
+(function() {
+
+    var debugOn = false;
+
+    // wrapper around console.debug
+    Krang.debug = function(msg) {
+        if (debugOn) {
+            console.debug(msg);
+        }
+    }
+
+    // switch
+    Krang.debug.on  = function() { debugOn = true  };
+    Krang.debug.off = function() { debugOn = false };
+})();
+
 /*
   Know IE version (stolen from http://prototype-ui.com)
 */
@@ -1895,8 +1921,8 @@ Krang.PoorTextCreationArguments = new Array;
 */
 Krang.XOriginProxy = (function() {
     var ifSuccessHandler = function(e, name, addToJSON, args, response, json) {
-        console.debug("4. X-JSON header in XHR response for cb '" + name +"' on next line");
-        console.debug(json);
+        Krang.debug("4. X-JSON header in XHR response for cb '" + name +"' on next line");
+        Krang.debug(json);
 
         Krang.hide_indicator();
                 
@@ -1916,13 +1942,12 @@ Krang.XOriginProxy = (function() {
              + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
         
         // post back to sender
-        console.log('xx: '+e.origin+' '+msg);
         e.source.postMessage(msg, e.origin);
     };
     
     var exceptionHandler = function(e, request, error) {
-        console.debug("4. Error object in XHR exception on next line");
-        console.debug(error);
+        Krang.debug("4. Error object in XHR exception on next line");
+        Krang.debug(error);
         
         Krang.hide_indicator();
         
@@ -1933,9 +1958,9 @@ Krang.XOriginProxy = (function() {
     };
 
     var request = function(e, options) {
-        console.debug("3. Sending Krang.Ajax.request(url, options) for URL: "+options.cmsURL
+        Krang.debug("3. Sending Krang.Ajax.request(url, options) for URL: "+options.cmsURL
                       +" ('options' on next line");
-        console.debug(options);
+        Krang.debug(options);
 
         // post XHR
         Krang.Ajax.request({
@@ -1950,9 +1975,9 @@ Krang.XOriginProxy = (function() {
 
     var xupdater = function(e, options) {
         // send XHR request for Prototype.XOrigin.XUpdater
-        console.debug("3. Sending Krang.Ajax.update(target, url, options) for URL: "+options.cmsURL
+        Krang.debug("3. Sending Krang.Ajax.update(target, url, options) for URL: "+options.cmsURL
                       +" ('options' on next line");
-        console.debug(options);
+        Krang.debug(options);
                     
         var target = options.target || 'C';
 
@@ -2014,7 +2039,7 @@ Krang.XOriginProxy = (function() {
                 // unpack the posted data
                 var options     = data.evalJSON();
                 
-                console.debug("2. Received message from '" + e.origin + "' - " + data);
+                Krang.debug("2. Received message from '" + e.origin + "' - " + data);
                 
                 Krang.show_indicator();
 
@@ -2030,6 +2055,8 @@ Krang.XOriginProxy = (function() {
         }
     };
 })();
+
+Krang.debug.on();
 
 Event.observe(window, 'message', function(e) {
     // get allowed preview site URLs from 'config' cookie

@@ -1,4 +1,5 @@
-if (Krang == undefined) { Krang = {} }
+var Krang;
+if (Object.isUndefined(Krang)) { Krang = {} }
 
 /**
    Krang.Error

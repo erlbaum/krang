@@ -1,5 +1,5 @@
 // Krang.XOrigin namespace
-if (Krang == undefined) { Krang = {} }
+if (Object.isUndefined(Krang)) { Krang = {} }
 Krang.XOrigin = {};
 
 // function factory
@@ -77,7 +77,6 @@ Krang.XOrigin.factory = (function() {
     };
 
     var responseHandler = function(e) {
-        console.log(e.origin + ' ' + Options.cmsURL);
         if (e.origin == Options.cmsURL.replace(/^(https?:\/\/[^/]+).*$/, "$1")) {
             // message coming from xwindow
 
@@ -88,7 +87,7 @@ Krang.XOrigin.factory = (function() {
             var data;
             if (data = e.data && e.data.split(/\uE000/)) {
 
-                console.debug("5. Response data from cmsURL: " + data);
+                Krang.debug("5. Response data from cmsURL: " + data);
 
                 var cb   = data[0];
                 var json = data[1] ? data[1].evalJSON() : {};
@@ -102,9 +101,7 @@ Krang.XOrigin.factory = (function() {
 //            var me = arguments.callee;
 //            setTimeout(function() { Event.stopObserving(window, 'message', me) }, 10);
 
-
-            console.log($H(Event.cache).inject(0,function(m,p){m+=$H(p.value).values().flatten().size();return m}))
-
+            Krang.debug("Number of Event handlers: "+$H(Event.cache).inject(0,function(m,p){m+=$H(p.value).values().flatten().size();return m}));
 
         } else {
             throw new Error("Cross document message from unauthorized origin '" + e.origin +"'");
@@ -131,7 +128,7 @@ Krang.XOrigin.factory = (function() {
         Event.observe(window, 'message', responseHandler);
         
         // send message
-        console.debug("1. Post message: "+msg);
+        Krang.debug("1. Post message: "+msg);
         xwindow.postMessage(msg, options.cmsURL);
     };
 })();

@@ -2,6 +2,9 @@
    Krang Preview Finder Module
  */
 (function() {
+
+Krang.debug.on();
+
 /*
                    --- CMS access data ---
 */
@@ -26,9 +29,9 @@
     }
     var storyID = flObj.storyID;
 
-    console.debug("CMS URL: "+cmsURL);
-    console.debug("Window ID: "+cmsWinID);
-    console.debug("Story ID: "+storyID);
+    Krang.debug("CMS URL: "+cmsURL);
+    Krang.debug("Window ID: "+cmsWinID);
+    Krang.debug("Story ID: "+storyID);
 
 /*
                     --- Template Finder ---
@@ -229,8 +232,8 @@
     // Update overlay buttons callback
     var initOverlay = function(status) { // status provided by Krang::CGI::Story::get_status()
 
-        console.debug("Story status on next line: ");
-        console.debug(status);
+        Krang.debug("Story status on next line: ");
+        Krang.debug(status);
 
         // Helper functions
 
@@ -263,7 +266,7 @@
         var editBtnIfOwner = function() {
             runMode = 'save_and_jump';
 
-            console.debug("Stories: "+storyID+' '+status.storyInSession);
+            Krang.debug("Stories: "+storyID+' '+status.storyInSession);
 
             if (status.storyInSession == storyID) {
                 // our story is already in the session, but is it also

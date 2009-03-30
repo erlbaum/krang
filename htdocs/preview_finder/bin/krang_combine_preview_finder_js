@@ -100,6 +100,8 @@ my @files = qw(
   htdocs/js/scriptaculous.js
   htdocs/proto_popup/src/proto_popup_base.js
   htdocs/proto_popup/src/proto_popup_alert.js
+  htdocs/preview_finder/js/krang_debug.js
+  htdocs/preview_finder/js/krang_error.js
   htdocs/preview_finder/js/xorigin.js
   htdocs/preview_finder/js/krang_messages.js
   htdocs/preview_finder/js/preview_finder.js
