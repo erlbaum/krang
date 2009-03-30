@@ -188,7 +188,7 @@
 
         // post message, caring for stories that live on the
         // workspace, but are not currently opened in the "Edit Story" screen
-        Prototype.XOrigin.WinInfo(cmsWin, {
+        Krang.XOrigin.WinInfo(cmsWin, {
             cmsURL:   cmsURL,
             question: 'isStoryOnWorkspace',
             response: function(response) {
@@ -198,7 +198,7 @@
                }
             },
             finish: function() {                    
-               Prototype.XOrigin.XUpdater(cmsWin, {
+               Krang.XOrigin.XUpdater(cmsWin, {
                    cmsURL:   cmsURL,
                    cmsApp:   'story.pl',
                    form:     'edit',
@@ -270,14 +270,14 @@
                 // our story is already in the session, but is it also
                 // on the "Edit Story" screen?
                 activateEdit(function() {
-                    Prototype.XOrigin.WinInfo(cmsWin, {
+                    Krang.XOrigin.WinInfo(cmsWin, {
                         cmsURL:   cmsURL,
                         question: 'isStoryOnWorkspace',
                         response: function(response) {
                             // it's not opened in "Edit Story", so open it
                             if (response == 'yes') {
                                 // like clicking on "Edit" button on workspace
-                                Prototype.XOrigin.XUpdater(cmsWin, {
+                                Krang.XOrigin.XUpdater(cmsWin, {
                                     cmsURL: cmsURL,
                                     cmsApp: 'story.pl',
                                     form:   'edit',
@@ -286,7 +286,7 @@
             } else {
                 // our story is not yet in the session, so open it on "Edit Story"
                 activateEdit(function() {
-                    Prototype.XOrigin.XUpdater(cmsWin, {
+                    Krang.XOrigin.XUpdater(cmsWin, {
                         cmsURL: cmsURL,
                         cmsApp: 'story.pl',
                         params: {rm: 'edit', story_id: storyID},
@@ -301,7 +301,7 @@
             runMode = 'save_and_jump';
             activateEdit(function() {
                 // check it out and open it on "Edit Story"
-                Prototype.XOrigin.XUpdater(cmsWin, {
+                Krang.XOrigin.XUpdater(cmsWin, {
                     cmsURL: cmsURL,
                     cmsApp: 'story.pl',
                     params: { rm: 'pe_checkout_and_edit', story_id: storyID },
@@ -316,7 +316,7 @@
             ms.update(ms.innerHTML +  ' ' + status.checkedOutBy).show().observe('click', function(e) {
                     uiReset();
                     // steal the story
-                    Prototype.XOrigin.XUpdater(cmsWin, {
+                    Krang.XOrigin.XUpdater(cmsWin, {
                         cmsURL: cmsURL,
                         cmsApp: 'story.pl',
                         method: 'get',
@@ -388,7 +388,7 @@
     }
 
     // get our story's checkout status...
-    Prototype.XOrigin.Request(cmsWin, {
+    Krang.XOrigin.Request(cmsWin, {
         cmsURL: cmsURL,
         cmsApp: 'story.pl',
         method: 'get',
