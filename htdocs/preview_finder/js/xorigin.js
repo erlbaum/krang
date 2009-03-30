@@ -54,11 +54,11 @@ Krang.XOrigin.factory = (function() {
         // default handler
         ProtoPopup.Alert.get('krang_preview_editor_failure', {
             modal:  true,
-            width:  '500px'
+            width:  '500px',
             body:   'Looks like a little bug (probably an Internal Server Error)<br/>Contact your System Administrator if this problem continues.',
             cancelIconSrc:           false,
             bodyBackgroundImage:     'url("' + Options.cmsURL + '/images/bug.gif")',
-            closeBtnBackgroundImage: 'url("' + Options.cmsURL + '/images/bkg-button-mini.gif")',
+            closeBtnBackgroundImage: 'url("' + Options.cmsURL + '/images/bkg-button-mini.gif")'
         }).show();
     };
 
@@ -72,11 +72,11 @@ Krang.XOrigin.factory = (function() {
         // default handler
         ProtoPopup.Alert.get('krang_preview_editor_exception', {
             modal:  true,
-            width:  '500px'
+            width:  '500px',
             body:   'Looks like a little bug (probably a JavaScript error)<br/>Contact your System Administrator if this problem continues.',
             cancelIconSrc:           false,
             bodyBackgroundImage:     'url("' + Options.cmsURL + '/images/bug.gif")',
-            closeBtnBackgroundImage: 'url("' + Options.cmsURL + '/images/bkg-button-mini.gif")',
+            closeBtnBackgroundImage: 'url("' + Options.cmsURL + '/images/bkg-button-mini.gif")'
         }).show();
     };
 

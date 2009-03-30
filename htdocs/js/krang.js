@@ -1933,7 +1933,7 @@ Krang.XOriginProxy = (function() {
     };
 
     var request = function(e, options) {
-        console.debug("3. Sending Ajax.Request(url, options) for URL: "+options.cmsURL
+        console.debug("3. Sending Krang.Ajax.request(url, options) for URL: "+options.cmsURL
                       +" ('options' on next line");
         console.debug(options);
 
@@ -1950,8 +1950,8 @@ Krang.XOriginProxy = (function() {
 
     var xupdater = function(e, options) {
         // send XHR request for Prototype.XOrigin.XUpdater
-        console.debug("3. Sending Ajax.Updater(target, url, options) for URL: "+options.cmsURL
-                      +" ('options' on next 2 lines");
+        console.debug("3. Sending Krang.Ajax.update(target, url, options) for URL: "+options.cmsURL
+                      +" ('options' on next line");
         console.debug(options);
                     
         var target = options.target || 'C';
