@@ -1,17 +1,19 @@
-if (Prototype == undefined) {
-    throw new Error("The library xorigin.js is based on prototype.js, but Prototype is not defined");
-}
+// Krang.XOrigin namespace
+if (Krang == undefined) { Krang = {} }
+Krang.XOrigin = {};
 
-Prototype.XOrigin = {};
+// function factory
+Krang.XOrigin.factory = (function() {
 
-//Prototype.XOrigin._send = function(type, xwindow, xurl, xpath, options, form, xtarget) {
-Prototype.XOrigin._send = function(type, xwindow, options) {
-    var callback = {};
+    // pseudo globals
+    var loadIndicator = $('krang_preview_editor_load_indicator');
+    var Options = {}, Handler = {};
 
-    // Hook Krang.Messages into onComplete handler
-    var _onComplete = options['onComplete'] || Prototype.emptyFunction;
-    delete options['onComplete'];
-    callback['onComplete'] = function(json, pref, conf) {
+    // complete handler: hook Krang.Messages
+    var completeHandler = function(json, pref, conf) {
+        var _onComplete = Options['onComplete'] || Prototype.emptyFunction;
+        delete Options['onComplete'];
+
         // call custom handler
         _onComplete(json, pref, conf);
 
@@ -41,67 +43,111 @@ Prototype.XOrigin._send = function(type, xwindow, options) {
         }
     };
 
-    // TODO: Hook modal error popup into onFailure and onException handler
-    ['onException', 'onFailure'].each(function(cb) {
-            callback[cb] = options[cb] || Prototype.emptyFunction;
-            delete options[cb];
-    });
+    // failure handler: hook modal failure popup
+    var failureHandler = function() {
+        var _cb = Options['onFailure'] || Prototype.emptyFunction;
+        delete Options['onFailure'];
 
-    // The response and finish handlers for XOrigin.WinInfo
-    ['response', 'finish'].each(function(cb) {
-            callback[cb] = options[cb] || Prototype.emptyFunction;
-            delete options[cb];
-    });
+        // custom handler
+        _cb();
 
-    // add our type
-    options.type = type;
-
-    // pack message for cross document messaging
-    var msg = Object.toJSON(options);
-
-    // show load indicator
-    var loadIndicator = $('krang_preview_editor_load_indicator');
-    loadIndicator.show();
-
-    // install 'message' event listener to receive the response
-    var responseHandler = function(e) {
-            if (e.origin == options.cmsURL.replace(/^(https?:\/\/[^/]+).*$/, "$1")) {
-                // message coming from xwindow
-
-                // TODO hide indicator
-                loadIndicator.hide();
-
-                // call callbacks
-                var data;
-                if (data = e.data && e.data.split(/\uE000/)) {
-
-                    console.debug("5. Response data from cmsURL: " + data);
-
-                    var cb   = data[0];
-                    var json = data[1] ? data[1].evalJSON() : {};
-                    var pref = data[2] ? data[2].evalJSON() : {};
-                    var conf = data[3] ? data[3].evalJSON() : {};
-
-                    callback[cb](json, pref, conf);
-                }
-
-                // this is a one time event listener
-                var me = arguments.callee;
-                setTimeout(function() { Event.stopObserving(window, 'message', me) }, 10);
-
-            } else {
-                throw new Error("Cross document message from unauthorized origin '" + e.origin +"'");
-            }
+        // default handler
+        ProtoPopup.Alert.get('krang_preview_editor_error', {
+            modal:  true,
+            header: '<strong>FAILRE</strong>',
+            body:   'Looks like a little bug (probably an Internal Server Error)<br/>Contact your System Administrator if this problem continues.',
+            cancelIconSrc: options.cmsURL + '/proto_popup/images/cancel.png'
+        }).show();
     };
 
-    // listen for response
-    Event.observe(window, 'message', responseHandler);
+    // exception handler: hook modal exception popup
+    var exceptionHandler = function(error) {
+        var _cb = Options['onException'] || Prototype.emptyFunction;
+        delete Options['onException'];
+        // custom handler
+        _cb(error);
 
-    // send message
-    console.debug("1. Post message: "+msg);
-    xwindow.postMessage(msg, options.cmsURL);
-};
+        // default handler
+        ProtoPopup.Alert.get('krang_preview_editor_error', {
+            modal:  true,
+            header: '<strong>EXCEPTION</strong>',
+            body:   'Looks like a little bug (probably a JavaScript error)<br/>Contact your System Administrator if this problem continues.',
+            cancelIconSrc: Options.cmsURL + '/proto_popup/images/cancel.png'
+        }).show();
+    };
 
-Prototype.XOrigin.Request  = Prototype.XOrigin._send.curry('request');
-Prototype.XOrigin.XUpdater = Prototype.XOrigin._send.curry('xupdater');
-Prototype.XOrigin.WinInfo  = Prototype.XOrigin._send.curry('wininfo');
+    var addHandler = function () {
+        Handler['onComplete']  = completeHandler;
+        Handler['onFailure']   = failureHandler;
+        Handler['onException'] = exceptionHandler;
+        
+        // The response and finish handlers for XOrigin.WinInfo
+        ['response', 'finish'].each(function(cb) {
+                Handler[cb] = Options[cb] || Prototype.emptyFunction;
+                delete Options[cb];
+        });
+    };
+
+    var responseHandler = function(e) {
+        console.log(e.origin + ' ' + Options.cmsURL);
+        if (e.origin == Options.cmsURL.replace(/^(https?:\/\/[^/]+).*$/, "$1")) {
+            // message coming from xwindow
+
+            // hide indicator
+            loadIndicator.hide();
+
+            // call handler
+            var data;
+            if (data = e.data && e.data.split(/\uE000/)) {
+
+                console.debug("5. Response data from cmsURL: " + data);
+
+                var cb   = data[0];
+                var json = data[1] ? data[1].evalJSON() : {};
+                var pref = data[2] ? data[2].evalJSON() : {};
+                var conf = data[3] ? data[3].evalJSON() : {};
+
+                Handler[cb](json, pref, conf);
+            }
+
+            // this is a one time event listener
+//            var me = arguments.callee;
+//            setTimeout(function() { Event.stopObserving(window, 'message', me) }, 10);
+
+
+            console.log($H(Event.cache).inject(0,function(m,p){m+=$H(p.value).values().flatten().size();return m}))
+
+
+        } else {
+            throw new Error("Cross document message from unauthorized origin '" + e.origin +"'");
+        }
+    };
+
+    return function(type, xwindow, options) {
+
+        // set pseudo globals
+        Options = options;
+        addHandler(options);
+
+        // add our type
+        options.type = type;
+        
+        // pack message for cross document messaging
+        var msg = Object.toJSON(options);
+        
+        // show load indicator
+        loadIndicator.show();
+        
+        // install 'message' event listener to receive the response
+        // listen for response
+        Event.observe(window, 'message', responseHandler);
+        
+        // send message
+        console.debug("1. Post message: "+msg);
+        xwindow.postMessage(msg, options.cmsURL);
+    };
+})();
+
+Krang.XOrigin.Request  = Krang.XOrigin.factory.curry('request');
+Krang.XOrigin.XUpdater = Krang.XOrigin.factory.curry('xupdater');
+Krang.XOrigin.WinInfo  = Krang.XOrigin.factory.curry('wininfo');

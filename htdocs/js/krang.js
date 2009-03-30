@@ -300,8 +300,9 @@ Krang.Ajax.request = function(args) {
     var url       = args['url'];
     var params    = args['params'] || {};
     var indicator = args['indicator'];
-    var complete  = args['onComplete'] || Prototype.emptyFunction;
-    var failure   = args['onFailure'] || Prototype.emptyFunction;
+    var complete  = args['onComplete']  || Prototype.emptyFunction;
+    var failure   = args['onFailure']   || Prototype.emptyFunction;
+    var exception = args['onException'] || Prototype.emptyFunction;
     var method    = args['method'] || 'get';
 
     // tell the user that we're doing something
@@ -341,7 +342,7 @@ Krang.Ajax.request = function(args) {
                 Krang.Error.show();
             },
             onException : function(transport, e) {
-                failure(transport, e);
+                exception(transport, e);
                 Krang.Error.show();
             }
         }
@@ -396,9 +397,10 @@ Krang.Ajax.update = function(args) {
     var params    = args.params || {};
     var target    = args.target;
     var indicator = args.indicator;
-    var complete  = args.onComplete || Prototype.emptyFunction;
-    var success   = args.onSuccess  || Prototype.emptyFunction;
-    var failure   = args.onFailure  || Prototype.emptyFunction;
+    var complete  = args.onComplete     || Prototype.emptyFunction;
+    var success   = args.onSuccess      || Prototype.emptyFunction;
+    var failure   = args.onFailure      || Prototype.emptyFunction;
+    var exception = args['onException'] || Prototype.emptyFunction;
     var to_top    = args.to_top == false ? false : true; // defaults to true
 
     // tell the user that we're doing something
@@ -464,7 +466,7 @@ Krang.Ajax.update = function(args) {
             },
             onException : function(transport, e) {
                 // user callback
-                failure(transport, e);
+                exception(transport, e);
                 Krang.Error.show();
             }
         }
@@ -1891,35 +1893,57 @@ Krang.PoorTextCreationArguments = new Array;
    Message handler called by previewed story's postMessage() - a HTML5
    feature implemented by Firefox 3+, IE8+, Safari4+
 */
-(function() {
+Krang.XOriginProxy = (function() {
+    var ifSuccessHandler = function(e, name, addToJSON, args, response, json) {
+        console.debug("4. X-JSON header in XHR response for cb '" + name +"' on next line");
+        console.debug(json);
+
+        Krang.hide_indicator();
+                
+        // pack response message 
+        var msg = name;
+        
+        // curry argument
+        if (Object.isFunction(addToJSON)) { json = addToJSON(json) }
+
+        // default json
+        if (!json) { json = {} }
+
+        // the XHR response object contains stuff we may
+        // not access cross origin wise
+        msg += "\uE000" + Object.toJSON(json)
+             + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
+             + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
+        
+        // post back to sender
+        console.log('xx: '+e.origin+' '+msg);
+        e.source.postMessage(msg, e.origin);
+    };
+    
+    var exceptionHandler = function(e, request, error) {
+        console.debug("4. Error object in XHR exception on next line");
+        console.debug(error);
+        
+        Krang.hide_indicator();
+        
+        var msg = "onException\uE000" + Object.toJSON(error);
+        
+        // post back to sender
+        e.source.postMessage(msg, e.origin);
+    };
+
     var request = function(e, options) {
         console.debug("3. Sending Ajax.Request(url, options) for URL: "+options.cmsURL
                       +" ('options' on next line");
         console.debug(options);
 
-        // add callbacks to options
-        ['onComplete', 'onFailure', 'onException'].each(function(cb) {
-            options[cb] = function(args, response, json) {
-                console.debug("4. X-JSON header in XHR response for cb '" + cb +"' on next line");
-                console.debug(json);
-                
-                Krang.hide_indicator();
-                
-                // pack response message (JSON header only)
-                // the XHR response object contains stuff we may not access cross origin wise
-                var msg = cb + "\uE000" + Object.toJSON(json)
-                             + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
-                             + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
-                
-                // post back to sender
-                e.source.postMessage(msg, e.origin);
-            }
-        });
-        
+        // post XHR
         Krang.Ajax.request({
-            url:        Krang.Window.pass_id(options.cmsURL + '/' + options.cmsApp),
-            params:     options.params,
-            onComplete: options.onComplete
+            url:         options.cmsURL + '/' + options.cmsApp,
+            params:      options.params,
+            onComplete:  ifSuccessHandler.curry(e, 'onComplete', undefined),
+            onFailure:   ifSuccessHandler.curry(e, 'onFailure',  undefined),
+            onException: exceptionHandler.curry(e)
         });
         
     };
@@ -1932,34 +1956,17 @@ Krang.PoorTextCreationArguments = new Array;
                     
         var target = options.target || 'C';
 
-        ['onComplete', 'onFailure', 'onException'].each(function(cb) {
-            options[cb] = function(args, response, json) {
-                console.debug("4. X-JSON header in XHR response for cb '" + cb +"' on next line");
-                console.debug(json);
-                
-                if (cb == 'onComplete') {
-                    // add messages and alerts to our json
-                    if (json === null) { json = {}; }
-                    json['messages'] = Krang.Messages.get('messages');
-                    json['alerts']   = Krang.Messages.get('alerts');
-                } else if (cb == 'onFailure' || cb == 'onException') {
-                    Krang.Error.show();
-                }
-
-                Krang.hide_indicator();
-
-                // pack response message (JSON header only)
-                // the XHR response object contains stuff we may not access cross origin wise
-                var msg = cb + "\uE000" + Object.toJSON(json) 
-                             + "\uE000" + Krang.Cookie.get('KRANG_PREFS')
-                             + "\uE000" + Krang.Cookie.get('KRANG_CONFIG');
-                
-                // post back to sender
-                e.source.postMessage(msg, e.origin);
-            }
+        // onComplete handler
+        var onComplete  = ifSuccessHandler.curry(e, 'onComplete', function(json) {
+            if (json === null) { json = {}; }
+            var alerts   = Krang.Messages.get('alerts');
+            var messages = Krang.Messages.get('messages');
+            if (alerts.length)   json['alerts']   = alerts;
+            if (messages.length) json['messages'] = messages;
+            return json;
         });
-        
-        // process CMS form for preview editor request
+
+        // update form with our arguments
         Krang.ElementEditor.run_save_hooks();
         
         var form = $(options.form);
@@ -1972,12 +1979,15 @@ Krang.PoorTextCreationArguments = new Array;
             var method = options.method;
         }
 
+        // post XHR
         Krang.Ajax.update({
-            url        : Krang.Window.pass_id(options.cmsURL + '/' + options.cmsApp),
+            url        : options.cmsURL + '/' + options.cmsApp,
             params     : params,
             method     : method,
             target     : target,
-            onComplete : options['onComplete']
+            onComplete : onComplete,
+            onFailure  : ifSuccessHandler.curry(e, 'onFailure',  undefined),
+            onException: exceptionHandler.curry(e)
         });
     };
 
@@ -1990,11 +2000,13 @@ Krang.PoorTextCreationArguments = new Array;
                 e.source.postMessage('response\uE000"no"', e.origin);                
             }
             e.source.postMessage('finish', e.origin);
+
+            Krang.hide_indicator();
         }
-        console.log(window);
     };
 
-    Krang.XOriginProxy = function(e, authorizedOrigins) {
+    // the proxy function
+    return function(e, authorizedOrigins) {
         if (authorizedOrigins.any(function(url) { return url == e.origin })) {
             // message from authorized origin
             var data;
@@ -2017,7 +2029,7 @@ Krang.PoorTextCreationArguments = new Array;
             }
         }
     };
- })();
+})();
 
 Event.observe(window, 'message', function(e) {
     // get allowed preview site URLs from 'config' cookie
