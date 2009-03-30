@@ -51,16 +51,8 @@ Krang.XOrigin.factory = (function() {
         // custom handler
         _cb();
 
-        // default handler
-        ProtoPopup.Alert.get('krang_preview_editor_error', {
-            modal:  true,
-            width:  '500px',
-            body:   'Looks like a little bug (probably an Internal Server Error)<br/>Contact your System Administrator if this problem continues.',
-            cancelIconSrc:           false,
-            bodyBackgroundImage:     'url("' + Options.cmsURL + '/images/bug.gif")',
-            closeBtnBackgroundImage: 'url("' + Options.cmsURL + '/images/bkg-button-mini.gif")'
-        }).show();
-    };
+        Krang.Error(Options.cmsURL);
+    }
 
     // exception handler: hook modal exception popup
     var exceptionHandler = function(error) {
@@ -69,15 +61,7 @@ Krang.XOrigin.factory = (function() {
         // custom handler
         _cb(error);
 
-        // default handler
-        ProtoPopup.Alert.get('krang_preview_editor_error', {
-            modal:  true,
-            width:  '500px',
-            body:   'Looks like a little bug (probably a JavaScript error)<br/>Contact your System Administrator if this problem continues.',
-            cancelIconSrc:           false,
-            bodyBackgroundImage:     'url("' + Options.cmsURL + '/images/bug.gif")',
-            closeBtnBackgroundImage: 'url("' + Options.cmsURL + '/images/bkg-button-mini.gif")'
-        }).show();
+        Krang.Error(Options.cmsURL, 'Looks like a little bug (probably a JavaScript error)<br/>Contact your System Administrator if this problem continues.');
     };
 
     var addHandler = function () {

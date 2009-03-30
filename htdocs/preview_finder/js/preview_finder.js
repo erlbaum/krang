@@ -10,7 +10,7 @@
         var cmsData = window.name ? window.name.evalJSON() : {}
     }
     catch(er) {
-        alert(er.name + ": Critical error in preview_finder.js. Please inform the Krang developer team.\n");
+        Krang.Error('', 'Critical error in preview_finder.js (malformed JSON data)');
     }
     var cmsURL     = cmsData.cmsURL;
     var cmsWinID   = cmsData.winID;
@@ -22,7 +22,7 @@
         var flObj   = flName ? flName.evalJSON() : '';
     }
     catch (er) {
-        alert(er.name + ": Critical error in preview_finder.js. Please inform the Krang developer team.");
+        Krang.Error(cmsURL, 'Critical error in preview_finder.js (malformed JSON data)');
     }
     var storyID = flObj.storyID;
 
@@ -121,7 +121,7 @@
                         info = comment.evalJSON();
                     }
                     catch (er) {
-                        alert(er.name + ": Critical error in preview_finder.js. Please inform the Krang developer team.");
+                        Krang.Error(cmsURL, 'Critical error in preview_finder.js (malformed JSON data)');
                     }
                     return info;
                 } else if (endRE.test(comment)) {
@@ -141,7 +141,7 @@
             html += formatInfo(info, separator);
         });
         
-        // finally print it to the popup
+        // maybe make info popup
         if (pinfo === null) {
             pinfo = ProtoPopup.makeFunction('__pinfo', {
                 header:         '<strong>Template / Media Info</strong>',
@@ -150,9 +150,8 @@
             });
         }
 
-//        if (info.cmsRoot) {
-            pinfo(html);
-//        }
+        // finally print it to the popup
+        pinfo(html);
 
         // and prevent the default behavior for links, unless it's our own link
         if (!element.hasClassName("krang-find-template-link")) {
