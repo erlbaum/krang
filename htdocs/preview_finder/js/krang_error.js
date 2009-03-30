@@ -2,9 +2,9 @@ var Krang;
 if (Object.isUndefined(Krang)) { Krang = {} }
 
 /**
-   Krang.Error
+   Krang.error(baseURL, errorString);
 */
-Krang.Error = function(baseURL, error) {
+Krang.error = function(baseURL, error) {
     // default error
     if (!error) {
         error = 'Looks like a little bug (probably an Internal Server Error)<br/>Contact your System Administrator if this problem continues.';

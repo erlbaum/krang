@@ -51,7 +51,7 @@ Krang.XOrigin.factory = (function() {
         // custom handler
         _cb();
 
-        Krang.Error(Options.cmsURL);
+        Krang.error(Options.cmsURL);
     }
 
     // exception handler: hook modal exception popup
@@ -61,7 +61,7 @@ Krang.XOrigin.factory = (function() {
         // custom handler
         _cb(error);
 
-        Krang.Error(Options.cmsURL, 'Looks like a little bug (probably a JavaScript error)<br/>Contact your System Administrator if this problem continues.');
+        Krang.error(Options.cmsURL, 'Looks like a little bug (probably a JavaScript error)<br/>Contact your System Administrator if this problem continues.');
     };
 
     var addHandler = function () {

@@ -13,7 +13,7 @@ Krang.debug.on();
         var cmsData = window.name ? window.name.evalJSON() : {}
     }
     catch(er) {
-        Krang.Error('', 'Critical error in preview_finder.js (malformed JSON data)');
+        Krang.error('', 'Critical error in preview_finder.js (malformed JSON data)');
     }
     var cmsURL     = cmsData.cmsURL;
     var cmsWinID   = cmsData.winID;
@@ -25,7 +25,7 @@ Krang.debug.on();
         var flObj   = flName ? flName.evalJSON() : '';
     }
     catch (er) {
-        Krang.Error(cmsURL, 'Critical error in preview_finder.js (malformed JSON data)');
+        Krang.error(cmsURL, 'Critical error in preview_finder.js (malformed JSON data)');
     }
     var storyID = flObj.storyID;
 
@@ -124,7 +124,7 @@ Krang.debug.on();
                         info = comment.evalJSON();
                     }
                     catch (er) {
-                        Krang.Error(cmsURL, 'Critical error in preview_finder.js (malformed JSON data)');
+                        Krang.error(cmsURL, 'Critical error in preview_finder.js (malformed JSON data)');
                     }
                     return info;
                 } else if (endRE.test(comment)) {
