@@ -90,7 +90,7 @@ Krang.Messages = {
 
                     // move the message element back up at the top just to make sure
                     // it always starts at the top
-                    el.setStyle({top: '49px'});
+                    el.setStyle({top: '26px'});
                     
                     new Effect.SlideDown(el, {
                         duration    : Krang.Messages._slide_time,
