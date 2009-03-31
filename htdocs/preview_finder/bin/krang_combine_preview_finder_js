@@ -6,11 +6,11 @@ use strict;
 
 =head1 NAME
 
-krang_combine_preview_finder_js - One JavaScript file for the template picker
+krang_combine_preview_editor_js - One JavaScript file for the template picker
 
 =head1 SYNOPSIS
 
-   krang_combine_preview_finder_js --minify --verbose
+   krang_combine_preview_editor_js --minify --verbose
 
 =head1 DESCRIPTION
 
@@ -96,22 +96,22 @@ use JavaScript::Minifier::XS qw(minify);
 
 # list of files relative to /htdocs
 my @files = qw(
-  htdocs/preview_finder/js/prototype.js
+  htdocs/preview_editor/js/prototype.js
   htdocs/js/scriptaculous.js
   htdocs/proto_popup/src/proto_popup_base.js
   htdocs/proto_popup/src/proto_popup_alert.js
-  htdocs/preview_finder/js/krang_debug.js
-  htdocs/preview_finder/js/krang_error.js
-  htdocs/preview_finder/js/xorigin.js
-  htdocs/preview_finder/js/krang_messages.js
-  htdocs/preview_finder/js/preview_finder.js
+  htdocs/preview_editor/js/krang_debug.js
+  htdocs/preview_editor/js/krang_error.js
+  htdocs/preview_editor/js/xorigin.js
+  htdocs/preview_editor/js/krang_messages.js
+  htdocs/preview_editor/js/preview_editor.js
 );
 @files = map { catfile(KrangRoot, $_) } @files;
 
 # combined js file
-my $preview_finder_js = catfile(KrangRoot, 'htdocs', 'js', "preview_finder.js");
+my $preview_editor_js = catfile(KrangRoot, 'htdocs', 'js', "preview_editor.js");
 
-say("Combining template picker javascript '$preview_finder_js'...");
+say("Combining template picker javascript '$preview_editor_js'...");
 combine_files();
 say(" Done.\n");
 
@@ -135,7 +135,7 @@ sub combine_files {
         }
     }
 
-    open(my $JS, '>', $preview_finder_js) or die "Could not open file $preview_finder_js for writing: $!";
+    open(my $JS, '>', $preview_editor_js) or die "Could not open file $preview_editor_js for writing: $!";
     print $JS $js_contents;
     close($JS);
 }

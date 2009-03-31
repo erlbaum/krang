@@ -1640,13 +1640,13 @@ if (self != top) {
     var peCSS = document.createElement('link');
     peCSS.type="text/css";
     peCSS.rel="stylesheet";
-    peCSS.href='$args{cms_root}/preview_finder/css/preview_editor.css';
+    peCSS.href='$args{cms_root}/preview_editor/css/preview_editor.css';
     document.getElementsByTagName("head")[0].appendChild(peCSS);
 
     // Preview Editor JavaScript
     var tpScript = document.createElement('script');
     tpScript.setAttribute('language','JavaScript');
-    tpScript.setAttribute('src','$args{cms_root}/js/preview_finder.js');
+    tpScript.setAttribute('src','$args{cms_root}/js/preview_editor.js');
     document.body.appendChild(tpScript);
 } else {
     // ... otherwise hide overlay
