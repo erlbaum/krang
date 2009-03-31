@@ -2919,11 +2919,7 @@ sub pe_checkout_and_edit {
         );
         return $self->checkout_and_edit;
     } else {
-        $self->add_json_header(
-            status => 'nok',
-            msg    => localize('Missing story ID in checkout'),
-        );
-        return $self->find;
+        croak(__PACKAGE__ . "::pe_checkout_and_edit(): Missing story ID in checkout");
     }
 }
 
