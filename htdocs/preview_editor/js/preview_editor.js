@@ -230,10 +230,10 @@ Krang.debug.on();
     $('krang_preview_editor_top_overlay').observe('click', function(e) { Event.stop(e) });
 
     // Update overlay buttons callback
-    var initOverlay = function(status) { // status provided by Krang::CGI::Story::get_status()
+    var initOverlay = function(status, pref, config) { // status provided by Krang::CGI::Story::get_status()
 
-        Krang.debug("Story status on next line: ");
-        Krang.debug(status);
+        Krang.debug("Story status on next 3 lines: ");
+        Krang.debug(status); Krang.debug(pref); Krang.debug(config);
 
         // Helper functions
 
@@ -245,23 +245,20 @@ Krang.debug.on();
             document.stopObserving('click', labelClickHandler);
         };
 
-        var doActivateEdit = function() {
+
+        var editBtnHandler;
+
+        var editBtnHandlerFactory = function(func, e) {
+            uiReset();
+            if (Object.isFunction(func)) { func.call(); }
+            activateEditMode();
+        }
+
+        var activateEditMode = function() {
             $('krang_preview_editor_btn_edit').addClassName('krang_preview_editor_btn_pressed').show();
             $$('.krang_preview_editor_element_label').invoke('show');
             document.observe('click', labelClickHandler);
         };
-
-        var activateEdit = function(func) {
-            $('krang_preview_editor_btn_edit').show().observe('click', function(e) {
-                uiReset();
-                if (Object.isFunction(func)) { func.call(); }
-                doActivateEdit();
-            });
-        }
-
-        // IMPORTANT NOTE: In the following functions, the anonymous
-        // functions passed to activateEdit() are
-        // executed when clicking on the Edit/Steal button
 
         var editBtnIfOwner = function() {
             runMode = 'save_and_jump';
@@ -271,7 +268,7 @@ Krang.debug.on();
             if (status.storyInSession == storyID) {
                 // our story is already in the session, but is it also
                 // on the "Edit Story" screen?
-                activateEdit(function() {
+                editBtnHandler = editBtnHandlerFactory.curry(function() {
                     Krang.XOrigin.WinInfo(cmsWin, {
                         cmsURL:   cmsURL,
                         question: 'isStoryOnWorkspace',
@@ -285,9 +282,10 @@ Krang.debug.on();
                                     form:   'edit',
                                     params: {rm: 'edit', story_id: storyID},
                                 })}}})});
+                $('krang_preview_editor_btn_edit').show().observe('click', editBtnHandler);
             } else {
                 // our story is not yet in the session, so open it on "Edit Story"
-                activateEdit(function() {
+                editBtnHandler = editBtnHandlerFactory.curry(function() {
                     Krang.XOrigin.XUpdater(cmsWin, {
                         cmsURL: cmsURL,
                         cmsApp: 'story.pl',
@@ -295,46 +293,57 @@ Krang.debug.on();
                         form:   undefined,
                    });
                 });
+                $('krang_preview_editor_btn_edit').show().observe('click', editBtnHandler);
             }
         }
 
         var editBtnIfMayEdit = function() {
             // our story is checked-in, but we may edit it
             runMode = 'save_and_jump';
-            activateEdit(function() {
+            editBtnHandler = editBtnHandlerFactory.curry(function() {
                 // check it out and open it on "Edit Story"
                 Krang.XOrigin.XUpdater(cmsWin, {
-                    cmsURL: cmsURL,
-                    cmsApp: 'story.pl',
-                    params: { rm: 'pe_checkout_and_edit', story_id: storyID },
+                    cmsURL:     cmsURL,
+                    cmsApp:     'story.pl',
+                    params:     { rm: 'pe_checkout_and_edit', story_id: storyID },
+                    onComplete: function() {
+                        // remove story check out handler
+                        $('krang_preview_editor_btn_edit').stopObserving('click', editBtnHandler);
+                        // attach edit handler
+                        editBtnHandler = editBtnHandlerFactory.curry(Prototype.emptyFunction);
+                        $('krang_preview_editor_btn_edit').show().observe('click', editBtnHandler);
+                    }
                 });
             });
+            $('krang_preview_editor_btn_edit').show().observe('click', editBtnHandler);
         }
 
         var editBtnIfMaySteal = function() {
             // story is checked out by another user, but we may steal it
             var ms = $('krang_preview_editor_btn_steal');
             // show the "Steal" button instead of the "Edit" button and add the current owner to the label
-            ms.update(ms.innerHTML +  ' ' + status.checkedOutBy).show().observe('click', function(e) {
-                    uiReset();
-                    // steal the story
-                    Krang.XOrigin.XUpdater(cmsWin, {
-                        cmsURL: cmsURL,
-                        cmsApp: 'story.pl',
-                        method: 'get',
-                        params: {
-                                rm: 'steal_selected',
-                                krang_pager_rows_checked: storyID
-                        },
-                        onComplete: function(json, pref, conf) {
-                            // Replace "Steal" button with "Edit" button
-                            ms.hide();
-                            runMode = 'save_and_jump';
-                            doActivateEdit();
-                            activateEdit();
-                        },
-                    });
-            });
+            var checkOutHandler = function(e) {
+                uiReset();
+                // steal the story
+                Krang.XOrigin.XUpdater(cmsWin, {
+                    cmsURL: cmsURL,
+                    cmsApp: 'story.pl',
+                    method: 'get',
+                    params: {
+                        rm: 'steal_selected',
+                        krang_pager_rows_checked: storyID
+                    },
+                    onComplete: function(json, pref, conf) {
+                        // Replace "Steal" button with "Edit" button
+                        ms.stopObserving('click', checkOutHandler).hide();
+                        runMode = 'save_and_jump';
+                        editBtnHandler = editBtnHandlerFactory.curry(Prototype.emptyFunction);
+                        $('krang_preview_editor_btn_edit').show().observe('click', editBtnHandler);
+                        activateEditMode();
+                    },
+                });
+            };
+            ms.update(ms.innerHTML +  ' ' + status.checkedOutBy).show().observe('click', checkOutHandler);
         }
 
         //
