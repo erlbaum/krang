@@ -1671,16 +1671,16 @@ END
 sub _insert_preview_editor_top_overlay {
     my ($self, %arg) = @_;
 
-    my $title       = localize('Krang Preview Editor');
-    my $browse      = localize('Browse');
-    my $find_tmpl   = localize('Find Template');
-    my $edit        = localize('Edit Story');
-    my $steal       = localize('Steal from');
-    my $checked_out = localize('Checked out by');
-    my $close       = localize('Close');
-    my $help        = localize('Help');
-    my $loading     = localize('Loading');
-    my $forbidden   = localize('No Edit Permission');
+    my $title       = 'Krang Preview Editor';
+    my $browse      = 'Browse';
+    my $find_tmpl   = 'Find Template';
+    my $edit        = 'Edit Story';
+    my $steal       = 'Steal from';
+    my $checked_out = 'Checked out by';
+    my $close       = 'Close';
+    my $help        = 'Help';
+    my $loading     = 'Loading';
+    my $forbidden   = 'No Edit Permission';
 
     my $help_url = $arg{cms_root} . "/help.pl?topic=preview_editor&window_id=$ENV{KRANG_WINDOW_ID}";
 
@@ -1703,7 +1703,7 @@ sub _insert_preview_editor_top_overlay {
 
 <div id="krang_preview_editor_load_indicator" style="$indicator_css">
 <img alt="Load Indicator" src="$arg{cms_root}/images/indicator_small_bluebg.gif" style="padding 0 1em 0 0; vertical-align:middle">
-$loading&hellip;
+<span id="krang_preview_editor_loading">$loading</span>&hellip;
 </div>
 END
         my $top_spacer = <<END;

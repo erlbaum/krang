@@ -8,13 +8,15 @@ Krang.debug.on();
 /*
                    --- CMS access data ---
 */
-    var cmsWin   = top.opener;
     try {
         var cmsData = window.name ? window.name.evalJSON() : {}
     }
     catch(er) {
         Krang.error('', 'Critical error in preview_editor.js (malformed JSON data)');
     }
+
+    // CMS window
+    var cmsWin   = top.opener;
     var cmsURL     = cmsData.cmsURL;
     var cmsWinID   = cmsData.winID;
 
@@ -267,6 +269,25 @@ Krang.debug.on();
         Krang.debug("Story status on next 3 lines: ");
         Krang.debug(status); Krang.debug(pref); Krang.debug(config);
 
+        // load the localizer
+        Krang.loadFile(cmsURL + '/js/lexicon.' + pref.language + '.js');
+
+        // localize UI
+        Krang.execWhenTrue(function() { return Krang.L10N.language == pref.language }, function() {
+            var localize = Krang.L10N.loc.bind(Krang.L10N);
+            console.log(localize('Krang Preview Editor'));
+            $("krang_preview_editor_logo").update(localize('Krang Preview Editor'));
+            $("krang_preview_editor_btn_browse").update(localize('Browse'));
+            $("krang_preview_editor_btn_find").update(localize('Find Template'));
+            $("krang_preview_editor_btn_edit").update(localize('Edit Story'));
+            $("krang_preview_editor_btn_steal").update(localize('Steal from'));
+            $("krang_preview_editor_checked_out").update(localize('Checked out by'));
+            $("krang_preview_editor_forbidden").update(localize('No Edit Permission'));
+            $("krang_preview_editor_loading").update(localize('Loading'));
+            $("krang_preview_editor_close").update(localize('Close'));
+            $("krang_preview_editor_help").update(localize('Help'));
+        });
+        
         // Helper functions
 
         var uiReset = function() {
