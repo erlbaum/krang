@@ -1708,18 +1708,18 @@ $loading&hellip;
 END
         my $top_spacer = <<END;
 <div id="krang_preview_editor_top_spacer"></div>
-<div id="krang_preview_editor_messages" onclick="Krang.Messages.hide()" class="krang_preview_editor_slider" style="display:none;">
+<div id="krang_preview_editor_messages" class="krang_preview_editor_slider" style="display:none;">
 <div class="wrapper">
 <div class="content" style="background: url('$arg{cms_root}/images/slider-info.gif') 20px 10px no-repeat;"></div>
 <form>
-<input value="$close" type="button" class="krang_preview_editor_button" style="background: #EEE url('$arg{cms_root}/images/bkg-button-mini.gif') 0 50% repeat-x !important;"/>
+<input value="$close" type="button" onclick="Krang.Messages.hide('messages')" class="krang_preview_editor_button" style="background: #EEE url('$arg{cms_root}/images/bkg-button-mini.gif') 0 50% repeat-x !important;"/>
 </form>
 </div></div>
 
-<div id="krang_preview_editor_alerts" onclick="Krang.Messages.hide()" class="krang_preview_editor_slider" style="display:none;"><div class="wrapper">
+<div id="krang_preview_editor_alerts" class="krang_preview_editor_slider" style="display:none;"><div class="wrapper">
 <div class="content" style="background: url('$arg{cms_root}/images/slider-alert.gif') 20px 10px no-repeat;"></div>
 <form>
-<input value="$close" type="button" class="krang_preview_editor_button" style="background: #EEE url('$arg{cms_root}/images/bkg-button-mini.gif') 0 50% repeat-x !important;">
+<input value="$close" type="button" onclick="Krang.Messages.hide('alerts')" class="krang_preview_editor_button" style="background: #EEE url('$arg{cms_root}/images/bkg-button-mini.gif') 0 50% repeat-x !important;">
 </form>
 </div></div>
 END
