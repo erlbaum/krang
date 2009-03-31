@@ -223,16 +223,13 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
          */
         this.sections.each(function(section) {
-                console.log('Section: '+section);
                 var se = new Element('div', {id : id+'-'+section, 'class' : 'proto-popup-'+section});
                 if (this.config[section+'BackgroundImage']) {
-                    console.log(this.config[section+'BackgroundImage']);
                     se.setStyle({backgroundImage: this.config[section+'BackgroundImage'],
                                 backgroundRepeat: 'no-repeat'});
                 }
                 this[section] = se;
                 popup.insert(se);
-                console.log(se);
         }.bind(this));
 
         // maybe add a modal overlay
