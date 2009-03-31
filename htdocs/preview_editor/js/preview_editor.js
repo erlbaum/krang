@@ -188,24 +188,56 @@ Krang.debug.on();
             jump_to:  cms.elementXPath,
         };
 
-        // post message, caring for stories that live on the
-        // workspace, but are not currently opened in the "Edit Story" screen
-        Krang.XOrigin.WinInfo(cmsWin, {
-            cmsURL:   cmsURL,
-            question: 'isStoryOnEditScreen',
-            response: function(response) {
-               if (response == 'no') {
-                   params['rm']       = 'edit';
-                   params['story_id'] = storyID;
-               }
+        var jumpToElement = function() {
+           Krang.XOrigin.XUpdater(cmsWin, {
+               cmsURL:   cmsURL,
+               cmsApp:   'story.pl',
+               form:     'edit',
+               params:   params
+           });
+        };
+
+        var putOnEditScreenAndJumpToElement = function() {
+            Krang.XOrigin.WinInfo(cmsWin, {
+                // maybe put story on Edit Story screen
+                cmsURL:   cmsURL,
+                question: 'isStoryOnEditScreen',
+                response: function(response) {
+                   if (response == 'no') {
+                       params['rm']       = 'edit';
+                       params['story_id'] = storyID;
+                   }
+                },
+                finish: jumpToElement
+            });
+        };
+
+        var checkoutAndJumpToElement = function() {
+            // check out
+            Krang.XOrigin.XUpdater(cmsWin, {
+                cmsURL:     cmsURL,
+                cmsApp:     'story.pl',
+                params:     { rm: 'pe_checkout_and_edit', story_id: storyID },
+                onComplete: jumpToElement
+            });
+        };
+
+        // checked-out status might have changed, so check it again
+        Krang.XOrigin.Request(cmsWin, {
+            cmsURL: cmsURL,
+            cmsApp: 'story.pl',
+            method: 'get',
+            params: {
+                rm:       'pe_get_status',
+                story_id: storyID
             },
-            finish: function() {                    
-               Krang.XOrigin.XUpdater(cmsWin, {
-                   cmsURL:   cmsURL,
-                   cmsApp:   'story.pl',
-                   form:     'edit',
-                   params:   params
-               });
+            // ...and edit the story
+            onComplete: function(status) {
+                if (status.checkedOutBy == 'me') {
+                    putOnEditScreenAndJumpToElement();
+                } else if (status.checkedOut == '0') {
+                    checkoutAndJumpToElement();
+                }
             }
         });
     };
