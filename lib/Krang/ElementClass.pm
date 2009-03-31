@@ -1708,7 +1708,7 @@ $loading&hellip;
 END
         my $top_spacer = <<END;
 <div id="krang_preview_editor_top_spacer"></div>
-<div id="krang_preview_editor_messages" class="krang_preview_editor_slider" style="display:none;">
+<div id="krang_preview_editor_messages" onclick="Krang.Messages.hide()" class="krang_preview_editor_slider" style="display:none;">
 <div class="wrapper">
 <div class="content" style="background: url('$arg{cms_root}/images/slider-info.gif') 20px 10px no-repeat;"></div>
 <form>
@@ -1716,7 +1716,7 @@ END
 </form>
 </div></div>
 
-<div id="krang_preview_editor_alerts" class="krang_preview_editor_slider" style="display:none;"><div class="wrapper">
+<div id="krang_preview_editor_alerts" onclick="Krang.Messages.hide()" class="krang_preview_editor_slider" style="display:none;"><div class="wrapper">
 <div class="content" style="background: url('$arg{cms_root}/images/slider-alert.gif') 20px 10px no-repeat;"></div>
 <form>
 <input value="$close" type="button" class="krang_preview_editor_button" style="background: #EEE url('$arg{cms_root}/images/bkg-button-mini.gif') 0 50% repeat-x !important;">
@@ -1775,19 +1775,3 @@ actually use them...
 =cut
 
 1;
-
-##  <TABLE cellpadding="0" cellspacing="0" border="0" width="100%"><tbody><tr>
-##    <td width="33%"><span id="krang_preview_editor_logo">$title</span></td>
-##<!--    <td width="33%" style="text-align: center"><span id="krang_preview_editor_toggle"><span id="krang_preview_editor_deactivate">deactivate</span><span id="krang_preview_editor_activate" style="display: none">activate</span></span></td>-->
-##
-##    <td width="57%" style="text-align: center">
-##       <span id="krang_preview_editor_btn_browse"  class="krang_preview_editor_btn" style="display:none">$browse</span>
-##       <span id="krang_preview_editor_btn_find"    class="krang_preview_editor_btn" style="display:none">$find_tmpl</span>
-##       <span id="krang_preview_editor_btn_edit"    class="krang_preview_editor_btn" style="display:none">$edit</span>
-##       <span id="krang_preview_editor_btn_steal"   class="krang_preview_editor_btn" style="display:none">$steal</span>
-##       <span id="krang_preview_editor_checked_out" style="display:none">$checked_out</span>
-##       <span id="krang_preview_editor_forbidden"   style="display:none">$forbidden</span>
-##    </td>
-##
-##    <td width="10%" style="text-align: right"><a href="" id="krang_preview_editor_help" name="$help_url">$help</a><a href="" id="krang_preview_editor_close">$close</a></td>
-##  </tr></tbody></table>
