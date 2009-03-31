@@ -192,9 +192,9 @@ Krang.debug.on();
         // workspace, but are not currently opened in the "Edit Story" screen
         Krang.XOrigin.WinInfo(cmsWin, {
             cmsURL:   cmsURL,
-            question: 'isStoryOnWorkspace',
+            question: 'isStoryOnEditScreen',
             response: function(response) {
-               if (response == 'yes') {
+               if (response == 'no') {
                    params['rm']       = 'edit';
                    params['story_id'] = storyID;
                }
@@ -271,10 +271,10 @@ Krang.debug.on();
                 editBtnHandler = editBtnHandlerFactory.curry(function() {
                     Krang.XOrigin.WinInfo(cmsWin, {
                         cmsURL:   cmsURL,
-                        question: 'isStoryOnWorkspace',
+                        question: 'isStoryOnEditScreen',
                         response: function(response) {
                             // it's not opened in "Edit Story", so open it
-                            if (response == 'yes') {
+                            if (response == 'no') {
                                 // like clicking on "Edit" button on workspace
                                 Krang.XOrigin.XUpdater(cmsWin, {
                                     cmsURL: cmsURL,

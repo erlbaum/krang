@@ -2017,9 +2017,9 @@ Krang.XOriginProxy = (function() {
     };
 
     var wininfo = function(e, options) {
-        if (options.question == 'isStoryOnWorkspace') {
-            if (document.forms && document.forms['krang_pager_form']
-                               && /workspace/.test(document.forms['krang_pager_form'].action)) {
+        if (options.question == 'isStoryOnEditScreen') {
+            if (document.forms && document.forms['edit']
+                               && /story/.test(document.forms['edit'].action)) {
                 e.source.postMessage('response\uE000"yes"', e.origin);
             } else {
                 e.source.postMessage('response\uE000"no"', e.origin);                
