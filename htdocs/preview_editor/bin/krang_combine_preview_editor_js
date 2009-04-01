@@ -98,10 +98,8 @@ use JavaScript::Minifier::XS qw(minify);
 my @files = qw(
   htdocs/preview_editor/js/prototype.js
   htdocs/js/scriptaculous.js
+  htdocs/preview_editor/js/krang_localize.js
   htdocs/preview_editor/js/krang_debug.js
-  htdocs/preview_editor/js/krang_exec_when_true.js
-  htdocs/js/lexicon.en.js
-  htdocs/preview_editor/js/krang_loadfile.js
   htdocs/proto_popup/src/proto_popup_base.js
   htdocs/proto_popup/src/proto_popup_alert.js
   htdocs/preview_editor/js/krang_error.js

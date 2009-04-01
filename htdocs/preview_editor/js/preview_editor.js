@@ -269,23 +269,29 @@ Krang.debug.on();
         Krang.debug("Story status on next 3 lines: ");
         Krang.debug(status); Krang.debug(pref); Krang.debug(config);
 
-        // load the localizer
-        Krang.loadFile(cmsURL + '/js/lexicon.' + pref.language + '.js');
-
-        // localize UI
-        Krang.execWhenTrue(function() { return Krang.L10N.language == pref.language }, function() {
-            var localize = Krang.L10N.loc.bind(Krang.L10N);
-            console.log(localize('Krang Preview Editor'));
-            $("krang_preview_editor_logo").update(localize('Krang Preview Editor'));
-            $("krang_preview_editor_btn_browse").update(localize('Browse'));
-            $("krang_preview_editor_btn_find").update(localize('Find Template'));
-            $("krang_preview_editor_btn_edit").update(localize('Edit Story'));
-            $("krang_preview_editor_btn_steal").update(localize('Steal from'));
-            $("krang_preview_editor_checked_out").update(localize('Checked out by'));
-            $("krang_preview_editor_forbidden").update(localize('No Edit Permission'));
-            $("krang_preview_editor_loading").update(localize('Loading'));
-            $("krang_preview_editor_close").update(localize('Close'));
-            $("krang_preview_editor_help").update(localize('Help'));
+        // localize the UI
+        Krang.XOrigin.WinInfo(cmsWin, {
+            cmsURL:   cmsURL,
+            question: 'getDictionary',
+            response: function(thesaurus) {
+                    console.log(thesaurus);
+                if (thesaurus) {
+                   Krang.localize.withDictionary(thesaurus);
+                } else {
+                    Krang.error(cmsURL, 'Couldn\'t find dictionary for language "'+pref.language+'"');
+                }
+            },
+            finish : function() {
+                // localize the top overlay UI
+                $("krang_preview_editor_logo",       "krang_preview_editor_btn_browse",
+                  "krang_preview_editor_btn_find",   "krang_preview_editor_btn_edit",
+                  "krang_preview_editor_btn_steal",  "krang_preview_editor_checked_out",
+                  "krang_preview_editor_forbidden",  "krang_preview_editor_loading",
+                  "krang_preview_editor_close",      "krang_preview_editor_help"
+                ).invoke('localize');
+                // localize the container element labels
+                $$('.krang_preview_editor_element_label').invoke('localize');
+            }
         });
         
         // Helper functions

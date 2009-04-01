@@ -2025,9 +2025,15 @@ Krang.XOriginProxy = (function() {
                 e.source.postMessage('response\uE000"no"', e.origin);                
             }
             e.source.postMessage('finish', e.origin);
-
-            Krang.hide_indicator();
+        } else if (options.question == 'getDictionary') {
+            if (Krang.L10N.lexicon) {
+                e.source.postMessage('response\uE000' + Object.toJSON(Krang.L10N.lexicon), e.origin);
+                e.source.postMessage('finish', e.origin);
+            } else {
+                e.source.postMessage('response\uE000', e.origin);
+            }
         }
+        Krang.hide_indicator();
     };
 
     // the proxy function

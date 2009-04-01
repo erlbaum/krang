@@ -90,9 +90,9 @@ Krang.XOrigin.factory = (function() {
                 Krang.debug("5. Response data from cmsURL: " + data);
 
                 var cb   = data[0];
-                var json = data[1] ? data[1].evalJSON() : {};
-                var pref = data[2] ? data[2].evalJSON() : {};
-                var conf = data[3] ? data[3].evalJSON() : {};
+                var json = data[1] ? data[1].evalJSON() : undefined;
+                var pref = data[2] ? data[2].evalJSON() : undefined;
+                var conf = data[3] ? data[3].evalJSON() : undefined;
 
                 Handler[cb](json, pref, conf);
             }
