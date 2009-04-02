@@ -169,6 +169,29 @@ Krang.debug.on();
                          --- Preview Editor ---
 
 */
+    // wrapper around Krang.XOrigin.XUpdater()
+    var Update = function(args) {
+        Krang.XOrigin.XUpdater(cmsWin, {
+            cmsURL:     cmsURL,
+            cmsApp:     'story.pl',
+            method:     args.method     || 'post',
+            form:       args.form       || undefined,
+            params:     args.params     || {},
+            onComplete: args.onComplete || Prototype.emptyFunction
+        });
+    };
+
+    // wrapper around Krang.XOrigin.Request()
+    var Request = function(args) {
+        Krang.XOrigin.Request(cmsWin, {
+            cmsURL:     cmsURL,
+            cmsApp:     'story.pl',
+            method:     args.method     || 'get',
+            form:       args.form       || undefined,
+            params:     args.params     || {},
+            onComplete: args.onComplete || Prototype.emptyFunction
+        });
+    };
 
     // click handler for container element labels, posts back to the
     // CMS to open the corresponding container element in the "Edit Story" UI
@@ -187,9 +210,7 @@ Krang.debug.on();
         var params  = { rm: 'save_and_jump', jump_to: cms.elementXPath }
         
         var jumpToElement = function() {
-            Krang.XOrigin.XUpdater(cmsWin, {
-                cmsURL: cmsURL,
-                cmsApp: 'story.pl',
+            Update({
                 form:   'edit', 
                 params: params,
             });
@@ -212,19 +233,14 @@ Krang.debug.on();
         
         var checkoutAndJumpToElement = function() {
             // check out
-            Krang.XOrigin.XUpdater(cmsWin, {
-                cmsURL:     cmsURL,
-                cmsApp:     'story.pl',
+            Update({
                 params:     { rm: 'pe_checkout_and_edit', story_id: storyID },
                 onComplete: jumpToElement
             });
         };
         
         // checked-out status might have changed, so check it again
-        Krang.XOrigin.Request(cmsWin, {
-            cmsURL: cmsURL,
-            cmsApp: 'story.pl',
-            method: 'get',
+        Request({
             params: {
                 rm:       'pe_get_status',
                 story_id: storyID
@@ -301,9 +317,7 @@ Krang.debug.on();
                             // it's not opened in "Edit Story", so open it
                             if (response == 'no') {
                                 // like clicking on "Edit" button on workspace
-                                Krang.XOrigin.XUpdater(cmsWin, {
-                                    cmsURL: cmsURL,
-                                    cmsApp: 'story.pl',
+                                Update({
                                     form:   'edit',
                                     params: {rm: 'edit', story_id: storyID},
                                 })}}})});
@@ -311,9 +325,7 @@ Krang.debug.on();
             } else {
                 // our story is not yet in the session, so open it on "Edit Story"
                 editBtnHandler = editBtnHandlerFactory.curry(function() {
-                    Krang.XOrigin.XUpdater(cmsWin, {
-                        cmsURL: cmsURL,
-                        cmsApp: 'story.pl',
+                    Update({
                         params: {rm: 'edit', story_id: storyID},
                         form:   undefined,
                     });
@@ -326,9 +338,7 @@ Krang.debug.on();
             // our story is checked-in, but we may edit it
             editBtnHandler = editBtnHandlerFactory.curry(function() {
                 // check it out and open it on "Edit Story"
-                Krang.XOrigin.XUpdater(cmsWin, {
-                    cmsURL:     cmsURL,
-                    cmsApp:     'story.pl',
+                Update({
                     params:     { rm: 'pe_checkout_and_edit', story_id: storyID },
                     onComplete: function() {
                         // remove story check out handler
@@ -349,9 +359,7 @@ Krang.debug.on();
             var checkOutHandler = function(e) {
                 uiReset();
                 // steal the story
-                Krang.XOrigin.XUpdater(cmsWin, {
-                    cmsURL: cmsURL,
-                    cmsApp: 'story.pl',
+                Update({
                     method: 'get',
                     params: {
                         rm: 'steal_selected',
@@ -393,9 +401,7 @@ Krang.debug.on();
                     {name:    'save',
                      label:   Krang.localize("Save"), giveFocus: true,
                      onClick: function(storyInSession) {
-                         Krang.XOrigin.XUpdater(cmsWin, {
-                             cmsURL: cmsURL,
-                             cmsApp: 'story.pl',
+                         Update({
                              form:   'edit',
                              params: {rm: 'db_save'},
                              onComplete: initEditBtn
@@ -489,10 +495,7 @@ Krang.debug.on();
     };
 
     // get our story's checkout status...
-    Krang.XOrigin.Request(cmsWin, {
-        cmsURL: cmsURL,
-        cmsApp: 'story.pl',
-        method: 'get',
+    Request({
         params: {
             rm:       'pe_get_status',
             story_id: storyID
