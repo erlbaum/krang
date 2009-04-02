@@ -409,12 +409,12 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
        It's CSS class is "'proto-popup-'+name+'-btn'".
 
     */
-    makeButton : function(name) {
+    makeButton : function(name, label) {
         var btn = new Element('input', {
-            id      : this.id + '-' + name + '_btn',
+            id      : this.id + '-' + name + '-btn',
             type    : 'button',
-            value   : this.config[name+'BtnLabel'],
-            'class' : 'proto-popup-'+name+'-btn'
+            value   : label,
+            'class' : 'proto-popup-btn'
         });
 
         // maybe add a background image
@@ -436,8 +436,8 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 */
 ProtoPopup.makeGetFor = function(newProtoPopup) {
     return function(id, config) {
-        var pp;
-        if (pp = ProtoPopup.id2obj[id]) {
+        var pp = ProtoPopup.id2obj[id];
+        if (pp) {
             // we have it
             pp.setHtml(config);
             return pp;

@@ -5,7 +5,7 @@
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<meta name="generator" content="JsDoc Toolkit" />
 		
-		<title>JsDoc Reference - ProtoPopup.Confirm</title>
+		<title>JsDoc Reference - ProtoPopup.Dialog</title>
 
 		<style type="text/css">
 			/* default.css */
@@ -208,7 +208,7 @@ ul.inheritsList
 <!-- ============================== class title ============================ -->
 			<h1 class="classTitle">
 				
-				Class ProtoPopup.Confirm
+				Class ProtoPopup.Dialog
 			</h1>
 
 <!-- ============================== class summary ========================== -->			
@@ -217,16 +217,16 @@ ul.inheritsList
 					<a href="../symbols/ProtoPopup.html">ProtoPopup</a>.<br />
 				
 			
-				Creates a ProtoPopup.Confirm object
+				Creates a ProtoPopup.Dialog object
 				
 				
-					<br /><i>Defined in: </i> <a href="../symbols/src/_home_bobesch_krang-devel_ProtoPopup_src_proto_popup_confirm.js.html">proto_popup_confirm.js</a>.
+					<br /><i>Defined in: </i> <a href="../symbols/src/_home_bobesch_krang-devel_ProtoPopup_src_proto_popup_dialog.js.html">proto_popup_dialog.js</a>.
 				
 			</p>
 
 <!-- ============================== constructor summary ==================== -->			
 			
-			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class ProtoPopup.Confirm.">
+			<table class="summaryTable" cellspacing="0" summary="A summary of the constructor documented in the class ProtoPopup.Dialog.">
 				<caption>Class Summary</caption>
 				<thead>
 					<tr>
@@ -239,9 +239,9 @@ ul.inheritsList
 						<td class="attributes">&nbsp;</td>
 						<td class="nameDescription" >
 							<div class="fixedFont">
-								<b><a href="../symbols/ProtoPopup.Confirm.html">ProtoPopup.Confirm</a></b>(id, config)
+								<b><a href="../symbols/ProtoPopup.Dialog.html">ProtoPopup.Dialog</a></b>(id, config)
 							</div>
-							<div class="description">ProtoPopup.Confirm is based on ProtoPopup and ads 'OK' and
+							<div class="description">ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
     'Cancel' buttons to its base object.</div>
 						</td>
 					</tr>
@@ -253,7 +253,7 @@ ul.inheritsList
 			
 				
 				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class ProtoPopup.Confirm.">
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class ProtoPopup.Dialog.">
 					<caption>Field Summary</caption>
 					<thead>
 						<tr>
@@ -267,13 +267,12 @@ ul.inheritsList
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
 								<div class="fixedFont">
-								ProtoPopup.Confirm.<b><a href="../symbols/ProtoPopup.Confirm.html#.config">config</a></b>
+								ProtoPopup.Dialog.<b><a href="../symbols/ProtoPopup.Dialog.html#.config">config</a></b>
 								</div>
 								<div class="description">The default configuration inherited from
     <a href="../symbols/ProtoPopup.html#config">ProtoPopup#config</a> augmented with:
     <div style="padding-left: 20px">
-       <b>okBtnLabel:</b> The label of the "OK" button inserted
-       in the popup's footer section.</div>
+       <b>buttons:</b> An array of button specs objects.</div>
 							</td>
 						</tr>
 					
@@ -292,7 +291,7 @@ ul.inheritsList
 			
 				
 				
-				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class ProtoPopup.Confirm.">
+				<table class="summaryTable" cellspacing="0" summary="A summary of the methods documented in the class ProtoPopup.Dialog.">
 					<caption>Method Summary</caption>
 					<thead>
 						<tr>
@@ -305,21 +304,10 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&lt;static&gt; &nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont">ProtoPopup.Confirm.<b><a href="../symbols/ProtoPopup.Confirm.html#.get">get</a></b>(id, config)
+								<div class="fixedFont">ProtoPopup.Dialog.<b><a href="../symbols/ProtoPopup.Dialog.html#.get">get</a></b>(id, config)
 								</div>
 								<div class="description">Class method returning (maybe first create) a draggable popup DIV
    for confirm dialogs.</div>
-							</td>
-						</tr>
-					
-						<tr>
-							<td class="attributes">&lt;static&gt; &nbsp;</td>
-							<td class="nameDescription">
-								<div class="fixedFont">ProtoPopup.Confirm.<b><a href="../symbols/ProtoPopup.Confirm.html#.makeFunction">makeFunction</a></b>(id, config)
-								</div>
-								<div class="description">Class method making custom functions accepting one argument that
-   will be inserted in the body section of the underlying
-   ProtoPopup.Confirm object created behind the scenes.</div>
 							</td>
 						</tr>
 					
@@ -353,11 +341,11 @@ ul.inheritsList
 				</div>
 				
 				<div class="fixedFont">
-						<b>ProtoPopup.Confirm</b>(id, config)
+						<b>ProtoPopup.Dialog</b>(id, config)
 				</div>
 				
 				<div class="description">
-					ProtoPopup.Confirm is based on ProtoPopup and ads 'OK' and
+					ProtoPopup.Dialog is based on ProtoPopup and ads 'OK' and
     'Cancel' buttons to its base object.
 					
 				</div>
@@ -390,7 +378,7 @@ ul.inheritsList
 						<dl class="detailList">
 						<dt class="heading">Returns:</dt>
 						
-								<dd>ProtoPopup.Confirm object</dd>
+								<dd>ProtoPopup.Dialog object</dd>
 						
 						</dl>
 					
@@ -410,30 +398,29 @@ ul.inheritsList
 					<div class="fixedFont">&lt;static&gt; 
 					
 					<span class="light">{object}</span>
-					<span class="light">ProtoPopup.Confirm.</span><b>config</b>
+					<span class="light">ProtoPopup.Dialog.</span><b>config</b>
 					
 					</div>
 					<div class="description">
 						The default configuration inherited from
     <a href="../symbols/ProtoPopup.html#config">ProtoPopup#config</a> augmented with:
     <div style="padding-left: 20px">
-       <b>okBtnLabel:</b> The label of the "OK" button inserted
-       in the popup's footer section. Defaults to 'OK'.<br/>
-       <b>cancelBtnLabel:</b> The label of the "Cancel" button inserted
-       in the popup's footer section. Defaults to 'Cancel'.<br/>
+       <b>buttons:</b> An array of button specs objects. The buttons are inserted
+       into the footer in the order they are specified.<br/><br/>
 
-       <b>onOk:</b> The callback executed when the 'OK' button is
-       clicked. Defaults to the empty function.<br/>
+       <b>A button spec object takes the following keys:</b><br/><br/>
 
-       <b>onCancel:</b> The callback executed when the 'Cancel' button
-       is clicked. Defaults to the empty function.<br/>
+       <b>name:</b> The name will be used to build the ID of the button. Give
+       a popup ID 'dialog' and a button name 'save', the button's ID will be 'dialog-save-btn'<br/>
 
-       <b>okBtnBackgroundImage</b> {STRING} - CSS property
-       'background-image' for the ok button. Defaults to
-       undefined.<br/>
+       <b>label:</b> The label of the button.<br/>
 
-       <b>cancelBtnBackgroundImage</b> {STRING} - CSS property
-       'background-image' for the cancel button. Defaults to
+       <b>onClick:</b> The callback function executed when the button is clicked.<br/>
+
+       <b>giveFocus:</b> A boolean specifying whether the button should be focused when the popup is displayed.<br/>
+
+       <b>backgroundImage</b> {STRING} - CSS property
+       'background-image' for the button. Defaults to
        undefined.<br/>
     </div>
 						
@@ -461,7 +448,7 @@ ul.inheritsList
 					<div class="fixedFont">&lt;static&gt; 
 					
 					
-					<span class="light">ProtoPopup.Confirm.</span><b>get</b>(id, config)
+					<span class="light">ProtoPopup.Dialog.</span><b>get</b>(id, config)
 					
 					</div>
 					<div class="description">
@@ -501,73 +488,6 @@ ul.inheritsList
 							<dt class="heading">Returns:</dt>
 							
 								<dd>The initialized and draggable popup.</dd>
-							
-							</dl>
-						
-						
-						
-
-					<hr />
-				
-					<a name=".makeFunction"> </a>
-					<div class="fixedFont">&lt;static&gt; 
-					
-					
-					<span class="light">ProtoPopup.Confirm.</span><b>makeFunction</b>(id, config)
-					
-					</div>
-					<div class="description">
-						Class method making custom functions accepting one argument that
-   will be inserted in the body section of the underlying
-   ProtoPopup.Confirm object created behind the scenes.
-						
-						
-					</div>
-					
-					
-					
-					<pre class="code">Make a custom info() method
-
-      // make the method
-      var info = ProtoPopup.Confirm.makeFunction('info', {
-          header : 'Question'
-      });
-
-      // first use
-      info('This or That');
-
-      // second use (using the same popup, showing the same header
-      info('To be or not to be');</pre>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
-							
-								<dt>
-									<span class="light fixedFont">{STRING}</span> <b>id</b>
-									
-								</dt>
-								<dd>The ID of the popup.</dd>
-							
-								<dt>
-									<span class="light fixedFont">{OBJECT}</span> <b>config</b>
-									
-								</dt>
-								<dd>The <a href="#config">#config</a> object.</dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-							<dl class="detailList">
-							<dt class="heading">Returns:</dt>
-							
-								<dd>A function accepting one argument to be inserted into the
-   popup's body section.</dd>
 							
 							</dl>
 						
