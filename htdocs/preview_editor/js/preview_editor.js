@@ -169,7 +169,6 @@ Krang.debug.on();
                          --- Preview Editor ---
 
 */
-    var runMode = '';
 
     // click handler for container element labels, posts back to the
     // CMS to open the corresponding container element in the "Edit Story" UI
@@ -181,39 +180,36 @@ Krang.debug.on();
             Event.stop(e);
             return false;
         }
-
+        
         // get info from our label
         var info    = element.readAttribute('name');
         var cms     = info.evalJSON();
-        var params  = {
-            rm:       runMode,
-            jump_to:  cms.elementXPath,
-        };
-
+        var params  = { rm: 'save_and_jump', jump_to: cms.elementXPath }
+        
         var jumpToElement = function() {
-           Krang.XOrigin.XUpdater(cmsWin, {
-               cmsURL:   cmsURL,
-               cmsApp:   'story.pl',
-               form:     'edit',
-               params:   params
-           });
-        };
-
+            Krang.XOrigin.XUpdater(cmsWin, {
+                cmsURL: cmsURL,
+                cmsApp: 'story.pl',
+                form:   'edit', 
+                params: params,
+            });
+        }
+        
         var putOnEditScreenAndJumpToElement = function() {
             Krang.XOrigin.WinInfo(cmsWin, {
                 // maybe put story on Edit Story screen
                 cmsURL:   cmsURL,
                 question: 'isStoryOnEditScreen',
                 response: function(response) {
-                   if (response == 'no') {
-                       params['rm']       = 'edit';
-                       params['story_id'] = storyID;
-                   }
+                    if (response == 'no') {
+                        params['rm']       = 'edit';
+                        params['story_id'] = storyID;
+                    }
                 },
                 finish: jumpToElement
             });
         };
-
+        
         var checkoutAndJumpToElement = function() {
             // check out
             Krang.XOrigin.XUpdater(cmsWin, {
@@ -223,7 +219,7 @@ Krang.debug.on();
                 onComplete: jumpToElement
             });
         };
-
+        
         // checked-out status might have changed, so check it again
         Krang.XOrigin.Request(cmsWin, {
             cmsURL: cmsURL,
@@ -265,35 +261,6 @@ Krang.debug.on();
 
     // Update overlay buttons callback
     var initOverlay = function(status, pref, config) { // status provided by Krang::CGI::Story::get_status()
-
-        Krang.debug("Story status on next 3 lines: ");
-        Krang.debug(status); Krang.debug(pref); Krang.debug(config);
-
-        // localize the UI
-        Krang.XOrigin.WinInfo(cmsWin, {
-            cmsURL:   cmsURL,
-            question: 'getDictionary',
-            response: function(thesaurus) {
-                    console.log(thesaurus);
-                if (thesaurus) {
-                   Krang.localize.withDictionary(thesaurus);
-                } else {
-                    Krang.error(cmsURL, 'Couldn\'t find dictionary for language "'+pref.language+'"');
-                }
-            },
-            finish : function() {
-                // localize the top overlay UI
-                $("krang_preview_editor_logo",       "krang_preview_editor_btn_browse",
-                  "krang_preview_editor_btn_find",   "krang_preview_editor_btn_edit",
-                  "krang_preview_editor_btn_steal",  "krang_preview_editor_checked_out",
-                  "krang_preview_editor_forbidden",  "krang_preview_editor_loading",
-                  "krang_preview_editor_close",      "krang_preview_editor_help"
-                ).invoke('localize');
-                // localize the container element labels
-                $$('.krang_preview_editor_element_label').invoke('localize');
-            }
-        });
-        
         // Helper functions
 
         var uiReset = function() {
@@ -311,7 +278,7 @@ Krang.debug.on();
             uiReset();
             if (Object.isFunction(func)) { func.call(); }
             activateEditMode();
-        }
+        };
 
         var activateEditMode = function() {
             $('krang_preview_editor_btn_edit').addClassName('krang_preview_editor_btn_pressed').show();
@@ -320,7 +287,6 @@ Krang.debug.on();
         };
 
         var editBtnIfOwner = function() {
-            runMode = 'save_and_jump';
 
             Krang.debug("Stories: "+storyID+' '+status.storyInSession);
 
@@ -350,15 +316,14 @@ Krang.debug.on();
                         cmsApp: 'story.pl',
                         params: {rm: 'edit', story_id: storyID},
                         form:   undefined,
-                   });
+                    });
                 });
                 $('krang_preview_editor_btn_edit').show().observe('click', editBtnHandler);
             }
-        }
+        };
 
         var editBtnIfMayEdit = function() {
             // our story is checked-in, but we may edit it
-            runMode = 'save_and_jump';
             editBtnHandler = editBtnHandlerFactory.curry(function() {
                 // check it out and open it on "Edit Story"
                 Krang.XOrigin.XUpdater(cmsWin, {
@@ -375,7 +340,7 @@ Krang.debug.on();
                 });
             });
             $('krang_preview_editor_btn_edit').show().observe('click', editBtnHandler);
-        }
+        };
 
         var editBtnIfMaySteal = function() {
             // story is checked out by another user, but we may steal it
@@ -395,7 +360,6 @@ Krang.debug.on();
                     onComplete: function(json, pref, conf) {
                         // Replace "Steal" button with "Edit" button
                         ms.stopObserving('click', checkOutHandler).hide();
-                        runMode = 'save_and_jump';
                         editBtnHandler = editBtnHandlerFactory.curry(Prototype.emptyFunction);
                         $('krang_preview_editor_btn_edit').show().observe('click', editBtnHandler);
                         activateEditMode();
@@ -403,7 +367,43 @@ Krang.debug.on();
                 });
             };
             ms.update(ms.innerHTML +  ' ' + status.checkedOutBy).show().observe('click', checkOutHandler);
-        }
+        };
+
+        var initEditBtn = function() {
+            if (status.checkedOutBy == 'me') {
+                editBtnIfOwner();
+            } else if (status.checkedOut == '0' && status.mayEdit  == '1') {
+                editBtnIfMayEdit();
+            } else if (status.checkedOut == '1' && status.maySteal == '1') {
+                editBtnIfMaySteal();
+            } else if (status.checkedOut == '0' && status.mayEdit  == '0') {
+                $('krang_preview_editor_forbidden').show();
+            } else {
+                // story is checked out and we may not steal it
+                var co = $('krang_preview_editor_checked_out').show();;
+                co.update(co.innerHTML + ' ' + status.checkedOutBy).show();
+            }
+        };
+
+        var askSaveDialog = function(storyInSession) {
+            new ProtoPopup.Dialog('krang_preview_editor_save_dlg', {
+                body: Krang.localize('Are you sure you want to discard your unsaved changes?'),
+                buttons: [
+                    {name:    'discard', label: Krang.localize("Discard"), onClick: initEditBtn},
+                    {name:    'save',
+                     label:   Krang.localize("Save"), giveFocus: true,
+                     onClick: function(storyInSession) {
+                         Krang.XOrigin.XUpdater(cmsWin, {
+                             cmsURL: cmsURL,
+                             cmsApp: 'story.pl',
+                             form:   'edit',
+                             params: {rm: 'db_save'},
+                             onComplete: initEditBtn
+                         });
+                     }}                         
+                    ]
+            }).show();
+        };
 
         //
         // Set button status
@@ -429,18 +429,12 @@ Krang.debug.on();
         }
 
         // Init "Edit/Steal" button and checked out msg
-        if (status.checkedOutBy == 'me') {
-            editBtnIfOwner();
-        } else if (status.checkedOut == '0' && status.mayEdit  == '1') {
-            editBtnIfMayEdit();
-        } else if (status.checkedOut == '1' && status.maySteal == '1') {
-            editBtnIfMaySteal();
-        } else if (status.checkedOut == '0' && status.mayEdit  == '0') {
-            $('krang_preview_editor_forbidden').show();
+        if (status.storyInSession && status.storyInSession != storyID) {
+            // we were previously editing the story that exists in the
+            // session, ask user if he wants to save it
+            askSaveDialog(status.storyInSession);
         } else {
-            // story is checked out and we may not steal it
-            var co = $('krang_preview_editor_checked_out').show();;
-            co.update(co.innerHTML + ' ' + status.checkedOutBy).show();
+            initEditBtn();
         }
 
         // Init "Close" button
@@ -459,6 +453,41 @@ Krang.debug.on();
         helpBtn.observe('click', showHelp);
     }
 
+    var localizeOverlay = function(status, pref, config) { 
+
+        Krang.debug("Story status on next 3 lines: ");
+        Krang.debug(status); Krang.debug(pref); Krang.debug(config);
+
+        // localize the UI
+        Krang.debug.off();
+        Krang.XOrigin.WinInfo(cmsWin, {
+            cmsURL:   cmsURL,
+            question: 'getDictionary',
+            response: function(thesaurus) {
+                    console.log(thesaurus);
+                if (thesaurus) {
+                   Krang.localize.withDictionary(thesaurus);
+                } else {
+                    Krang.error(cmsURL, 'Couldn\'t find dictionary for language "'+pref.language+'"');
+                }
+            },
+            finish : function() {
+                // localize the top overlay UI
+                $("krang_preview_editor_logo",       "krang_preview_editor_btn_browse",
+                  "krang_preview_editor_btn_find",   "krang_preview_editor_btn_edit",
+                  "krang_preview_editor_btn_steal",  "krang_preview_editor_checked_out",
+                  "krang_preview_editor_forbidden",  "krang_preview_editor_loading",
+                  "krang_preview_editor_close",      "krang_preview_editor_help"
+                ).invoke('localize');
+                // localize the container element labels
+                $$('.krang_preview_editor_element_label').invoke('localize');
+                Krang.debug.on();
+                //init UI overlay
+                initOverlay(status, pref, config);
+            }
+        });
+    };
+
     // get our story's checkout status...
     Krang.XOrigin.Request(cmsWin, {
         cmsURL: cmsURL,
@@ -468,7 +497,7 @@ Krang.debug.on();
             rm:       'pe_get_status',
             story_id: storyID
         },
-        // ...and initialize the overlay and its buttons
-        onComplete: initOverlay
+        // ...and initialize the overlay and its buttons after localizing them
+        onComplete: localizeOverlay
     });
 })();

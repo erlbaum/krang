@@ -102,6 +102,7 @@ my @files = qw(
   htdocs/preview_editor/js/krang_debug.js
   htdocs/proto_popup/src/proto_popup_base.js
   htdocs/proto_popup/src/proto_popup_alert.js
+  htdocs/proto_popup/src/proto_popup_dialog.js
   htdocs/preview_editor/js/krang_error.js
   htdocs/preview_editor/js/xorigin.js
   htdocs/preview_editor/js/krang_messages.js
