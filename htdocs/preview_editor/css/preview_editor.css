@@ -122,3 +122,57 @@ a#krang_preview_editor_help:visited, a#krang_preview_editor_close:visited {
   font-size: 11px;
   line-height: 1;
 }
+
+/****************
+ * Dialog popup *
+ ****************/
+#proto-popup { 
+  border-radius: 10px;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+}
+
+#proto-popup, #proto-popup-body{
+  padding: 0;
+  background-color: #E0F0FF;
+}
+
+#proto-popup-body {
+  font: bold 105% arial,sans-serif;
+  margin: 10px;
+  line-height: 1.5;
+  color: #222;
+  
+}
+
+#proto-popup-footer {
+  border-top: 1px solid #6A5ACD;
+  padding: 10px;
+}
+
+.proto-popup-btn {
+  color: #690 !important;
+  width: auto !important;
+  overflow: visible;
+  margin: 0;
+  border: 1px solid #BBB;
+  border-color: #EEE #BBB #BBB #EEE;
+  padding: .1em .5em;
+  font-size: 11px;
+  line-height: 1;
+  background: transparent url(/images/bkg-button-mini.gif) 0 50% repeat-x
+}
+.proto-popup-btn:hover {
+  background-color: #FF9 !important;
+  background-image: none !important;
+}
+
+#proto-popup-dont_save-btn { 
+  margin-right: 5px;
+}
+
+#proto-popup-save-btn { 
+  float: right;
+}
+
+

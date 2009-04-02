@@ -394,10 +394,9 @@ Krang.debug.on();
         };
 
         var askSaveDialog = function(storyInSession) {
-            new ProtoPopup.Dialog('krang_preview_editor_save_dlg', {
+            new ProtoPopup.Dialog('proto-popup', {
                 body: Krang.localize('Are you sure you want to discard your unsaved changes?'),
                 buttons: [
-                    {name:    'discard', label: Krang.localize("Discard"), onClick: initEditBtn},
                     {name:    'save',
                      label:   Krang.localize("Save"), giveFocus: true,
                      onClick: function(storyInSession) {
@@ -406,7 +405,8 @@ Krang.debug.on();
                              params: {rm: 'db_save'},
                              onComplete: initEditBtn
                          });
-                     }}                         
+                     }},
+                    {name:    'discard', label: Krang.localize("Discard"), onClick: initEditBtn}
                     ]
             }).show();
         };
