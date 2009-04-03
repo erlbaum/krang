@@ -466,37 +466,3 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
 </VirtualHost>
 </tmpl_loop>
   
-#
-### Access from VMWARE
-#
-Listen 172.16.0.1:8030
-
-<VirtualHost 172.16.0.1:8030>
-   ServerName <tmpl_var HostName>
-
-   PerlTransHandler Krang::Handler->trans_handler
-   PerlLogHandler    Krang::Handler->log_handler
-
-   <Location />
-      PerlSetVar        flavor root
-      ErrorDocument 500 /bug.cgi?rm=ise=1
-   </Location>
-
-   <tmpl_loop InstanceLoop>
-      <Location /<tmpl_var InstanceName>>
-         PerlSetVar        flavor root
-         PerlSetVar        instance <tmpl_var InstanceName>
-
-         AuthType          Krang::Handler
-         AuthName          <tmpl_var InstanceName>
-         PerlAccessHandler Krang::Handler->access_handler
-         PerlAuthenHandler Krang::Handler->authen_handler
-         PerlAuthzHandler  Krang::Handler->authz_handler
-         PerlLogHandler    Krang::Handler->log_handler
-         PerlCleanupHandler Apache::SizeLimit
-         require           valid-user
-
-         ErrorDocument 500 /<tmpl_var InstanceName>/bug.cgi?ise=1
-      </Location>
-   </tmpl_loop>
-</VirtualHost>
