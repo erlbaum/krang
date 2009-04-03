@@ -419,8 +419,7 @@ var ProtoPopup = Class.create(/** @lends ProtoPopup.prototype */{
 
         // maybe add a background image
         if (this.config[name + 'BtnBackgroundImage']) {
-            btn.setStyle({backgroundImage: this.config[name + 'BtnBackgroundImage'],
-                        backgroundPosition: 'no-repeat'});
+            btn.setStyle({backgroundImage: this.config[name + 'BtnBackgroundImage']});
         }
 
         return btn;

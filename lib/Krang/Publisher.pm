@@ -107,7 +107,7 @@ use File::Temp qw(tempdir);
 use Time::Piece;
 use Set::IntRange;
 
-use Krang::ClassLoader Conf => qw(KrangRoot instance PreviewSSL);
+use Krang::ClassLoader Conf => qw(KrangRoot instance PreviewSSL EnablePreviewEditor);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Template';
@@ -1853,6 +1853,10 @@ sub _build_story_single_category {
 
     # get story output
     my $article_output = $story_element->publish(publisher => $self);
+
+##    my $div = $child->is_container && EnablePreviewEditor
+##      ? $self->_get_preview_editor_element_overlays(%args)
+##      : '';
 
     # break the story into pages
     my @article_pages = split(/${\PAGE_BREAK}/, $article_output);

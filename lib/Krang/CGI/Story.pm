@@ -430,10 +430,8 @@ sub checkout_and_edit {
         $query->delete('story_id');
         $session{story} = $story;
 
-        # this hack catches Edit -> View -> Edit (!) cases so they don't overwrite cancel info
-        unless ($query->param('version') && $query->param('return_params') eq 'rm') {
-            $self->_cancel_edit_goes_to('story.pl?rm=find', $story->checked_out_by);
-        }
+        # make Cancel button return story to original user and bring up Find screen
+        $self->_cancel_edit_goes_to('story.pl?rm=find', $story->checked_out_by);
     } else {
         $story = $session{story};
         croak("Unable to load story from session!")
@@ -2616,8 +2614,14 @@ sub alert_duplicate_url {
             '',
             map {
                 sprintf(
-                    qq{<tr>  <td> %d </td>  <td> <a href="" class="story-preview-link" name="story_%d">%s</a> </td>  </tr>},
-                    $_->{id}, $_->{id}, $_->{url})
+                    qq{<tr>  <td> %d </td>  <td> %s </td>  </tr>},
+                    $_->{id},
+                    format_url(
+                        url    => $_->{url},
+                        name   => 'story_' . $_->{id},
+                        class  => 'story-preview-link',
+                    ),
+                ),
               } @{$error->stories}
         );
 

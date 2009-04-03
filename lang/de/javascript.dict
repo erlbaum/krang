@@ -93,7 +93,10 @@
 "Are you sure you want to discard any unsaved changes?"  "Sind Sie sicher, dass Sie alle noch nicht gespeicherten Veränderungen verwerfen wollen?"
 "Krang couldn't find a valid Window ID for this login. Please login again, and if the problem persists, try restarting your browser."  "Krang konnte für diese Anmeldung keine gültige Fenster ID finden.  Bitte melden Sie sich erneut an.  Sollte das Problem dann immer noch auftreten, starten Sie den Borwser bitte neu."
 
+#
 # In preview_editor.js
+#
+# Overlay
 "Browse"               "Surfen"
 "Checked out by"       "In Arbeit bei"
 "Close"                "Schließen"
@@ -104,6 +107,10 @@
 "Loading"              "Lädt"
 "No Edit Permission"   "Bearbeiten nicht erlaubt"
 "Steal from"           "Übernehmen von"
+
+# Button labels
+"Discard"  "Verwerfen"
+"Save"     "Speichern"
 
 # Some display names
 "Page"     "Seite"

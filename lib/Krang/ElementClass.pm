@@ -727,7 +727,7 @@ sub find_template {
         my %publish_context = $publisher->publish_context();
 
         # use template finder if enabled
-        if (EnablePreviewEditor) {
+        if (EnablePreviewEditor && $publisher->is_preview) {
             $args{cms_root} = pkg('Conf')->cms_root;
             $self->_insert_comments_for_template_finder(
                 %args,
@@ -1092,9 +1092,8 @@ sub _fill_loop_iteration {
     );
 
     # overlay div showing the child's display name
-    my %publish_context = $publisher->publish_context;
-    my $div = $child->is_container && EnablePreviewEditor
-      ? $self->_get_preview_editor_element_overlays(%args, %publish_context)
+    my $div = $child->is_container && EnablePreviewEditor && $publisher->is_preview
+      ? $self->_get_preview_editor_element_overlays(%args)
       : '';
 
     # see if inner loop contains a tag for the element itself (ie without '_loop')
