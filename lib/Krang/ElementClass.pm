@@ -1733,8 +1733,8 @@ END
 sub _get_preview_editor_element_overlays {
     my ($self, %args) = @_;
 
-    my $path     = $args{child}->xpath || '/';
-    my $id       = $args{publisher}->story->story_id;
+    my $path = $args{child} ? $args{child}->xpath : '/';
+    my $id   = $args{publisher}->story->story_id;
 
     return qq{<div class="krang_preview_editor_element_label" name="{storyID: '$id', elementXPath: '$path'}" style="display: none">} . $args{child}->display_name . '</div>';
 }
