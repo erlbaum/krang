@@ -129,12 +129,15 @@ sub edit {
         )
     );
 
+    # preview editor
+    my $use_editor = pkg('MyPref')->get('use_preview_editor');
+
     $template->param(
         use_preview_editor_selector => scalar $q->radio_group(
             -name    => 'use_preview_editor',
             -values  => [1, 0],
             -labels  => {1 => localize('Yes'), 0 => localize('No')},
-            -default => pkg('MyPref')->get('use_preview_editor'),
+            -default => defined($use_editor) ? $use_editor : 0,
             -class   => 'radio',
         )
     ) if EnablePreviewEditor;
