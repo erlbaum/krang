@@ -2,7 +2,7 @@
     ProtoPopup.Confirm provide a light-weight solution for info, alert
     and confirm dialogs based on Prototype and Scriptaculous.
     @author <a href="mailto:bs@cms-schulze.de">Bodo Schulze</a>
-    @version 0.2
+    @version 0.3
     @license BSD-like
     @www <a href="http://dev.cms-schulze.de>ProtoPopup</a>
 
