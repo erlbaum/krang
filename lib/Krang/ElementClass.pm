@@ -1059,12 +1059,17 @@ sub fill_template {
         # hasn't been set (first child element takes precedence), set it.
         if (exists($template_vars{$name}) && !exists($child_params{$name})) {
 
+            # overlay div showing the child's display name
+            my $div = $child->is_container && EnablePreviewEditor && $publisher->is_preview
+              ? $self->_get_preview_editor_element_overlays(child => $child, publisher => $publisher)
+                : '';
+
             # get html for element, unless it's already built
             $html ||= $child->publish(
                 publisher          => $publisher,
                 fill_template_args => \%fill_template_args
             );
-            $child_params{$name} = $html;
+            $child_params{$name} = $div . $html;
         }
     }
 
