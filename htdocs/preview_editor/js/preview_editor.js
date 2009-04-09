@@ -471,7 +471,7 @@ Krang.debug.on();
             question: 'getDictionary',
             response: function(thesaurus) {
                     console.log(thesaurus);
-                if (thesaurus) {
+                if (thesaurus || pref.language == 'en') {
                    Krang.localize.withDictionary(thesaurus);
                 } else {
                     Krang.error(cmsURL, 'Couldn\'t find dictionary for language "'+pref.language+'"');
