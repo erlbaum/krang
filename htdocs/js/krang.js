@@ -634,9 +634,9 @@ Krang.Form = {
         form = $(form);
         if (!form) { return false }
         if (!ckbx) { ckbx = 'krang_pager_rows_checked' }
-        [ [$('C'), 'list-btn'], [form, 'mini-list-btn'] ].each(function(spec) {
-            spec[0].select('.'+spec[1]).each(function(btn) {
-             var submenu = btn.next('ul');
+        $A([ [$('C'), '.list-btn'], [form, '.mini-list-btn'] ]).each(function(spec) {
+            spec[0].select(spec[1]).each(function(btn) {
+                var submenu = btn.next('ul');
                 if (Krang.row_checked(form, ckbx)) {
                     btn.addClassName(spec[1]+'-enabled');
                     btn.enable();
@@ -645,7 +645,8 @@ Krang.Form = {
                     btn.removeClassName(spec[1]+'-enabled');
                     btn.disable();
                     if(submenu) submenu.addClassName('disabled');
-                    spec[0].select('input#checkallbox').first().checked = false;
+                    var ca = spec[0].select('input#checkallbox');
+                    if (ca) ca.first().checked = false;
                 }
             })});
     }
@@ -1498,7 +1499,7 @@ Krang.Widget.update_time_chooser = function(inputName, use_ampm_time) {
     var hour   = clock.down('select', 0).value;
     var minute = clock.down('select', 1).value;
 
-    var ampm   = use_ampm_time ? (clock.down('select', 2).value + ' ') : '';
+    var ampm   = use_ampm_time ? (clock.down('select', 2).value) : '';
     if( hour && minute && ((use_ampm_time && ampm) || true ) ) {
         $(inputName).value = hour + ':' + minute + ' ' + ampm;
     }
