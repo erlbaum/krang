@@ -312,7 +312,7 @@ sub category {
     # root category
     if ($arg{depth_only}) {
         my $ret = scalar($self->{category_cache}[0]->ancestors());
-        return (defined($ret) ? ret : 0);
+        return (defined($ret) ? $ret : 0);
     }
 
     # unrecognized arguments
