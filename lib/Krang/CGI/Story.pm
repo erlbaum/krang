@@ -1944,7 +1944,6 @@ sub _do_find {
         columns_hidden   => [qw( status )],
         row_handler      => sub { $self->find_story_row_handler(@_, retired => $retired); },
         id_handler => sub { return $_[0]->story_id },
-        default_sort_order_desc => 1
     );
 
     my $pager_tmpl = $self->load_tmpl(
