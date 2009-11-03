@@ -137,7 +137,7 @@ Krang::Conf - Krang configuration module
   # or you can access them as methods in the Krang::Conf module
   $root = pkg('Conf')->rootdir;
 
-  # the current instance, which affects the values returned, can
+  # the current instance, which affects the values returned, can be
   # manipulated with instance():
   pkg('Conf')->instance("this_instance");
 
