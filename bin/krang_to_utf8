@@ -19,6 +19,10 @@ configuration changes to convert an entire Krang installation to UTF8.
 
 This script will convert your Krang installation to UTF8.
 
+IMPORTANT NOTE: Prior to v4.004 of DBD::mysql the database driver
+option 'mysql_enable_utf8' will not work properly.  Make sure to use a
+later version.
+
 =head1 OPTIONS
 
 The script takes the following options:
