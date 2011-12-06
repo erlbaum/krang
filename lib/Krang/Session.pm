@@ -105,6 +105,7 @@ will croak().
 
 sub load {
     my ($pkg, $session_id) = @_;
+    $LAST_SESSION_ID = $session_id if $session_id;
     $session_id ||= $LAST_SESSION_ID;    # use the last id if none was provided.
     my $dbh = dbh();
 
@@ -227,8 +228,6 @@ sub delete {
 
 Returns the id of the current session.
 
-=back
-
 =cut
 
 sub session_id {
@@ -248,7 +247,16 @@ But this has
 
 =cut
 
+=item C<< Krang::Session->clear_session_id() >>
 
+Clears the LAST_SESSION_ID variable.
+
+=cut
+
+sub clear_last_session_id {
+    my $pkg = shift;
+    $LAST_SESSION_ID = undef;
+}
 
 sub persist_to_mypref {
     my $self = shift;
@@ -258,6 +266,10 @@ sub persist_to_mypref {
 
     pkg('MyPref')->set(config => nfreeze($persist)) if $persist;
 }
+
+=back
+
+=cut
 
 1;
 
