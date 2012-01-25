@@ -7,6 +7,7 @@ use File::Spec::Functions;
 use File::Path;
 use IO::File;
 use Storable qw/freeze thaw/;
+use Sys::Hostname qw(hostname);
 
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -769,10 +770,18 @@ is($sched->inactive, 0, "Schedule for Story $story_id is again active");
 # test 'daemon_uuid'
 my ($found) = pkg('Schedule')->find(schedule_id => $sched->schedule_id, daemon_uuid => undef);
 isa_ok($found, 'Krang::Schedule', 'select_for_update found, object');
-$sched->daemon_uuid(`hostname` . '_' . $$);
+$sched->daemon_uuid(hostname . '_' . $$);
 $sched->save;
 ($found) = pkg('Schedule')->find(schedule_id => $sched->schedule_id, daemon_uuid => undef);
 ok(!$found, "daemon_uuid is set: not found");
+($found) = pkg('Schedule')->find(daemon_uuid => hostname . '_' . $$);
+ok($found, "daemon_uuid is set: found");
+($found) = pkg('Schedule')->find(daemon_uuid => 'not' . hostname . '_' . $$);
+ok(!$found, "incorrect daemon_uuid is not found");
+($found) = pkg('Schedule')->find(daemon_uuid_like => hostname . '_%');
+ok($found, "daemon_uuid is set: found using _like");
+($found) = pkg('Schedule')->find(daemon_uuid_like => 'not' . hostname . '_%');
+ok(!$found, "incorrect daemon_uuid is not found using _like");
 $sched->daemon_uuid(undef);
 $sched->save;
 ($found) = pkg('Schedule')->find(schedule_id => $sched->schedule_id, daemon_uuid => undef);

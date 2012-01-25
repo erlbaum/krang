@@ -112,7 +112,7 @@ can_ok(
       checkin checkout checked_out checked_out_by revert
       linked_stories linked_media move_to_desk publish_path preview_path
       delete clone serialize_xml deserialize_xml story_uuid
-      retire unretire trash untrash last_modified_date/
+      retire unretire trash untrash/
 );
 
 is($story->title,               "Test");
@@ -154,6 +154,7 @@ SKIP: {
 }
 
 # test contribs
+$contrib->selected_contrib_type(undef);
 eval { $story->contribs($contrib); };
 like($@, qr/invalid/);
 $contrib->selected_contrib_type(1);
