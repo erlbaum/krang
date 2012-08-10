@@ -2,7 +2,7 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.21 - August 5th, 2012
+=head2 3.21 - August 10th, 2012
 
 =over
 
@@ -63,6 +63,11 @@ Bulk Edit even when the separator wasn't C<< <p> >>. [Michael Peters]
 Advanced search on Media filename no longer treats underscores as SQL
 wildcard characters since they are really common in file names. [Michael
 Peters]
+
+=item *
+
+Added new C<save_args> option to L<Krang::Story>'s C<transform_stories()>
+method. [Michael Peters]
 
 =back
 
