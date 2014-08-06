@@ -149,8 +149,10 @@ is checked out and whether the user has access to edit the template.
 $nlink is always 1.  $user is set to the user that has the template
 checked out or "nobody" for checked in templates.  $group is "ci" if
 the template is checked out, "ci" if it's checked in.  $size is the
-size of the template text in bytes.  $time is set to the deploy_time()
-of the template.
+size of the template text in bytes.  $time is set to the deploy_date()
+of the template (or the creation_date if never deployed) and, for 
+media, $time is set to the last-modifeied time of the media file on
+disk (since media objects don't have a last_modified field).
 
 =cut
 
@@ -170,7 +172,13 @@ sub status {
         $size = $object->file_size();
     }
 
-    $date = $object->creation_date()->epoch;
+    # use file stat for media last-modified time
+    # and for templates use deploy_date or (if never deplyed) creation_date
+    $date = $object->isa('Krang::Media') 
+      ? ( stat( $object->file_path() ) )[9]
+      : $object->deploy_date() 
+        ? $object->deploy_date()->epoch
+        : $object->creation_date()->epoch;
 
     my $owner = $object->checked_out_by;
 

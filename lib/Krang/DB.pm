@@ -98,6 +98,7 @@ sub dbh {
         RaiseError           => 1,
         AutoCommit           => 1,
         mysql_auto_reconnect => 1,
+        ($args{connect_args} ? %{ $args{connect_args} || {} } : ()), 
     );
 
     $connect_options{mysql_socket} = DBSock if DBSock;
