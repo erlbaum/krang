@@ -14,17 +14,21 @@ systemd has replaced the older /etc/init.d style scripts and use of
 chkconfig.
 
 If you want to build Krang from a source distribution (ex:
-krang-3.25-src.tar.gz), you'll need the following RPMs installed.
-You can install them via yum:
+krang-3.25-src.tar.gz), you'll need the following prerequisites,
+which can be installed using yum (as root):
 
-   gcc
-   cpp
-   binutils
-   glibc-kernheaders
-   zlib-devel
-   mysql-devel
-   expat-devel
-   libjpeg-devel
-   giflib-devel
-   libpng-devel
+  # yum group install -y "Development Tools"
 
+  # yum install -y           \
+      expat-devel            \
+      giflib-devel           \
+      libjpeg-devel          \
+      libpng-devel           \
+      mariadb-devel          \
+      mariadb-libs           \
+      mariadb-server         \
+      perl                   \
+      perl-devel             \
+      perl-ExtUtils-CBuilder \
+      perl-Sys-Syslog        \
+      zlib-devel 
