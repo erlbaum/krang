@@ -1,0 +1,30 @@
+Platform for RedHat Enterprise Linux, ES7 is mostly copied from 
+the ES6 platform.
+
+Before you install Krang you'll need to install Maria DB.  You
+can do that like this:
+
+    # yum install mariadb-server mariadb-devel
+
+After that you should be ready to run krang_install.  See INSTALL
+for details.
+
+NOTE: On RHEL ES7 Krang is NOT YET setup to start on boot, since
+systemd has replaced the older /etc/init.d style scripts and use of
+chkconfig.
+
+If you want to build Krang from a source distribution (ex:
+krang-3.25-src.tar.gz), you'll need the following RPMs installed.
+You can install them via yum:
+
+   gcc
+   cpp
+   binutils
+   glibc-kernheaders
+   zlib-devel
+   mysql-devel
+   expat-devel
+   libjpeg-devel
+   giflib-devel
+   libpng-devel
+
