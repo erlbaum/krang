@@ -1,0 +1,29 @@
+Platform for RedHat Enterprise Linux, ES6 is mostly copied from 
+the ES5 platform.
+
+Before you install Krang you'll need to install MySQL 5.  You can
+do that like this:
+
+    # yum install mysql-server mysql-devel
+
+After that you should be ready to run krang_install.  See INSTALL
+for details.
+
+NOTE: On RHEL ES6 Krang is setup to start on boot, via a link to
+bin/krang_ctl placed in /etc/init.d and activated using chkconfig.
+
+If you want to build Krang from a source distribution (ex:
+krang-3.25-src.tar.gz), you'll need the following RPMs installed.
+You can install them via yum:
+
+   gcc
+   cpp
+   binutils
+   glibc-kernheaders
+   zlib-devel
+   mysql-devel
+   expat-devel
+   libjpeg-devel
+   giflib-devel
+   libpng-devel
+
