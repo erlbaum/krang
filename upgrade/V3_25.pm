@@ -16,6 +16,10 @@ sub per_installation {
     $self->remove_files(
         qw{
             src/Bit-Vector-6.3.tar.gz
+            src/ExtUtils-CBuilder-0.280202.tar.gz
+            src/ExtUtils-Install-1.54.tar.gz
+            src/ExtUtils-MakeMaker-6.62.tar.gz
+            src/ExtUtils-ParseXS-3.08.tar.gz
             src/Imager-0.72.tar.gz
             src/JSON-Any-1.17.tar.gz
             src/Linux-Pid-0.03.tar.gz
