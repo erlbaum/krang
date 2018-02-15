@@ -24,6 +24,7 @@ sub per_installation {
             src/JSON-Any-1.17.tar.gz
             src/Linux-Pid-0.03.tar.gz
             src/Unicode-Normalize-1.04.tar.gz
+            src/Apache-MOD_PERL/apache_1.3.41.tar.gz
         };
     );
 
