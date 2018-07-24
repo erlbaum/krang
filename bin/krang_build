@@ -264,21 +264,17 @@ unless ($skip_all_modules) {
     # list are actually built first
     my @early_modules = qw(
         Test-Simple
-        ExtUtils-Install
         Module-Build
         version
         Module-Metadata
         Perl-OSType
         Test-Harness
-        ExtUtils-ParseXS
-        ExtUtils-CBuilder
         IPC-Cmd
         Module-Load-Conditional
         Module-Load
         Params-Check
         Locale-Maketext-Simple
         Module-CoreList
-        ExtUtils-MakeMaker
         Expect
         IO-Tty
     );
