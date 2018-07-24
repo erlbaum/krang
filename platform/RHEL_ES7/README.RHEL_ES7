@@ -23,40 +23,36 @@ which can be installed using yum (as root):
 
   # yum group install -y "Development Tools"
 
-  # yum install -y               \
-      expat-devel                \
-      giflib-devel               \
-      libjpeg-devel              \
-      libpng-devel               \
-      mariadb-devel              \
-      mariadb-libs               \
-      mariadb-server             \
-      perl                       \
-      perl-devel                 \
-      perl-ExtUtils-CBuilder     \
-      perl-ExtUtils-ParseXS      \
-      perl-ExtUtils-InstallPaths \
-      perl-ExtUtils-PkgConfig    \
-      perl-ExtUtils-XSBuilder    \
-      perl-ExtUtils-XSpp         \
-      perl-ExtUtils-Embed        \
-      perl-Sys-Syslog            \
+  # yum install -y                \
+      expat-devel                 \
+      giflib-devel                \
+      libjpeg-devel               \
+      libpng-devel                \
+      mariadb-devel               \
+      mariadb-libs                \
+      mariadb-server              \
+      perl                        \
+      perl-devel                  \
+      perl-ExtUtils-Config        \
+      perl-ExtUtils-CBuilder      \
+      perl-ExtUtils-Embed         \
+      perl-ExtUtils-ParseXS       \
+      perl-ExtUtils-Install       \
+      perl-ExtUtils-InstallPaths  \
+      perl-ExtUtils-PkgConfig     \
+      perl-ExtUtils-XSBuilder     \
+      perl-ExtUtils-XSpp          \
+      perl-File-Next              \
+      perl-IPC-Cmd                \
+      perl-Locale-Maketext-Simple \
+      perl-Module-CoreList        \
+      perl-Module-Load            \
+      perl-Sys-Syslog             \
       zlib-devel
 
 Then you can build krang:
 
   # bin/krang_build
-
-If you get an error building mod_perl like:
-
-  Can't open perl script "/usr/share/perl5/ExtUtils/xsubpp"
-
-The workaround is to:
-
-  cp -av /usr/bin/xsubpp /usr/share/perl5/ExtUtils/xsubpp
-
-(or you may need to copy xsubpp from elsewhere, try: `which xsubpp`
-to find it)
 
 And, finally, if you want to run krang over SSL, you'll need to take
 a few extra steps to install the older-style openssl library that we

@@ -29,7 +29,7 @@ And then tar that all back up again:
   src/Apache-MOD_PERL$ rm -rf apache_1.3.42/
 
 
-1. mod_perl 1.31 - Make our own 1.32 release from its subversion repo
+2. mod_perl 1.31 - Make our own 1.32 release from its subversion repo
 
 Unfortunately, Apache::Symbol won't compile in mod_perl 1.31 either:
 
@@ -67,13 +67,62 @@ and craft our own home-grown mod_perl 1.32 release package, like this:
   src/Apache-MOD_PERL$ rm mod_perl-1.31.tar.gz
 
 
-and now we can build apache 1.3x and mod_perl successfully!
+3. Also, on CentOS, mod_perl failed to build due to errors such as:
+
+   Can't open perl script "/usr/share/perl5/ExtUtils/xsubpp": File not found
+
+and, similarly for typemap:
+
+   Can't open perl script "/usr/share/perl5/ExtUtils/typemap": File not found
+
+These were due to a config.sh script making a now-outdated assumption about 
+where the ExtUtils::ParseXS module happened to be installed.  The fix was
+inspired by this JIRA issue, in which the Apache HAWQ project solved a similar
+issue with the same boiler-plate config script snippet:
+
+  https://jira.apache.org/jira/browse/HAWQ-1277
+
+The patch below uses the same approach as theirs but had to be adapted because:
+
+a. in our case, the xsubpp file found was a symlink, so their -r file test
+   couldn't find it, 
+
+b. on CentOS 7 minimal, xsubpp and typemap are found in different locations, and
+
+c. their Makefile syntax had to be reworked to make the variables expand properly
+   in a shell script:
+
+So the fix was:
+
+src/Apache-MOD_PERL/mod_perl-1.32$ diff -u apaci/mod_perl.config.sh{,.fixed}
+--- apaci/mod_perl.config.sh    2018-02-15 20:46:45.000000000 -0500
++++ apaci/mod_perl.config.sh.fixed      2018-07-24 16:57:09.000000000 -0400
+@@ -188,11 +188,16 @@
+            * )    ;;
+        esac
+ fi
++
++# search @INC for xsubpp and typemap
++XSUBPPDIR="`$perl_interp -e 'use List::Util qw(first); print first { -e qq{$_/ExtUtils/xsubpp} } @INC'`"
++TYPEMAPDIR="`$perl_interp -e 'use List::Util qw(first); print first { -e qq{$_/ExtUtils/typemap} } @INC'`"
++
+ perl_inc="`$perl_interp -MConfig -e 'print "$Config{archlibexp}/CORE"'`"
+ perl_privlibexp="`$perl_interp -MConfig -e 'print $Config{privlibexp}'`"
+ perl_archlibexp="`$perl_interp -MConfig -e 'print $Config{archlibexp}'`"
+ perl_xsinit="$perl_interp -MExtUtils::Embed -e xsinit"
+-perl_xsubpp="$perl_interp ${perl_privlibexp}/ExtUtils/xsubpp -nolinenumbers -typemap ${perl_privlibexp}/ExtUtils/typemap"
++perl_xsubpp="$perl_interp ${XSUBPPDIR}/ExtUtils/xsubpp -nolinenumbers -typemap ${TYPEMAPDIR}/ExtUtils/typemap"
+ perl_ar="`$perl_interp -MConfig -e 'print $Config{ar}'`"
+ perl_ranlib=`$perl_interp -MConfig -e 'print $Config{ranlib}'`
+
+
+and NOW we can build apache 1.3x and mod_perl successfully!
 
 ...unless you want to run krang_build --with-ssl
 
 Then soldier on:
 
-3. mod_ssl - bump the version of apache it expects and install openssl
+4. mod_ssl - bump the version of apache it expects and install openssl
 
 The 1st error:
 
