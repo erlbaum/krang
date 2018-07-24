@@ -1,0 +1,79 @@
+Platform for RedHat Enterprise Linux, ES7 is mostly copied from 
+the ES6 platform.
+
+Before you install Krang you'll need to install Maria DB.  You
+can do that like this:
+
+    # yum install mariadb-server mariadb-devel
+
+After that you should be ready to run krang_install.  See INSTALL
+for details.
+
+NOTE: On RHEL ES7 Krang is NOT YET setup to start on boot, since
+systemd has replaced the older /etc/init.d style scripts and use of
+chkconfig.
+
+If you want to build Krang from a source distribution (ex:
+krang-3.25-src.tar.gz), you'll need the following prerequisites,
+which can be installed using yum (as root):
+
+  # yum update -y
+
+  # yum upgrade -y
+
+  # yum group install -y "Development Tools"
+
+  # yum install -y                \
+      expat-devel                 \
+      giflib-devel                \
+      libjpeg-devel               \
+      libpng-devel                \
+      mariadb-devel               \
+      mariadb-libs                \
+      mariadb-server              \
+      perl                        \
+      perl-devel                  \
+      perl-ExtUtils-Config        \
+      perl-ExtUtils-CBuilder      \
+      perl-ExtUtils-Embed         \
+      perl-ExtUtils-ParseXS       \
+      perl-ExtUtils-Install       \
+      perl-ExtUtils-InstallPaths  \
+      perl-ExtUtils-PkgConfig     \
+      perl-ExtUtils-XSBuilder     \
+      perl-ExtUtils-XSpp          \
+      perl-File-Next              \
+      perl-IPC-Cmd                \
+      perl-Locale-Maketext-Simple \
+      perl-Module-CoreList        \
+      perl-Module-Load            \
+      perl-Sys-Syslog             \
+      zlib-devel
+
+Then you can build krang:
+
+  # bin/krang_build
+
+And, finally, if you want to run krang over SSL, you'll need to take
+a few extra steps to install the older-style openssl library that we
+now bundle with mod_ssl:
+
+  # cd krang/src/Apache-MOD_PERL/       \
+    && tar -xzvf openssl-0.9.8zh.tar.gz \
+      -C /usr/src                       \
+    && cd /usr/src/openssl-0.9.8zh/     \
+    && ./config --prefix=/usr           \
+      --openssldir=/etc/ssl             \
+      --libdir=lib                      \
+      shared                            \
+      zlib-dynamic                      \
+    && make depend                      \
+    && make -j1                         \
+    && make install                     \
+    && echo DONE
+
+  # cd krang
+
+  # bin/krang_build --with-ssl
+
+
